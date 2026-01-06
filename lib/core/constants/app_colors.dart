@@ -26,5 +26,8 @@ class AppColors {
   // Google Button Colors
   static const Color googleButtonBackground = Color(0xFFFFFFFF); // White
   static const Color googleButtonBorder = Color(0xFF000000); // Black
+
+  // Loading Colors
+   static const Color loadingBackground = Color(0x33FFFFFF); // highlight
 }
 

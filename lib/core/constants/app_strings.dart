@@ -19,7 +19,7 @@ class AppStrings {
 
   // Placeholders
   static const String emailPlaceholder = 'your@email.com';
-  static const String passwordPlaceholder = 'correct horse battery staple';
+  static const String passwordPlaceholder = 'password';
 
   // Reset Password Screen
   static const String resetYourPassword = 'Reset Your Password';
@@ -37,6 +37,10 @@ class AppStrings {
   static const String fullNamePlaceholder = 'Your name';
   static const String confirmPasswordPlaceholder = 'Re-enter your password';
   static const String alreadyHaveAccount = 'Already have an account?';
+
+  // Splash Screen
+  static const String tagline = 'Tổ ấm hạnh phúc của bạn.';
+  static const String loading = 'Loading...';
 
   // Links
   static const String needAnAccount = 'Need an account?';

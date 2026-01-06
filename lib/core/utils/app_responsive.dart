@@ -46,6 +46,13 @@ class AppResponsive {
     if (h < 800) return 48;
     return 90;
   }
+
+  /// A simple scaling factor based on a reference screen width (e.g., 390).
+  static double scaleFactor(BuildContext context, {double baseWidth = 390.0}) {
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    // Clamp the scale factor to avoid overly large UI on very wide screens.
+    return (screenWidth / baseWidth).clamp(0.8, 1.5);
+  }
 }
 
 

@@ -6,5 +6,8 @@ class AppAssets {
   // Image Assets (SVG)
   static const String appIcon = 'assets/images/app_icon.svg';
   static const String googleIcon = 'assets/images/google_icon.svg';
+  static const String appIconSecond = 'assets/images/app_icon_2.svg';
+  static const String appIconFirst = 'assets/images/app_icon_1.svg';
+
 }
 

@@ -7,7 +7,7 @@ import '../../../../core/widgets/app_widgets.dart';
 
 /// Sign Up footer - keep consistent with other auth screens
 class SignUpFooterWidget extends StatelessWidget {
-  final VoidCallback onSignIn;
+  final VoidCallback? onSignIn;
 
   const SignUpFooterWidget({
     super.key,
@@ -30,7 +30,7 @@ class SignUpFooterWidget extends StatelessWidget {
         const SizedBox(width: 4),
         AppWidgets.linkText(
           text: AppStrings.signIn,
-          onTap: onSignIn,
+          onTap: onSignIn ?? () {},
         ),
       ],
     );

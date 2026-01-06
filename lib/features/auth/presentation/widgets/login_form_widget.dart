@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/widgets/app_widgets.dart';
 import '../../../../core/constants/app_strings.dart';
-import '../bloc/login_bloc.dart';
-import '../bloc/login_event.dart';
-import '../bloc/login_state.dart';
+import '../bloc/auth_bloc.dart';
+import '../bloc/auth_event.dart';
+import '../bloc/auth_state.dart';
 
 /// Login Form Widget - Contains email, password fields and sign in button
 class LoginFormWidget extends StatefulWidget {
@@ -28,8 +28,8 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
 
   void _handleSignIn() {
     if (_formKey.currentState!.validate()) {
-      context.read<LoginBloc>().add(
-            LoginWithEmailPassword(
+      context.read<AuthBloc>().add(
+            AuthLoginWithEmailPassword(
               email: _emailController.text.trim(),
               password: _passwordController.text,
             ),
@@ -39,7 +39,7 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<LoginBloc, LoginState>(
+    return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
         final isObscured = state.isPasswordObscured;
 
@@ -74,7 +74,9 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
                 isPassword: true,
                 obscureText: isObscured,
                 onTogglePassword: () {
-                  context.read<LoginBloc>().add(const TogglePasswordVisibility());
+                  context
+                      .read<AuthBloc>()
+                      .add(const AuthTogglePasswordVisibility());
                 },
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -90,8 +92,8 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
               // Sign in button
               AppWidgets.primaryButton(
                 text: AppStrings.signIn,
-                onPressed: state is LoginLoading ? () {} : _handleSignIn,
-                isEnabled: state is! LoginLoading,
+                onPressed: state is AuthLoading ? () {} : _handleSignIn,
+                isEnabled: state is! AuthLoading,
               ),
               ],
             ),
