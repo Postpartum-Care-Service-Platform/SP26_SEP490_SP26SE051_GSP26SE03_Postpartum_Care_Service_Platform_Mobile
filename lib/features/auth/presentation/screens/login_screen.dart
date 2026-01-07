@@ -13,6 +13,7 @@ import '../widgets/login_form_widget.dart';
 import '../widgets/login_footer_widget.dart';
 import 'reset_password_screen.dart';
 import 'sign_up_screen.dart';
+import '../../../../core/widgets/app_scaffold.dart';
 
 /// Login Screen - Main login page following clean architecture + BloC pattern
 class LoginScreen extends StatelessWidget {
@@ -25,12 +26,8 @@ class LoginScreen extends StatelessWidget {
       child: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthSuccess) {
-            // TODO: Navigate to home screen
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Login successful!'),
-                backgroundColor: Colors.green,
-              ),
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => const AppScaffold()),
             );
           } else if (state is AuthError) {
             ScaffoldMessenger.of(context).showSnackBar(

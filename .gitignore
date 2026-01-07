@@ -43,3 +43,29 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Android signing
+android/key.properties
+**/*.jks
+**/*.keystore
+
+# Env/local configs
+.env
+.env.*
+*.local
+
+# Flutter version manager (nếu dùng FVM)
+.fvm/
+
+
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/extensions.json
+
+
+android/.gradle/
+android/local.properties
+android/**/build/
+

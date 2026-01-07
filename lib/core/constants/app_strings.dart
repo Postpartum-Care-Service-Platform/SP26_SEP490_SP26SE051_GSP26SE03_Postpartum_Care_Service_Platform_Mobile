@@ -46,5 +46,18 @@ class AppStrings {
   static const String needAnAccount = 'Need an account?';
   static const String forgotPassword = 'Forgot your password?';
   static const String resetIt = 'Reset it';
+
+  // Home Screen
+  static const String goodMorning = 'Chào buổi sáng';
+  static const String quickActions = 'Lối tắt';
+  static const String upcomingSchedule = 'Lịch trình sắp tới';
+  static const String promotions = 'Ưu đãi & Gói dịch vụ';
+  static const String viewAll = 'Xem tất cả';
+
+  // Quick Actions
+  static const String spaAndCare = 'Spa & Chăm sóc';
+  static const String babyActivities = 'Hoạt động cho bé';
+  static const String nutritionMenu = 'Thực đơn & Dinh dưỡng';
+  static const String resortMap = 'Bản đồ Resort';
 }
 
