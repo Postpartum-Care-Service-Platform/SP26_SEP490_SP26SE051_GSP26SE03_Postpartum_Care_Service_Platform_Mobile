@@ -14,6 +14,7 @@ import '../models/verify_reset_otp_request_model.dart';
 import '../models/verify_reset_otp_response_model.dart';
 import '../models/reset_password_request_model.dart';
 import '../models/reset_password_response_model.dart';
+import '../models/refresh_token_request_model.dart';
 
 /// Remote data source for authentication
 abstract class AuthRemoteDataSource {
@@ -30,6 +31,7 @@ abstract class AuthRemoteDataSource {
   Future<ResetPasswordResponseModel> resetPassword(
     ResetPasswordRequestModel request,
   );
+  Future<LoginResponseModel> refreshToken(RefreshTokenRequestModel request);
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -226,6 +228,42 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       return ForgotPasswordResponseModel.fromJson(
         response.data as Map<String, dynamic>,
       );
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final responseData = e.response?.data as Map<String, dynamic>?;
+        final errorMessage = _parseErrorMessage(responseData);
+        throw Exception(errorMessage);
+      } else {
+        throw Exception('Network error: ${e.message}');
+      }
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  @override
+  Future<LoginResponseModel> refreshToken(RefreshTokenRequestModel request) async {
+    try {
+      // Create a new Dio instance without interceptors to avoid circular calls
+      final baseUrl = dio.options.baseUrl;
+      final refreshDio = Dio(
+        BaseOptions(
+          baseUrl: baseUrl,
+          connectTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(seconds: 30),
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+        ),
+      );
+
+      final response = await refreshDio.post(
+        ApiEndpoints.refreshToken,
+        data: request.toJson(),
+      );
+
+      return LoginResponseModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       if (e.response != null) {
         final responseData = e.response?.data as Map<String, dynamic>?;

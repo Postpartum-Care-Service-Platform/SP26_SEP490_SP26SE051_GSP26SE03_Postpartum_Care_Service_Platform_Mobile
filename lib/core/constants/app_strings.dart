@@ -111,6 +111,12 @@ class AppStrings {
   static const String servicesScreen = 'Services Screen';
   static const String scheduleScreen = 'Schedule Screen';
 
+  // Bottom Navigation Bar
+  static const String bottomNavHome = 'Home';
+  static const String bottomNavServices = 'Services';
+  static const String bottomNavSchedule = 'Schedule';
+  static const String bottomNavProfile = 'Profile';
+
   // Error Messages
   static const String errorLoginFailed = 'Login failed';
 }

@@ -38,5 +38,7 @@ abstract class AuthRepository {
   Future<String> resendOtp({
     required String email,
   });
+
+  Future<void> refreshToken();
 }
 
