@@ -39,7 +39,7 @@ class AppBottomNavigationBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).padding.bottom;
     final scale = AppResponsive.scaleFactor(context);
-    
+
     final selectedColor = AppColors.primary;
     final unselectedColor = AppColors.third;
     final barHeight = 88 * scale;
@@ -162,7 +162,6 @@ class _PillBottomNavState extends State<_PillBottomNav>
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     color: AppColors.white,
-                    borderRadius: BorderRadius.circular(borderRadius),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.06),
@@ -181,20 +180,20 @@ class _PillBottomNavState extends State<_PillBottomNav>
                 width: selectedPillWidth,
                 child: SlideTransition(
                   position: _slideAnimation,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: widget.selectedColor,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: widget.selectedColor,
                       borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(selectedBorderRadius),
                         topRight: Radius.circular(selectedBorderRadius),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: widget.selectedColor.withValues(alpha: 0.18),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: widget.selectedColor.withValues(alpha: 0.18),
                           blurRadius: shadowBlur,
                           offset: Offset(0, selectedShadowOffsetY),
-                        ),
-                      ],
+                          ),
+                        ],
                     ),
                   ),
                 ),

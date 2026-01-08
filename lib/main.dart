@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/material.dart';
 import 'features/splash/presentation/screens/splash_screen.dart';
 import 'core/constants/app_colors.dart';
+import 'core/config/app_config.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Load environment variables
+  await AppConfig.init();
+  
   runApp(const MyApp());
 }
 
