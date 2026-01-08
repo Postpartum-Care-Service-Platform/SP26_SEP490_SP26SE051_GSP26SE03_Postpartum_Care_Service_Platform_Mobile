@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../../domain/entities/user_role.dart';
+
 /// Auth States - States that represent the auth flow
 abstract class AuthState extends Equatable {
   final bool isPasswordObscured;
@@ -22,7 +24,17 @@ class AuthLoading extends AuthState {
 
 /// Success state - when auth is successful
 class AuthSuccess extends AuthState {
-  const AuthSuccess({super.isPasswordObscured});
+  /// Role to decide which portal to open.
+  /// If null, the app can fallback to a role selection screen.
+  final UserRole? role;
+
+  const AuthSuccess({
+    this.role,
+    super.isPasswordObscured,
+  });
+
+  @override
+  List<Object?> get props => [role, isPasswordObscured];
 }
 
 /// Error state - when auth fails

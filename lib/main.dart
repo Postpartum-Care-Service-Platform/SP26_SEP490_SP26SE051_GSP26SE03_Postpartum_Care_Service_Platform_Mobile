@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/material.dart';
-import 'features/splash/presentation/screens/splash_screen.dart';
+
 import 'core/constants/app_colors.dart';
+import 'features/splash/presentation/screens/splash_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -18,12 +18,11 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: AppColors.primary,
-        ).copyWith(
-          surface: AppColors.background,
-        ),
+        ).copyWith(surface: AppColors.background),
         scaffoldBackgroundColor: AppColors.background,
         useMaterial3: true,
       ),
+      // NOTE: Khôi phục flow chuẩn: Splash -> Login.
       home: const SplashScreen(),
     );
   }

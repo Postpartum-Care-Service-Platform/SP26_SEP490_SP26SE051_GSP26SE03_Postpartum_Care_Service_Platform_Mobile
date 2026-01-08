@@ -69,3 +69,46 @@ android/.gradle/
 android/local.properties
 android/**/build/
 
+# iOS/macOS CocoaPods & Xcode generated
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/ephemeral/
+ios/Flutter/App.framework
+ios/Flutter/engine/
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+ios/Runner/GeneratedPluginRegistrant.*
+ios/Runner.xcworkspace/xcuserdata/
+ios/Runner.xcodeproj/xcuserdata/
+macos/Pods/
+macos/Flutter/ephemeral/
+macos/Runner.xcworkspace/xcuserdata/
+macos/Runner.xcodeproj/xcuserdata/
+
+# Xcode user-specific files
+*.xcuserstate
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+
+# Firebase configs (treat as environment-specific)
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+
+# Binaries/artifacts
+*.exe
+*.dll
+*.so
+*.dylib
+*.app
+*.ipa
+*.apk
+*.aab
+
+# Crash dumps / profiling
+*.dmp
+*.stackdump
+*.hprof
