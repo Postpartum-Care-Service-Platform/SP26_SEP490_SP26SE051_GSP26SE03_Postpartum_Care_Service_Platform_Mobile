@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/user_entity.dart';
 
+import '../../domain/entities/user_role.dart';
+
 /// Auth States - States that represent the auth flow
 abstract class AuthState extends Equatable {
   final bool isPasswordObscured;

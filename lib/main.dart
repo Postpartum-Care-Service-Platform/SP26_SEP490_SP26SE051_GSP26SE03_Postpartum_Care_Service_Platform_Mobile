@@ -23,12 +23,11 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: AppColors.primary,
-        ).copyWith(
-          surface: AppColors.background,
-        ),
+        ).copyWith(surface: AppColors.background),
         scaffoldBackgroundColor: AppColors.background,
         useMaterial3: true,
       ),
+      // NOTE: Khôi phục flow chuẩn: Splash -> Login.
       home: const SplashScreen(),
     );
   }
