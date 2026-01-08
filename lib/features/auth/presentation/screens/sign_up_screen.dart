@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/auth_scaffold.dart';
+import '../../../../core/widgets/app_toast.dart';
+import '../../../../core/widgets/app_loading.dart';
+import '../../../../core/di/injection_container.dart';
+import '../bloc/auth_bloc.dart';
+import '../bloc/auth_state.dart';
 import '../widgets/login_logo_widget.dart';
 import '../widgets/sign_up_form_widget.dart';
 import '../widgets/sign_up_footer_widget.dart';
+import 'otp_verification_screen.dart';
 
 /// Sign Up Screen - built based on existing auth screens
 class SignUpScreen extends StatelessWidget {
@@ -16,7 +23,32 @@ class SignUpScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final isWide = AppResponsive.isTablet(context);
 
-    return AuthScaffold(
+    return BlocProvider(
+      create: (context) => InjectionContainer.authBloc,
+      child: BlocListener<AuthBloc, AuthState>(
+        listener: (context, state) {
+          if (state is AuthLoading) {
+            AppLoading.show(context, message: AppStrings.processing);
+          } else if (state is AuthRegisterSuccess) {
+            AppLoading.hide(context);
+            AppToast.showSuccess(
+              context,
+              message: state.message,
+            );
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (_) => OtpVerificationScreen(email: state.email),
+              ),
+            );
+          } else if (state is AuthError) {
+            AppLoading.hide(context);
+            AppToast.showError(
+              context,
+              message: state.message,
+            );
+          }
+        },
+        child: AuthScaffold(
       footer: SignUpFooterWidget(
         onSignIn: () => Navigator.pop(context),
       ),
@@ -43,6 +75,8 @@ class SignUpScreen extends StatelessWidget {
         const SizedBox(height: 32),
         const SignUpFormWidget(),
       ],
+        ),
+      ),
     );
   }
 }

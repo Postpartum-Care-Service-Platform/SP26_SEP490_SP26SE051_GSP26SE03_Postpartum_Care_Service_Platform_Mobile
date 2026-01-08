@@ -8,6 +8,8 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
+import '../../../../core/services/auth_service.dart';
+import '../../../../core/widgets/app_scaffold.dart';
 import '../../../auth/presentation/screens/login_screen.dart';
 import '../widgets/loading_indicator.dart';
 
@@ -58,18 +60,33 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
     _introController.forward();
 
-    Timer(const Duration(seconds: 4), () {
-      if (mounted) {
+    _checkAuthenticationAndNavigate();
+  }
+
+  Future<void> _checkAuthenticationAndNavigate() async {
+    // Wait for splash animation (minimum 2 seconds)
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (!mounted) return;
+
+    // Check if user is authenticated
+    final isAuthenticated = await AuthService.isAuthenticated();
+
+    if (!mounted) return;
+
+    // Navigate based on authentication status
+    final destination = isAuthenticated 
+        ? const AppScaffold() 
+        : const LoginScreen();
+
         Navigator.of(context).pushReplacement(
           PageRouteBuilder(
-            pageBuilder: (_, __, ___) => const LoginScreen(),
+        pageBuilder: (_, __, ___) => destination,
             transitionsBuilder: (_, animation, __, child) =>
                 FadeTransition(opacity: animation, child: child),
             transitionDuration: const Duration(milliseconds: 800),
           ),
         );
-      }
-    });
   }
 
   @override

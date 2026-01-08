@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../domain/entities/user_entity.dart';
 
 /// Auth States - States that represent the auth flow
 abstract class AuthState extends Equatable {
@@ -22,7 +23,15 @@ class AuthLoading extends AuthState {
 
 /// Success state - when auth is successful
 class AuthSuccess extends AuthState {
-  const AuthSuccess({super.isPasswordObscured});
+  final UserEntity? user;
+
+  const AuthSuccess({
+    super.isPasswordObscured,
+    this.user,
+  });
+
+  @override
+  List<Object?> get props => [isPasswordObscured, user];
 }
 
 /// Error state - when auth fails
@@ -30,6 +39,79 @@ class AuthError extends AuthState {
   final String message;
 
   const AuthError({
+    required this.message,
+    super.isPasswordObscured,
+  });
+
+  @override
+  List<Object?> get props => [message, isPasswordObscured];
+}
+
+/// Register success state - when registration is successful
+class AuthRegisterSuccess extends AuthState {
+  final String message;
+  final String email;
+
+  const AuthRegisterSuccess({
+    required this.message,
+    required this.email,
+    super.isPasswordObscured,
+  });
+
+  @override
+  List<Object?> get props => [message, email, isPasswordObscured];
+}
+
+/// Verify email success state - when email verification is successful
+class AuthVerifyEmailSuccess extends AuthState {
+  final String message;
+
+  const AuthVerifyEmailSuccess({
+    required this.message,
+    super.isPasswordObscured,
+  });
+
+  @override
+  List<Object?> get props => [message, isPasswordObscured];
+}
+
+/// Forgot password success - when OTP has been sent to email
+class AuthForgotPasswordSuccess extends AuthState {
+  final String message;
+  final String email;
+
+  const AuthForgotPasswordSuccess({
+    required this.message,
+    required this.email,
+    super.isPasswordObscured,
+  });
+
+  @override
+  List<Object?> get props => [message, email, isPasswordObscured];
+}
+
+/// Verify reset OTP success - returns resetToken for next step
+class AuthVerifyResetOtpSuccess extends AuthState {
+  final String message;
+  final String resetToken;
+  final String email;
+
+  const AuthVerifyResetOtpSuccess({
+    required this.message,
+    required this.resetToken,
+    required this.email,
+    super.isPasswordObscured,
+  });
+
+  @override
+  List<Object?> get props => [message, resetToken, email, isPasswordObscured];
+}
+
+/// Reset password success state
+class AuthResetPasswordSuccess extends AuthState {
+  final String message;
+
+  const AuthResetPasswordSuccess({
     required this.message,
     super.isPasswordObscured,
   });

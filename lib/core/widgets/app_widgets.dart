@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_strings.dart';
 import '../utils/app_text_styles.dart';
@@ -277,6 +278,63 @@ class AppWidgets {
           ),
         ),
       ],
+    );
+  }
+
+  /// OTP Input Row - Reusable 1-line OTP input with fixed-length boxes
+  static Widget otpInputRow({
+    required int length,
+    required List<TextEditingController> controllers,
+    required List<FocusNode> focusNodes,
+    required void Function(int index, String value) onChanged,
+    double boxWidth = 48,
+    double boxHeight = 56,
+    double spacing = 4,
+  }) {
+    assert(controllers.length >= length, 'controllers length must be >= length');
+    assert(focusNodes.length >= length, 'focusNodes length must be >= length');
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(
+        length,
+        (index) => Container(
+          width: boxWidth,
+          height: boxHeight,
+          margin: EdgeInsets.symmetric(horizontal: spacing),
+          child: TextField(
+            controller: controllers[index],
+            focusNode: focusNodes[index],
+            textAlign: TextAlign.center,
+            keyboardType: TextInputType.number,
+            maxLength: 1,
+            style: AppTextStyles.arimo(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+            decoration: InputDecoration(
+              counterText: '',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: AppColors.border),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: AppColors.border),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(
+                  color: AppColors.primary,
+                  width: 2,
+                ),
+              ),
+            ),
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            onChanged: (value) => onChanged(index, value),
+          ),
+        ),
+      ),
     );
   }
 }
