@@ -7,6 +7,7 @@ import '../models/verify_email_request_model.dart';
 import '../models/forgot_password_request_model.dart';
 import '../models/verify_reset_otp_request_model.dart';
 import '../models/reset_password_request_model.dart';
+import '../models/refresh_token_request_model.dart';
 import '../../../../core/storage/secure_storage_service.dart';
 
 /// Authentication repository implementation
@@ -138,6 +139,36 @@ class AuthRepositoryImpl implements AuthRepository {
       final request = ForgotPasswordRequestModel(email: email);
       final response = await remoteDataSource.resendOtp(request);
       return response.message;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> refreshToken() async {
+    try {
+      final refreshToken = await SecureStorageService.getRefreshToken();
+      if (refreshToken == null || refreshToken.isEmpty) {
+        throw Exception('No refresh token available');
+      }
+
+      final request = RefreshTokenRequestModel(refreshToken: refreshToken);
+      final response = await remoteDataSource.refreshToken(request);
+
+      // Save new tokens to secure storage
+      await SecureStorageService.saveAccessToken(response.accessToken);
+      await SecureStorageService.saveRefreshToken(response.refreshToken);
+      await SecureStorageService.saveExpiresAt(response.expiresAt);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<UserEntity> getCurrentAccount() async {
+    try {
+      final response = await remoteDataSource.getCurrentAccount();
+      return response.toEntity();
     } catch (e) {
       rethrow;
     }

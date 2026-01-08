@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
+import '../constants/app_strings.dart';
 import '../utils/app_responsive.dart';
 
 enum AppBottomTab {
@@ -23,6 +24,19 @@ extension AppBottomTabX on AppBottomTab {
         return Icons.person_outline_rounded;
     }
   }
+
+  String get label {
+    switch (this) {
+      case AppBottomTab.home:
+        return AppStrings.bottomNavHome;
+      case AppBottomTab.services:
+        return AppStrings.bottomNavServices;
+      case AppBottomTab.schedule:
+        return AppStrings.bottomNavSchedule;
+      case AppBottomTab.profile:
+        return AppStrings.bottomNavProfile;
+    }
+  }
 }
 
 class AppBottomNavigationBar extends StatelessWidget {
@@ -42,13 +56,13 @@ class AppBottomNavigationBar extends StatelessWidget {
 
     final selectedColor = AppColors.primary;
     final unselectedColor = AppColors.third;
-    final barHeight = 88 * scale;
+    final barHeight = 80 * scale;
 
     return SafeArea(
       top: false,
       bottom: false,
       child: Padding(
-        padding: EdgeInsets.only(bottom: bottomInset == 0 ? 12 * scale : 0),
+        padding: EdgeInsets.only(bottom: bottomInset == 0 ? 8 * scale : 0),
         child: SizedBox(
           height: barHeight,
           child: _PillBottomNav(
@@ -81,34 +95,54 @@ class _PillBottomNav extends StatefulWidget {
 }
 
 class _PillBottomNavState extends State<_PillBottomNav>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
+    with TickerProviderStateMixin {
+  late AnimationController _slideController;
+  late AnimationController _scaleController;
   late Animation<Offset> _slideAnimation;
+  late Animation<double> _scaleAnimation;
 
   int _indexOf(AppBottomTab tab) => AppBottomTab.values.indexOf(tab);
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
+    _slideController = AnimationController(
+      duration: const Duration(milliseconds: 350),
       vsync: this,
     );
+    _scaleController = AnimationController(
+      duration: const Duration(milliseconds: 250),
+      vsync: this,
+    );
+    
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 1.0),
+      begin: const Offset(0, 0.5),
       end: Offset.zero,
     ).animate(
       CurvedAnimation(
-        parent: _animationController,
+        parent: _slideController,
+        curve: Curves.easeOutCubic,
+      ),
+    );
+    
+    _scaleAnimation = Tween<double>(
+      begin: 0.8,
+      end: 1.0,
+    ).animate(
+      CurvedAnimation(
+        parent: _scaleController,
         curve: Curves.easeOut,
       ),
     );
-    _animationController.forward();
+    
+    _slideController.forward();
+    _scaleController.forward();
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _slideController.dispose();
+    _scaleController.dispose();
     super.dispose();
   }
 
@@ -116,8 +150,10 @@ class _PillBottomNavState extends State<_PillBottomNav>
   void didUpdateWidget(covariant _PillBottomNav oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.currentTab != widget.currentTab) {
-      _animationController.reset();
-      _animationController.forward();
+      _slideController.reset();
+      _scaleController.reset();
+      _slideController.forward();
+      _scaleController.forward();
     }
   }
 
@@ -128,16 +164,17 @@ class _PillBottomNavState extends State<_PillBottomNav>
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final outerHPadding = 18.0 * scale;
-        final barHeight = 71.0 * scale;
-        final selectedPillWidth = 57.0 * scale;
-        final selectedPillTop = 8.0 * scale;
-        final selectedPillBottom = -8.0 * scale;
-        final borderRadius = 71.0 * scale;
-        final selectedBorderRadius = 39.0 * scale;
-        final shadowBlur = 18.0 * scale;
-        final shadowOffsetY = 8.0 * scale;
-        final selectedShadowOffsetY = 10.0 * scale;
+        final outerHPadding = 16.0 * scale;
+        final barHeight = 72.0 * scale;
+        final selectedPillWidth = 52.0 * scale;
+        final selectedPillTop = 6.0 * scale;
+        final selectedPillBottom = -6.0 * scale;
+        final selectedBorderRadius = 26.0 * scale;
+        final topBorderRadius = 20.0 * scale;
+        final shadowBlur = 20.0 * scale;
+        final shadowOffsetY = 4.0 * scale;
+        final selectedShadowBlur = 16.0 * scale;
+        final selectedShadowOffsetY = 0.0;
         
         final availableWidth = constraints.maxWidth;
         final barWidth = availableWidth.isFinite ? availableWidth : 360.0 * scale;
@@ -154,6 +191,7 @@ class _PillBottomNavState extends State<_PillBottomNav>
           child: Stack(
             clipBehavior: Clip.none,
             children: [
+              // Background with enhanced shadow and border
               Positioned(
                 left: 0,
                 right: 0,
@@ -162,17 +200,35 @@ class _PillBottomNavState extends State<_PillBottomNav>
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     color: AppColors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(topBorderRadius),
+                      topRight: Radius.circular(topBorderRadius),
+                    ),
+                    border: Border(
+                      top: BorderSide(
+                        color: Colors.black.withValues(alpha: 0.12),
+                        width: 1.0 * scale,
+                      ),
+                    ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.06),
+                        color: Colors.black.withValues(alpha: 0.08),
                         blurRadius: shadowBlur,
                         offset: Offset(0, shadowOffsetY),
+                        spreadRadius: 0,
+                      ),
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: shadowBlur * 0.5,
+                        offset: Offset(0, shadowOffsetY * 0.5),
+                        spreadRadius: 0,
                       ),
                     ],
                   ),
                 ),
               ),
 
+              // Selected indicator pill with smooth animation
               Positioned(
                 left: selectedLeft,
                 top: selectedPillTop,
@@ -180,34 +236,43 @@ class _PillBottomNavState extends State<_PillBottomNav>
                 width: selectedPillWidth,
                 child: SlideTransition(
                   position: _slideAnimation,
+                  child: ScaleTransition(
+                    scale: _scaleAnimation,
                     child: DecoratedBox(
                       decoration: BoxDecoration(
                         color: widget.selectedColor,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(selectedBorderRadius),
-                        topRight: Radius.circular(selectedBorderRadius),
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(selectedBorderRadius),
+                          topRight: Radius.circular(selectedBorderRadius),
+                          bottomLeft: Radius.zero,
+                          bottomRight: Radius.zero,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: widget.selectedColor.withValues(alpha: 0.18),
-                          blurRadius: shadowBlur,
-                          offset: Offset(0, selectedShadowOffsetY),
+                            color: widget.selectedColor.withValues(alpha: 0.25),
+                            blurRadius: selectedShadowBlur,
+                            offset: Offset(0, selectedShadowOffsetY),
+                            spreadRadius: -2,
                           ),
                         ],
+                      ),
                     ),
                   ),
                 ),
               ),
 
+              // Navigation icons
               Positioned.fill(
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: outerHPadding),
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       for (final tab in AppBottomTab.values)
                         Expanded(
                           child: _NavIconButton(
                             icon: tab.icon,
+                            label: tab.label,
                             isSelected: tab == widget.currentTab,
                             selectedColor: AppColors.white,
                             unselectedColor: widget.unselectedColor,
@@ -229,6 +294,7 @@ class _PillBottomNavState extends State<_PillBottomNav>
 
 class _NavIconButton extends StatefulWidget {
   final IconData icon;
+  final String label;
   final bool isSelected;
   final Color selectedColor;
   final Color unselectedColor;
@@ -237,6 +303,7 @@ class _NavIconButton extends StatefulWidget {
 
   const _NavIconButton({
     required this.icon,
+    required this.label,
     required this.isSelected,
     required this.selectedColor,
     required this.unselectedColor,
@@ -250,50 +317,65 @@ class _NavIconButton extends StatefulWidget {
 
 class _NavIconButtonState extends State<_NavIconButton>
     with SingleTickerProviderStateMixin {
-  late AnimationController _backgroundController;
-  late Animation<double> _backgroundAnimation;
+  late AnimationController _scaleController;
+  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
-    _backgroundController = AnimationController(
+    _scaleController = AnimationController(
       duration: const Duration(milliseconds: 200),
       vsync: this,
     );
-    _backgroundAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.85).animate(
       CurvedAnimation(
-        parent: _backgroundController,
-        curve: Curves.easeOut,
+        parent: _scaleController,
+        curve: Curves.easeInOut,
       ),
     );
+    
+    if (widget.isSelected) {
+      _scaleController.value = 1.0;
+    }
   }
 
   @override
   void dispose() {
-    _backgroundController.dispose();
+    _scaleController.dispose();
     super.dispose();
   }
 
+  @override
+  void didUpdateWidget(covariant _NavIconButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isSelected != oldWidget.isSelected) {
+      if (widget.isSelected) {
+        _scaleController.forward().then((_) => _scaleController.reverse());
+      }
+    }
+  }
+
   void _handleTapDown(TapDownDetails details) {
-    _backgroundController.forward();
+    _scaleController.forward();
   }
 
   void _handleTapUp(TapUpDetails details) {
-    _backgroundController.reverse();
+    _scaleController.reverse();
   }
 
   void _handleTapCancel() {
-    _backgroundController.reverse();
+    _scaleController.reverse();
   }
 
   @override
   Widget build(BuildContext context) {
     final iconColor = widget.isSelected ? widget.selectedColor : widget.unselectedColor;
-    final iconSize = 24.0 * widget.scale;
-    final backgroundSize = 40.0 * widget.scale;
-    final verticalPadding = 8.0 * widget.scale;
-    final horizontalPadding = 4.0 * widget.scale;
-    final iconTopPadding = widget.isSelected ? 0.0 : 4.0 * widget.scale;
+    final textColor = widget.isSelected ? widget.selectedColor : widget.unselectedColor;
+    final iconSize = 22.0 * widget.scale;
+    final selectedIconSize = 24.0 * widget.scale;
+    final fontSize = 10.0 * widget.scale;
+    final selectedFontSize = 11.0 * widget.scale;
+    final spacing = 4.0 * widget.scale;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -304,33 +386,40 @@ class _NavIconButtonState extends State<_NavIconButton>
       child: Container(
         width: double.infinity,
         height: double.infinity,
-        padding: EdgeInsets.symmetric(
-          vertical: verticalPadding,
-          horizontal: horizontalPadding,
-        ),
-        child: Center(
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              FadeTransition(
-                opacity: _backgroundAnimation,
-                child: Container(
-                  width: backgroundSize,
-                  height: backgroundSize,
-                  decoration: BoxDecoration(
-                    color: widget.isSelected
-                        ? widget.selectedColor.withValues(alpha: 0.2)
-                        : widget.unselectedColor.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
+        padding: EdgeInsets.symmetric(vertical: 6.0 * widget.scale),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedScale(
+              scale: widget.isSelected ? 1.0 : 0.95,
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+              child: ScaleTransition(
+                scale: _scaleAnimation,
+                child: Icon(
+                  widget.icon,
+                  size: widget.isSelected ? selectedIconSize : iconSize,
+                  color: iconColor,
                 ),
               ),
-              Container(
-                padding: EdgeInsets.only(top: iconTopPadding),
-                child: Icon(widget.icon, size: iconSize, color: iconColor),
+            ),
+            SizedBox(height: spacing),
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 200),
+              style: TextStyle(
+                fontSize: widget.isSelected ? selectedFontSize : fontSize,
+                fontWeight: widget.isSelected ? FontWeight.w600 : FontWeight.w500,
+                color: textColor,
+                height: 1.2,
               ),
-            ],
-          ),
+              child: Text(
+                widget.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
         ),
       ),
     );

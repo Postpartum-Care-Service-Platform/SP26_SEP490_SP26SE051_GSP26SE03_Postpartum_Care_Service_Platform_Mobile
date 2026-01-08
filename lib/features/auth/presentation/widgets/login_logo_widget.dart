@@ -16,7 +16,7 @@ class LoginLogoWidget extends StatelessWidget {
       children: [
         // Logo icon from Figma (SVG)
         SvgPicture.asset(
-          AppAssets.appIcon,
+          AppAssets.appIconThird,
           width: 39.986,
           height: 39.986,
           placeholderBuilder: (context) {

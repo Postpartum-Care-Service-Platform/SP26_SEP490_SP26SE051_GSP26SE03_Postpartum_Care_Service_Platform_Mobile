@@ -8,11 +8,15 @@ class ApiEndpoints {
   static const String register = '/Auth/register';
   static const String verifyEmail = '/Auth/verify-email';
   static const String logout = '/Auth/logout';
-  static const String refreshToken = '/Auth/refresh';
+  static const String refreshToken = '/Auth/refresh-token';
   static const String forgotPassword = '/Auth/forgot-password';
   static const String verifyResetOtp = '/Auth/verify-reset-otp';
   static const String resetPassword = '/Auth/reset-password';
   static const String resendOtp = '/Auth/resend-otp';
+
+
+  // Account endpoints
+  static const String getCurrentAccount = '/Account/GetCurrentAccount';
 
   // User endpoints
   static const String profile = '/user/profile';
@@ -39,5 +43,11 @@ class ApiEndpoints {
   // Profile endpoints
   static const String userProfile = '/profile';
   static const String updateUserProfile = '/profile';
+
+  // Family Profile endpoints
+  static const String getMyFamilyProfiles = '/FamilyProfile/GetMyFamilyProfiles';
+  static const String createFamilyProfile = '/FamilyProfile/Create';
+  static String updateFamilyProfile(int id) => '/FamilyProfile/Update/$id';
+  static const String getMemberTypes = '/member-types';
 }
 

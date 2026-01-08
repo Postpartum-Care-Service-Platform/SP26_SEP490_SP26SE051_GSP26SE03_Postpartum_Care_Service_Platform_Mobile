@@ -8,6 +8,7 @@ class AppAssets {
   static const String googleIcon = 'assets/images/google_icon.svg';
   static const String appIconSecond = 'assets/images/app_icon_2.svg';
   static const String appIconFirst = 'assets/images/app_icon_1.svg';
+  static const String appIconThird = 'assets/images/app_icon_3.svg';
 
   // Home Screen
   static const String promotionBanner = 'assets/images/promotion_banner.jpg'; // Placeholder
