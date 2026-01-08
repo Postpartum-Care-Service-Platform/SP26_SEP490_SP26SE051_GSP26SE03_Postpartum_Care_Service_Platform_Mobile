@@ -78,30 +78,30 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     if (responseData is Map<String, dynamic>) {
       final responseMap = responseData;
 
-      // Handle validation errors (400) - format: {"errors": {"Field": ["Error message"]}}
+    // Handle validation errors (400) - format: {"errors": {"Field": ["Error message"]}}
       if (responseMap.containsKey('errors')) {
         final errors = responseMap['errors'] as Map<String, dynamic>?;
-        if (errors != null && errors.isNotEmpty) {
-          final errorMessages = <String>[];
-          errors.forEach((field, messages) {
-            if (messages is List) {
-              errorMessages.addAll(
-                messages.map((msg) => msg.toString()),
-              );
-            } else {
-              errorMessages.add(messages.toString());
-            }
-          });
-          return errorMessages.join('\n');
-        }
+      if (errors != null && errors.isNotEmpty) {
+        final errorMessages = <String>[];
+        errors.forEach((field, messages) {
+          if (messages is List) {
+            errorMessages.addAll(
+              messages.map((msg) => msg.toString()),
+            );
+          } else {
+            errorMessages.add(messages.toString());
+          }
+        });
+        return errorMessages.join('\n');
       }
+    }
 
-      // Handle authentication errors (401) - format: {"error": "Error message"}
+    // Handle authentication errors (401) - format: {"error": "Error message"}
       if (responseMap.containsKey('error')) {
         return responseMap['error'] as String;
-      }
+    }
 
-      // Fallback to message or default
+    // Fallback to message or default
       return responseMap['message'] as String? ?? AppStrings.errorLoginFailed;
     }
 

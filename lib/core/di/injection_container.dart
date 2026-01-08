@@ -9,6 +9,13 @@ import '../../features/auth/domain/usecases/verify_reset_otp_usecase.dart';
 import '../../features/auth/domain/usecases/reset_password_usecase.dart';
 import '../../features/auth/domain/usecases/resend_otp_usecase.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
+import '../../features/family_profile/data/datasources/family_profile_remote_datasource.dart';
+import '../../features/family_profile/data/repositories/family_profile_repository_impl.dart';
+import '../../features/family_profile/domain/repositories/family_profile_repository.dart';
+import '../../features/family_profile/domain/usecases/get_family_profiles_usecase.dart';
+import '../../features/family_profile/domain/usecases/get_member_types_usecase.dart';
+import '../../features/family_profile/domain/usecases/create_family_profile_usecase.dart';
+import '../../features/family_profile/presentation/bloc/family_profile_bloc.dart';
 import '../apis/api_client.dart';
 
 /// Centralized dependency injection container
@@ -20,6 +27,9 @@ class InjectionContainer {
   
   static AuthRemoteDataSource get _authRemoteDataSource =>
       AuthRemoteDataSourceImpl(dio: ApiClient.dio);
+  
+  static FamilyProfileRemoteDataSource get _familyProfileRemoteDataSource =>
+      FamilyProfileRemoteDataSourceImpl(dio: ApiClient.dio);
 
   // ==================== Repositories ====================
   
@@ -27,6 +37,9 @@ class InjectionContainer {
       AuthRepositoryImpl(remoteDataSource: _authRemoteDataSource);
   
   static AuthRepository get _authRepository => authRepository;
+  
+  static FamilyProfileRepository get familyProfileRepository =>
+      FamilyProfileRepositoryImpl(remoteDataSource: _familyProfileRemoteDataSource);
 
   // ==================== Use Cases ====================
   
@@ -42,6 +55,13 @@ class InjectionContainer {
   static ResendOtpUsecase get _resendOtpUsecase =>
       ResendOtpUsecase(_authRepository);
 
+  static GetFamilyProfilesUsecase get _getFamilyProfilesUsecase =>
+      GetFamilyProfilesUsecase(familyProfileRepository);
+  static GetMemberTypesUsecase get _getMemberTypesUsecase =>
+      GetMemberTypesUsecase(familyProfileRepository);
+  static CreateFamilyProfileUsecase get _createFamilyProfileUsecase =>
+      CreateFamilyProfileUsecase(familyProfileRepository);
+
   // ==================== Blocs ====================
   
   static AuthBloc get authBloc => AuthBloc(
@@ -53,6 +73,12 @@ class InjectionContainer {
     resetPasswordUsecase: _resetPasswordUsecase,
     resendOtpUsecase: _resendOtpUsecase,
   );
+
+  static FamilyProfileBloc get familyProfileBloc => FamilyProfileBloc(
+        getFamilyProfilesUsecase: _getFamilyProfilesUsecase,
+        getMemberTypesUsecase: _getMemberTypesUsecase,
+        createFamilyProfileUsecase: _createFamilyProfileUsecase,
+      );
 
   // ==================== Reset ====================
   

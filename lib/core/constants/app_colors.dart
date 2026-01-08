@@ -29,5 +29,7 @@ class AppColors {
 
   // Loading Colors
    static const Color loadingBackground = Color(0x33FFFFFF); // highlight
+
+   static const Color logout = Color.fromARGB(255, 255, 0, 0); // red
 }
 

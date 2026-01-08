@@ -105,10 +105,76 @@ class AppStrings {
   // Profile Screen
   static const String profileTitle = 'Profile';
   static const String profileScreen = 'Profile Screen';
+  static const String welcomeBack = 'Welcome Back';
   static const String logoutTitle = 'Đăng xuất';
   static const String logoutConfirmation = 'Bạn có chắc chắn muốn đăng xuất?';
   static const String cancel = 'Hủy';
   static const String logout = 'Đăng xuất';
+  
+  // Profile Menu Items
+  static const String myAccount = 'Tài khoản của tôi';
+  static const String familyProfile = 'Hồ sơ gia đình';
+  static const String notifications = 'Thông báo';
+  static const String medicalRecords = 'Hồ sơ y tế';
+  
+  // Family Profile Screen
+  static const String familyProfileTitle = 'Hồ sơ gia đình';
+  static const String addFamilyMember = 'Thêm thành viên';
+  static const String editFamilyMember = 'Chỉnh sửa';
+  static const String deleteFamilyMember = 'Xóa';
+  static const String owner = 'Chủ tài khoản';
+  static const String member = 'Thành viên';
+  static const String noFamilyMembers = 'Chưa có thành viên nào';
+  static const String addFirstMember = 'Thêm thành viên đầu tiên';
+  static const String add = 'Thêm';
+  static const String save = 'Lưu';
+  static const String profileFullName = 'Họ và tên';
+  static const String profileFullNamePlaceholder = 'Nhập họ và tên';
+  static const String memberType = 'Mối quan hệ';
+  static const String selectMemberType = 'Chọn mối quan hệ';
+  static const String dateOfBirth = 'Ngày sinh';
+  static const String selectDate = 'Chọn ngày sinh';
+  static const String gender = 'Giới tính';
+  static const String selectGender = 'Chọn giới tính';
+  static const String male = 'Nam';
+  static const String female = 'Nữ';
+  static const String address = 'Địa chỉ';
+  static const String addressPlaceholder = 'Nhập địa chỉ';
+  static const String phoneNumber = 'Số điện thoại';
+  static const String phoneNumberPlaceholder = 'Nhập số điện thoại';
+  static const String avatar = 'Ảnh đại diện';
+  static const String selectAvatar = 'Chọn ảnh';
+  static const String changeAvatar = 'Đổi ảnh';
+  static const String updateSuccess = 'Cập nhật thành công';
+  static const String updateFailed = 'Cập nhật thất bại';
+  static const String updating = 'Đang cập nhật...';
+  static const String confirmDelete = 'Xác nhận xóa';
+  static const String confirmDeleteMessage = 'Bạn có chắc chắn muốn xóa {name}?';
+  static const String delete = 'Xóa';
+  static const String featureUnderDevelopment = 'Tính năng đang được phát triển';
+  static const String addMemberFeatureUnderDevelopment = 'Tính năng thêm thành viên đang được phát triển';
+  static const String deleteFeatureUnderDevelopment = 'Tính năng xóa đang được phát triển';
+  static const String edit = 'Chỉnh sửa';
+  static const String takePhoto = 'Chụp ảnh';
+  static const String chooseFromLibrary = 'Chọn từ thư viện';
+  static const String pleaseEnterFullName = 'Vui lòng nhập họ và tên';
+  static const String invalidPhoneNumber = 'Số điện thoại không hợp lệ';
+  static const String pleaseGrantPhotoPermission = 'Vui lòng cấp quyền truy cập ảnh trong phần Cài đặt ứng dụng.';
+  static const String photoPermissionDenied = 'Quyền truy cập ảnh bị từ chối.';
+  static const String pleaseGrantCameraPermission = 'Vui lòng cấp quyền sử dụng camera trong phần Cài đặt ứng dụng.';
+  static const String cameraPermissionDenied = 'Quyền sử dụng camera bị từ chối.';
+  static const String cannotOpenPhotoLibrary = 'Không thể mở thư viện ảnh. Vui lòng kiểm tra quyền truy cập (error: {code})';
+  static const String errorSelectingPhoto = 'Đã xảy ra lỗi khi chọn ảnh: {error}';
+  static const String viewMode = 'Đang xem';
+  static const String editMode = 'Đang chỉnh sửa';
+  static const String contract = 'Hợp đồng';
+  static const String bookingHistory = 'Lịch sử đặt lịch';
+  static const String paymentMethods = 'Phương thức thanh toán';
+  static const String help = 'Trợ giúp';
+  static const String contact = 'Liên hệ';
+  static const String about = 'Về chúng tôi';
+  static const String terms = 'Điều khoản';
+  static const String privacy = 'Chính sách bảo mật';
 
   // Other Screens
   static const String servicesScreen = 'Services Screen';

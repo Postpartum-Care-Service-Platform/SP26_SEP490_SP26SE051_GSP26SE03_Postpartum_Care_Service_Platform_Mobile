@@ -43,5 +43,11 @@ class ApiEndpoints {
   // Profile endpoints
   static const String userProfile = '/profile';
   static const String updateUserProfile = '/profile';
+
+  // Family Profile endpoints
+  static const String getMyFamilyProfiles = '/FamilyProfile/GetMyFamilyProfiles';
+  static const String createFamilyProfile = '/FamilyProfile/Create';
+  static String updateFamilyProfile(int id) => '/FamilyProfile/Update/$id';
+  static const String getMemberTypes = '/member-types';
 }
 
