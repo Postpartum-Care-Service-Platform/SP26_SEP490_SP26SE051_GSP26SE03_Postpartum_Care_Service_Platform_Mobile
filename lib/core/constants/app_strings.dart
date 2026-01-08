@@ -54,6 +54,9 @@ class AppStrings {
 
   // Home Screen
   static const String goodMorning = 'Chào buổi sáng';
+  static const String goodAfternoon = 'Chào buổi trưa';
+  static const String goodEvening = 'Chào buổi chiều';
+  static const String goodNight = 'Chào buổi tối';
   static const String quickActions = 'Lối tắt';
   static const String upcomingSchedule = 'Lịch trình sắp tới';
   static const String promotions = 'Ưu đãi & Gói dịch vụ';

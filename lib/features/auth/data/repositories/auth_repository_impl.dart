@@ -163,5 +163,15 @@ class AuthRepositoryImpl implements AuthRepository {
       rethrow;
     }
   }
+
+  @override
+  Future<UserEntity> getCurrentAccount() async {
+    try {
+      final response = await remoteDataSource.getCurrentAccount();
+      return response.toEntity();
+    } catch (e) {
+      rethrow;
+    }
+  }
 }
 

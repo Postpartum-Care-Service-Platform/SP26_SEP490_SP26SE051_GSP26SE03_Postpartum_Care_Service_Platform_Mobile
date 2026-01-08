@@ -40,5 +40,7 @@ abstract class AuthRepository {
   });
 
   Future<void> refreshToken();
+
+  Future<UserEntity> getCurrentAccount();
 }
 

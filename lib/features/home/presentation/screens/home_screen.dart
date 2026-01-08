@@ -2,14 +2,51 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../../../features/auth/domain/repositories/auth_repository.dart';
 import '../widgets/home_header.dart';
 import '../widgets/quick_action_card.dart';
 import '../widgets/section_header.dart';
 import '../widgets/upcoming_schedule_card.dart';
 import '../widgets/promotion_banner.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final AuthRepository _authRepository = InjectionContainer.authRepository;
+  String? _username;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCurrentAccount();
+  }
+
+  Future<void> _loadCurrentAccount() async {
+    try {
+      final user = await _authRepository.getCurrentAccount();
+      
+      if (mounted) {
+        setState(() {
+          _username = user.username;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _username = 'Mom'; // Fallback to default
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +59,7 @@ class HomeScreen extends StatelessWidget {
           children: [
             // Top inset is already handled by SafeArea.
             const SizedBox(height: 8),
-            const HomeHeader(userName: 'Jessica'), // Placeholder name
+            HomeHeader(userName: _username, isLoading: _isLoading),
             const SizedBox(height: 32),
 
             // Quick Actions Section

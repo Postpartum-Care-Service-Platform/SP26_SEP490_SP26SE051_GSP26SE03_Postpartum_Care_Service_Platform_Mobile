@@ -23,8 +23,10 @@ class InjectionContainer {
 
   // ==================== Repositories ====================
   
-  static AuthRepository get _authRepository =>
+  static AuthRepository get authRepository =>
       AuthRepositoryImpl(remoteDataSource: _authRemoteDataSource);
+  
+  static AuthRepository get _authRepository => authRepository;
 
   // ==================== Use Cases ====================
   
