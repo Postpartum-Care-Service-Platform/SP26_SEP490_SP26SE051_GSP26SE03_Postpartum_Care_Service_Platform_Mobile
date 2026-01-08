@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/widgets/app_widgets.dart';
+import '../bloc/auth_bloc.dart';
+import '../bloc/auth_event.dart';
 
 /// Reset Password Form Widget - email field + reset button
 class ResetPasswordFormWidget extends StatefulWidget {
@@ -22,10 +25,11 @@ class _ResetPasswordFormWidgetState extends State<ResetPasswordFormWidget> {
 
   void _onResetPressed() {
     if (_formKey.currentState?.validate() == true) {
-      // TODO: connect to bloc/usecase
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Reset link sent!')),
-      );
+      context.read<AuthBloc>().add(
+            AuthForgotPassword(
+              email: _emailController.text.trim(),
+            ),
+          );
     }
   }
 
@@ -42,10 +46,10 @@ class _ResetPasswordFormWidgetState extends State<ResetPasswordFormWidget> {
             controller: _emailController,
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return 'Please enter your email';
+                return AppStrings.errorInputEmailRequired;
               }
               if (!value.contains('@')) {
-                return 'Please enter a valid email';
+                return AppStrings.errorInputEmailInvalid;
               }
               return null;
             },

@@ -18,6 +18,7 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -41,7 +42,6 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
   Widget build(BuildContext context) {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
-        final isObscured = state.isPasswordObscured;
 
         return Form(
           key: _formKey,
@@ -57,10 +57,7 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
                 controller: _emailController,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter your email';
-                  }
-                  if (!value.contains('@')) {
-                    return 'Please enter a valid email';
+                    return AppStrings.errorInputEmail;
                   }
                   return null;
                 },
@@ -72,18 +69,13 @@ class _LoginFormWidgetState extends State<LoginFormWidget> {
                 placeholder: AppStrings.passwordPlaceholder,
                 controller: _passwordController,
                 isPassword: true,
-                obscureText: isObscured,
+                obscureText: _obscurePassword,
                 onTogglePassword: () {
-                  context
-                      .read<AuthBloc>()
-                      .add(const AuthTogglePasswordVisibility());
+                  setState(() => _obscurePassword = !_obscurePassword);
                 },
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter your password';
-                  }
-                  if (value.length < 6) {
-                    return 'Password must be at least 6 characters';
+                    return AppStrings.errorInputPassword;
                   }
                   return null;
                 },
