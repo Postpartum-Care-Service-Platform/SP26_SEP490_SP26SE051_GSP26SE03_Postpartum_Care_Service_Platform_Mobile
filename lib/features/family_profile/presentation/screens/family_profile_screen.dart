@@ -7,6 +7,8 @@ import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_loading.dart';
 import '../../../../core/widgets/app_toast.dart';
+import '../../../../core/services/current_account_cache_service.dart';
+import '../../../../core/di/injection_container.dart';
 import '../../domain/entities/family_profile_entity.dart';
 import '../../data/models/create_family_profile_request_model.dart';
 import '../../data/models/update_family_profile_request_model.dart';
@@ -139,6 +141,15 @@ class _FamilyProfileScreenState extends State<FamilyProfileScreen> {
     // Update existing member
     AppLoading.show(context, message: AppStrings.updating);
     try {
+      // Check if member being updated is the owner (isOwner = true)
+      // Get member info before update to check isOwner status
+      final blocState = context.read<FamilyProfileBloc>().state;
+      final memberToUpdate = blocState.members.firstWhere(
+        (member) => member.id == memberId,
+        orElse: () => blocState.members.first,
+      );
+      final isOwnerUpdate = memberToUpdate.isOwner;
+
       final request = UpdateFamilyProfileRequestModel(
         memberTypeId: memberTypeId,
         fullName: fullName,
@@ -156,6 +167,18 @@ class _FamilyProfileScreenState extends State<FamilyProfileScreen> {
           .getFamilyProfilesUsecase
           .repository
           .updateFamilyProfile(memberId, request);
+
+      // If updated member is the owner, refresh current account cache
+      if (isOwnerUpdate) {
+        // Invalidate and refresh current account cache
+        await CurrentAccountCacheService.clearCache();
+        try {
+          final authRepository = InjectionContainer.authRepository;
+          await authRepository.getCurrentAccount();
+        } catch (e) {
+          // Silently fail - cache refresh is optional
+        }
+      }
 
       if (mounted) {
         AppLoading.hide(context);

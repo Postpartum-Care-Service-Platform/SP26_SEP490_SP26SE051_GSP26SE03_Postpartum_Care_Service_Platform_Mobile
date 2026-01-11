@@ -28,6 +28,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final AuthRepository _authRepository = InjectionContainer.authRepository;
   String? _username;
+  String? _avatarUrl;
+  bool _isEmailVerified = false;
   bool _isLoading = true;
 
   @override
@@ -38,11 +40,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadCurrentAccount() async {
     try {
-      final user = await _authRepository.getCurrentAccount();
+      final account = await _authRepository.getCurrentAccount();
       
       if (mounted) {
         setState(() {
-          _username = user.username;
+          _username = account.username;
+          _avatarUrl = account.avatarUrl;
+          _isEmailVerified = account.isEmailVerified;
           _isLoading = false;
         });
       }
@@ -70,7 +74,12 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
             // Top inset is already handled by SafeArea.
             const SizedBox(height: 8),
-            HomeHeader(userName: _username, isLoading: _isLoading),
+            HomeHeader(
+              userName: _username,
+              avatarUrl: _avatarUrl,
+              isEmailVerified: _isEmailVerified,
+              isLoading: _isLoading,
+            ),
             const SizedBox(height: 32),
 
             // Quick Actions Section

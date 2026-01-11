@@ -12,6 +12,8 @@ class CurrentAccountModel extends Equatable {
   final DateTime createdAt;
   final DateTime updatedAt;
   final String roleName;
+  final bool isEmailVerified;
+  final String? avatarUrl;
 
   const CurrentAccountModel({
     required this.id,
@@ -23,6 +25,8 @@ class CurrentAccountModel extends Equatable {
     required this.createdAt,
     required this.updatedAt,
     required this.roleName,
+    required this.isEmailVerified,
+    this.avatarUrl,
   });
 
   factory CurrentAccountModel.fromJson(Map<String, dynamic> json) =>
@@ -36,6 +40,8 @@ class CurrentAccountModel extends Equatable {
         createdAt: DateTime.parse(json['createdAt'] as String),
         updatedAt: DateTime.parse(json['updatedAt'] as String),
         roleName: json['roleName'] as String,
+        isEmailVerified: json['isEmailVerified'] as bool? ?? false,
+        avatarUrl: json['avatarUrl'] as String?,
       );
 
   Map<String, dynamic> toJson() => {
@@ -48,6 +54,8 @@ class CurrentAccountModel extends Equatable {
         'createdAt': createdAt.toIso8601String(),
         'updatedAt': updatedAt.toIso8601String(),
         'roleName': roleName,
+        'isEmailVerified': isEmailVerified,
+        'avatarUrl': avatarUrl,
       };
 
   UserEntity toEntity() => UserEntity(
@@ -68,5 +76,7 @@ class CurrentAccountModel extends Equatable {
         createdAt,
         updatedAt,
         roleName,
+        isEmailVerified,
+        avatarUrl,
       ];
 }

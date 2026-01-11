@@ -35,6 +35,8 @@ class AppColors {
    static const Color loadingBackground = Color(0x33FFFFFF); // highlight
 
    static const Color logout = Color.fromARGB(255, 255, 0, 0); // red
+   static const Color verified = Color.fromARGB(255, 0, 128, 0); // green
+   static const Color red = Color.fromARGB(255, 255, 0, 0); // red
 
   // Package Colors
   static const Color packageVip = Color(0xFFFF8C00); // Gold for VIP packages

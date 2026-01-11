@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
+import '../../../../core/widgets/avatar_widget.dart';
 import '../../../auth/data/models/current_account_model.dart';
 
 /// Player card style account summary card
@@ -68,47 +69,43 @@ class AccountSummaryCard extends StatelessWidget {
             padding: EdgeInsets.all(24 * scale),
             child: Column(
               children: [
-                // Avatar with border
-                Container(
-                  width: 100 * scale,
-                  height: 100 * scale,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.white,
-                    border: Border.all(
-                      color: AppColors.white,
-                      width: 4 * scale,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.2),
-                        blurRadius: 15 * scale,
-                        offset: Offset(0, 5 * scale),
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Text(
-                      account.username.isNotEmpty
-                          ? account.username[0].toUpperCase()
-                          : '?',
-                      style: AppTextStyles.tinos(
-                        fontSize: 42 * scale,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ),
+                // Avatar with border and verified badge
+                AvatarWidget(
+                  imageUrl: account.avatarUrl,
+                  displayName: account.username,
+                  size: 100,
+                  showVerifiedBadge: true,
+                  isVerified: account.isEmailVerified,
+                  backgroundColor: AppColors.white,
+                  borderWidth: 4,
+                  borderColor: AppColors.white,
                 ),
                 SizedBox(height: 20 * scale),
-                // Username
-                Text(
-                  account.username,
-                  style: AppTextStyles.tinos(
-                    fontSize: 24 * scale,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.white,
-                  ),
+                // Username with verified icon
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        account.username,
+                        style: AppTextStyles.tinos(
+                          fontSize: 24 * scale,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.white,
+                        ),
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (account.isEmailVerified) ...[
+                      SizedBox(width: 8 * scale),
+                      Icon(
+                        Icons.verified,
+                        size: 20 * scale,
+                        color: AppColors.white,
+                      ),
+                    ],
+                  ],
                 ),
                 SizedBox(height: 8 * scale),
                 // Email

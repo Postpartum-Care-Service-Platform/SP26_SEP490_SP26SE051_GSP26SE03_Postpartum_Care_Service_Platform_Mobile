@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/widgets/app_widgets.dart';
@@ -40,6 +41,13 @@ class AccountDetailsSection extends StatelessWidget {
               value: account.isActive
                   ? AppStrings.accountStatusActive
                   : AppStrings.accountStatusLocked,
+            ),
+            AccountInfoRow(
+              label: 'Email',
+              value: account.isEmailVerified ? 'Đã xác thực' : 'Chưa xác thực',
+              valueColor: account.isEmailVerified 
+                  ? AppColors.verified 
+                  : AppColors.red,
             ),
             AccountInfoRow(
               label: AppStrings.accountCreatedAt,
