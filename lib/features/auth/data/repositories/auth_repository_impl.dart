@@ -8,6 +8,9 @@ import '../models/forgot_password_request_model.dart';
 import '../models/verify_reset_otp_request_model.dart';
 import '../models/reset_password_request_model.dart';
 import '../models/refresh_token_request_model.dart';
+import '../models/google_sign_in_request_model.dart';
+import '../models/change_password_request_model.dart';
+import '../models/current_account_model.dart';
 import '../../../../core/storage/secure_storage_service.dart';
 
 /// Authentication repository implementation
@@ -165,10 +168,57 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<UserEntity> googleSignIn({
+    required String idToken,
+  }) async {
+    try {
+      final request = GoogleSignInRequestModel(idToken: idToken);
+      final response = await remoteDataSource.googleSignIn(request);
+
+      // Save tokens to secure storage
+      await SecureStorageService.saveAccessToken(response.accessToken);
+      await SecureStorageService.saveRefreshToken(response.refreshToken);
+      await SecureStorageService.saveExpiresAt(response.expiresAt);
+
+      return response.user.toEntity();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
   Future<UserEntity> getCurrentAccount() async {
     try {
       final response = await remoteDataSource.getCurrentAccount();
       return response.toEntity();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<CurrentAccountModel> getAccountById(String id) async {
+    try {
+      return await remoteDataSource.getAccountById(id);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<String> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String confirmNewPassword,
+  }) async {
+    try {
+      final request = ChangePasswordRequestModel(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+        confirmNewPassword: confirmNewPassword,
+      );
+      final response = await remoteDataSource.changePassword(request);
+      return response.message;
     } catch (e) {
       rethrow;
     }

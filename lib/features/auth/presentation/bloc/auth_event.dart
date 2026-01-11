@@ -24,7 +24,14 @@ class AuthLoginWithEmailPassword extends AuthEvent {
 
 /// Event to sign in with Google
 class AuthLoginWithGoogle extends AuthEvent {
-  const AuthLoginWithGoogle();
+  final String idToken;
+
+  const AuthLoginWithGoogle({
+    required this.idToken,
+  });
+
+  @override
+  List<Object?> get props => [idToken];
 }
 
 /// Event to register with email, password, and other details
@@ -119,6 +126,32 @@ class AuthResendOtp extends AuthEvent {
 /// Event to reset auth state
 class AuthResetState extends AuthEvent {
   const AuthResetState();
+}
+
+/// Event to get account by ID
+class AuthGetAccountById extends AuthEvent {
+  final String id;
+
+  const AuthGetAccountById({required this.id});
+
+  @override
+  List<Object?> get props => [id];
+}
+
+/// Event to change password
+class AuthChangePassword extends AuthEvent {
+  final String currentPassword;
+  final String newPassword;
+  final String confirmNewPassword;
+
+  const AuthChangePassword({
+    required this.currentPassword,
+    required this.newPassword,
+    required this.confirmNewPassword,
+  });
+
+  @override
+  List<Object?> get props => [currentPassword, newPassword, confirmNewPassword];
 }
 
 

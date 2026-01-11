@@ -8,6 +8,7 @@ enum AppBottomTab {
   home,
   services,
   schedule,
+  chat,
   profile,
 }
 
@@ -20,6 +21,8 @@ extension AppBottomTabX on AppBottomTab {
         return Icons.account_balance_wallet_outlined;
       case AppBottomTab.schedule:
         return Icons.show_chart_rounded;
+      case AppBottomTab.chat:
+        return Icons.chat_bubble_outline_rounded;
       case AppBottomTab.profile:
         return Icons.person_outline_rounded;
     }
@@ -33,6 +36,8 @@ extension AppBottomTabX on AppBottomTab {
         return AppStrings.bottomNavServices;
       case AppBottomTab.schedule:
         return AppStrings.bottomNavSchedule;
+      case AppBottomTab.chat:
+        return AppStrings.bottomNavChat;
       case AppBottomTab.profile:
         return AppStrings.bottomNavProfile;
     }
@@ -159,7 +164,7 @@ class _PillBottomNavState extends State<_PillBottomNav>
 
   @override
   Widget build(BuildContext context) {
-    const itemCount = 4;
+    const itemCount = 5; // số lượng tab hiện tại
     final scale = AppResponsive.scaleFactor(context);
 
     return LayoutBuilder(

@@ -13,6 +13,7 @@ import '../../../auth/presentation/screens/login_screen.dart';
 import '../../../family_profile/presentation/screens/family_profile_screen.dart';
 import '../widgets/profile_header.dart';
 import '../widgets/profile_menu_item.dart';
+import 'account_details_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -23,6 +24,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final AuthRepository _authRepository = InjectionContainer.authRepository;
+  String? _userId;
   String? _userName;
   String? _userEmail;
   bool _isLoading = true;
@@ -38,6 +40,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final user = await _authRepository.getCurrentAccount();
       if (mounted) {
         setState(() {
+          _userId = user.id;
           _userName = user.username;
           _userEmail = user.email;
           _isLoading = false;
@@ -115,7 +118,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         icon: Icons.person_outline_rounded,
                         title: AppStrings.myAccount,
                         onTap: () {
-                          // TODO: Navigate to my account
+                          if (_userId == null) return;
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => AccountDetailsScreen(
+                                userId: _userId!,
+                              ),
+                            ),
+                          );
                         },
                       ),
                       ProfileMenuItem(

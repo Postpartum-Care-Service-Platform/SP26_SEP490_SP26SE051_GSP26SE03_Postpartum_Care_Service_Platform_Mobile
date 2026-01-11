@@ -8,20 +8,22 @@ class ApiEndpoints {
   static const String register = '/Auth/register';
   static const String verifyEmail = '/Auth/verify-email';
   static const String logout = '/Auth/logout';
+  static const String changePassword = '/Auth/change-password';
   static const String refreshToken = '/Auth/refresh-token';
   static const String forgotPassword = '/Auth/forgot-password';
   static const String verifyResetOtp = '/Auth/verify-reset-otp';
   static const String resetPassword = '/Auth/reset-password';
   static const String resendOtp = '/Auth/resend-otp';
+  static const String googleSignIn = '/Auth/google';
 
 
   // Account endpoints
   static const String getCurrentAccount = '/Account/GetCurrentAccount';
+  static String getAccountById(String id) => '/Account/GetById/$id';
 
-  // User endpoints
+  // User endpoints (legacy / placeholder)
   static const String profile = '/user/profile';
   static const String updateProfile = '/user/profile';
-  static const String changePassword = '/user/change-password';
 
   // Home endpoints
   static const String home = '/home';
@@ -49,5 +51,11 @@ class ApiEndpoints {
   static const String createFamilyProfile = '/FamilyProfile/Create';
   static String updateFamilyProfile(int id) => '/FamilyProfile/Update/$id';
   static const String getMemberTypes = '/member-types';
+
+  // Package endpoints
+  static const String packages = '/Packages';
+
+  // Care Plan endpoints
+  static String getCarePlanDetailsByPackage(int packageId) => '/care-plan-details/by-package/$packageId';
 }
 

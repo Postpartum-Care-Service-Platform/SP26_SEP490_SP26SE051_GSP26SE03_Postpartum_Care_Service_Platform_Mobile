@@ -17,33 +17,35 @@ class HomeHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
     
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              TimeUtils.getGreeting(),
-              style: AppTextStyles.arimo(fontSize: 16, color: Colors.grey[600]),
-            ),
-            const SizedBox(height: 4),
-            if (isLoading)
-              _UsernameSkeleton(scale: scale)
-            else
+    return Builder(
+      builder: (context) => Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               Text(
-                userName ?? 'Mom',
-                style: AppTextStyles.tinos(fontSize: 24, fontWeight: FontWeight.bold),
+                TimeUtils.getGreeting(),
+                style: AppTextStyles.arimo(fontSize: 16, color: Colors.grey[600]),
               ),
-          ],
-        ),
-        IconButton(
-          icon: Icon(Icons.notifications_none_rounded, color: Colors.grey[800]),
-          onPressed: () {
-            // TODO: Navigate to notifications screen
-          },
-        ),
-      ],
+              const SizedBox(height: 4),
+              if (isLoading)
+                _UsernameSkeleton(scale: scale)
+              else
+                Text(
+                  userName ?? 'Mom',
+                  style: AppTextStyles.tinos(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+            ],
+          ),
+          IconButton(
+            icon: Icon(Icons.notifications_none_rounded, color: Colors.grey[800]),
+            onPressed: () {
+              Scaffold.of(context).openEndDrawer();
+            },
+          ),
+        ],
+      ),
     );
   }
 }
