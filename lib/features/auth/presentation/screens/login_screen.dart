@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/auth_scaffold.dart';
@@ -17,6 +19,16 @@ import '../../../../core/widgets/app_toast.dart';
 import 'reset_password_screen.dart';
 import 'sign_up_screen.dart';
 import '../../../../core/widgets/app_scaffold.dart';
+
+// Google Sign-In configuration using Web Client ID from .env
+const _webClientId = String.fromEnvironment(
+  'GOOGLE_WEB_CLIENT_ID',
+  defaultValue: '',
+);
+final GoogleSignIn _googleSignIn = GoogleSignIn(
+  serverClientId:
+      _webClientId.isNotEmpty ? _webClientId : dotenv.env['GOOGLE_WEB_CLIENT_ID'],
+);
 
 /// Login Screen - Main login page following clean architecture + BloC pattern
 class LoginScreen extends StatelessWidget {
@@ -88,10 +100,31 @@ class LoginScreen extends StatelessWidget {
                   return GoogleSignInButton(
                     onPressed: state is AuthLoading
                         ? () {}
-                        : () {
-                            context
-                                .read<AuthBloc>()
-                                .add(const AuthLoginWithGoogle());
+                        : () async {
+                            try {
+                              final GoogleSignInAccount? account =
+                                  await _googleSignIn.signIn();
+                              if (account != null) {
+                                final GoogleSignInAuthentication auth =
+                                    await account.authentication;
+                                final String? idToken = auth.idToken;
+                                if (idToken != null) {
+                                  context.read<AuthBloc>().add(
+                                        AuthLoginWithGoogle(idToken: idToken),
+                                      );
+                                } else {
+                                  AppToast.showError(
+                                    context,
+                                    message: 'Không thể lấy idToken từ Google',
+                                  );
+                                }
+                              }
+                            } catch (e) {
+                              AppToast.showError(
+                                context,
+                                message: 'Lỗi đăng nhập Google: ${e.toString()}',
+                              );
+                            }
                           },
                   );
                 },

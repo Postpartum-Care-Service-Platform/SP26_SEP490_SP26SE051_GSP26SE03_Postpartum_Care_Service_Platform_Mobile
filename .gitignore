@@ -112,3 +112,5 @@ ios/Runner/GoogleService-Info.plist
 *.dmp
 *.stackdump
 *.hprof
+
+.cursor

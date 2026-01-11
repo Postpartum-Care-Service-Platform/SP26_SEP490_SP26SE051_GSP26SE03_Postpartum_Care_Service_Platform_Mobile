@@ -8,6 +8,9 @@ import '../../domain/usecases/forgot_password_usecase.dart';
 import '../../domain/usecases/verify_reset_otp_usecase.dart';
 import '../../domain/usecases/reset_password_usecase.dart';
 import '../../domain/usecases/resend_otp_usecase.dart';
+import '../../domain/usecases/google_sign_in_usecase.dart';
+import '../../domain/usecases/get_account_by_id_usecase.dart';
+import '../../domain/usecases/change_password_usecase.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
@@ -20,6 +23,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final VerifyResetOtpUsecase verifyResetOtpUsecase;
   final ResetPasswordUsecase resetPasswordUsecase;
   final ResendOtpUsecase resendOtpUsecase;
+  final GoogleSignInUsecase googleSignInUsecase;
+  final GetAccountByIdUsecase getAccountByIdUsecase;
+  final ChangePasswordUsecase changePasswordUsecase;
 
   AuthBloc({
     required this.loginUsecase,
@@ -29,6 +35,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required this.verifyResetOtpUsecase,
     required this.resetPasswordUsecase,
     required this.resendOtpUsecase,
+    required this.googleSignInUsecase,
+    required this.getAccountByIdUsecase,
+    required this.changePasswordUsecase,
   }) : super(const AuthInitial(isPasswordObscured: true)) {
     on<AuthLoginWithEmailPassword>(_onLoginWithEmailPassword);
     on<AuthLoginWithGoogle>(_onLoginWithGoogle);
@@ -40,6 +49,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthResendOtp>(_onResendOtp);
     on<AuthTogglePasswordVisibility>(_onTogglePasswordVisibility);
     on<AuthResetState>(_onResetState);
+    on<AuthGetAccountById>(_onGetAccountById);
+    on<AuthChangePassword>(_onChangePassword);
   }
 
   Future<void> _onLoginWithEmailPassword(
@@ -81,11 +92,28 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading(isPasswordObscured: state.isPasswordObscured));
 
-    // TODO: Implement Google sign-in logic
-    await Future.delayed(const Duration(seconds: 1));
+    // Validate idToken
+    if (event.idToken.isEmpty) {
+      emit(AuthError(
+        message: AppStrings.errorLoginFailed,
+        isPasswordObscured: state.isPasswordObscured,
+      ));
+      return;
+    }
 
-    // Simulate successful login
-    emit(AuthSuccess(isPasswordObscured: state.isPasswordObscured));
+    try {
+      final user = await googleSignInUsecase(idToken: event.idToken);
+
+      emit(AuthSuccess(
+        isPasswordObscured: state.isPasswordObscured,
+        user: user,
+      ));
+    } catch (e) {
+      emit(AuthError(
+        message: e.toString().replaceAll('Exception: ', ''),
+        isPasswordObscured: state.isPasswordObscured,
+      ));
+    }
   }
 
   Future<void> _onRegister(
@@ -343,6 +371,87 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) {
     emit(AuthInitial(isPasswordObscured: state.isPasswordObscured));
+  }
+
+  Future<void> _onGetAccountById(
+    AuthGetAccountById event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading(isPasswordObscured: state.isPasswordObscured));
+
+    if (event.id.isEmpty) {
+      emit(AuthError(
+        message: 'ID tài khoản không hợp lệ',
+        isPasswordObscured: state.isPasswordObscured,
+      ));
+      return;
+    }
+
+    try {
+      final account = await getAccountByIdUsecase(id: event.id);
+
+      emit(AuthGetAccountByIdSuccess(
+        account: account,
+        isPasswordObscured: state.isPasswordObscured,
+      ));
+    } catch (e) {
+      emit(AuthError(
+        message: e.toString().replaceAll('Exception: ', ''),
+        isPasswordObscured: state.isPasswordObscured,
+      ));
+    }
+  }
+
+  Future<void> _onChangePassword(
+    AuthChangePassword event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading(isPasswordObscured: state.isPasswordObscured));
+
+    // Validate passwords
+    if (event.currentPassword.isEmpty ||
+        event.newPassword.isEmpty ||
+        event.confirmNewPassword.isEmpty) {
+      emit(AuthError(
+        message: AppStrings.errorFillAllFields,
+        isPasswordObscured: state.isPasswordObscured,
+      ));
+      return;
+    }
+
+    if (event.newPassword.length < 6) {
+      emit(AuthError(
+        message: AppStrings.errorInputPasswordMinLength,
+        isPasswordObscured: state.isPasswordObscured,
+      ));
+      return;
+    }
+
+    if (event.newPassword != event.confirmNewPassword) {
+      emit(AuthError(
+        message: AppStrings.errorInputPasswordsNotMatch,
+        isPasswordObscured: state.isPasswordObscured,
+      ));
+      return;
+    }
+
+    try {
+      final message = await changePasswordUsecase(
+        currentPassword: event.currentPassword,
+        newPassword: event.newPassword,
+        confirmNewPassword: event.confirmNewPassword,
+      );
+
+      emit(AuthChangePasswordSuccess(
+        message: message,
+        isPasswordObscured: state.isPasswordObscured,
+      ));
+    } catch (e) {
+      emit(AuthError(
+        message: e.toString().replaceAll('Exception: ', ''),
+        isPasswordObscured: state.isPasswordObscured,
+      ));
+    }
   }
 }
 

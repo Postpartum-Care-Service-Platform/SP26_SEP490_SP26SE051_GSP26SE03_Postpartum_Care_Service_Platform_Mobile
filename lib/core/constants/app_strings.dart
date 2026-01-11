@@ -179,14 +179,59 @@ class AppStrings {
   // Other Screens
   static const String servicesScreen = 'Services Screen';
   static const String scheduleScreen = 'Schedule Screen';
+  static const String chatScreen = 'Chat Screen';
 
   // Bottom Navigation Bar
   static const String bottomNavHome = 'Home';
   static const String bottomNavServices = 'Services';
   static const String bottomNavSchedule = 'Schedule';
+  static const String bottomNavChat = 'Chat';
   static const String bottomNavProfile = 'Profile';
 
   // Error Messages
   static const String errorLoginFailed = 'Login failed';
+
+  // Account Details Screen
+  static const String accountDetailsTitle = 'Thông tin chi tiết';
+  static const String accountPhoneNumber = 'Số điện thoại';
+  static const String accountStatus = 'Trạng thái';
+  static const String accountStatusActive = 'Đang hoạt động';
+  static const String accountStatusLocked = 'Bị khóa';
+  static const String accountCreatedAt = 'Ngày tạo';
+  static const String accountUpdatedAt = 'Cập nhật lần cuối';
+  static const String accountSecurityTitle = 'Bảo mật & mật khẩu';
+  static const String changePasswordTitle = 'Đổi mật khẩu';
+  static const String changePasswordDescription =
+      'Để bảo mật tài khoản, vui lòng sử dụng mật khẩu đủ mạnh và không chia sẻ cho người khác.';
+  static const String currentPassword = 'Mật khẩu hiện tại';
+  static const String currentPasswordPlaceholder = 'Nhập mật khẩu hiện tại';
+  static const String saveNewPassword = 'Lưu mật khẩu mới';
+  static const String retry = 'Thử lại';
+  static const String noAccountData = 'Không có dữ liệu tài khoản.';
+
+  // Notification Screen
+  static const String notificationTitle = 'Notification';
+  static const String latestNotification = 'Latest notification';
+  static const String sortBy = 'Sort By';
+  static const String noNotifications = 'Không có thông báo nào';
+  static const String minutesAgo = '{minutes} phút trước';
+  static const String hoursAgo = '{hours} giờ trước';
+  static const String daysAgo = '{days} ngày trước';
+  static const String justNow = 'Vừa xong';
+
+  // Package Screen
+  static const String noPackages = 'Chưa có gói dịch vụ nào';
+  static const String loadPackagesError = 'Không thể tải gói dịch vụ';
+  static const String days = 'ngày';
+  static const String currencyUnit = ' đ';
+
+  // Care Plan Screen
+  static const String carePlanTitle = 'Lịch trình nghỉ dưỡng';
+  static const String noCarePlanDetails = 'Gói dịch vụ này chưa có lịch trình nghỉ dưỡng';
+  static const String day = 'Ngày';
+  static const String activity = 'Hoạt động';
+  static const String time = 'Thời gian';
+  static const String instruction = 'Hướng dẫn';
+  static const String loadCarePlanError = 'Không thể tải lịch trình nghỉ dưỡng';
 }
 

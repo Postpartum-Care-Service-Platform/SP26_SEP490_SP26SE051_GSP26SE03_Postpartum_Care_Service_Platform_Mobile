@@ -1,4 +1,5 @@
 import '../entities/user_entity.dart';
+import '../../data/models/current_account_model.dart';
 
 /// Authentication repository interface
 abstract class AuthRepository {
@@ -41,6 +42,18 @@ abstract class AuthRepository {
 
   Future<void> refreshToken();
 
+  Future<UserEntity> googleSignIn({
+    required String idToken,
+  });
+
   Future<UserEntity> getCurrentAccount();
+
+  Future<CurrentAccountModel> getAccountById(String id);
+
+  Future<String> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String confirmNewPassword,
+  });
 }
 

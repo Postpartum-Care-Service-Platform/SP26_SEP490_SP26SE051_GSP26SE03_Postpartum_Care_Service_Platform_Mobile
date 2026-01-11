@@ -5,6 +5,8 @@ import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/schedule/presentation/screens/schedule_screen.dart';
 import '../../features/services/presentation/screens/services_screen.dart';
+import '../../features/chat/presentation/screens/chat_screen.dart';
+import '../../features/notification/presentation/widgets/notification_drawer.dart';
 import 'app_bottom_navigation_bar.dart';
 
 class AppScaffold extends StatefulWidget {
@@ -24,6 +26,7 @@ class _AppScaffoldState extends State<AppScaffold> {
     HomeScreen(),
     ServicesScreen(),
     ScheduleScreen(),
+    ChatScreen(),
     ProfileScreen(),
   ];
 
@@ -69,6 +72,7 @@ class _AppScaffoldState extends State<AppScaffold> {
         currentTab: _currentTab,
         onTabSelected: _onTabSelected,
       ),
+      endDrawer: const NotificationDrawer(),
     );
   }
 }

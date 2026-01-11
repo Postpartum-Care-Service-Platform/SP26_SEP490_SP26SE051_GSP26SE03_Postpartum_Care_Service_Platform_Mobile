@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_assets.dart';
+import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
+import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../features/auth/domain/repositories/auth_repository.dart';
+import '../../../../features/package/presentation/bloc/package_bloc.dart';
+import '../../../../features/package/presentation/bloc/package_event.dart';
+import '../../../../features/package/presentation/bloc/package_state.dart';
+import '../../../../features/package/presentation/widgets/package_carousel.dart';
+import '../../../../features/package/presentation/screens/package_screen.dart';
 import '../widgets/home_header.dart';
 import '../widgets/quick_action_card.dart';
 import '../widgets/section_header.dart';
@@ -50,13 +58,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      bottom: false,
-      child: SingleChildScrollView(
-        padding: AppResponsive.pagePadding(context),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    return BlocProvider(
+      create: (context) => InjectionContainer.packageBloc
+        ..add(const PackageLoadRequested()),
+      child: SafeArea(
+        bottom: false,
+        child: SingleChildScrollView(
+          padding: AppResponsive.pagePadding(context),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             // Top inset is already handled by SafeArea.
             const SizedBox(height: 8),
             HomeHeader(userName: _username, isLoading: _isLoading),
@@ -95,23 +106,148 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 32),
 
           // Promotions Section
-          SectionHeader(
-            title: AppStrings.promotions,
-            actionText: AppStrings.viewAll,
-            onActionPressed: () {},
+          Builder(
+            builder: (homeContext) => SectionHeader(
+              title: AppStrings.promotions,
+              actionText: AppStrings.viewAll,
+              onActionPressed: () {
+                final bloc = homeContext.read<PackageBloc>();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => BlocProvider.value(
+                      value: bloc,
+                      child: const PackageScreen(),
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
           const SizedBox(height: 16),
-          // Note: You need to add a placeholder image at 'assets/images/promotion_banner.jpg'
-          PromotionBanner(
-            title: 'Ưu đãi 20% Spa',
-            subtitle: 'Gói phục hồi sau sinh',
-            imagePath: AppAssets.promotionBanner,
-            onTap: () {},
+          BlocBuilder<PackageBloc, PackageState>(
+            builder: (context, state) {
+              if (state is PackageLoading) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(24.0),
+                    child: CircularProgressIndicator(
+                      color: AppColors.primary,
+                    ),
+                  ),
+                );
+              }
+
+              if (state is PackageError) {
+                return Container(
+                  padding: const EdgeInsets.all(16),
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Colors.red.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.error_outline, color: Colors.red[300]),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          AppStrings.loadPackagesError,
+                          style: AppTextStyles.arimo(
+                            fontSize: 14,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              if (state is PackageLoaded) {
+                if (state.packages.isEmpty) {
+                  return Container(
+                    padding: const EdgeInsets.all(16),
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      AppStrings.noPackages,
+                      style: AppTextStyles.arimo(
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  );
+                }
+
+                // Show packages in carousel slides
+                return Builder(
+                  builder: (homeContext) {
+                    final bloc = homeContext.read<PackageBloc>();
+                    return PackageCarousel(
+                      packages: state.packages,
+                      onViewAll: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => BlocProvider.value(
+                              value: bloc,
+                              child: const PackageScreen(),
+                            ),
+                          ),
+                        );
+                      },
+                      onPackageTap: (package) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => BlocProvider.value(
+                              value: bloc,
+                              child: const PackageScreen(),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                );
+              }
+
+              // Fallback to static banner if no state
+              return Builder(
+                builder: (homeContext) {
+                  final bloc = homeContext.read<PackageBloc>();
+                  return PromotionBanner(
+                    title: 'Ưu đãi 20% Spa',
+                    subtitle: 'Gói phục hồi sau sinh',
+                    imagePath: AppAssets.promotionBanner,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => BlocProvider.value(
+                            value: bloc,
+                            child: const PackageScreen(),
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              );
+            },
           ),
           const SizedBox(height: 24),
-        ],
+            ],
+          ),
+        ),
       ),
-    )
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/user_entity.dart';
+import '../../data/models/current_account_model.dart';
 
 import '../../domain/entities/user_role.dart';
 
@@ -114,6 +115,32 @@ class AuthResetPasswordSuccess extends AuthState {
   final String message;
 
   const AuthResetPasswordSuccess({
+    required this.message,
+    super.isPasswordObscured,
+  });
+
+  @override
+  List<Object?> get props => [message, isPasswordObscured];
+}
+
+/// Get account by ID success state
+class AuthGetAccountByIdSuccess extends AuthState {
+  final CurrentAccountModel account;
+
+  const AuthGetAccountByIdSuccess({
+    required this.account,
+    super.isPasswordObscured,
+  });
+
+  @override
+  List<Object?> get props => [account, isPasswordObscured];
+}
+
+/// Change password success state
+class AuthChangePasswordSuccess extends AuthState {
+  final String message;
+
+  const AuthChangePasswordSuccess({
     required this.message,
     super.isPasswordObscured,
   });
