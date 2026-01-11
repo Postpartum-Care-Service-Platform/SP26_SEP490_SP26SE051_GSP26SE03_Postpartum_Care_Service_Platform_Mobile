@@ -46,7 +46,7 @@ abstract class AuthRepository {
     required String idToken,
   });
 
-  Future<UserEntity> getCurrentAccount();
+  Future<CurrentAccountModel> getCurrentAccount();
 
   Future<CurrentAccountModel> getAccountById(String id);
 

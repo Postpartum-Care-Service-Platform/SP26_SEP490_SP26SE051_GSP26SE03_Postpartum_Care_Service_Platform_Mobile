@@ -10,6 +10,9 @@ class SecureStorageService {
     ),
   );
 
+  // Expose storage for use in other services
+  static const storage = _storage;
+
   // Keys
   static const String _keyAccessToken = 'access_token';
   static const String _keyRefreshToken = 'refresh_token';

@@ -27,6 +27,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _userId;
   String? _userName;
   String? _userEmail;
+  String? _avatarUrl;
+  bool _isEmailVerified = false;
   bool _isLoading = true;
 
   @override
@@ -37,12 +39,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _loadCurrentAccount() async {
     try {
-      final user = await _authRepository.getCurrentAccount();
+      final account = await _authRepository.getCurrentAccount();
       if (mounted) {
         setState(() {
-          _userId = user.id;
-          _userName = user.username;
-          _userEmail = user.email;
+          _userId = account.id;
+          _userName = account.username;
+          _userEmail = account.email;
+          _avatarUrl = account.avatarUrl;
+          _isEmailVerified = account.isEmailVerified;
           _isLoading = false;
         });
       }
@@ -102,6 +106,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ProfileHeader(
               userName: _userName,
               userEmail: _userEmail,
+              avatarUrl: _avatarUrl,
+              isEmailVerified: _isEmailVerified,
               isLoading: _isLoading,
             ),
 

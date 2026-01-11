@@ -12,6 +12,7 @@ import '../models/google_sign_in_request_model.dart';
 import '../models/change_password_request_model.dart';
 import '../models/current_account_model.dart';
 import '../../../../core/storage/secure_storage_service.dart';
+import '../../../../core/services/current_account_cache_service.dart';
 
 /// Authentication repository implementation
 class AuthRepositoryImpl implements AuthRepository {
@@ -187,12 +188,41 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<UserEntity> getCurrentAccount() async {
+  Future<CurrentAccountModel> getCurrentAccount() async {
     try {
-      final response = await remoteDataSource.getCurrentAccount();
-      return response.toEntity();
+      // Try to get from cache first
+      final cachedAccount = await CurrentAccountCacheService.getCurrentAccount();
+      if (cachedAccount != null) {
+        // Return cached account immediately for better UX
+        // Then refresh in background
+        _refreshCurrentAccountInBackground();
+        return cachedAccount;
+      }
+
+      // No cache, fetch from API
+      final account = await remoteDataSource.getCurrentAccount();
+      
+      // Save to cache
+      await CurrentAccountCacheService.saveCurrentAccount(account);
+      
+      return account;
     } catch (e) {
+      // If API fails, try to return cached data as fallback
+      final cachedAccount = await CurrentAccountCacheService.getCurrentAccount();
+      if (cachedAccount != null) {
+        return cachedAccount;
+      }
       rethrow;
+    }
+  }
+
+  /// Refresh current account in background without blocking
+  Future<void> _refreshCurrentAccountInBackground() async {
+    try {
+      final account = await remoteDataSource.getCurrentAccount();
+      await CurrentAccountCacheService.saveCurrentAccount(account);
+    } catch (e) {
+      // Silently fail - background refresh is optional
     }
   }
 

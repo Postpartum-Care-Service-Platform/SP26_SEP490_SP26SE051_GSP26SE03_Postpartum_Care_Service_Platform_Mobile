@@ -7,11 +7,13 @@ import '../../../../core/utils/app_text_styles.dart';
 class AccountInfoRow extends StatelessWidget {
   final String label;
   final String value;
+  final Color? valueColor;
 
   const AccountInfoRow({
     super.key,
     required this.label,
     required this.value,
+    this.valueColor,
   });
 
   @override
@@ -42,7 +44,7 @@ class AccountInfoRow extends StatelessWidget {
               style: AppTextStyles.arimo(
                 fontSize: 14 * scale,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: valueColor ?? AppColors.textPrimary,
               ),
             ),
           ),

@@ -1,4 +1,5 @@
 import '../storage/secure_storage_service.dart';
+import 'current_account_cache_service.dart';
 
 /// Authentication service for checking token validity
 class AuthService {
@@ -32,6 +33,8 @@ class AuthService {
   /// Clear all authentication data
   static Future<void> logout() async {
     await SecureStorageService.clearAll();
+    // Clear current account cache on logout
+    await CurrentAccountCacheService.clearCache();
   }
 }
 
