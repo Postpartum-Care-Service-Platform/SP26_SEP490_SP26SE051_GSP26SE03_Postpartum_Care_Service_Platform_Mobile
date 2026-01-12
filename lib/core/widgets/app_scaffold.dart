@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
-import '../../features/schedule/presentation/screens/schedule_screen.dart';
+import '../../features/appointment/presentation/screens/appointment_screen.dart';
 import '../../features/services/presentation/screens/services_screen.dart';
 import '../../features/chat/presentation/screens/chat_screen.dart';
 import '../../features/notification/presentation/widgets/notification_drawer.dart';
@@ -24,8 +24,8 @@ class _AppScaffoldState extends State<AppScaffold> {
 
   final List<Widget> _screens = const [
     HomeScreen(),
+    AppointmentScreen(),
     ServicesScreen(),
-    ScheduleScreen(),
     ChatScreen(),
     ProfileScreen(),
   ];

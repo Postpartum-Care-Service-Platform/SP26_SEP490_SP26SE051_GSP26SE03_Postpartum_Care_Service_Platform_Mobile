@@ -41,5 +41,12 @@ class AppColors {
   // Package Colors
   static const Color packageVip = Color(0xFFFF8C00); // Gold for VIP packages
   static const Color packagePro = Color(0xFF9C27B0); // Purple for PRO packages
+
+  // Appointment Status Colors
+  static const Color appointmentScheduled = Color(0xFF2196F3); // Blue
+  static const Color appointmentRescheduled = Color(0xFF2196F3); // Blue
+  static const Color appointmentCompleted = Color(0xFF4CAF50); // Green
+  static const Color appointmentPending = Color(0xFFFF8C00); // Amber
+  static const Color appointmentCancelled = Color(0xFFF44336); // Red
 }
 

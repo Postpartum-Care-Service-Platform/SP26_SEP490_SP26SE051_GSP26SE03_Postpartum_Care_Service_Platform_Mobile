@@ -56,8 +56,8 @@ class AppDrawerForm extends StatelessWidget {
             // Header
             Padding(
               padding: EdgeInsets.symmetric(
-                horizontal: 20 * scale,
-                vertical: 12 * scale,
+                horizontal: 16 * scale,
+                vertical: 8 * scale,
               ),
               child: Row(
                 children: [
@@ -65,23 +65,28 @@ class AppDrawerForm extends StatelessWidget {
                     icon: Icon(
                       Icons.close_rounded,
                       color: AppColors.textPrimary,
-                      size: 22 * scale,
+                      size: 20 * scale,
                     ),
                     onPressed: () => Navigator.of(context).pop(),
-                    splashRadius: 24 * scale,
+                    splashRadius: 20 * scale,
+                    padding: EdgeInsets.zero,
+                    constraints: BoxConstraints(
+                      minWidth: 40 * scale,
+                      minHeight: 40 * scale,
+                    ),
                   ),
                   Expanded(
                     child: Text(
                       title,
                       textAlign: TextAlign.center,
                       style: AppTextStyles.tinos(
-                        fontSize: 22 * scale,
+                        fontSize: 18 * scale,
                         fontWeight: FontWeight.bold,
                         color: AppColors.textPrimary,
                       ),
                     ),
                   ),
-                  SizedBox(width: 48 * scale), // balance with close button space
+                  SizedBox(width: 40 * scale), // balance with close button space
                 ],
               ),
             ),
@@ -89,9 +94,13 @@ class AppDrawerForm extends StatelessWidget {
             // Form Content
             Expanded(
               child: SingleChildScrollView(
-                padding: EdgeInsets.all(16 * scale),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 16 * scale,
+                  vertical: 8 * scale,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
                   children: children,
                 ),
               ),
@@ -101,14 +110,14 @@ class AppDrawerForm extends StatelessWidget {
             if (onSave != null)
               Padding(
                 padding: EdgeInsets.fromLTRB(
-                  20 * scale,
                   16 * scale,
-                  20 * scale,
-                  20 * scale,
+                  12 * scale,
+                  16 * scale,
+                  16 * scale,
                 ),
                 child: SizedBox(
                   width: double.infinity,
-                  height: 52 * scale,
+                  height: 48 * scale,
                   child: ElevatedButton(
                     onPressed: isLoading ? null : onSave,
                     style: ElevatedButton.styleFrom(

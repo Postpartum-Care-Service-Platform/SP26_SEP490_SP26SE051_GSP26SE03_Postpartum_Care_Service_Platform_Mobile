@@ -183,10 +183,10 @@ class AppStrings {
 
   // Bottom Navigation Bar
   static const String bottomNavHome = 'Home';
-  static const String bottomNavServices = 'Services';
-  static const String bottomNavSchedule = 'Schedule';
-  static const String bottomNavChat = 'Chat';
-  static const String bottomNavProfile = 'Profile';
+  static const String bottomNavServices = 'Dịch vụ';
+  static const String bottomNavSchedule = 'Lịch hẹn';
+  static const String bottomNavChat = 'Tư vấn';
+  static const String bottomNavProfile = 'Tôi';
 
   // Error Messages
   static const String errorLoginFailed = 'Login failed';
@@ -233,5 +233,51 @@ class AppStrings {
   static const String time = 'Thời gian';
   static const String instruction = 'Hướng dẫn';
   static const String loadCarePlanError = 'Không thể tải lịch trình nghỉ dưỡng';
+
+  // Appointment Screen
+  static const String appointmentTitle = 'Lịch hẹn';
+  static const String noAppointments = 'Chưa có lịch hẹn nào';
+  static const String createAppointment = 'Đặt lịch hẹn';
+  static const String bookAppointment = 'Đặt lịch';
+  static const String editAppointment = 'Chỉnh sửa lịch hẹn';
+  static const String cancelAppointment = 'Hủy lịch hẹn';
+  static const String appointmentName = 'Tên lịch hẹn';
+  static const String appointmentNamePlaceholder = 'Nhập tên lịch hẹn';
+  static const String appointmentDate = 'Ngày hẹn';
+  static const String selectAppointmentDate = 'Chọn ngày';
+  static const String appointmentTime = 'Giờ hẹn';
+  static const String selectAppointmentTime = 'Chọn giờ';
+  static const String appointmentLocation = 'Địa điểm';
+  static const String appointmentLocationName = 'The Joyful Nest';
+  static const String appointmentLocationAddress =
+      '1056A Đường Nguyễn Văn Linh, Tân Phong, Quận 7, Thành phố Hồ Chí Minh 700000, Việt Nam';
+  static const String appointmentStatus = 'Trạng thái';
+  static const String staff = 'Nhân viên';
+  static const String noStaffAssigned = 'Chưa có nhân viên';
+  static const String confirmCancel = 'Xác nhận hủy';
+  static const String confirmCancelMessage = 'Bạn có chắc chắn muốn hủy lịch hẹn này?';
+  static const String loadAppointmentsError = 'Không thể tải danh sách lịch hẹn';
+  static const String createAppointmentError = 'Không thể tạo lịch hẹn';
+  static const String updateAppointmentError = 'Không thể cập nhật lịch hẹn';
+  static const String cancelAppointmentError = 'Không thể hủy lịch hẹn';
+  static const String createAppointmentSuccess = 'Tạo lịch hẹn thành công';
+  static const String updateAppointmentSuccess = 'Cập nhật lịch hẹn thành công';
+  static const String cancelAppointmentSuccess = 'Hủy lịch hẹn thành công';
+  static const String pleaseEnterAppointmentName = 'Vui lòng nhập tên lịch hẹn';
+  static const String pleaseSelectDate = 'Vui lòng chọn ngày';
+  static const String pleaseSelectTime = 'Vui lòng chọn giờ';
+  
+  // Appointment Status
+  static const String statusScheduled = 'Đã lên lịch';
+  static const String statusRescheduled = 'Đã đổi lịch';
+  static const String statusCompleted = 'Hoàn thành';
+  static const String statusPending = 'Đang chờ';
+  static const String statusCancelled = 'Đã hủy';
+  
+  // Appointment Filter
+  static const String filterAll = 'Tất cả';
+  static const String filterUpcoming = 'Lịch sắp tới';
+  static const String filterCompleted = 'Đã hoàn thành';
+  static const String filterCancelled = 'Đã hủy';
 }
 

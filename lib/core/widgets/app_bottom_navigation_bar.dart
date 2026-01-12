@@ -1,26 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../constants/app_colors.dart';
 import '../constants/app_strings.dart';
+import '../constants/app_assets.dart';
 import '../utils/app_responsive.dart';
 
 enum AppBottomTab {
   home,
+  appointment,
   services,
-  schedule,
   chat,
   profile,
 }
 
 extension AppBottomTabX on AppBottomTab {
-  IconData get icon {
+  IconData? get icon {
     switch (this) {
       case AppBottomTab.home:
         return Icons.home_rounded;
+      case AppBottomTab.appointment:
+        return Icons.calendar_month_outlined;
       case AppBottomTab.services:
-        return Icons.account_balance_wallet_outlined;
-      case AppBottomTab.schedule:
-        return Icons.show_chart_rounded;
+        return null; // Use SVG instead
       case AppBottomTab.chat:
         return Icons.chat_bubble_outline_rounded;
       case AppBottomTab.profile:
@@ -28,14 +30,23 @@ extension AppBottomTabX on AppBottomTab {
     }
   }
 
+  String? get svgIcon {
+    switch (this) {
+      case AppBottomTab.services:
+        return AppAssets.appIconThird;
+      default:
+        return null;
+    }
+  }
+
   String get label {
     switch (this) {
       case AppBottomTab.home:
         return AppStrings.bottomNavHome;
-      case AppBottomTab.services:
-        return AppStrings.bottomNavServices;
-      case AppBottomTab.schedule:
+      case AppBottomTab.appointment:
         return AppStrings.bottomNavSchedule;
+        case AppBottomTab.services:
+        return AppStrings.bottomNavServices;
       case AppBottomTab.chat:
         return AppStrings.bottomNavChat;
       case AppBottomTab.profile:
@@ -277,6 +288,7 @@ class _PillBottomNavState extends State<_PillBottomNav>
                         Expanded(
                           child: _NavIconButton(
                             icon: tab.icon,
+                            svgIcon: tab.svgIcon,
                             label: tab.label,
                             isSelected: tab == widget.currentTab,
                             selectedColor: AppColors.white,
@@ -298,7 +310,8 @@ class _PillBottomNavState extends State<_PillBottomNav>
 }
 
 class _NavIconButton extends StatefulWidget {
-  final IconData icon;
+  final IconData? icon;
+  final String? svgIcon;
   final String label;
   final bool isSelected;
   final Color selectedColor;
@@ -307,7 +320,8 @@ class _NavIconButton extends StatefulWidget {
   final double scale;
 
   const _NavIconButton({
-    required this.icon,
+    this.icon,
+    this.svgIcon,
     required this.label,
     required this.isSelected,
     required this.selectedColor,
@@ -402,11 +416,21 @@ class _NavIconButtonState extends State<_NavIconButton>
               curve: Curves.easeOut,
               child: ScaleTransition(
                 scale: _scaleAnimation,
-                child: Icon(
-                  widget.icon,
-                  size: widget.isSelected ? selectedIconSize : iconSize,
-                  color: iconColor,
-                ),
+                child: widget.svgIcon != null
+                    ? SvgPicture.asset(
+                        widget.svgIcon!,
+                        width: widget.isSelected ? selectedIconSize : iconSize,
+                        height: widget.isSelected ? selectedIconSize : iconSize,
+                        colorFilter: ColorFilter.mode(
+                          iconColor,
+                          BlendMode.srcIn,
+                        ),
+                      )
+                    : Icon(
+                        widget.icon,
+                        size: widget.isSelected ? selectedIconSize : iconSize,
+                        color: iconColor,
+                      ),
               ),
             ),
             SizedBox(height: spacing),

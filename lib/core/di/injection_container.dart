@@ -36,6 +36,14 @@ import '../../features/care_plan/data/repositories/care_plan_repository_impl.dar
 import '../../features/care_plan/domain/repositories/care_plan_repository.dart';
 import '../../features/care_plan/domain/usecases/get_care_plan_details_usecase.dart';
 import '../../features/care_plan/presentation/bloc/care_plan_bloc.dart';
+import '../../features/appointment/data/datasources/appointment_datasource.dart';
+import '../../features/appointment/data/repositories/appointment_repository_impl.dart';
+import '../../features/appointment/domain/repositories/appointment_repository.dart';
+import '../../features/appointment/domain/usecases/get_appointments_usecase.dart';
+import '../../features/appointment/domain/usecases/create_appointment_usecase.dart';
+import '../../features/appointment/domain/usecases/update_appointment_usecase.dart';
+import '../../features/appointment/domain/usecases/cancel_appointment_usecase.dart';
+import '../../features/appointment/presentation/bloc/appointment_bloc.dart';
 import '../apis/api_client.dart';
 
 /// Centralized dependency injection container
@@ -60,6 +68,9 @@ class InjectionContainer {
   static CarePlanDataSource get _carePlanDataSource =>
       CarePlanDataSourceImpl();
 
+  static AppointmentDataSource get _appointmentDataSource =>
+      AppointmentDataSourceImpl();
+
   // ==================== Repositories ====================
   
   static AuthRepository get authRepository =>
@@ -78,6 +89,9 @@ class InjectionContainer {
   
   static CarePlanRepository get carePlanRepository =>
       CarePlanRepositoryImpl(_carePlanDataSource);
+
+  static AppointmentRepository get appointmentRepository =>
+      AppointmentRepositoryImpl(dataSource: _appointmentDataSource) as AppointmentRepository;
 
   // ==================== Use Cases ====================
   
@@ -119,6 +133,15 @@ class InjectionContainer {
   static GetCarePlanDetailsUsecase get _getCarePlanDetailsUsecase =>
       GetCarePlanDetailsUsecase(carePlanRepository);
 
+  static GetAppointmentsUsecase get _getAppointmentsUsecase =>
+      GetAppointmentsUsecase(appointmentRepository);
+  static CreateAppointmentUsecase get _createAppointmentUsecase =>
+      CreateAppointmentUsecase(appointmentRepository);
+  static UpdateAppointmentUsecase get _updateAppointmentUsecase =>
+      UpdateAppointmentUsecase(appointmentRepository);
+  static CancelAppointmentUsecase get _cancelAppointmentUsecase =>
+      CancelAppointmentUsecase(appointmentRepository);
+
   // ==================== Blocs ====================
   
   static AuthBloc get authBloc => AuthBloc(
@@ -152,6 +175,13 @@ class InjectionContainer {
   
   static CarePlanBloc get carePlanBloc => CarePlanBloc(
         getCarePlanDetailsUsecase: _getCarePlanDetailsUsecase,
+      );
+
+  static AppointmentBloc get appointmentBloc => AppointmentBloc(
+        getAppointmentsUsecase: _getAppointmentsUsecase,
+        createAppointmentUsecase: _createAppointmentUsecase,
+        updateAppointmentUsecase: _updateAppointmentUsecase,
+        cancelAppointmentUsecase: _cancelAppointmentUsecase,
       );
 
   // ==================== Reset ====================
