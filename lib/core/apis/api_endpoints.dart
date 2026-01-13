@@ -80,8 +80,6 @@ class ApiEndpoints {
   /// Get all appointments (for staff/admin)
   static const String allAppointments = '/Appointment/all';
   
-  /// Get appointment by ID
-  static String appointmentById(int id) => '/Appointment/$id';
   
   /// Confirm appointment (staff confirms)
   static String confirmAppointment(int id) => '/Appointment/$id/confirm';
@@ -89,8 +87,6 @@ class ApiEndpoints {
   /// Complete appointment (mark as completed)
   static String completeAppointment(int id) => '/Appointment/$id/complete';
   
-  /// Cancel appointment
-  static String cancelAppointment(int id) => '/Appointment/$id/cancel';
   
   /// Create appointment for customer (staff creates)
   static const String createAppointmentForCustomer = '/Appointment/create-for-customer';
@@ -117,7 +113,6 @@ class ApiEndpoints {
   // ==========================================
   
   /// Create service booking
-  /// TODO: Update khi BE có API
   static const String createServiceBooking = '/ServiceBooking';
   
   /// Get tickets by customer

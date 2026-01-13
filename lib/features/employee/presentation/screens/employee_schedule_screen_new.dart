@@ -22,7 +22,7 @@ class EmployeeScheduleScreenNew extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) =>
-          InjectionContainer.appointmentBloc
+          InjectionContainer.employeeAppointmentBloc
             ..add(const LoadMyAssignedAppointments()),
       child: const _EmployeeScheduleContent(),
     );
@@ -34,8 +34,6 @@ class _EmployeeScheduleContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final padding = AppResponsive.pagePadding(context);
-
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -110,7 +108,7 @@ class _EmptyState extends StatelessWidget {
           Icon(
             Icons.calendar_today_outlined,
             size: 80,
-            color: AppColors.textSecondary.withOpacity(0.5),
+            color: AppColors.textSecondary.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(
@@ -150,7 +148,7 @@ class _ErrorState extends StatelessWidget {
           Icon(
             Icons.error_outline,
             size: 80,
-            color: Colors.red.withOpacity(0.7),
+            color: Colors.red.withValues(alpha: 0.7),
           ),
           const SizedBox(height: 16),
           Padding(
@@ -767,7 +765,7 @@ class _ActionButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: color, width: 1),
         ),

@@ -66,8 +66,15 @@ class _FamilyProfileFormDrawerState extends State<FamilyProfileFormDrawer> {
       _selectedMemberTypeId = hasMemberType ? memberTypeId : null;
       _selectedDateOfBirth = widget.member!.dateOfBirth;
       final gender = widget.member!.gender;
-      _selectedGender =
-          (gender == 'Nam' || gender == 'Nữ') ? gender : null;
+      // Convert API value to internal value (Male/Female)
+      // Handle both old format (Nam/Nữ) and new format (Male/Female)
+      if (gender == 'Male' || gender == 'Nam') {
+        _selectedGender = 'Male';
+      } else if (gender == 'Female' || gender == 'Nữ') {
+        _selectedGender = 'Female';
+      } else {
+        _selectedGender = null;
+      }
       _avatarUrl = widget.member!.avatarUrl;
     }
   }
@@ -644,17 +651,17 @@ class _FamilyProfileFormDrawerState extends State<FamilyProfileFormDrawer> {
               Expanded(
                 child: InkWell(
                   onTap: _isEditing
-                      ? () => setState(() => _selectedGender = 'Nam')
+                      ? () => setState(() => _selectedGender = 'Male')
                       : null,
                   borderRadius: BorderRadius.circular(12 * scale),
                   child: Container(
                     padding: EdgeInsets.symmetric(vertical: 14 * scale),
                     decoration: BoxDecoration(
-                      color: _selectedGender == 'Nam'
+                      color: _selectedGender == 'Male'
                           ? AppColors.primary.withValues(alpha: 0.1)
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(12 * scale),
-                      border: _selectedGender == 'Nam'
+                      border: _selectedGender == 'Male'
                           ? Border.all(
                               color: AppColors.primary,
                               width: 1.5,
@@ -670,16 +677,16 @@ class _FamilyProfileFormDrawerState extends State<FamilyProfileFormDrawer> {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: _selectedGender == 'Nam'
+                              color: _selectedGender == 'Male'
                                   ? AppColors.primary
                                   : AppColors.textSecondary,
                               width: 2,
                             ),
-                            color: _selectedGender == 'Nam'
+                            color: _selectedGender == 'Male'
                                 ? AppColors.primary
                                 : Colors.transparent,
                           ),
-                          child: _selectedGender == 'Nam'
+                          child: _selectedGender == 'Male'
                               ? Icon(
                                   Icons.check,
                                   size: 14 * scale,
@@ -692,10 +699,10 @@ class _FamilyProfileFormDrawerState extends State<FamilyProfileFormDrawer> {
                           AppStrings.male,
                           style: AppTextStyles.arimo(
                             fontSize: 14 * scale,
-                            fontWeight: _selectedGender == 'Nam'
+                            fontWeight: _selectedGender == 'Male'
                                 ? FontWeight.w600
                                 : FontWeight.w500,
-                            color: _selectedGender == 'Nam'
+                            color: _selectedGender == 'Male'
                                 ? AppColors.primary
                                 : AppColors.textPrimary,
                           ),
@@ -709,17 +716,17 @@ class _FamilyProfileFormDrawerState extends State<FamilyProfileFormDrawer> {
               Expanded(
                 child: InkWell(
                   onTap: _isEditing
-                      ? () => setState(() => _selectedGender = 'Nữ')
+                      ? () => setState(() => _selectedGender = 'Female')
                       : null,
                   borderRadius: BorderRadius.circular(12 * scale),
                   child: Container(
                     padding: EdgeInsets.symmetric(vertical: 14 * scale),
                     decoration: BoxDecoration(
-                      color: _selectedGender == 'Nữ'
+                      color: _selectedGender == 'Female'
                           ? AppColors.primary.withValues(alpha: 0.1)
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(12 * scale),
-                      border: _selectedGender == 'Nữ'
+                      border: _selectedGender == 'Female'
                           ? Border.all(
                               color: AppColors.primary,
                               width: 1.5,
@@ -735,16 +742,16 @@ class _FamilyProfileFormDrawerState extends State<FamilyProfileFormDrawer> {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: _selectedGender == 'Nữ'
+                              color: _selectedGender == 'Female'
                                   ? AppColors.primary
                                   : AppColors.textSecondary,
                               width: 2,
                             ),
-                            color: _selectedGender == 'Nữ'
+                            color: _selectedGender == 'Female'
                                 ? AppColors.primary
                                 : Colors.transparent,
                           ),
-                          child: _selectedGender == 'Nữ'
+                          child: _selectedGender == 'Female'
                               ? Icon(
                                   Icons.check,
                                   size: 14 * scale,
@@ -757,10 +764,10 @@ class _FamilyProfileFormDrawerState extends State<FamilyProfileFormDrawer> {
                           AppStrings.female,
                           style: AppTextStyles.arimo(
                             fontSize: 14 * scale,
-                            fontWeight: _selectedGender == 'Nữ'
+                            fontWeight: _selectedGender == 'Female'
                                 ? FontWeight.w600
                                 : FontWeight.w500,
-                            color: _selectedGender == 'Nữ'
+                            color: _selectedGender == 'Female'
                                 ? AppColors.primary
                                 : AppColors.textPrimary,
                           ),

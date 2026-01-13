@@ -1,6 +1,5 @@
 import '../../domain/entities/amenity_ticket_entity.dart';
 import '../../domain/entities/amenity_ticket_status.dart';
-import '../../domain/entities/amenity_service_entity.dart';
 import 'amenity_service_model.dart';
 
 /// AmenityTicket Data Model

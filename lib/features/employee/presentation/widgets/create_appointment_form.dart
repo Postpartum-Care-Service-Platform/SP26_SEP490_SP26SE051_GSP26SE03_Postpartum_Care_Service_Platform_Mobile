@@ -39,7 +39,6 @@ class _CreateAppointmentFormState extends State<CreateAppointmentForm> {
   List<RoomEntity> _availableRooms = [];
   
   bool _isLoadingCustomers = false;
-  bool _isLoadingRooms = false;
   bool _isSubmitting = false;
 
   @override

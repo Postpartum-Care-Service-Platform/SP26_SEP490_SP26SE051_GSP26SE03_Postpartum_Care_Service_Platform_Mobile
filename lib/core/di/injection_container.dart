@@ -57,7 +57,7 @@ import '../../features/employee/domain/usecases/confirm_appointment.dart';
 import '../../features/employee/domain/usecases/complete_appointment.dart';
 import '../../features/employee/domain/usecases/cancel_appointment.dart';
 import '../../features/employee/domain/usecases/create_appointment_for_customer.dart';
-import '../../features/employee/presentation/bloc/appointment/appointment_bloc.dart';
+import '../../features/employee/presentation/bloc/appointment/appointment_bloc.dart' as employee_appointment;
 import '../../features/employee/data/datasources/room_remote_datasource.dart';
 import '../../features/employee/data/repositories/room_repository_impl.dart';
 import '../../features/employee/domain/repositories/room_repository.dart';
@@ -103,8 +103,6 @@ class InjectionContainer {
 
   static AppointmentRemoteDataSource get _appointmentRemoteDataSource =>
       AppointmentRemoteDataSourceImpl();
-  static CarePlanDataSource get _carePlanDataSource =>
-      CarePlanDataSourceImpl();
   
   static AppointmentEmployeeRemoteDataSource get _appointmentEmployeeRemoteDataSource =>
       AppointmentEmployeeRemoteDataSource(dio: ApiClient.dio);
@@ -139,7 +137,6 @@ class InjectionContainer {
 
   static AppointmentRepository get appointmentRepository =>
       AppointmentRepositoryImpl(dataSource: _appointmentRemoteDataSource) as AppointmentRepository;
-      CarePlanRepositoryImpl(_carePlanDataSource);
   
   static AppointmentEmployeeRepository get appointmentEmployeeRepository =>
       AppointmentEmployeeRepositoryImpl(remoteDataSource: _appointmentEmployeeRemoteDataSource);
@@ -282,7 +279,7 @@ class InjectionContainer {
       );
   
   // Employee Blocs
-  static AppointmentBloc get appointmentBloc => AppointmentBloc(
+  static employee_appointment.AppointmentBloc get employeeAppointmentBloc => employee_appointment.AppointmentBloc(
         getMyAssignedAppointments: _getMyAssignedAppointments,
         getAllAppointments: _getAllAppointments,
         getAppointmentById: _getAppointmentById,
