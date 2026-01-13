@@ -6,6 +6,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 class AppConfig {
   AppConfig._();
 
+  // Base URL configuration
   static String get baseUrl {
     final url = dotenv.env['BASE_URL'] ?? '';
     
@@ -17,7 +18,11 @@ class AppConfig {
     return url;
   }
   
+  // API URL (base URL + /api suffix)
   static String get apiUrl => '$baseUrl/api';
+  
+  // Google OAuth 2.0 Web Client ID
+  static String get googleWebClientId => dotenv.env['GOOGLE_WEB_CLIENT_ID'] ?? '';
   
   /// Initialize configuration
   /// Call this in main() before runApp()

@@ -9,6 +9,8 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/services/auth_service.dart';
+import '../../../../core/services/current_account_cache_service.dart';
+import '../../../employee/presentation/screens/employee_portal_screen.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../auth/presentation/screens/login_screen.dart';
 import '../widgets/loading_indicator.dart';
@@ -74,10 +76,17 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
     if (!mounted) return;
 
-    // Navigate based on authentication status
-    final destination = isAuthenticated 
-        ? const AppScaffold() 
-        : const LoginScreen();
+    // Navigate based on authentication status + role
+    Widget destination;
+    if (!isAuthenticated) {
+      destination = const LoginScreen();
+    } else {
+      // Try to read cached account to decide portal
+      final cached = await CurrentAccountCacheService.getCurrentAccount();
+      final role = cached?.roleName.toLowerCase();
+      final isEmployee = role == 'staff' || role == 'manager' || role == 'admin';
+      destination = isEmployee ? const EmployeePortalScreen() : const AppScaffold();
+    }
 
         Navigator.of(context).pushReplacement(
           PageRouteBuilder(

@@ -4,9 +4,9 @@ import '../../../../core/constants/app_colors.dart';
 
 enum EmployeeTab {
   schedule,
-  checkin,
   tasks,
-  requests,
+  appointment,
+  chat,
 }
 
 class EmployeeBottomNavBar extends StatelessWidget {
@@ -32,16 +32,16 @@ class EmployeeBottomNavBar extends StatelessWidget {
           label: 'Lịch',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.check_circle),
-          label: 'Check-in',
-        ),
-        BottomNavigationBarItem(
           icon: Icon(Icons.assignment),
           label: 'Công việc',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.description),
-          label: 'Yêu cầu',
+          icon: Icon(Icons.event_available),
+          label: 'Tạo lịch hẹn',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.chat_bubble_outline),
+          label: 'Chat',
         ),
       ],
     );
