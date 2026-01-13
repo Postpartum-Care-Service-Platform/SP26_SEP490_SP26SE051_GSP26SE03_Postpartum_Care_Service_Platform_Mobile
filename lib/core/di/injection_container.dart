@@ -10,6 +10,7 @@ import '../../features/auth/domain/usecases/reset_password_usecase.dart';
 import '../../features/auth/domain/usecases/resend_otp_usecase.dart';
 import '../../features/auth/domain/usecases/google_sign_in_usecase.dart';
 import '../../features/auth/domain/usecases/get_account_by_id_usecase.dart';
+import '../../features/auth/domain/usecases/get_current_account_usecase.dart';
 import '../../features/auth/domain/usecases/change_password_usecase.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/family_profile/data/datasources/family_profile_remote_datasource.dart';
@@ -60,7 +61,7 @@ class InjectionContainer {
       FamilyProfileRemoteDataSourceImpl(dio: ApiClient.dio);
   
   static NotificationDataSource get _notificationDataSource =>
-      NotificationDataSourceImpl();
+      NotificationDataSourceImpl(dio: ApiClient.dio);
   
   static PackageDataSource get _packageDataSource =>
       PackageDataSourceImpl();
@@ -110,6 +111,8 @@ class InjectionContainer {
       GoogleSignInUsecase(_authRepository);
   static GetAccountByIdUsecase get _getAccountByIdUsecase =>
       GetAccountByIdUsecase(_authRepository);
+  static GetCurrentAccountUsecase get _getCurrentAccountUsecase =>
+      GetCurrentAccountUsecase(_authRepository);
   static ChangePasswordUsecase get _changePasswordUsecase =>
       ChangePasswordUsecase(_authRepository);
 
@@ -154,6 +157,7 @@ class InjectionContainer {
     resendOtpUsecase: _resendOtpUsecase,
     googleSignInUsecase: _googleSignInUsecase,
     getAccountByIdUsecase: _getAccountByIdUsecase,
+    getCurrentAccountUsecase: _getCurrentAccountUsecase,
     changePasswordUsecase: _changePasswordUsecase,
   );
 

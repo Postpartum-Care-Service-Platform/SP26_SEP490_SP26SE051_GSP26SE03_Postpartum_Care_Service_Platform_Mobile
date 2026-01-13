@@ -12,15 +12,37 @@ class NotificationModel extends NotificationEntity {
     required super.type,
   });
 
-  factory NotificationModel.fromJson(Map<String, dynamic> json) {
+  NotificationModel copyWith({
+    String? id,
+    String? category,
+    String? title,
+    String? description,
+    DateTime? createdAt,
+    bool? isRead,
+    NotificationType? type,
+  }) {
     return NotificationModel(
-      id: json['id'] as String,
-      category: json['category'] as String,
-      title: json['title'] as String,
-      description: json['description'] as String?,
+      id: id ?? this.id,
+      category: category ?? this.category,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      createdAt: createdAt ?? this.createdAt,
+      isRead: isRead ?? this.isRead,
+      type: type ?? this.type,
+    );
+  }
+
+  factory NotificationModel.fromJson(Map<String, dynamic> json) {
+    final status = (json['status'] as String?)?.toLowerCase();
+    final typeName = json['notificationTypeName'] as String?;
+    return NotificationModel(
+      id: (json['id'] ?? '').toString(),
+      category: typeName ?? 'Thông báo',
+      title: (json['title'] ?? '').toString(),
+      description: json['content'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),
-      isRead: json['isRead'] as bool? ?? false,
-      type: _parseType(json['type'] as String?),
+      isRead: status == 'read',
+      type: _parseType(typeName),
     );
   }
 
@@ -36,21 +58,14 @@ class NotificationModel extends NotificationEntity {
     };
   }
 
-  static NotificationType _parseType(String? type) {
-    switch (type) {
-      case 'payment':
-        return NotificationType.payment;
-      case 'reminder':
-        return NotificationType.reminder;
-      case 'security':
-        return NotificationType.security;
-      case 'loan':
-        return NotificationType.loan;
-      case 'budget':
-        return NotificationType.budget;
-      default:
-        return NotificationType.general;
-    }
+  static NotificationType _parseType(String? typeName) {
+    final normalized = (typeName ?? '').toLowerCase();
+    if (normalized.contains('payment')) return NotificationType.payment;
+    if (normalized.contains('reminder')) return NotificationType.reminder;
+    if (normalized.contains('security')) return NotificationType.security;
+    if (normalized.contains('loan')) return NotificationType.loan;
+    if (normalized.contains('budget')) return NotificationType.budget;
+    return NotificationType.general;
   }
 
   static String _typeToString(NotificationType type) {

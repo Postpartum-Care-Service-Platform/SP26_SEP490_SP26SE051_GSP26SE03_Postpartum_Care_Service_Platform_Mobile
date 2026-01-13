@@ -6,7 +6,8 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/di/injection_container.dart';
-import '../../../../features/auth/domain/repositories/auth_repository.dart';
+import '../../../../features/auth/presentation/bloc/auth_bloc.dart';
+import '../../../../features/auth/presentation/bloc/auth_state.dart';
 import '../../../../features/package/presentation/bloc/package_bloc.dart';
 import '../../../../features/package/presentation/bloc/package_event.dart';
 import '../../../../features/package/presentation/bloc/package_state.dart';
@@ -26,60 +27,48 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final AuthRepository _authRepository = InjectionContainer.authRepository;
-  String? _username;
-  String? _avatarUrl;
-  bool _isEmailVerified = false;
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadCurrentAccount();
-  }
-
-  Future<void> _loadCurrentAccount() async {
-    try {
-      final account = await _authRepository.getCurrentAccount();
-      
-      if (mounted) {
-        setState(() {
-          _username = account.username;
-          _avatarUrl = account.avatarUrl;
-          _isEmailVerified = account.isEmailVerified;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _username = 'Mom'; // Fallback to default
-          _isLoading = false;
-        });
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => InjectionContainer.packageBloc
         ..add(const PackageLoadRequested()),
-      child: SafeArea(
-        bottom: false,
-        child: SingleChildScrollView(
-          padding: AppResponsive.pagePadding(context),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-            // Top inset is already handled by SafeArea.
-            const SizedBox(height: 8),
-            HomeHeader(
-              userName: _username,
-              avatarUrl: _avatarUrl,
-              isEmailVerified: _isEmailVerified,
-              isLoading: _isLoading,
-            ),
+      child: BlocBuilder<AuthBloc, AuthState>(
+        builder: (context, authState) {
+          String? username;
+          String? avatarUrl;
+          bool isEmailVerified = false;
+          bool isLoading = true;
+
+          if (authState is AuthCurrentAccountLoaded) {
+            username = authState.account.username;
+            avatarUrl = authState.account.avatarUrl;
+            isEmailVerified = authState.account.isEmailVerified;
+            isLoading = false;
+          } else if (authState is AuthLoading) {
+            isLoading = true;
+          } else if (authState is AuthError) {
+            username = 'Mom'; // Fallback to default
+            isLoading = false;
+          } else {
+            isLoading = true;
+          }
+
+          return SafeArea(
+            bottom: false,
+            child: SingleChildScrollView(
+              padding: AppResponsive.pagePadding(context),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                // Top inset is already handled by SafeArea.
+                const SizedBox(height: 8),
+                HomeHeader(
+                  userName: username,
+                  avatarUrl: avatarUrl,
+                  isEmailVerified: isEmailVerified,
+                  isLoading: isLoading,
+                ),
             const SizedBox(height: 32),
 
             // Quick Actions Section
@@ -253,9 +242,11 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
           const SizedBox(height: 24),
-            ],
-          ),
-        ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }

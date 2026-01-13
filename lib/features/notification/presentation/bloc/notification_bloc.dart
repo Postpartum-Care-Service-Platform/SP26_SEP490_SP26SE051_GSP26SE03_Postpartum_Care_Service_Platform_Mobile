@@ -45,12 +45,20 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     Emitter<NotificationState> emit,
   ) async {
     if (state is NotificationLoaded) {
+      final current = state as NotificationLoaded;
       try {
         await markNotificationReadUsecase(event.notificationId);
-        final notifications = await getNotificationsUsecase();
-        final unreadCount = await getUnreadCountUsecase();
-        emit(NotificationLoaded(
-          notifications: notifications,
+        final updatedNotifications = current.notifications
+            .map(
+              (n) => n.id == event.notificationId
+                  ? n.copyWith(isRead: true)
+                  : n,
+            )
+            .toList();
+        final unreadCount =
+            updatedNotifications.where((n) => !n.isRead).length;
+        emit(current.copyWith(
+          notifications: updatedNotifications,
           unreadCount: unreadCount,
         ));
       } catch (e) {
@@ -64,18 +72,18 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     Emitter<NotificationState> emit,
   ) async {
     if (state is NotificationLoaded) {
+      final current = state as NotificationLoaded;
       try {
-        final notifications = await getNotificationsUsecase();
-        for (final notification in notifications) {
+        for (final notification in current.notifications) {
           if (!notification.isRead) {
             await markNotificationReadUsecase(notification.id);
           }
         }
-        final updatedNotifications = await getNotificationsUsecase();
-        final unreadCount = await getUnreadCountUsecase();
-        emit(NotificationLoaded(
+        final updatedNotifications =
+            current.notifications.map((n) => n.copyWith(isRead: true)).toList();
+        emit(current.copyWith(
           notifications: updatedNotifications,
-          unreadCount: unreadCount,
+          unreadCount: 0,
         ));
       } catch (e) {
         emit(NotificationError(e.toString()));
@@ -88,12 +96,14 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     Emitter<NotificationState> emit,
   ) async {
     if (state is NotificationLoaded) {
+      final current = state as NotificationLoaded;
       try {
-        // Delete will be handled by repository
-        final notifications = await getNotificationsUsecase();
-        final unreadCount = await getUnreadCountUsecase();
-        emit(NotificationLoaded(
-          notifications: notifications,
+        final updatedNotifications =
+            current.notifications.where((n) => n.id != event.notificationId).toList();
+        final unreadCount =
+            updatedNotifications.where((n) => !n.isRead).length;
+        emit(current.copyWith(
+          notifications: updatedNotifications,
           unreadCount: unreadCount,
         ));
       } catch (e) {

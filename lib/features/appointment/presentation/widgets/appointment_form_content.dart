@@ -5,6 +5,7 @@ import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_widgets.dart';
 import '../../domain/entities/appointment_entity.dart';
+import 'business_hours_time_picker.dart';
 
 /// Appointment form content widget (for use in drawer or dialog)
 class AppointmentFormContent extends StatefulWidget {
@@ -48,8 +49,11 @@ class AppointmentFormContentState extends State<AppointmentFormContent> {
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime now = DateTime.now();
+    // Only allow selecting today or future dates
     final DateTime firstDate = widget.appointment != null
-        ? widget.appointment!.appointmentDate.subtract(const Duration(days: 365))
+        ? (widget.appointment!.appointmentDate.isBefore(now)
+            ? widget.appointment!.appointmentDate
+            : now)
         : now;
     final DateTime lastDate = now.add(const Duration(days: 365));
 
@@ -59,25 +63,60 @@ class AppointmentFormContentState extends State<AppointmentFormContent> {
       firstDate: firstDate,
       lastDate: lastDate,
       locale: const Locale('vi', 'VN'),
+      // Disable past dates
+      selectableDayPredicate: (DateTime date) {
+        // Allow today and future dates only
+        final today = DateTime(now.year, now.month, now.day);
+        final selectedDay = DateTime(date.year, date.month, date.day);
+        return selectedDay.isAtSameMomentAs(today) || selectedDay.isAfter(today);
+      },
     );
 
     if (picked != null) {
       setState(() {
         _selectedDate = picked;
+        // Reset time if selected date is today and current time has passed
+        final today = DateTime(now.year, now.month, now.day);
+        final selectedDay = DateTime(picked.year, picked.month, picked.day);
+        if (selectedDay.isAtSameMomentAs(today) && _selectedTime != null) {
+          final selectedDateTime = DateTime(
+            picked.year,
+            picked.month,
+            picked.day,
+            _selectedTime!.hour,
+            _selectedTime!.minute,
+          );
+          if (selectedDateTime.isBefore(now)) {
+            _selectedTime = null;
+          }
+        }
       });
+      
+      // Automatically show time picker after selecting date
+      if (mounted) {
+        await Future.delayed(const Duration(milliseconds: 300));
+        if (mounted) {
+          await _selectTime(context);
+        }
+      }
     }
   }
 
   Future<void> _selectTime(BuildContext context) async {
-    final TimeOfDay? picked = await showTimePicker(
+    if (_selectedDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Vui lòng chọn ngày trước'),
+          backgroundColor: AppColors.red,
+        ),
+      );
+      return;
+    }
+
+    final TimeOfDay? picked = await BusinessHoursTimePicker.show(
       context: context,
-      initialTime: _selectedTime ?? const TimeOfDay(hour: 9, minute: 0),
-      builder: (context, child) {
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
-          child: child!,
-        );
-      },
+      selectedDate: _selectedDate!,
+      initialTime: _selectedTime,
     );
 
     if (picked != null) {
@@ -112,6 +151,37 @@ class AppointmentFormContentState extends State<AppointmentFormContent> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppStrings.pleaseSelectTime),
+          backgroundColor: AppColors.red,
+        ),
+      );
+      return false;
+    }
+
+    // Validate that appointment is not in the past
+    final appointmentDateTime = DateTime(
+      _selectedDate!.year,
+      _selectedDate!.month,
+      _selectedDate!.day,
+      _selectedTime!.hour,
+      _selectedTime!.minute,
+    );
+    
+    final now = DateTime.now();
+    if (appointmentDateTime.isBefore(now)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Không thể đặt lịch hẹn vào thời gian quá khứ'),
+          backgroundColor: AppColors.red,
+        ),
+      );
+      return false;
+    }
+
+    // Validate business hours (8:00 - 17:00)
+    if (_selectedTime!.hour < 8 || _selectedTime!.hour > 17) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Chỉ có thể đặt lịch trong giờ hành chính (8:00 - 17:00)'),
           backgroundColor: AppColors.red,
         ),
       );

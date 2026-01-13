@@ -1,5 +1,7 @@
+import 'package:dio/dio.dart';
+import '../../../../core/apis/api_client.dart';
+import '../../../../core/apis/api_endpoints.dart';
 import '../models/notification_model.dart';
-import '../../domain/entities/notification_entity.dart';
 
 /// Notification data source interface
 abstract class NotificationDataSource {
@@ -10,101 +12,57 @@ abstract class NotificationDataSource {
   Future<int> getUnreadCount();
 }
 
-/// Mock notification data source implementation
+/// Notification data source implementation backed by API
 class NotificationDataSourceImpl implements NotificationDataSource {
-  // Mock data - will be replaced with API calls later
-  final List<NotificationModel> _mockNotifications = [
-    NotificationModel(
-      id: '1',
-      category: 'Payment Received',
-      title: 'Earn 5% Cashback on Grocery Purchases this Weekend!',
-      createdAt: DateTime.now().subtract(const Duration(minutes: 34)),
-      isRead: false,
-      type: NotificationType.payment,
-    ),
-    NotificationModel(
-      id: '2',
-      category: 'Payment Reminder',
-      title: 'Diversify Your Portfolio with Emerging Markets Fund',
-      createdAt: DateTime.now().subtract(const Duration(minutes: 15)),
-      isRead: false,
-      type: NotificationType.reminder,
-    ),
-    NotificationModel(
-      id: '3',
-      category: 'Security Alert',
-      title: 'Suspicious Login Attempt Detected on Your Account',
-      createdAt: DateTime.now().subtract(const Duration(minutes: 52)),
-      isRead: true,
-      type: NotificationType.security,
-    ),
-    NotificationModel(
-      id: '4',
-      category: 'Loan Reminder',
-      title: 'Your Mortgage Payment is Due in 3 Days',
-      createdAt: DateTime.now().subtract(const Duration(minutes: 35)),
-      isRead: false,
-      type: NotificationType.loan,
-    ),
-    NotificationModel(
-      id: '5',
-      category: 'Budget Advisory',
-      title: '80% of Your Monthly Budget Spent - Time for Expense Review!',
-      createdAt: DateTime.now().subtract(const Duration(minutes: 24)),
-      isRead: false,
-      type: NotificationType.budget,
-    ),
-  ];
+  NotificationDataSourceImpl({Dio? dio}) : _dio = dio ?? ApiClient.dio;
+
+  final Dio _dio;
+
+  /// Local cache to support read/mark interactions even if API lacks endpoints.
+  List<NotificationModel> _cachedNotifications = [];
 
   @override
   Future<List<NotificationModel>> getNotifications() async {
-    // Simulate API delay
-    await Future.delayed(const Duration(milliseconds: 300));
-    return List.from(_mockNotifications);
+    final response = await _dio.get(ApiEndpoints.notificationsMe);
+    final data = response.data;
+
+    if (data is List) {
+      final notifications = data
+          .map((item) => NotificationModel.fromJson(item as Map<String, dynamic>))
+          .toList();
+      _cachedNotifications = notifications;
+      return notifications;
+    }
+
+    throw Exception('Phản hồi thông báo không hợp lệ');
   }
 
   @override
   Future<void> markAsRead(String notificationId) async {
-    await Future.delayed(const Duration(milliseconds: 200));
-    final index = _mockNotifications.indexWhere((n) => n.id == notificationId);
-    if (index != -1) {
-      _mockNotifications[index] = NotificationModel(
-        id: _mockNotifications[index].id,
-        category: _mockNotifications[index].category,
-        title: _mockNotifications[index].title,
-        description: _mockNotifications[index].description,
-        createdAt: _mockNotifications[index].createdAt,
-        isRead: true,
-        type: _mockNotifications[index].type,
-      );
-    }
+    _cachedNotifications = _cachedNotifications
+        .map(
+          (n) => n.id == notificationId ? n.copyWith(isRead: true) : n,
+        )
+        .toList();
   }
 
   @override
   Future<void> markAllAsRead() async {
-    await Future.delayed(const Duration(milliseconds: 200));
-    for (int i = 0; i < _mockNotifications.length; i++) {
-      _mockNotifications[i] = NotificationModel(
-        id: _mockNotifications[i].id,
-        category: _mockNotifications[i].category,
-        title: _mockNotifications[i].title,
-        description: _mockNotifications[i].description,
-        createdAt: _mockNotifications[i].createdAt,
-        isRead: true,
-        type: _mockNotifications[i].type,
-      );
-    }
+    _cachedNotifications =
+        _cachedNotifications.map((n) => n.copyWith(isRead: true)).toList();
   }
 
   @override
   Future<void> deleteNotification(String notificationId) async {
-    await Future.delayed(const Duration(milliseconds: 200));
-    _mockNotifications.removeWhere((n) => n.id == notificationId);
+    _cachedNotifications =
+        _cachedNotifications.where((n) => n.id != notificationId).toList();
   }
 
   @override
   Future<int> getUnreadCount() async {
-    await Future.delayed(const Duration(milliseconds: 100));
-    return _mockNotifications.where((n) => !n.isRead).length;
+    if (_cachedNotifications.isEmpty) {
+      _cachedNotifications = await getNotifications();
+    }
+    return _cachedNotifications.where((n) => !n.isRead).length;
   }
 }

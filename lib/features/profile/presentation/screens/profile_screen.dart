@@ -8,7 +8,8 @@ import '../../../../core/apis/api_client.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/widgets/app_widgets.dart';
-import '../../../../features/auth/domain/repositories/auth_repository.dart';
+import '../../../../features/auth/presentation/bloc/auth_bloc.dart';
+import '../../../../features/auth/presentation/bloc/auth_state.dart';
 import '../../../auth/presentation/screens/login_screen.dart';
 import '../../../family_profile/presentation/screens/family_profile_screen.dart';
 import '../widgets/profile_header.dart';
@@ -23,41 +24,6 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final AuthRepository _authRepository = InjectionContainer.authRepository;
-  String? _userId;
-  String? _userName;
-  String? _userEmail;
-  String? _avatarUrl;
-  bool _isEmailVerified = false;
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadCurrentAccount();
-  }
-
-  Future<void> _loadCurrentAccount() async {
-    try {
-      final account = await _authRepository.getCurrentAccount();
-      if (mounted) {
-        setState(() {
-          _userId = account.id;
-          _userName = account.username;
-          _userEmail = account.email;
-          _avatarUrl = account.avatarUrl;
-          _isEmailVerified = account.isEmailVerified;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
 
   Future<void> _handleLogout(BuildContext context) async {
     // Show confirmation dialog
@@ -97,19 +63,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
     
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Header
-            ProfileHeader(
-              userName: _userName,
-              userEmail: _userEmail,
-              avatarUrl: _avatarUrl,
-              isEmailVerified: _isEmailVerified,
-              isLoading: _isLoading,
-            ),
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, authState) {
+        String? userId;
+        String? userName;
+        String? userEmail;
+        String? avatarUrl;
+        bool isEmailVerified = false;
+        bool isLoading = true;
+
+        if (authState is AuthCurrentAccountLoaded) {
+          userId = authState.account.id;
+          userName = authState.account.username;
+          userEmail = authState.account.email;
+          avatarUrl = authState.account.avatarUrl;
+          isEmailVerified = authState.account.isEmailVerified;
+          isLoading = false;
+        } else if (authState is AuthLoading) {
+          isLoading = true;
+        } else {
+          isLoading = false;
+        }
+
+        return Scaffold(
+          backgroundColor: AppColors.background,
+          body: SafeArea(
+            child: Column(
+              children: [
+                // Header
+                ProfileHeader(
+                  userName: userName,
+                  userEmail: userEmail,
+                  avatarUrl: avatarUrl,
+                  isEmailVerified: isEmailVerified,
+                  isLoading: isLoading,
+                ),
 
             // Menu Items
             Expanded(
@@ -124,11 +112,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         icon: Icons.person_outline_rounded,
                         title: AppStrings.myAccount,
                         onTap: () {
-                          if (_userId == null) return;
+                          if (userId == null) return;
+                          // Get AuthBloc from context to share with AccountDetailsScreen
+                          final authBloc = context.read<AuthBloc>();
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (_) => AccountDetailsScreen(
-                                userId: _userId!,
+                              builder: (_) => BlocProvider.value(
+                                value: authBloc,
+                                child: AccountDetailsScreen(
+                                  userId: userId!,
+                                ),
                               ),
                             ),
                           );
@@ -138,10 +131,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         icon: Icons.people_outline,
                         title: AppStrings.familyProfile,
                         onTap: () {
+                          // Get AuthBloc from context to share with FamilyProfileScreen
+                          final authBloc = context.read<AuthBloc>();
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (_) => BlocProvider(
-                                create: (_) => InjectionContainer.familyProfileBloc,
+                              builder: (_) => MultiBlocProvider(
+                                providers: [
+                                  BlocProvider.value(value: authBloc),
+                                  BlocProvider(
+                                    create: (_) => InjectionContainer.familyProfileBloc,
+                                  ),
+                                ],
                                 child: const FamilyProfileScreen(),
                               ),
                             ),
@@ -244,9 +244,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
             ),
-          ],
-        ),
-      ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

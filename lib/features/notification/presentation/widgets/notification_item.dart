@@ -102,16 +102,6 @@ class NotificationItem extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Category
-                  Text(
-                    notification.category,
-                    style: AppTextStyles.arimo(
-                      fontSize: 14 * scale,
-                      fontWeight: FontWeight.normal,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  SizedBox(height: 4 * scale),
                   // Title
                   Text(
                     notification.title,
@@ -123,7 +113,22 @@ class NotificationItem extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  SizedBox(height: 8 * scale),
+                  if (notification.description != null &&
+                      notification.description!.isNotEmpty) ...[
+                    SizedBox(height: 4 * scale),
+                    // Content / body
+                    Text(
+                      notification.description!,
+                      style: AppTextStyles.arimo(
+                        fontSize: 13 * scale,
+                        fontWeight: FontWeight.normal,
+                        color: AppColors.textSecondary,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                  SizedBox(height: 6 * scale),
                   // Time ago
                   Text(
                     _formatTimeAgo(notification.createdAt),

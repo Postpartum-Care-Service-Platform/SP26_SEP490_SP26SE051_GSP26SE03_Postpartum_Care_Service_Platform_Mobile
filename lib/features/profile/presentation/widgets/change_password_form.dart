@@ -54,6 +54,8 @@ class _ChangePasswordFormState extends State<ChangePasswordForm> {
           _currentPasswordController.clear();
           _newPasswordController.clear();
           _confirmNewPasswordController.clear();
+          // Refresh current account to update UI
+          context.read<AuthBloc>().add(const AuthLoadCurrentAccount());
         }
       },
       child: Form(

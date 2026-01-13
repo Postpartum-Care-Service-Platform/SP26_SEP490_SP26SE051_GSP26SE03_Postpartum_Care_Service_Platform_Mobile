@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/di/injection_container.dart';
+import '../../features/auth/presentation/bloc/auth_event.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/appointment/presentation/screens/appointment_screen.dart';
@@ -56,23 +59,27 @@ class _AppScaffoldState extends State<AppScaffold> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: PageView(
-        controller: _pageController,
-        onPageChanged: (index) {
-          if (index < 0 || index >= AppBottomTab.values.length) return;
-          setState(() {
-            _currentTab = AppBottomTab.values[index];
-          });
-        },
-        children: _screens,
+    return BlocProvider(
+      create: (context) => InjectionContainer.authBloc
+        ..add(const AuthLoadCurrentAccount()),
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: PageView(
+          controller: _pageController,
+          onPageChanged: (index) {
+            if (index < 0 || index >= AppBottomTab.values.length) return;
+            setState(() {
+              _currentTab = AppBottomTab.values[index];
+            });
+          },
+          children: _screens,
+        ),
+        bottomNavigationBar: AppBottomNavigationBar(
+          currentTab: _currentTab,
+          onTabSelected: _onTabSelected,
+        ),
+        endDrawer: const NotificationDrawer(),
       ),
-      bottomNavigationBar: AppBottomNavigationBar(
-        currentTab: _currentTab,
-        onTabSelected: _onTabSelected,
-      ),
-      endDrawer: const NotificationDrawer(),
     );
   }
 }

@@ -148,4 +148,17 @@ class AuthChangePasswordSuccess extends AuthState {
   List<Object?> get props => [message, isPasswordObscured];
 }
 
+/// Current account loaded state
+class AuthCurrentAccountLoaded extends AuthState {
+  final CurrentAccountModel account;
+
+  const AuthCurrentAccountLoaded({
+    required this.account,
+    super.isPasswordObscured,
+  });
+
+  @override
+  List<Object?> get props => [account, isPasswordObscured];
+}
+
 
