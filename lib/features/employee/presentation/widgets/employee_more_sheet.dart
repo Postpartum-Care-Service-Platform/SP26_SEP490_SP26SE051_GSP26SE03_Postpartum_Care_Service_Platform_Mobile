@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../screens/employee_meal_plan_screen.dart';
-import '../screens/employee_service_booking_screen.dart';
+import '../screens/service_booking_screen.dart';
 
 class EmployeeMoreSheet {
   EmployeeMoreSheet._();
@@ -56,7 +56,7 @@ class EmployeeMoreSheet {
                     Navigator.of(context).pop();
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => const EmployeeServiceBookingScreen(),
+                        builder: (_) => const ServiceBookingScreen(),
                       ),
                     );
                   },

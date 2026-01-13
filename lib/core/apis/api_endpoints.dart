@@ -19,6 +19,7 @@ class ApiEndpoints {
 
   // Account endpoints
   static const String getCurrentAccount = '/Account/GetCurrentAccount';
+  static const String getAllAccounts = '/Account/GetAll';
   static String getAccountById(String id) => '/Account/GetById/$id';
 
   // User endpoints (legacy / placeholder)
@@ -57,5 +58,73 @@ class ApiEndpoints {
 
   // Care Plan endpoints
   static String getCarePlanDetailsByPackage(int packageId) => '/care-plan-details/by-package/$packageId';
+
+  // ==========================================
+  // Employee - Appointment endpoints
+  // ==========================================
+  
+  /// Get appointments assigned to current staff
+  static const String myAssignedAppointments = '/Appointment/my-assigned';
+  
+  /// Get all appointments (for staff/admin)
+  static const String allAppointments = '/Appointment/all';
+  
+  /// Get appointment by ID
+  static String appointmentById(int id) => '/Appointment/$id';
+  
+  /// Confirm appointment (staff confirms)
+  static String confirmAppointment(int id) => '/Appointment/$id/confirm';
+  
+  /// Complete appointment (mark as completed)
+  static String completeAppointment(int id) => '/Appointment/$id/complete';
+  
+  /// Cancel appointment
+  static String cancelAppointment(int id) => '/Appointment/$id/cancel';
+  
+  /// Create appointment for customer (staff creates)
+  static const String createAppointmentForCustomer = '/Appointment/create-for-customer';
+
+  // ==========================================
+  // Employee - Room endpoints
+  // ==========================================
+  
+  /// Get all rooms
+  static const String rooms = '/Room';
+  
+  /// Get room by ID
+  static String roomById(int id) => '/Room/$id';
+
+  // ==========================================
+  // Employee - AmenityService endpoints
+  // ==========================================
+  
+  /// Get all amenity services
+  static const String amenityServices = '/AmenityService';
+
+  // ==========================================
+  // Employee - Service Booking endpoints (TODO: Chờ BE API)
+  // ==========================================
+  
+  /// Create service booking
+  /// TODO: Update khi BE có API
+  static const String createServiceBooking = '/ServiceBooking';
+  
+  /// Get tickets by customer
+  static String getTicketsByCustomer(String customerId) => '/ServiceBooking/customer/$customerId';
+  
+  /// Get my assigned tickets
+  static const String myAssignedTickets = '/ServiceBooking/my-assigned';
+  
+  /// Get all tickets
+  static const String allTickets = '/ServiceBooking/all';
+  
+  /// Cancel ticket
+  static String cancelTicket(int ticketId) => '/ServiceBooking/$ticketId/cancel';
+  
+  /// Confirm ticket
+  static String confirmTicket(int ticketId) => '/ServiceBooking/$ticketId/confirm';
+  
+  /// Complete ticket
+  static String completeTicket(int ticketId) => '/ServiceBooking/$ticketId/complete';
 }
 
