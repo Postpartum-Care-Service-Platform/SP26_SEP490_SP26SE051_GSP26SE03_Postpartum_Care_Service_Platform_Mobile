@@ -61,6 +61,7 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
         date: event.date,
         time: event.time,
         name: event.name,
+        appointmentTypeId: event.appointmentTypeId,
       );
       final appointments = await getAppointmentsUsecase();
       emit(AppointmentLoaded(appointments: appointments));
@@ -81,6 +82,7 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
         date: event.date,
         time: event.time,
         name: event.name,
+        appointmentTypeId: event.appointmentTypeId,
       );
       final appointments = await getAppointmentsUsecase();
       emit(AppointmentLoaded(appointments: appointments));

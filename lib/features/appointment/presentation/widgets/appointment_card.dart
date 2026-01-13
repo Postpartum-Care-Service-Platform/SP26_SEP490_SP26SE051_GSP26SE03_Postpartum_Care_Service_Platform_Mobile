@@ -174,9 +174,37 @@ class AppointmentCard extends StatelessWidget {
                       ),
                   ],
                 ),
-                SizedBox(height: 14 * scale),
+                SizedBox(height: 8 * scale),
+
+                // Appointment type (if available)
+                if (appointment.appointmentType != null) ...[
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.event_note_outlined,
+                        size: 18 * scale,
+                        color: AppColors.textSecondary,
+                      ),
+                      SizedBox(width: 8 * scale),
+                      Expanded(
+                        child: Text(
+                          appointment.appointmentType!.name,
+                          style: AppTextStyles.arimo(
+                            fontSize: 13 * scale,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textSecondary,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 10 * scale),
+                ],
 
                 // Ngày hẹn
+
                 Row(
                   children: [
                     _IconBadge(icon: Icons.event_available, scale: scale),

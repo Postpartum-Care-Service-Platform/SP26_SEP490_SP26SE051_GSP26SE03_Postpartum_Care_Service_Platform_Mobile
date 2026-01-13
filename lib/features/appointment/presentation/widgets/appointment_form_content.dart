@@ -4,13 +4,17 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_widgets.dart';
+import '../../../../core/widgets/app_toast.dart';
 import '../../domain/entities/appointment_entity.dart';
+import '../../domain/entities/appointment_type_entity.dart';
+import '../../domain/usecases/get_appointment_types_usecase.dart';
+import '../../../../core/di/injection_container.dart';
 import 'business_hours_time_picker.dart';
 
 /// Appointment form content widget (for use in drawer or dialog)
 class AppointmentFormContent extends StatefulWidget {
   final AppointmentEntity? appointment;
-  final Function(String date, String time, String name) onSubmit;
+  final Function(String date, String time, String name, int? appointmentTypeId) onSubmit;
 
   const AppointmentFormContent({
     super.key,
@@ -28,6 +32,9 @@ class AppointmentFormContentState extends State<AppointmentFormContent> {
   late TextEditingController _nameController;
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
+  List<AppointmentTypeEntity> _appointmentTypes = [];
+  int? _selectedAppointmentTypeId;
+  bool _isLoadingTypes = false;
 
   @override
   void initState() {
@@ -38,13 +45,39 @@ class AppointmentFormContentState extends State<AppointmentFormContent> {
     if (widget.appointment != null) {
       _selectedDate = widget.appointment!.appointmentDate;
       _selectedTime = TimeOfDay.fromDateTime(widget.appointment!.appointmentDate);
+      _selectedAppointmentTypeId = widget.appointment!.appointmentType?.id;
     }
+    _loadAppointmentTypes();
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadAppointmentTypes() async {
+    setState(() {
+      _isLoadingTypes = true;
+    });
+    try {
+      final GetAppointmentTypesUsecase usecase =
+          InjectionContainer.appointmentTypesUsecase;
+      final types = await usecase();
+      setState(() {
+        _appointmentTypes = types;
+        _selectedAppointmentTypeId = _selectedAppointmentTypeId ??
+            (types.isNotEmpty ? types.first.id : null);
+      });
+    } catch (_) {
+      // silent fail; dropdown will be empty
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingTypes = false;
+        });
+      }
+    }
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -104,11 +137,9 @@ class AppointmentFormContentState extends State<AppointmentFormContent> {
 
   Future<void> _selectTime(BuildContext context) async {
     if (_selectedDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Vui lòng chọn ngày trước'),
-          backgroundColor: AppColors.red,
-        ),
+      AppToast.showError(
+        context,
+        message: 'Vui lòng chọn ngày trước',
       );
       return;
     }
@@ -128,31 +159,25 @@ class AppointmentFormContentState extends State<AppointmentFormContent> {
 
   bool _validate() {
     if (_nameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppStrings.pleaseEnterAppointmentName),
-          backgroundColor: AppColors.red,
-        ),
+      AppToast.showError(
+        context,
+        message: AppStrings.pleaseEnterAppointmentName,
       );
       return false;
     }
 
     if (_selectedDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppStrings.pleaseSelectDate),
-          backgroundColor: AppColors.red,
-        ),
+      AppToast.showError(
+        context,
+        message: AppStrings.pleaseSelectDate,
       );
       return false;
     }
 
     if (_selectedTime == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppStrings.pleaseSelectTime),
-          backgroundColor: AppColors.red,
-        ),
+      AppToast.showError(
+        context,
+        message: AppStrings.pleaseSelectTime,
       );
       return false;
     }
@@ -168,22 +193,26 @@ class AppointmentFormContentState extends State<AppointmentFormContent> {
     
     final now = DateTime.now();
     if (appointmentDateTime.isBefore(now)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Không thể đặt lịch hẹn vào thời gian quá khứ'),
-          backgroundColor: AppColors.red,
-        ),
+      AppToast.showError(
+        context,
+        message: 'Không thể đặt lịch hẹn vào thời gian quá khứ',
       );
       return false;
     }
 
     // Validate business hours (8:00 - 17:00)
     if (_selectedTime!.hour < 8 || _selectedTime!.hour > 17) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Chỉ có thể đặt lịch trong giờ hành chính (8:00 - 17:00)'),
-          backgroundColor: AppColors.red,
-        ),
+      AppToast.showError(
+        context,
+        message: 'Chỉ có thể đặt lịch trong giờ hành chính (8:00 - 17:00)',
+      );
+      return false;
+    }
+
+    if (_appointmentTypes.isNotEmpty && _selectedAppointmentTypeId == null) {
+      AppToast.showError(
+        context,
+        message: AppStrings.pleaseSelectAppointmentType,
       );
       return false;
     }
@@ -346,6 +375,99 @@ class AppointmentFormContentState extends State<AppointmentFormContent> {
             ),
           ],
         ),
+        SizedBox(height: 12 * scale),
+
+        // Appointment Type - single choice list
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              AppStrings.appointmentType,
+              style: AppTextStyles.arimo(
+                fontSize: 13 * scale,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            SizedBox(height: 8 * scale),
+            if (_isLoadingTypes)
+              Text(
+                '${AppStrings.loading}...',
+                style: AppTextStyles.arimo(
+                  fontSize: 13 * scale,
+                  color: AppColors.textSecondary,
+                ),
+              )
+            else if (_appointmentTypes.isEmpty)
+              Text(
+                AppStrings.selectAppointmentType,
+                style: AppTextStyles.arimo(
+                  fontSize: 13 * scale,
+                  color: AppColors.textSecondary,
+                ),
+              )
+            else
+              Column(
+                children: _appointmentTypes.map((type) {
+                  final bool isSelected =
+                      _selectedAppointmentTypeId == type.id;
+                  return InkWell(
+                    onTap: () {
+                      setState(() {
+                        _selectedAppointmentTypeId = type.id;
+                      });
+                    },
+                    child: Container(
+                      margin: EdgeInsets.only(bottom: 6 * scale),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12 * scale,
+                        vertical: 10 * scale,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColors.primary.withValues(alpha: 0.06)
+                            : AppColors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isSelected
+                              ? AppColors.primary
+                              : AppColors.borderLight,
+                          width: isSelected ? 1.5 : 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            isSelected
+                                ? Icons.radio_button_checked
+                                : Icons.radio_button_off,
+                            size: 18 * scale,
+                            color: isSelected
+                                ? AppColors.primary
+                                : AppColors.textSecondary,
+                          ),
+                          SizedBox(width: 8 * scale),
+                          Expanded(
+                            child: Text(
+                              type.name,
+                              style: AppTextStyles.arimo(
+                                fontSize: 14 * scale,
+                                color: AppColors.textPrimary,
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.w400,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+          ],
+        ),
       ],
     );
   }
@@ -359,6 +481,11 @@ class AppointmentFormContentState extends State<AppointmentFormContent> {
     final timeStr =
         '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}';
 
-    widget.onSubmit(dateStr, timeStr, _nameController.text.trim());
+    widget.onSubmit(
+      dateStr,
+      timeStr,
+      _nameController.text.trim(),
+      _selectedAppointmentTypeId,
+    );
   }
 }

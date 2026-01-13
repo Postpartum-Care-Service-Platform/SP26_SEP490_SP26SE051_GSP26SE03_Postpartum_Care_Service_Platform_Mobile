@@ -247,6 +247,9 @@ class AppStrings {
   static const String selectAppointmentDate = 'Chọn ngày';
   static const String appointmentTime = 'Giờ hẹn';
   static const String selectAppointmentTime = 'Chọn giờ';
+  static const String appointmentType = 'Loại lịch hẹn';
+  static const String selectAppointmentType = 'Chọn loại lịch hẹn';
+  static const String pleaseSelectAppointmentType = 'Vui lòng chọn loại lịch hẹn';
   static const String appointmentLocation = 'Địa điểm';
   static const String appointmentLocationName = 'The Joyful Nest';
   static const String appointmentLocationAddress =

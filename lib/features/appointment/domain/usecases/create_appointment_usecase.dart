@@ -11,11 +11,13 @@ class CreateAppointmentUsecase {
     required String date,
     required String time,
     required String name,
+    int? appointmentTypeId,
   }) async {
     return await repository.createAppointment(
       date: date,
       time: time,
       name: name,
+      appointmentTypeId: appointmentTypeId,
     );
   }
 }

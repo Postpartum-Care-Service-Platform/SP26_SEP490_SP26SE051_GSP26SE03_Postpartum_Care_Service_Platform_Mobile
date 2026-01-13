@@ -44,6 +44,7 @@ import '../../features/appointment/domain/usecases/get_appointments_usecase.dart
 import '../../features/appointment/domain/usecases/create_appointment_usecase.dart';
 import '../../features/appointment/domain/usecases/update_appointment_usecase.dart';
 import '../../features/appointment/domain/usecases/cancel_appointment_usecase.dart';
+import '../../features/appointment/domain/usecases/get_appointment_types_usecase.dart';
 import '../../features/appointment/presentation/bloc/appointment_bloc.dart';
 import '../apis/api_client.dart';
 
@@ -144,6 +145,8 @@ class InjectionContainer {
       UpdateAppointmentUsecase(appointmentRepository);
   static CancelAppointmentUsecase get _cancelAppointmentUsecase =>
       CancelAppointmentUsecase(appointmentRepository);
+  static GetAppointmentTypesUsecase get appointmentTypesUsecase =>
+      GetAppointmentTypesUsecase(appointmentRepository);
 
   // ==================== Blocs ====================
   

@@ -1,4 +1,5 @@
 import '../../domain/entities/appointment_entity.dart';
+import '../../domain/entities/appointment_type_entity.dart';
 import '../../domain/repositories/appointment_repository.dart';
 import '../datasources/appointment_datasource.dart';
 
@@ -19,11 +20,13 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
     required String date,
     required String time,
     required String name,
+    int? appointmentTypeId,
   }) async {
     final model = await dataSource.createAppointment(
       date: date,
       time: time,
       name: name,
+      appointmentTypeId: appointmentTypeId,
     );
     return model.toEntity();
   }
@@ -34,12 +37,14 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
     required String date,
     required String time,
     required String name,
+    int? appointmentTypeId,
   }) async {
     final model = await dataSource.updateAppointment(
       id: id,
       date: date,
       time: time,
       name: name,
+      appointmentTypeId: appointmentTypeId,
     );
     return model.toEntity();
   }
@@ -47,5 +52,11 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   @override
   Future<void> cancelAppointment(int id) async {
     await dataSource.cancelAppointment(id);
+  }
+
+  @override
+  Future<List<AppointmentTypeEntity>> getAppointmentTypes() async {
+    final models = await dataSource.getAppointmentTypes();
+    return models.map((m) => m.toEntity()).toList();
   }
 }

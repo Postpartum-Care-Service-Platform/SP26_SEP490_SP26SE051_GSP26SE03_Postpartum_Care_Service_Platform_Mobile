@@ -46,6 +46,7 @@ class ApiEndpoints {
   static const String appointments = '/Appointment';
   static String appointmentById(int id) => '/Appointment/$id';
   static String cancelAppointment(int id) => '/Appointment/$id/cancel';
+  static const String appointmentTypes = '/AppointmentType';
 
   // Notification endpoints
   static const String notificationsMe = '/Notification/me';

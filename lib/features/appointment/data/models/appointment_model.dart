@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/appointment_entity.dart';
 import 'user_info_model.dart';
+import 'appointment_type_model.dart';
 
 /// Appointment model - Data layer
 class AppointmentModel extends Equatable {
@@ -11,6 +12,7 @@ class AppointmentModel extends Equatable {
   final DateTime createdAt;
   final UserInfoModel? customer;
   final UserInfoModel? staff;
+  final AppointmentTypeModel? appointmentType;
 
   const AppointmentModel({
     required this.id,
@@ -20,6 +22,7 @@ class AppointmentModel extends Equatable {
     required this.createdAt,
     this.customer,
     this.staff,
+    this.appointmentType,
   });
 
   factory AppointmentModel.fromJson(Map<String, dynamic> json) {
@@ -75,7 +78,15 @@ class AppointmentModel extends Equatable {
           ? UserInfoModel.fromJson(json['staff'] as Map<String, dynamic>)
           : null;
       
-      return AppointmentModel(
+      // Handle appointmentType (optional)
+      final appointmentTypeJson = json['appointmentType'];
+      final appointmentType = appointmentTypeJson != null
+          ? AppointmentTypeModel.fromJson(
+              appointmentTypeJson as Map<String, dynamic>,
+            )
+          : null;
+
+      final model = AppointmentModel(
         id: id,
         appointmentDate: appointmentDate,
         name: name,
@@ -83,7 +94,9 @@ class AppointmentModel extends Equatable {
         createdAt: createdAt,
         customer: customer,
         staff: staff,
+        appointmentType: appointmentType,
       );
+      return model;
     } catch (e) {
       rethrow;
     }
@@ -98,6 +111,7 @@ class AppointmentModel extends Equatable {
       'createdAt': createdAt.toIso8601String(),
       if (customer != null) 'customer': customer!.toJson(),
       if (staff != null) 'staff': staff!.toJson(),
+      if (appointmentType != null) 'appointmentType': appointmentType!.toJson(),
     };
   }
 
@@ -116,6 +130,7 @@ class AppointmentModel extends Equatable {
       createdAt: createdAt,
       customer: customer?.toEntity(),
       staff: staff?.toEntity(),
+      appointmentType: appointmentType?.toEntity(),
     );
   }
 
@@ -160,5 +175,6 @@ class AppointmentModel extends Equatable {
         createdAt,
         customer,
         staff,
+        appointmentType,
       ];
 }

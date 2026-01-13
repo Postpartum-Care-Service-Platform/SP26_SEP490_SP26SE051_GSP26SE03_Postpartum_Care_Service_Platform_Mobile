@@ -23,7 +23,7 @@ class AppointmentDrawerHelpers {
       backgroundColor: Colors.transparent,
       builder: (sheetContext) => Container(
         constraints: BoxConstraints(
-          maxHeight: screenHeight * 0.5,
+          maxHeight: screenHeight * 0.55,
         ),
         child: AppDrawerForm(
           title: AppStrings.createAppointment,
@@ -34,12 +34,13 @@ class AppointmentDrawerHelpers {
           children: [
             AppointmentFormContent(
               key: formKey,
-              onSubmit: (date, time, name) {
+              onSubmit: (date, time, name, appointmentTypeId) {
                 Navigator.of(sheetContext).pop();
                 bloc.add(AppointmentCreateRequested(
                   date: date,
                   time: time,
                   name: name,
+                  appointmentTypeId: appointmentTypeId,
                 ));
               },
             ),
@@ -64,7 +65,7 @@ class AppointmentDrawerHelpers {
       backgroundColor: Colors.transparent,
       builder: (sheetContext) => Container(
         constraints: BoxConstraints(
-          maxHeight: screenHeight * 0.5,
+          maxHeight: screenHeight * 0.55,
         ),
         child: AppDrawerForm(
           title: AppStrings.editAppointment,
@@ -76,13 +77,14 @@ class AppointmentDrawerHelpers {
             AppointmentFormContent(
               key: formKey,
               appointment: appointment,
-              onSubmit: (date, time, name) {
+              onSubmit: (date, time, name, appointmentTypeId) {
                 Navigator.of(sheetContext).pop();
                 bloc.add(AppointmentUpdateRequested(
                   id: appointment.id,
                   date: date,
                   time: time,
                   name: name,
+                  appointmentTypeId: appointmentTypeId,
                 ));
               },
             ),

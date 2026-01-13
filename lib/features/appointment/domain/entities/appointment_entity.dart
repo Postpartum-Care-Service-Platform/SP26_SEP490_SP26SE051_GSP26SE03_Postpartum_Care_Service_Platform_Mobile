@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'appointment_type_entity.dart';
 
 /// Appointment status enum
 enum AppointmentStatus {
@@ -36,6 +37,7 @@ class AppointmentEntity extends Equatable {
   final DateTime createdAt;
   final UserInfoEntity? customer;
   final UserInfoEntity? staff;
+  final AppointmentTypeEntity? appointmentType;
 
   const AppointmentEntity({
     required this.id,
@@ -45,6 +47,7 @@ class AppointmentEntity extends Equatable {
     required this.createdAt,
     this.customer,
     this.staff,
+    this.appointmentType,
   });
 
   @override
@@ -56,5 +59,6 @@ class AppointmentEntity extends Equatable {
         createdAt,
         customer,
         staff,
+        appointmentType,
       ];
 }

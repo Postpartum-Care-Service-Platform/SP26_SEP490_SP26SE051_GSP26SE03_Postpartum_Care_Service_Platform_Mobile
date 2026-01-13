@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
+import '../../../../core/widgets/app_toast.dart';
 
 /// Custom time picker for business hours (8:00 - 17:00)
 /// Shows a clock-like UI for easy time selection
@@ -253,33 +254,28 @@ class _BusinessHoursTimePickerState extends State<BusinessHoursTimePicker> {
               final minute = int.tryParse(minuteController.text);
 
               if (hour == null || minute == null) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Vui lòng nhập đầy đủ giờ và phút'),
-                    backgroundColor: AppColors.red,
-                  ),
+                AppToast.showError(
+                  context,
+                  message: 'Vui lòng nhập đầy đủ giờ và phút',
                 );
                 return;
               }
 
               // Validate business hours
               if (hour < _startHour || hour > _endHour) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Giờ phải trong khoảng $_startHour:00 - $_endHour:00'),
-                    backgroundColor: AppColors.red,
-                  ),
+                AppToast.showError(
+                  context,
+                  message:
+                      'Giờ phải trong khoảng $_startHour:00 - $_endHour:00',
                 );
                 return;
               }
 
               // Validate minute
               if (minute < 0 || minute > 59) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Phút phải trong khoảng 0-59'),
-                    backgroundColor: AppColors.red,
-                  ),
+                AppToast.showError(
+                  context,
+                  message: 'Phút phải trong khoảng 0-59',
                 );
                 return;
               }
@@ -294,11 +290,9 @@ class _BusinessHoursTimePickerState extends State<BusinessHoursTimePicker> {
               );
 
               if (selectedDateTime.isBefore(_now)) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Không thể chọn thời gian quá khứ'),
-                    backgroundColor: AppColors.red,
-                  ),
+                AppToast.showError(
+                  context,
+                  message: 'Không thể chọn thời gian quá khứ',
                 );
                 return;
               }
@@ -306,11 +300,10 @@ class _BusinessHoursTimePickerState extends State<BusinessHoursTimePicker> {
               // Validate minimum time if today
               if (isToday) {
                 if (hour < minHour) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Không thể chọn giờ đã qua. Giờ tối thiểu: ${(_now.hour + 1).toString().padLeft(2, '0')}:00'),
-                      backgroundColor: AppColors.red,
-                    ),
+                  AppToast.showError(
+                    context,
+                    message:
+                        'Không thể chọn giờ đã qua. Giờ tối thiểu: ${(_now.hour + 1).toString().padLeft(2, '0')}:00',
                   );
                   return;
                 }
@@ -318,11 +311,10 @@ class _BusinessHoursTimePickerState extends State<BusinessHoursTimePicker> {
                   final nextMinute = _now.minute + 1;
                   final nextHour = nextMinute >= 60 ? _now.hour + 1 : _now.hour;
                   final displayMinute = nextMinute >= 60 ? 0 : nextMinute;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Không thể chọn thời gian đã qua. Thời gian tối thiểu: ${nextHour.toString().padLeft(2, '0')}:${displayMinute.toString().padLeft(2, '0')}'),
-                      backgroundColor: AppColors.red,
-                    ),
+                  AppToast.showError(
+                    context,
+                    message:
+                        'Không thể chọn thời gian đã qua. Thời gian tối thiểu: ${nextHour.toString().padLeft(2, '0')}:${displayMinute.toString().padLeft(2, '0')}',
                   );
                   return;
                 }

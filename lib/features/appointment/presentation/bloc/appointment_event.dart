@@ -23,15 +23,17 @@ class AppointmentCreateRequested extends AppointmentEvent {
   final String date;
   final String time;
   final String name;
+  final int? appointmentTypeId;
 
   const AppointmentCreateRequested({
     required this.date,
     required this.time,
     required this.name,
+    this.appointmentTypeId,
   });
 
   @override
-  List<Object?> get props => [date, time, name];
+  List<Object?> get props => [date, time, name, appointmentTypeId];
 }
 
 /// Update appointment event
@@ -40,16 +42,18 @@ class AppointmentUpdateRequested extends AppointmentEvent {
   final String date;
   final String time;
   final String name;
+  final int? appointmentTypeId;
 
   const AppointmentUpdateRequested({
     required this.id,
     required this.date,
     required this.time,
     required this.name,
+    this.appointmentTypeId,
   });
 
   @override
-  List<Object?> get props => [id, date, time, name];
+  List<Object?> get props => [id, date, time, name, appointmentTypeId];
 }
 
 /// Cancel appointment event

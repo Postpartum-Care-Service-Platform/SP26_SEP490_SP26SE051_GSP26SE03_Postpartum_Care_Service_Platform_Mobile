@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import '../../../../core/apis/api_client.dart';
 import '../../../../core/apis/api_endpoints.dart';
 import '../models/appointment_model.dart';
+import '../models/appointment_type_model.dart';
 
 /// Appointment data source interface
 abstract class AppointmentDataSource {
@@ -10,14 +11,17 @@ abstract class AppointmentDataSource {
     required String date,
     required String time,
     required String name,
+    int? appointmentTypeId,
   });
   Future<AppointmentModel> updateAppointment({
     required int id,
     required String date,
     required String time,
     required String name,
+    int? appointmentTypeId,
   });
   Future<void> cancelAppointment(int id);
+  Future<List<AppointmentTypeModel>> getAppointmentTypes();
 }
 
 /// Appointment data source implementation
@@ -53,6 +57,7 @@ class AppointmentDataSourceImpl implements AppointmentDataSource {
     required String date,
     required String time,
     required String name,
+    int? appointmentTypeId,
   }) async {
     try {
       final response = await dio.post(
@@ -61,6 +66,7 @@ class AppointmentDataSourceImpl implements AppointmentDataSource {
           'date': date,
           'time': time,
           'name': name,
+          if (appointmentTypeId != null) 'appointmentTypeId': appointmentTypeId,
         },
       );
 
@@ -95,6 +101,7 @@ class AppointmentDataSourceImpl implements AppointmentDataSource {
     required String date,
     required String time,
     required String name,
+    int? appointmentTypeId,
   }) async {
     try {
       final response = await dio.put(
@@ -103,6 +110,7 @@ class AppointmentDataSourceImpl implements AppointmentDataSource {
           'date': date,
           'time': time,
           'name': name,
+          if (appointmentTypeId != null) 'appointmentTypeId': appointmentTypeId,
         },
       );
 
@@ -150,6 +158,27 @@ class AppointmentDataSourceImpl implements AppointmentDataSource {
         }
         throw Exception(
             errorMessage ?? 'Failed to cancel appointment: ${e.response?.statusCode}');
+      } else {
+        throw Exception('Network error: ${e.message}');
+      }
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  @override
+  Future<List<AppointmentTypeModel>> getAppointmentTypes() async {
+    try {
+      final response = await dio.get(ApiEndpoints.appointmentTypes);
+      final List<dynamic> data = response.data as List<dynamic>;
+      return data
+          .map((json) =>
+              AppointmentTypeModel.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(
+            'Failed to load appointment types: ${e.response?.statusCode}');
       } else {
         throw Exception('Network error: ${e.message}');
       }
