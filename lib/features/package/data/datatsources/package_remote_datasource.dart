@@ -3,16 +3,16 @@ import '../../../../core/apis/api_client.dart';
 import '../../../../core/apis/api_endpoints.dart';
 import '../models/package_model.dart';
 
-/// Package data source interface
-abstract class PackageDataSource {
+/// Package remote data source interface
+abstract class PackageRemoteDataSource {
   Future<List<PackageModel>> getPackages();
 }
 
-/// Package data source implementation
-class PackageDataSourceImpl implements PackageDataSource {
+/// Package remote data source implementation
+class PackageRemoteDataSourceImpl implements PackageRemoteDataSource {
   final Dio dio;
 
-  PackageDataSourceImpl({Dio? dio}) : dio = dio ?? ApiClient.dio;
+  PackageRemoteDataSourceImpl({Dio? dio}) : dio = dio ?? ApiClient.dio;
 
   @override
   Future<List<PackageModel>> getPackages() async {

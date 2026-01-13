@@ -42,3 +42,18 @@ class NotificationDelete extends NotificationEvent {
 class NotificationRefresh extends NotificationEvent {
   const NotificationRefresh();
 }
+
+/// Load notification detail event
+class NotificationLoadDetailRequested extends NotificationEvent {
+  final String notificationId;
+
+  const NotificationLoadDetailRequested(this.notificationId);
+
+  @override
+  List<Object?> get props => [notificationId];
+}
+
+/// Clear viewing detail event
+class NotificationClearDetail extends NotificationEvent {
+  const NotificationClearDetail();
+}

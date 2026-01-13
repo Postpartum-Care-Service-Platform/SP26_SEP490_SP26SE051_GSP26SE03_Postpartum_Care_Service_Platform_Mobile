@@ -1,10 +1,10 @@
 import '../../domain/entities/package_entity.dart';
 import '../../domain/repositories/package_repository.dart';
-import '../datatsources/package_datasource.dart';
+import '../datatsources/package_remote_datasource.dart';
 
 /// Package repository implementation - Data layer
 class PackageRepositoryImpl implements PackageRepository {
-  final PackageDataSource dataSource;
+  final PackageRemoteDataSource dataSource;
 
   PackageRepositoryImpl(this.dataSource);
 

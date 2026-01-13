@@ -50,6 +50,8 @@ class ApiEndpoints {
 
   // Notification endpoints
   static const String notificationsMe = '/Notification/me';
+  static String markNotificationAsRead(int id) => '/Notification/mark-as-read/$id';
+  static String getNotificationById(int id) => '/Notification/$id';
 
   // Profile endpoints
   static const String userProfile = '/profile';

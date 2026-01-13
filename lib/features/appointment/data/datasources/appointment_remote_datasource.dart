@@ -4,8 +4,8 @@ import '../../../../core/apis/api_endpoints.dart';
 import '../models/appointment_model.dart';
 import '../models/appointment_type_model.dart';
 
-/// Appointment data source interface
-abstract class AppointmentDataSource {
+/// Appointment remote data source interface
+abstract class AppointmentRemoteDataSource {
   Future<List<AppointmentModel>> getAppointments();
   Future<AppointmentModel> createAppointment({
     required String date,
@@ -24,11 +24,11 @@ abstract class AppointmentDataSource {
   Future<List<AppointmentTypeModel>> getAppointmentTypes();
 }
 
-/// Appointment data source implementation
-class AppointmentDataSourceImpl implements AppointmentDataSource {
+/// Appointment remote data source implementation
+class AppointmentRemoteDataSourceImpl implements AppointmentRemoteDataSource {
   final Dio dio;
 
-  AppointmentDataSourceImpl({Dio? dio}) : dio = dio ?? ApiClient.dio;
+  AppointmentRemoteDataSourceImpl({Dio? dio}) : dio = dio ?? ApiClient.dio;
 
   @override
   Future<List<AppointmentModel>> getAppointments() async {

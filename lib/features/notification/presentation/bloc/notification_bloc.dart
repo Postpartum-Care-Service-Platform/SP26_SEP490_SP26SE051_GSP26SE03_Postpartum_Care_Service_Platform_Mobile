@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/usecases/get_notifications_usecase.dart';
+import '../../domain/usecases/get_notification_by_id_usecase.dart';
 import '../../domain/usecases/mark_notification_read_usecase.dart';
 import '../../domain/usecases/get_unread_count_usecase.dart';
 import 'notification_event.dart';
@@ -8,15 +9,19 @@ import 'notification_state.dart';
 /// Notification BloC
 class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
   final GetNotificationsUsecase getNotificationsUsecase;
+  final GetNotificationByIdUsecase getNotificationByIdUsecase;
   final MarkNotificationReadUsecase markNotificationReadUsecase;
   final GetUnreadCountUsecase getUnreadCountUsecase;
 
   NotificationBloc({
     required this.getNotificationsUsecase,
+    required this.getNotificationByIdUsecase,
     required this.markNotificationReadUsecase,
     required this.getUnreadCountUsecase,
   }) : super(const NotificationInitial()) {
     on<NotificationLoadRequested>(_onLoadRequested);
+    on<NotificationLoadDetailRequested>(_onLoadDetailRequested);
+    on<NotificationClearDetail>(_onClearDetail);
     on<NotificationMarkAsRead>(_onMarkAsRead);
     on<NotificationMarkAllAsRead>(_onMarkAllAsRead);
     on<NotificationDelete>(_onDelete);
@@ -37,6 +42,47 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
       ));
     } catch (e) {
       emit(NotificationError(e.toString()));
+    }
+  }
+
+  Future<void> _onLoadDetailRequested(
+    NotificationLoadDetailRequested event,
+    Emitter<NotificationState> emit,
+  ) async {
+    // Keep the current NotificationLoaded state and just add the detail
+    if (state is NotificationLoaded) {
+      final current = state as NotificationLoaded;
+      try {
+        final notification = await getNotificationByIdUsecase(event.notificationId);
+        // Always emit new state even if notification is the same
+        // This ensures listener is triggered every time
+        emit(NotificationLoaded(
+          notifications: current.notifications,
+          unreadCount: current.unreadCount,
+          viewingDetail: notification,
+        ));
+      } catch (e) {
+        // On error, keep current state
+        emit(NotificationError(e.toString()));
+      }
+    } else {
+      // If not in NotificationLoaded state, try to load detail anyway
+      try {
+        final notification = await getNotificationByIdUsecase(event.notificationId);
+        emit(NotificationDetailLoaded(notification: notification));
+      } catch (e) {
+        emit(NotificationError(e.toString()));
+      }
+    }
+  }
+
+  Future<void> _onClearDetail(
+    NotificationClearDetail event,
+    Emitter<NotificationState> emit,
+  ) async {
+    if (state is NotificationLoaded) {
+      final current = state as NotificationLoaded;
+      emit(current.copyWith(viewingDetail: null));
     }
   }
 

@@ -218,6 +218,13 @@ class AppStrings {
   static const String hoursAgo = '{hours} giờ trước';
   static const String daysAgo = '{days} ngày trước';
   static const String justNow = 'Vừa xong';
+  static const String notificationDetail = 'Chi tiết thông báo';
+  static const String notificationContent = 'Nội dung';
+  static const String notificationCreatedAt = 'Ngày tạo';
+  static const String notificationUpdatedAt = 'Cập nhật lần cuối';
+  static const String notificationStatus = 'Trạng thái';
+  static const String notificationStatusRead = 'Đã đọc';
+  static const String notificationStatusUnread = 'Chưa đọc';
 
   // Package Screen
   static const String noPackages = 'Chưa có gói dịch vụ nào';

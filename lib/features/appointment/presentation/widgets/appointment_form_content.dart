@@ -465,7 +465,7 @@ class AppointmentFormContentState extends State<AppointmentFormContent> {
                     ),
                   );
                 }).toList(),
-              ),
+            ),
           ],
         ),
       ],

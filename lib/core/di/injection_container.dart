@@ -20,24 +20,25 @@ import '../../features/family_profile/domain/usecases/get_family_profiles_usecas
 import '../../features/family_profile/domain/usecases/get_member_types_usecase.dart';
 import '../../features/family_profile/domain/usecases/create_family_profile_usecase.dart';
 import '../../features/family_profile/presentation/bloc/family_profile_bloc.dart';
-import '../../features/notification/data/datasources/notification_datasource.dart';
+import '../../features/notification/data/datasources/notification_remote_datasource.dart';
 import '../../features/notification/data/repositories/notification_repository_impl.dart';
 import '../../features/notification/domain/repositories/notification_repository.dart';
 import '../../features/notification/domain/usecases/get_notifications_usecase.dart';
+import '../../features/notification/domain/usecases/get_notification_by_id_usecase.dart';
 import '../../features/notification/domain/usecases/mark_notification_read_usecase.dart';
 import '../../features/notification/domain/usecases/get_unread_count_usecase.dart';
 import '../../features/notification/presentation/bloc/notification_bloc.dart';
-import '../../features/package/data/datatsources/package_datasource.dart';
+import '../../features/package/data/datatsources/package_remote_datasource.dart';
 import '../../features/package/data/repositories/package_repository_impl.dart';
 import '../../features/package/domain/repositories/package_repository.dart';
 import '../../features/package/domain/usecases/get_packages_usecase.dart';
 import '../../features/package/presentation/bloc/package_bloc.dart';
-import '../../features/care_plan/data/datasources/care_plan_datasource.dart';
+import '../../features/care_plan/data/datasources/care_plan_remote_datasource.dart';
 import '../../features/care_plan/data/repositories/care_plan_repository_impl.dart';
 import '../../features/care_plan/domain/repositories/care_plan_repository.dart';
 import '../../features/care_plan/domain/usecases/get_care_plan_details_usecase.dart';
 import '../../features/care_plan/presentation/bloc/care_plan_bloc.dart';
-import '../../features/appointment/data/datasources/appointment_datasource.dart';
+import '../../features/appointment/data/datasources/appointment_remote_datasource.dart';
 import '../../features/appointment/data/repositories/appointment_repository_impl.dart';
 import '../../features/appointment/domain/repositories/appointment_repository.dart';
 import '../../features/appointment/domain/usecases/get_appointments_usecase.dart';
@@ -61,17 +62,17 @@ class InjectionContainer {
   static FamilyProfileRemoteDataSource get _familyProfileRemoteDataSource =>
       FamilyProfileRemoteDataSourceImpl(dio: ApiClient.dio);
   
-  static NotificationDataSource get _notificationDataSource =>
-      NotificationDataSourceImpl(dio: ApiClient.dio);
+  static NotificationRemoteDataSource get _notificationRemoteDataSource =>
+      NotificationRemoteDataSourceImpl(dio: ApiClient.dio);
   
-  static PackageDataSource get _packageDataSource =>
-      PackageDataSourceImpl();
+  static PackageRemoteDataSource get _packageRemoteDataSource =>
+      PackageRemoteDataSourceImpl();
   
-  static CarePlanDataSource get _carePlanDataSource =>
-      CarePlanDataSourceImpl();
+  static CarePlanRemoteDataSource get _carePlanRemoteDataSource =>
+      CarePlanRemoteDataSourceImpl();
 
-  static AppointmentDataSource get _appointmentDataSource =>
-      AppointmentDataSourceImpl();
+  static AppointmentRemoteDataSource get _appointmentRemoteDataSource =>
+      AppointmentRemoteDataSourceImpl();
 
   // ==================== Repositories ====================
   
@@ -84,16 +85,16 @@ class InjectionContainer {
       FamilyProfileRepositoryImpl(remoteDataSource: _familyProfileRemoteDataSource);
   
   static NotificationRepository get notificationRepository =>
-      NotificationRepositoryImpl(_notificationDataSource);
+      NotificationRepositoryImpl(_notificationRemoteDataSource);
   
   static PackageRepository get packageRepository =>
-      PackageRepositoryImpl(_packageDataSource);
+      PackageRepositoryImpl(_packageRemoteDataSource);
   
   static CarePlanRepository get carePlanRepository =>
-      CarePlanRepositoryImpl(_carePlanDataSource);
+      CarePlanRepositoryImpl(_carePlanRemoteDataSource);
 
   static AppointmentRepository get appointmentRepository =>
-      AppointmentRepositoryImpl(dataSource: _appointmentDataSource) as AppointmentRepository;
+      AppointmentRepositoryImpl(dataSource: _appointmentRemoteDataSource) as AppointmentRepository;
 
   // ==================== Use Cases ====================
   
@@ -126,6 +127,8 @@ class InjectionContainer {
   
   static GetNotificationsUsecase get _getNotificationsUsecase =>
       GetNotificationsUsecase(notificationRepository);
+  static GetNotificationByIdUsecase get _getNotificationByIdUsecase =>
+      GetNotificationByIdUsecase(notificationRepository);
   static MarkNotificationReadUsecase get _markNotificationReadUsecase =>
       MarkNotificationReadUsecase(notificationRepository);
   static GetUnreadCountUsecase get _getUnreadCountUsecase =>
@@ -172,6 +175,7 @@ class InjectionContainer {
   
   static NotificationBloc get notificationBloc => NotificationBloc(
         getNotificationsUsecase: _getNotificationsUsecase,
+        getNotificationByIdUsecase: _getNotificationByIdUsecase,
         markNotificationReadUsecase: _markNotificationReadUsecase,
         getUnreadCountUsecase: _getUnreadCountUsecase,
       );

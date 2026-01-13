@@ -5,6 +5,9 @@ abstract class NotificationRepository {
   /// Get all notifications
   Future<List<NotificationEntity>> getNotifications();
 
+  /// Get notification by ID
+  Future<NotificationEntity> getNotificationById(String notificationId);
+
   /// Mark notification as read
   Future<void> markAsRead(String notificationId);
 

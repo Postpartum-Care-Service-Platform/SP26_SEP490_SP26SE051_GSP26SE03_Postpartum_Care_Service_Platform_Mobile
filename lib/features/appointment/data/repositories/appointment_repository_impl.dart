@@ -1,11 +1,11 @@
 import '../../domain/entities/appointment_entity.dart';
 import '../../domain/entities/appointment_type_entity.dart';
 import '../../domain/repositories/appointment_repository.dart';
-import '../datasources/appointment_datasource.dart';
+import '../datasources/appointment_remote_datasource.dart';
 
 /// Appointment repository implementation - Data layer
 class AppointmentRepositoryImpl implements AppointmentRepository {
-  final AppointmentDataSource dataSource;
+  final AppointmentRemoteDataSource dataSource;
 
   AppointmentRepositoryImpl({required this.dataSource});
 
