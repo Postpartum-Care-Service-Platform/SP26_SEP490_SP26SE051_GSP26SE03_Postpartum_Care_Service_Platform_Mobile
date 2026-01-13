@@ -3,16 +3,16 @@ import '../../../../core/apis/api_client.dart';
 import '../../../../core/apis/api_endpoints.dart';
 import '../models/care_plan_model.dart';
 
-/// Care Plan Data Source interface
-abstract class CarePlanDataSource {
+/// Care Plan Remote Data Source interface
+abstract class CarePlanRemoteDataSource {
   Future<List<CarePlanModel>> getCarePlanDetailsByPackage(int packageId);
 }
 
-/// Care Plan Data Source implementation
-class CarePlanDataSourceImpl implements CarePlanDataSource {
+/// Care Plan Remote Data Source implementation
+class CarePlanRemoteDataSourceImpl implements CarePlanRemoteDataSource {
   final Dio dio;
 
-  CarePlanDataSourceImpl({Dio? dio}) : dio = dio ?? ApiClient.dio;
+  CarePlanRemoteDataSourceImpl({Dio? dio}) : dio = dio ?? ApiClient.dio;
 
   @override
   Future<List<CarePlanModel>> getCarePlanDetailsByPackage(int packageId) async {

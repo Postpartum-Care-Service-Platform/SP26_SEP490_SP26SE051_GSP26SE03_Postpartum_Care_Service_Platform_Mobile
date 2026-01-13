@@ -52,5 +52,20 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
+        <!-- Allow querying for map applications -->
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="geo"/>
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="https" android:host="www.google.com" android:pathPattern="/maps.*"/>
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="http" android:host="www.google.com" android:pathPattern="/maps.*"/>
+        </intent>
+        <!-- Google Maps package -->
+        <package android:name="com.google.android.apps.maps"/>
     </queries>
 </manifest>

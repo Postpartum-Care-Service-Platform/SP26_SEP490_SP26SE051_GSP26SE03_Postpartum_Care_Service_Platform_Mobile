@@ -10,6 +10,7 @@ import '../../features/auth/domain/usecases/reset_password_usecase.dart';
 import '../../features/auth/domain/usecases/resend_otp_usecase.dart';
 import '../../features/auth/domain/usecases/google_sign_in_usecase.dart';
 import '../../features/auth/domain/usecases/get_account_by_id_usecase.dart';
+import '../../features/auth/domain/usecases/get_current_account_usecase.dart';
 import '../../features/auth/domain/usecases/change_password_usecase.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/family_profile/data/datasources/family_profile_remote_datasource.dart';
@@ -19,23 +20,33 @@ import '../../features/family_profile/domain/usecases/get_family_profiles_usecas
 import '../../features/family_profile/domain/usecases/get_member_types_usecase.dart';
 import '../../features/family_profile/domain/usecases/create_family_profile_usecase.dart';
 import '../../features/family_profile/presentation/bloc/family_profile_bloc.dart';
-import '../../features/notification/data/datasources/notification_datasource.dart';
+import '../../features/notification/data/datasources/notification_remote_datasource.dart';
 import '../../features/notification/data/repositories/notification_repository_impl.dart';
 import '../../features/notification/domain/repositories/notification_repository.dart';
 import '../../features/notification/domain/usecases/get_notifications_usecase.dart';
+import '../../features/notification/domain/usecases/get_notification_by_id_usecase.dart';
 import '../../features/notification/domain/usecases/mark_notification_read_usecase.dart';
 import '../../features/notification/domain/usecases/get_unread_count_usecase.dart';
 import '../../features/notification/presentation/bloc/notification_bloc.dart';
-import '../../features/package/data/datatsources/package_datasource.dart';
+import '../../features/package/data/datatsources/package_remote_datasource.dart';
 import '../../features/package/data/repositories/package_repository_impl.dart';
 import '../../features/package/domain/repositories/package_repository.dart';
 import '../../features/package/domain/usecases/get_packages_usecase.dart';
 import '../../features/package/presentation/bloc/package_bloc.dart';
-import '../../features/care_plan/data/datasources/care_plan_datasource.dart';
+import '../../features/care_plan/data/datasources/care_plan_remote_datasource.dart';
 import '../../features/care_plan/data/repositories/care_plan_repository_impl.dart';
 import '../../features/care_plan/domain/repositories/care_plan_repository.dart';
 import '../../features/care_plan/domain/usecases/get_care_plan_details_usecase.dart';
 import '../../features/care_plan/presentation/bloc/care_plan_bloc.dart';
+import '../../features/appointment/data/datasources/appointment_remote_datasource.dart';
+import '../../features/appointment/data/repositories/appointment_repository_impl.dart';
+import '../../features/appointment/domain/repositories/appointment_repository.dart';
+import '../../features/appointment/domain/usecases/get_appointments_usecase.dart';
+import '../../features/appointment/domain/usecases/create_appointment_usecase.dart';
+import '../../features/appointment/domain/usecases/update_appointment_usecase.dart';
+import '../../features/appointment/domain/usecases/cancel_appointment_usecase.dart';
+import '../../features/appointment/domain/usecases/get_appointment_types_usecase.dart';
+import '../../features/appointment/presentation/bloc/appointment_bloc.dart';
 import '../../features/employee/data/datasources/appointment_employee_remote_datasource.dart';
 import '../../features/employee/data/repositories/appointment_employee_repository_impl.dart';
 import '../../features/employee/domain/repositories/appointment_employee_repository.dart';
@@ -81,12 +92,17 @@ class InjectionContainer {
   static FamilyProfileRemoteDataSource get _familyProfileRemoteDataSource =>
       FamilyProfileRemoteDataSourceImpl(dio: ApiClient.dio);
   
-  static NotificationDataSource get _notificationDataSource =>
-      NotificationDataSourceImpl();
+  static NotificationRemoteDataSource get _notificationRemoteDataSource =>
+      NotificationRemoteDataSourceImpl(dio: ApiClient.dio);
   
-  static PackageDataSource get _packageDataSource =>
-      PackageDataSourceImpl();
+  static PackageRemoteDataSource get _packageRemoteDataSource =>
+      PackageRemoteDataSourceImpl();
   
+  static CarePlanRemoteDataSource get _carePlanRemoteDataSource =>
+      CarePlanRemoteDataSourceImpl();
+
+  static AppointmentRemoteDataSource get _appointmentRemoteDataSource =>
+      AppointmentRemoteDataSourceImpl();
   static CarePlanDataSource get _carePlanDataSource =>
       CarePlanDataSourceImpl();
   
@@ -113,12 +129,16 @@ class InjectionContainer {
       FamilyProfileRepositoryImpl(remoteDataSource: _familyProfileRemoteDataSource);
   
   static NotificationRepository get notificationRepository =>
-      NotificationRepositoryImpl(_notificationDataSource);
+      NotificationRepositoryImpl(_notificationRemoteDataSource);
   
   static PackageRepository get packageRepository =>
-      PackageRepositoryImpl(_packageDataSource);
+      PackageRepositoryImpl(_packageRemoteDataSource);
   
   static CarePlanRepository get carePlanRepository =>
+      CarePlanRepositoryImpl(_carePlanRemoteDataSource);
+
+  static AppointmentRepository get appointmentRepository =>
+      AppointmentRepositoryImpl(dataSource: _appointmentRemoteDataSource) as AppointmentRepository;
       CarePlanRepositoryImpl(_carePlanDataSource);
   
   static AppointmentEmployeeRepository get appointmentEmployeeRepository =>
@@ -150,6 +170,8 @@ class InjectionContainer {
       GoogleSignInUsecase(_authRepository);
   static GetAccountByIdUsecase get _getAccountByIdUsecase =>
       GetAccountByIdUsecase(_authRepository);
+  static GetCurrentAccountUsecase get _getCurrentAccountUsecase =>
+      GetCurrentAccountUsecase(_authRepository);
   static ChangePasswordUsecase get _changePasswordUsecase =>
       ChangePasswordUsecase(_authRepository);
 
@@ -162,6 +184,8 @@ class InjectionContainer {
   
   static GetNotificationsUsecase get _getNotificationsUsecase =>
       GetNotificationsUsecase(notificationRepository);
+  static GetNotificationByIdUsecase get _getNotificationByIdUsecase =>
+      GetNotificationByIdUsecase(notificationRepository);
   static MarkNotificationReadUsecase get _markNotificationReadUsecase =>
       MarkNotificationReadUsecase(notificationRepository);
   static GetUnreadCountUsecase get _getUnreadCountUsecase =>
@@ -209,6 +233,17 @@ class InjectionContainer {
   static CreateServiceBooking get _createServiceBooking =>
       CreateServiceBooking(amenityTicketRepository);
 
+  static GetAppointmentsUsecase get _getAppointmentsUsecase =>
+      GetAppointmentsUsecase(appointmentRepository);
+  static CreateAppointmentUsecase get _createAppointmentUsecase =>
+      CreateAppointmentUsecase(appointmentRepository);
+  static UpdateAppointmentUsecase get _updateAppointmentUsecase =>
+      UpdateAppointmentUsecase(appointmentRepository);
+  static CancelAppointmentUsecase get _cancelAppointmentUsecase =>
+      CancelAppointmentUsecase(appointmentRepository);
+  static GetAppointmentTypesUsecase get appointmentTypesUsecase =>
+      GetAppointmentTypesUsecase(appointmentRepository);
+
   // ==================== Blocs ====================
   
   static AuthBloc get authBloc => AuthBloc(
@@ -221,6 +256,7 @@ class InjectionContainer {
     resendOtpUsecase: _resendOtpUsecase,
     googleSignInUsecase: _googleSignInUsecase,
     getAccountByIdUsecase: _getAccountByIdUsecase,
+    getCurrentAccountUsecase: _getCurrentAccountUsecase,
     changePasswordUsecase: _changePasswordUsecase,
   );
 
@@ -232,6 +268,7 @@ class InjectionContainer {
   
   static NotificationBloc get notificationBloc => NotificationBloc(
         getNotificationsUsecase: _getNotificationsUsecase,
+        getNotificationByIdUsecase: _getNotificationByIdUsecase,
         markNotificationReadUsecase: _markNotificationReadUsecase,
         getUnreadCountUsecase: _getUnreadCountUsecase,
       );
@@ -270,6 +307,13 @@ class InjectionContainer {
   static AmenityTicketBloc get amenityTicketBloc => AmenityTicketBloc(
         createServiceBooking: _createServiceBooking,
         repository: amenityTicketRepository,
+      );
+
+  static AppointmentBloc get appointmentBloc => AppointmentBloc(
+        getAppointmentsUsecase: _getAppointmentsUsecase,
+        createAppointmentUsecase: _createAppointmentUsecase,
+        updateAppointmentUsecase: _updateAppointmentUsecase,
+        cancelAppointmentUsecase: _cancelAppointmentUsecase,
       );
 
   // ==================== Reset ====================

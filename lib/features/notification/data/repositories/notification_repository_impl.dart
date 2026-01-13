@@ -1,10 +1,10 @@
 import '../../domain/entities/notification_entity.dart';
 import '../../domain/repositories/notification_repository.dart';
-import '../datasources/notification_datasource.dart';
+import '../datasources/notification_remote_datasource.dart';
 
 /// Notification repository implementation - Data layer
 class NotificationRepositoryImpl implements NotificationRepository {
-  final NotificationDataSource dataSource;
+  final NotificationRemoteDataSource dataSource;
 
   NotificationRepositoryImpl(this.dataSource);
 
@@ -12,6 +12,12 @@ class NotificationRepositoryImpl implements NotificationRepository {
   Future<List<NotificationEntity>> getNotifications() async {
     final models = await dataSource.getNotifications();
     return models.map((model) => model.toEntity()).toList();
+  }
+
+  @override
+  Future<NotificationEntity> getNotificationById(String notificationId) async {
+    final model = await dataSource.getNotificationById(notificationId);
+    return model.toEntity();
   }
 
   @override

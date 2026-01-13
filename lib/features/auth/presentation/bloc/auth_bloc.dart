@@ -10,6 +10,7 @@ import '../../domain/usecases/reset_password_usecase.dart';
 import '../../domain/usecases/resend_otp_usecase.dart';
 import '../../domain/usecases/google_sign_in_usecase.dart';
 import '../../domain/usecases/get_account_by_id_usecase.dart';
+import '../../domain/usecases/get_current_account_usecase.dart';
 import '../../domain/usecases/change_password_usecase.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
@@ -25,6 +26,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final ResendOtpUsecase resendOtpUsecase;
   final GoogleSignInUsecase googleSignInUsecase;
   final GetAccountByIdUsecase getAccountByIdUsecase;
+  final GetCurrentAccountUsecase getCurrentAccountUsecase;
   final ChangePasswordUsecase changePasswordUsecase;
 
   AuthBloc({
@@ -37,6 +39,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required this.resendOtpUsecase,
     required this.googleSignInUsecase,
     required this.getAccountByIdUsecase,
+    required this.getCurrentAccountUsecase,
     required this.changePasswordUsecase,
   }) : super(const AuthInitial(isPasswordObscured: true)) {
     on<AuthLoginWithEmailPassword>(_onLoginWithEmailPassword);
@@ -50,6 +53,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthTogglePasswordVisibility>(_onTogglePasswordVisibility);
     on<AuthResetState>(_onResetState);
     on<AuthGetAccountById>(_onGetAccountById);
+    on<AuthLoadCurrentAccount>(_onLoadCurrentAccount);
     on<AuthChangePassword>(_onChangePassword);
   }
 
@@ -391,6 +395,27 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final account = await getAccountByIdUsecase(id: event.id);
 
       emit(AuthGetAccountByIdSuccess(
+        account: account,
+        isPasswordObscured: state.isPasswordObscured,
+      ));
+    } catch (e) {
+      emit(AuthError(
+        message: e.toString().replaceAll('Exception: ', ''),
+        isPasswordObscured: state.isPasswordObscured,
+      ));
+    }
+  }
+
+  Future<void> _onLoadCurrentAccount(
+    AuthLoadCurrentAccount event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading(isPasswordObscured: state.isPasswordObscured));
+
+    try {
+      final account = await getCurrentAccountUsecase();
+
+      emit(AuthCurrentAccountLoaded(
         account: account,
         isPasswordObscured: state.isPasswordObscured,
       ));

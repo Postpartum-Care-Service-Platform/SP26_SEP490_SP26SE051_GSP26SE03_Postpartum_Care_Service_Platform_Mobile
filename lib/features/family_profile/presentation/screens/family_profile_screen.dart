@@ -8,7 +8,8 @@ import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_loading.dart';
 import '../../../../core/widgets/app_toast.dart';
 import '../../../../core/services/current_account_cache_service.dart';
-import '../../../../core/di/injection_container.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../domain/entities/family_profile_entity.dart';
 import '../../data/models/create_family_profile_request_model.dart';
 import '../../data/models/update_family_profile_request_model.dart';
@@ -168,15 +169,19 @@ class _FamilyProfileScreenState extends State<FamilyProfileScreen> {
           .repository
           .updateFamilyProfile(memberId, request);
 
-      // If updated member is the owner, refresh current account cache
+      // If updated member is the owner, refresh current account to update UI
       if (isOwnerUpdate) {
-        // Invalidate and refresh current account cache
+        // Clear cache first
         await CurrentAccountCacheService.clearCache();
+        // Dispatch event to AuthBloc to refresh current account
+        // This will update UI in HomeScreen and ProfileScreen automatically
         try {
-          final authRepository = InjectionContainer.authRepository;
-          await authRepository.getCurrentAccount();
+          final authBloc = BlocProvider.of<AuthBloc>(context, listen: false);
+          authBloc.add(const AuthLoadCurrentAccount());
         } catch (e) {
-          // Silently fail - cache refresh is optional
+          // AuthBloc not found in context - UI won't be updated automatically
+          // This should not happen in normal flow as FamilyProfileScreen is
+          // navigated from ProfileScreen which has AuthBloc in AppScaffold
         }
       }
 

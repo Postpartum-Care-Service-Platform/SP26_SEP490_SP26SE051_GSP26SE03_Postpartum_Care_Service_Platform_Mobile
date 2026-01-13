@@ -7,7 +7,6 @@ import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_loading.dart';
 import '../../../../core/widgets/app_toast.dart';
-import '../../../../core/di/injection_container.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
@@ -18,7 +17,7 @@ import '../widgets/change_password_section.dart';
 import '../widgets/account_error_view.dart';
 
 /// Account details + change password screen
-class AccountDetailsScreen extends StatelessWidget {
+class AccountDetailsScreen extends StatefulWidget {
   final String userId;
 
   const AccountDetailsScreen({
@@ -27,11 +26,22 @@ class AccountDetailsScreen extends StatelessWidget {
   });
 
   @override
+  State<AccountDetailsScreen> createState() => _AccountDetailsScreenState();
+}
+
+class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // AuthBloc should be provided by parent (ProfileScreen)
+    // Dispatch event to load account by ID
+    final authBloc = context.read<AuthBloc>();
+    authBloc.add(AuthGetAccountById(id: widget.userId));
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => InjectionContainer.authBloc
-        ..add(AuthGetAccountById(id: userId)),
-      child: BlocListener<AuthBloc, AuthState>(
+    return BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthLoading) {
             AppLoading.show(context, message: AppStrings.processing);
@@ -46,22 +56,31 @@ class AccountDetailsScreen extends StatelessWidget {
             );
           }
         },
-        child: Scaffold(
-          backgroundColor: AppColors.background,
-          appBar: AppBar(
+        child: PopScope(
+          onPopInvokedWithResult: (didPop, result) {
+            if (didPop) {
+              // Reload current account when leaving this screen
+              // This ensures ProfileScreen still has AuthCurrentAccountLoaded state
+              final authBloc = context.read<AuthBloc>();
+              authBloc.add(const AuthLoadCurrentAccount());
+            }
+          },
+          child: Scaffold(
             backgroundColor: AppColors.background,
-            elevation: 0,
-            iconTheme: const IconThemeData(color: AppColors.textPrimary),
-            title: Text(
-              AppStrings.myAccount,
-              style: AppTextStyles.tinos(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+            appBar: AppBar(
+              backgroundColor: AppColors.background,
+              elevation: 0,
+              iconTheme: const IconThemeData(color: AppColors.textPrimary),
+              title: Text(
+                AppStrings.myAccount,
+                style: AppTextStyles.tinos(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
               ),
+              centerTitle: true,
             ),
-            centerTitle: true,
-          ),
           body: BlocBuilder<AuthBloc, AuthState>(
             builder: (context, state) {
               if (state is AuthLoading && state is! AuthGetAccountByIdSuccess) {
@@ -81,7 +100,7 @@ class AccountDetailsScreen extends StatelessWidget {
                   message: state.message,
                   onRetry: () {
                     context.read<AuthBloc>().add(
-                          AuthGetAccountById(id: userId),
+                          AuthGetAccountById(id: widget.userId),
                         );
                   },
                 );
@@ -98,8 +117,8 @@ class AccountDetailsScreen extends StatelessWidget {
               );
             },
           ),
+          ),
         ),
-      ),
     );
   }
 }

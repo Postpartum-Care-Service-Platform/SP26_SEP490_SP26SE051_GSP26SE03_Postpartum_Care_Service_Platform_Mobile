@@ -11,7 +11,7 @@ import '../bloc/notification_state.dart';
 import '../screens/notification_screen.dart';
 import 'notification_item.dart';
 
-/// Notification drawer widget
+/// Notification drawer widget - Simplified version
 class NotificationDrawer extends StatelessWidget {
   const NotificationDrawer({super.key});
 
@@ -28,17 +28,17 @@ class NotificationDrawer extends StatelessWidget {
         child: SafeArea(
           child: Column(
             children: [
-              // Header
+              // Simple Header
               Padding(
-                padding: EdgeInsets.all(20 * scale),
+                padding: EdgeInsets.all(16 * scale),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       AppStrings.notificationTitle,
                       style: AppTextStyles.arimo(
-                        fontSize: 20 * scale,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 18 * scale,
+                        fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
                       ),
                     ),
@@ -46,13 +46,16 @@ class NotificationDrawer extends StatelessWidget {
                       icon: const Icon(
                         Icons.close_rounded,
                         color: AppColors.textPrimary,
+                        size: 24,
                       ),
                       onPressed: () => Navigator.of(context).pop(),
+                      padding: EdgeInsets.zero,
+                      constraints: BoxConstraints(),
                     ),
                   ],
                 ),
               ),
-              const Divider(height: 1),
+              Divider(height: 1, color: AppColors.borderLight),
               // Content
               Expanded(
                 child: BlocBuilder<NotificationBloc, NotificationState>(
@@ -67,27 +70,30 @@ class NotificationDrawer extends StatelessWidget {
 
                     if (state is NotificationError) {
                       return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              state.message,
-                              style: AppTextStyles.arimo(
-                                fontSize: 14,
-                                color: AppColors.textSecondary,
+                        child: Padding(
+                          padding: EdgeInsets.all(24 * scale),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                state.message,
+                                style: AppTextStyles.arimo(
+                                  fontSize: 14 * scale,
+                                  color: AppColors.textSecondary,
+                                ),
+                                textAlign: TextAlign.center,
                               ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 16),
-                            ElevatedButton(
-                              onPressed: () {
-                                context.read<NotificationBloc>().add(
-                                      const NotificationLoadRequested(),
-                                    );
-                              },
-                              child: Text(AppStrings.retry),
-                            ),
-                          ],
+                              SizedBox(height: 16 * scale),
+                              TextButton(
+                                onPressed: () {
+                                  context.read<NotificationBloc>().add(
+                                        const NotificationLoadRequested(),
+                                      );
+                                },
+                                child: Text(AppStrings.retry),
+                              ),
+                            ],
+                          ),
                         ),
                       );
                     }
@@ -95,61 +101,51 @@ class NotificationDrawer extends StatelessWidget {
                     if (state is NotificationLoaded) {
                       final displayNotifications = state.notifications.take(5).toList();
 
+                      if (displayNotifications.isEmpty) {
+                        return Center(
+                          child: Text(
+                            AppStrings.noNotifications,
+                            style: AppTextStyles.arimo(
+                              fontSize: 14 * scale,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        );
+                      }
+
                       return Column(
                         children: [
-                          // Notifications list
                           Expanded(
-                            child: displayNotifications.isEmpty
-                                ? Center(
-                                    child: Text(
-                                      AppStrings.noNotifications,
-                                      style: AppTextStyles.arimo(
-                                        fontSize: 14,
-                                        color: AppColors.textSecondary,
-                                      ),
-                                    ),
-                                  )
-                                : ListView.separated(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 20 * scale,
-                                      vertical: 12 * scale,
-                                    ),
-                                    itemCount: displayNotifications.length,
-                                    separatorBuilder: (context, index) => Divider(
-                                      height: 1,
-                                      color: AppColors.borderLight,
-                                    ),
-                                    itemBuilder: (context, index) {
-                                      final notification = displayNotifications[index];
-                                      return NotificationItem(
-                                        notification: notification,
-                                        onTap: () {
-                                          if (!notification.isRead) {
-                                            context.read<NotificationBloc>().add(
-                                                  NotificationMarkAsRead(notification.id),
-                                                );
-                                          }
-                                        },
-                                      );
-                                    },
-                                  ),
-                          ),
-                          // View All button - Always visible
-                          Container(
-                            padding: EdgeInsets.all(20 * scale),
-                            decoration: BoxDecoration(
-                              border: Border(
-                                top: BorderSide(
-                                  color: AppColors.borderLight,
-                                  width: 1,
-                                ),
+                            child: ListView.separated(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 16 * scale,
+                                vertical: 8 * scale,
                               ),
+                              itemCount: displayNotifications.length,
+                              separatorBuilder: (context, index) => SizedBox(height: 8 * scale),
+                              itemBuilder: (context, index) {
+                                final notification = displayNotifications[index];
+                                return NotificationItem(
+                                  notification: notification,
+                                  onTap: () {
+                                    if (!notification.isRead) {
+                                      context.read<NotificationBloc>().add(
+                                            NotificationMarkAsRead(notification.id),
+                                          );
+                                    }
+                                  },
+                                );
+                              },
                             ),
+                          ),
+                          // Simple View All button
+                          Padding(
+                            padding: EdgeInsets.all(16 * scale),
                             child: SizedBox(
                               width: double.infinity,
                               child: ElevatedButton(
                                 onPressed: () {
-                                  Navigator.of(context).pop(); // Close drawer
+                                  Navigator.of(context).pop();
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
                                       builder: (context) => const NotificationScreen(),
@@ -159,9 +155,7 @@ class NotificationDrawer extends StatelessWidget {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.primary,
                                   foregroundColor: AppColors.white,
-                                  padding: EdgeInsets.symmetric(
-                                    vertical: 14 * scale,
-                                  ),
+                                  padding: EdgeInsets.symmetric(vertical: 12 * scale),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12 * scale),
                                   ),
@@ -169,9 +163,8 @@ class NotificationDrawer extends StatelessWidget {
                                 child: Text(
                                   AppStrings.viewAll,
                                   style: AppTextStyles.arimo(
-                                    fontSize: 16 * scale,
+                                    fontSize: 15 * scale,
                                     fontWeight: FontWeight.w600,
-                                    color: AppColors.white,
                                   ),
                                 ),
                               ),

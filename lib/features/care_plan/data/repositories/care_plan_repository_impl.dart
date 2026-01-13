@@ -1,10 +1,10 @@
 import '../../domain/entities/care_plan_entity.dart';
 import '../../domain/repositories/care_plan_repository.dart';
-import '../datasources/care_plan_datasource.dart';
+import '../datasources/care_plan_remote_datasource.dart';
 
 /// Care Plan Repository implementation - Data layer
 class CarePlanRepositoryImpl implements CarePlanRepository {
-  final CarePlanDataSource dataSource;
+  final CarePlanRemoteDataSource dataSource;
 
   CarePlanRepositoryImpl(this.dataSource);
 

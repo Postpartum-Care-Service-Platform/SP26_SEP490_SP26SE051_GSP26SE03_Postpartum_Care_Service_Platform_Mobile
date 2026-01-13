@@ -14,17 +14,13 @@ class CurrentAccountCacheService {
 
   /// Save current account to cache
   static Future<void> saveCurrentAccount(CurrentAccountModel account) async {
-    try {
       final jsonString = jsonEncode(account.toJson());
       await _saveToStorage(_keyCurrentAccount, jsonString);
       await _saveToStorage(
         _keyCacheTimestamp,
         DateTime.now().millisecondsSinceEpoch.toString(),
       );
-    } catch (e) {
-      // Silently fail - cache is optional
-      print('Failed to cache current account: $e');
-    }
+
   }
 
   /// Get current account from cache
@@ -58,13 +54,8 @@ class CurrentAccountCacheService {
 
   /// Clear current account cache
   static Future<void> clearCache() async {
-    try {
       await _deleteFromStorage(_keyCurrentAccount);
       await _deleteFromStorage(_keyCacheTimestamp);
-    } catch (e) {
-      // Silently fail
-      print('Failed to clear cache: $e');
-    }
   }
 
   /// Check if cache exists and is valid

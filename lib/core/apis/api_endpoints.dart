@@ -43,6 +43,17 @@ class ApiEndpoints {
   static String updateSchedule(String id) => '/schedules/$id';
   static String deleteSchedule(String id) => '/schedules/$id';
 
+  // Appointment endpoints
+  static const String appointments = '/Appointment';
+  static String appointmentById(int id) => '/Appointment/$id';
+  static String cancelAppointment(int id) => '/Appointment/$id/cancel';
+  static const String appointmentTypes = '/AppointmentType';
+
+  // Notification endpoints
+  static const String notificationsMe = '/Notification/me';
+  static String markNotificationAsRead(int id) => '/Notification/mark-as-read/$id';
+  static String getNotificationById(int id) => '/Notification/$id';
+
   // Profile endpoints
   static const String userProfile = '/profile';
   static const String updateUserProfile = '/profile';

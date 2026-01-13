@@ -154,4 +154,9 @@ class AuthChangePassword extends AuthEvent {
   List<Object?> get props => [currentPassword, newPassword, confirmNewPassword];
 }
 
+/// Event to load current account
+class AuthLoadCurrentAccount extends AuthEvent {
+  const AuthLoadCurrentAccount();
+}
+
 

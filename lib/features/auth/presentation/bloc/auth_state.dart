@@ -2,7 +2,6 @@ import 'package:equatable/equatable.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../data/models/current_account_model.dart';
 
-import '../../domain/entities/user_role.dart';
 
 /// Auth States - States that represent the auth flow
 abstract class AuthState extends Equatable {
@@ -147,6 +146,19 @@ class AuthChangePasswordSuccess extends AuthState {
 
   @override
   List<Object?> get props => [message, isPasswordObscured];
+}
+
+/// Current account loaded state
+class AuthCurrentAccountLoaded extends AuthState {
+  final CurrentAccountModel account;
+
+  const AuthCurrentAccountLoaded({
+    required this.account,
+    super.isPasswordObscured,
+  });
+
+  @override
+  List<Object?> get props => [account, isPasswordObscured];
 }
 
 
