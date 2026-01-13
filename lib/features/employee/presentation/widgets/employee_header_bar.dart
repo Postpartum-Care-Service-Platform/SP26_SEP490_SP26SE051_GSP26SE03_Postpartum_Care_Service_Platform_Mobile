@@ -1,8 +1,14 @@
 // lib/features/employee/presentation/widgets/employee_header_bar.dart
 import 'package:flutter/material.dart';
 
+import '../../../../core/apis/api_client.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_strings.dart';
+import '../../../../core/services/auth_service.dart';
 import '../../../../core/utils/app_text_styles.dart';
+import '../../../../core/widgets/app_toast.dart';
+import '../../../../core/widgets/app_widgets.dart';
+import '../../../../features/auth/presentation/screens/login_screen.dart';
 import 'employee_notifications_sheet.dart';
 
 class EmployeeHeaderBar extends StatelessWidget {
@@ -14,6 +20,40 @@ class EmployeeHeaderBar extends StatelessWidget {
     required this.title,
     required this.subtitle,
   });
+
+  Future<void> _handleLogout(BuildContext context) async {
+    // Show confirmation dialog
+    final confirmed = await AppWidgets.showConfirmDialog(
+      context,
+      title: AppStrings.logoutTitle,
+      message: AppStrings.logoutConfirmation,
+      confirmText: AppStrings.logout,
+      cancelText: AppStrings.cancel,
+      confirmColor: AppColors.logout,
+      icon: Icons.logout_rounded,
+    );
+
+    if (confirmed != true) return;
+
+    // Clear authentication data
+    await AuthService.logout();
+    
+    // Reset API client
+    ApiClient.reset();
+
+    if (context.mounted) {
+      AppToast.showSuccess(
+        context,
+        message: AppStrings.successLogout,
+      );
+
+      // Navigate to login screen
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (route) => false,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -87,6 +127,20 @@ class EmployeeHeaderBar extends StatelessWidget {
                       ),
                     ),
                 ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          InkWell(
+            borderRadius: BorderRadius.circular(24),
+            onTap: () => _handleLogout(context),
+            child: SizedBox(
+              width: 44,
+              height: 44,
+              child: Icon(
+                Icons.logout_rounded,
+                color: AppColors.logout,
+                size: 24,
               ),
             ),
           ),

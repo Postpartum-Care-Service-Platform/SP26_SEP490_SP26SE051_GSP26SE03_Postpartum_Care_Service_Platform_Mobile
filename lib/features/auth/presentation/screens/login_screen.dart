@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/auth_scaffold.dart';
@@ -19,15 +18,13 @@ import '../../../../core/widgets/app_toast.dart';
 import 'reset_password_screen.dart';
 import 'sign_up_screen.dart';
 import '../../../../core/widgets/app_scaffold.dart';
+import '../../../employee/presentation/screens/employee_portal_screen.dart';
+import '../../../../core/config/app_config.dart';
 
-// Google Sign-In configuration using Web Client ID from .env
-const _webClientId = String.fromEnvironment(
-  'GOOGLE_WEB_CLIENT_ID',
-  defaultValue: '',
-);
+// Google Sign-In configuration using Web Client ID from AppConfig
+// AppConfig loads the value from .env file
 final GoogleSignIn _googleSignIn = GoogleSignIn(
-  serverClientId:
-      _webClientId.isNotEmpty ? _webClientId : dotenv.env['GOOGLE_WEB_CLIENT_ID'],
+  serverClientId: AppConfig.googleWebClientId,
 );
 
 /// Login Screen - Main login page following clean architecture + BloC pattern
@@ -44,19 +41,19 @@ class LoginScreen extends StatelessWidget {
             AppLoading.show(context, message: AppStrings.processing);
           } else if (state is AuthSuccess) {
             AppLoading.hide(context);
-            AppToast.showSuccess(
-              context,
-              message: AppStrings.successLogin,
-            );
+            AppToast.showSuccess(context, message: AppStrings.successLogin);
+            final role = state.user?.role.toLowerCase();
+            final isEmployee =
+                role == 'staff' || role == 'manager' || role == 'admin';
+            final destination = isEmployee
+                ? const EmployeePortalScreen()
+                : const AppScaffold();
             Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => const AppScaffold()),
+              MaterialPageRoute(builder: (context) => destination),
             );
           } else if (state is AuthError) {
             AppLoading.hide(context);
-            AppToast.showError(
-              context,
-              message: state.message,
-            );
+            AppToast.showError(context, message: state.message);
           }
         },
         child: Scaffold(
@@ -66,9 +63,7 @@ class LoginScreen extends StatelessWidget {
               onSignUp: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => const SignUpScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const SignUpScreen()),
                 );
               },
               onForgotPassword: () {
@@ -110,8 +105,8 @@ class LoginScreen extends StatelessWidget {
                                 final String? idToken = auth.idToken;
                                 if (idToken != null) {
                                   context.read<AuthBloc>().add(
-                                        AuthLoginWithGoogle(idToken: idToken),
-                                      );
+                                    AuthLoginWithGoogle(idToken: idToken),
+                                  );
                                 } else {
                                   AppToast.showError(
                                     context,
@@ -122,7 +117,8 @@ class LoginScreen extends StatelessWidget {
                             } catch (e) {
                               AppToast.showError(
                                 context,
-                                message: 'Lỗi đăng nhập Google: ${e.toString()}',
+                                message:
+                                    'Lỗi đăng nhập Google: ${e.toString()}',
                               );
                             }
                           },

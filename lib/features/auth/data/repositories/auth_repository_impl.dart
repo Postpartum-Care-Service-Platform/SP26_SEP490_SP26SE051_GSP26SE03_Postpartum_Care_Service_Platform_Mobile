@@ -38,6 +38,14 @@ class AuthRepositoryImpl implements AuthRepository {
       await SecureStorageService.saveRefreshToken(response.refreshToken);
       await SecureStorageService.saveExpiresAt(response.expiresAt);
 
+      // Fetch current account and cache for role-based routing
+      try {
+        final account = await remoteDataSource.getCurrentAccount();
+        await CurrentAccountCacheService.saveCurrentAccount(account);
+      } catch (_) {
+        // Ignore cache failures
+      }
+
       return response.user.toEntity();
     } catch (e) {
       rethrow;

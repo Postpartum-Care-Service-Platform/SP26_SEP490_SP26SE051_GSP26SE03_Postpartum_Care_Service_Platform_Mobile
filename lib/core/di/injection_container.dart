@@ -47,6 +47,36 @@ import '../../features/appointment/domain/usecases/update_appointment_usecase.da
 import '../../features/appointment/domain/usecases/cancel_appointment_usecase.dart';
 import '../../features/appointment/domain/usecases/get_appointment_types_usecase.dart';
 import '../../features/appointment/presentation/bloc/appointment_bloc.dart';
+import '../../features/employee/data/datasources/appointment_employee_remote_datasource.dart';
+import '../../features/employee/data/repositories/appointment_employee_repository_impl.dart';
+import '../../features/employee/domain/repositories/appointment_employee_repository.dart';
+import '../../features/employee/domain/usecases/get_my_assigned_appointments.dart';
+import '../../features/employee/domain/usecases/get_all_appointments.dart';
+import '../../features/employee/domain/usecases/get_appointment_by_id.dart';
+import '../../features/employee/domain/usecases/confirm_appointment.dart';
+import '../../features/employee/domain/usecases/complete_appointment.dart';
+import '../../features/employee/domain/usecases/cancel_appointment.dart';
+import '../../features/employee/domain/usecases/create_appointment_for_customer.dart';
+import '../../features/employee/presentation/bloc/appointment/appointment_bloc.dart';
+import '../../features/employee/data/datasources/room_remote_datasource.dart';
+import '../../features/employee/data/repositories/room_repository_impl.dart';
+import '../../features/employee/domain/repositories/room_repository.dart';
+import '../../features/employee/domain/usecases/get_all_rooms.dart';
+import '../../features/employee/domain/usecases/get_room_by_id.dart';
+import '../../features/employee/domain/usecases/get_available_rooms.dart';
+import '../../features/employee/presentation/bloc/room/room_bloc.dart';
+import '../../features/employee/data/datasources/amenity_service_remote_datasource.dart';
+import '../../features/employee/data/repositories/amenity_service_repository_impl.dart';
+import '../../features/employee/domain/repositories/amenity_service_repository.dart';
+import '../../features/employee/domain/usecases/get_all_amenity_services.dart';
+import '../../features/employee/domain/usecases/get_amenity_service_by_id.dart';
+import '../../features/employee/domain/usecases/get_active_amenity_services.dart';
+import '../../features/employee/presentation/bloc/amenity_service/amenity_service_bloc.dart';
+import '../../features/employee/data/datasources/amenity_ticket_remote_datasource.dart';
+import '../../features/employee/data/repositories/amenity_ticket_repository_impl.dart';
+import '../../features/employee/domain/repositories/amenity_ticket_repository.dart';
+import '../../features/employee/domain/usecases/create_service_booking.dart';
+import '../../features/employee/presentation/bloc/amenity_ticket/amenity_ticket_bloc.dart';
 import '../apis/api_client.dart';
 
 /// Centralized dependency injection container
@@ -73,6 +103,20 @@ class InjectionContainer {
 
   static AppointmentRemoteDataSource get _appointmentRemoteDataSource =>
       AppointmentRemoteDataSourceImpl();
+  static CarePlanDataSource get _carePlanDataSource =>
+      CarePlanDataSourceImpl();
+  
+  static AppointmentEmployeeRemoteDataSource get _appointmentEmployeeRemoteDataSource =>
+      AppointmentEmployeeRemoteDataSource(dio: ApiClient.dio);
+  
+  static RoomRemoteDataSource get _roomRemoteDataSource =>
+      RoomRemoteDataSource(dio: ApiClient.dio);
+  
+  static AmenityServiceRemoteDataSource get _amenityServiceRemoteDataSource =>
+      AmenityServiceRemoteDataSource(dio: ApiClient.dio);
+  
+  static AmenityTicketRemoteDataSource get _amenityTicketRemoteDataSource =>
+      AmenityTicketRemoteDataSource(dio: ApiClient.dio);
 
   // ==================== Repositories ====================
   
@@ -95,6 +139,19 @@ class InjectionContainer {
 
   static AppointmentRepository get appointmentRepository =>
       AppointmentRepositoryImpl(dataSource: _appointmentRemoteDataSource) as AppointmentRepository;
+      CarePlanRepositoryImpl(_carePlanDataSource);
+  
+  static AppointmentEmployeeRepository get appointmentEmployeeRepository =>
+      AppointmentEmployeeRepositoryImpl(remoteDataSource: _appointmentEmployeeRemoteDataSource);
+  
+  static RoomRepository get roomRepository =>
+      RoomRepositoryImpl(remoteDataSource: _roomRemoteDataSource);
+  
+  static AmenityServiceRepository get amenityServiceRepository =>
+      AmenityServiceRepositoryImpl(remoteDataSource: _amenityServiceRemoteDataSource);
+  
+  static AmenityTicketRepository get amenityTicketRepository =>
+      AmenityTicketRepositoryImpl(remoteDataSource: _amenityTicketRemoteDataSource);
 
   // ==================== Use Cases ====================
   
@@ -139,6 +196,42 @@ class InjectionContainer {
   
   static GetCarePlanDetailsUsecase get _getCarePlanDetailsUsecase =>
       GetCarePlanDetailsUsecase(carePlanRepository);
+  
+  // Employee - Appointment UseCases
+  static GetMyAssignedAppointments get _getMyAssignedAppointments =>
+      GetMyAssignedAppointments(appointmentEmployeeRepository);
+  static GetAllAppointments get _getAllAppointments =>
+      GetAllAppointments(appointmentEmployeeRepository);
+  static GetAppointmentById get _getAppointmentById =>
+      GetAppointmentById(appointmentEmployeeRepository);
+  static ConfirmAppointment get _confirmAppointment =>
+      ConfirmAppointment(appointmentEmployeeRepository);
+  static CompleteAppointment get _completeAppointment =>
+      CompleteAppointment(appointmentEmployeeRepository);
+  static CancelAppointment get _cancelAppointment =>
+      CancelAppointment(appointmentEmployeeRepository);
+  static CreateAppointmentForCustomer get _createAppointmentForCustomer =>
+      CreateAppointmentForCustomer(appointmentEmployeeRepository);
+  
+  // Employee - Room UseCases
+  static GetAllRooms get _getAllRooms =>
+      GetAllRooms(roomRepository);
+  static GetRoomById get _getRoomById =>
+      GetRoomById(roomRepository);
+  static GetAvailableRooms get _getAvailableRooms =>
+      GetAvailableRooms(roomRepository);
+  
+  // Employee - AmenityService UseCases
+  static GetAllAmenityServices get _getAllAmenityServices =>
+      GetAllAmenityServices(amenityServiceRepository);
+  static GetAmenityServiceById get _getAmenityServiceById =>
+      GetAmenityServiceById(amenityServiceRepository);
+  static GetActiveAmenityServices get _getActiveAmenityServices =>
+      GetActiveAmenityServices(amenityServiceRepository);
+  
+  // Employee - AmenityTicket UseCases
+  static CreateServiceBooking get _createServiceBooking =>
+      CreateServiceBooking(amenityTicketRepository);
 
   static GetAppointmentsUsecase get _getAppointmentsUsecase =>
       GetAppointmentsUsecase(appointmentRepository);
@@ -186,6 +279,34 @@ class InjectionContainer {
   
   static CarePlanBloc get carePlanBloc => CarePlanBloc(
         getCarePlanDetailsUsecase: _getCarePlanDetailsUsecase,
+      );
+  
+  // Employee Blocs
+  static AppointmentBloc get appointmentBloc => AppointmentBloc(
+        getMyAssignedAppointments: _getMyAssignedAppointments,
+        getAllAppointments: _getAllAppointments,
+        getAppointmentById: _getAppointmentById,
+        confirmAppointment: _confirmAppointment,
+        completeAppointment: _completeAppointment,
+        cancelAppointment: _cancelAppointment,
+        createAppointmentForCustomer: _createAppointmentForCustomer,
+      );
+  
+  static RoomBloc get roomBloc => RoomBloc(
+        getAllRooms: _getAllRooms,
+        getRoomById: _getRoomById,
+        getAvailableRooms: _getAvailableRooms,
+      );
+  
+  static AmenityServiceBloc get amenityServiceBloc => AmenityServiceBloc(
+        getAllAmenityServices: _getAllAmenityServices,
+        getAmenityServiceById: _getAmenityServiceById,
+        getActiveAmenityServices: _getActiveAmenityServices,
+      );
+  
+  static AmenityTicketBloc get amenityTicketBloc => AmenityTicketBloc(
+        createServiceBooking: _createServiceBooking,
+        repository: amenityTicketRepository,
       );
 
   static AppointmentBloc get appointmentBloc => AppointmentBloc(
