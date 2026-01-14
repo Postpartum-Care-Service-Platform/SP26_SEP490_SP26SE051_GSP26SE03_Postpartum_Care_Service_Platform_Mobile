@@ -7,7 +7,7 @@ import '../../../../core/di/injection_container.dart';
 import '../../../../features/package/presentation/bloc/package_bloc.dart';
 import '../../../../features/package/presentation/bloc/package_event.dart';
 import '../../../../features/package/presentation/screens/package_screen.dart';
-import '../../../../features/chat/presentation/screens/chat_screen.dart';
+import '../../../chat/presentation/screens/chat_shell_screen.dart';
 import '../widgets/employee_bottom_nav_bar.dart';
 import '../widgets/employee_fab.dart';
 import '../widgets/employee_more_sheet.dart';
@@ -32,7 +32,7 @@ class _EmployeePortalScreenState extends State<EmployeePortalScreen> {
               InjectionContainer.packageBloc..add(const PackageLoadRequested()),
           child: const PackageScreen(),
         ),
-        const ChatScreen(),
+        const ChatShellScreen(),
       ];
 
   void _onTabSelected(EmployeeTab tab) {

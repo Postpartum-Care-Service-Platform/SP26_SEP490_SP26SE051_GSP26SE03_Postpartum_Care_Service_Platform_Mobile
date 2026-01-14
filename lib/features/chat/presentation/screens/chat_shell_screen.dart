@@ -12,14 +12,14 @@ import '../widgets/chat_header.dart';
 import '../widgets/conversation_detail.dart';
 import '../widgets/conversation_list.dart';
 
-class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+class ChatShellScreen extends StatefulWidget {
+  const ChatShellScreen({super.key});
 
   @override
-  State<ChatScreen> createState() => _ChatScreenState();
+  State<ChatShellScreen> createState() => _ChatShellScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatShellScreenState extends State<ChatShellScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _messageScrollController = ScrollController();
 

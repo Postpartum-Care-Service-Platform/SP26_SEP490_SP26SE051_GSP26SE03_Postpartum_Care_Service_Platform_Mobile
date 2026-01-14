@@ -10,16 +10,16 @@ import '../../../../core/widgets/app_drawer_form.dart';
 import '../bloc/chat_bloc.dart';
 import '../bloc/chat_event.dart';
 import '../widgets/conversation_list.dart';
-import 'chat_conversation_screen.dart';
+import 'conversation_detail_screen.dart';
 
-class ConversationScreen extends StatefulWidget {
-  const ConversationScreen({super.key});
+class ConversationListScreen extends StatefulWidget {
+  const ConversationListScreen({super.key});
 
   @override
-  State<ConversationScreen> createState() => _ConversationScreenState();
+  State<ConversationListScreen> createState() => _ConversationScreenState();
 }
 
-class _ConversationScreenState extends State<ConversationScreen> {
+class _ConversationScreenState extends State<ConversationListScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   @override
@@ -84,7 +84,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
       MaterialPageRoute(
         builder: (_) => BlocProvider.value(
           value: chatBloc,
-          child: const ChatConversationScreen(),
+          child: const ConversationDetailScreen(),
         ),
       ),
     );

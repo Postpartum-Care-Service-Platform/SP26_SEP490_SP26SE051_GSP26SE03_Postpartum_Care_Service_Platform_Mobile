@@ -9,14 +9,14 @@ import '../bloc/chat_event.dart';
 import '../bloc/chat_state.dart';
 import '../widgets/conversation_detail.dart';
 
-class ChatConversationScreen extends StatefulWidget {
-  const ChatConversationScreen({super.key});
+class ConversationDetailScreen extends StatefulWidget {
+  const ConversationDetailScreen({super.key});
 
   @override
-  State<ChatConversationScreen> createState() => _ChatConversationScreenState();
+  State<ConversationDetailScreen> createState() => _ConversationDetailScreenState();
 }
 
-class _ChatConversationScreenState extends State<ChatConversationScreen> {
+class _ConversationDetailScreenState extends State<ConversationDetailScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _messageScrollController = ScrollController();
 
