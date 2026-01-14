@@ -10,6 +10,7 @@ class AppDrawerForm extends StatelessWidget {
   final VoidCallback? onSave;
   final bool isLoading;
   final String? saveButtonText;
+  final bool isCompact;
 
   const AppDrawerForm({
     super.key,
@@ -18,6 +19,7 @@ class AppDrawerForm extends StatelessWidget {
     this.onSave,
     this.isLoading = false,
     this.saveButtonText,
+    this.isCompact = false,
   });
 
   @override
@@ -39,7 +41,7 @@ class AppDrawerForm extends StatelessWidget {
           ],
         ),
         child: Column(
-          mainAxisSize: MainAxisSize.max,
+          mainAxisSize: isCompact ? MainAxisSize.min : MainAxisSize.max,
           children: [
             // Handle bar
             Padding(
@@ -92,8 +94,8 @@ class AppDrawerForm extends StatelessWidget {
             ),
 
             // Form Content
-            Expanded(
-              child: SingleChildScrollView(
+            if (isCompact)
+              Padding(
                 padding: EdgeInsets.symmetric(
                   horizontal: 16 * scale,
                   vertical: 8 * scale,
@@ -103,8 +105,21 @@ class AppDrawerForm extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: children,
                 ),
+              )
+            else
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16 * scale,
+                    vertical: 8 * scale,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisSize: MainAxisSize.min,
+                    children: children,
+                  ),
+                ),
               ),
-            ),
 
             // Footer with Save Button (only show when onSave is provided)
             if (onSave != null)

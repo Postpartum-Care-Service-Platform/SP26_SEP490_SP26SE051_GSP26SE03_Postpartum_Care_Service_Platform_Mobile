@@ -77,6 +77,16 @@ import '../../features/employee/data/repositories/amenity_ticket_repository_impl
 import '../../features/employee/domain/repositories/amenity_ticket_repository.dart';
 import '../../features/employee/domain/usecases/create_service_booking.dart';
 import '../../features/employee/presentation/bloc/amenity_ticket/amenity_ticket_bloc.dart';
+import '../../features/chat/data/datasources/chat_remote_datasource.dart';
+import '../../features/chat/data/repositories/chat_repository_impl.dart';
+import '../../features/chat/domain/repositories/chat_repository.dart';
+import '../../features/chat/domain/usecases/get_conversations_usecase.dart';
+import '../../features/chat/domain/usecases/get_conversation_detail_usecase.dart';
+import '../../features/chat/domain/usecases/send_message_usecase.dart';
+import '../../features/chat/domain/usecases/create_conversation_usecase.dart';
+import '../../features/chat/domain/usecases/mark_messages_read_usecase.dart';
+import '../../features/chat/domain/usecases/request_support_usecase.dart';
+import '../../features/chat/presentation/bloc/chat_bloc.dart';
 import '../apis/api_client.dart';
 
 /// Centralized dependency injection container
@@ -116,6 +126,9 @@ class InjectionContainer {
   static AmenityTicketRemoteDataSource get _amenityTicketRemoteDataSource =>
       AmenityTicketRemoteDataSource(dio: ApiClient.dio);
 
+  static ChatRemoteDataSource get _chatRemoteDataSource =>
+      ChatRemoteDataSourceImpl(dio: ApiClient.dio);
+
   // ==================== Repositories ====================
   
   static AuthRepository get authRepository =>
@@ -149,6 +162,9 @@ class InjectionContainer {
   
   static AmenityTicketRepository get amenityTicketRepository =>
       AmenityTicketRepositoryImpl(remoteDataSource: _amenityTicketRemoteDataSource);
+
+  static ChatRepository get chatRepository =>
+      ChatRepositoryImpl(remoteDataSource: _chatRemoteDataSource);
 
   // ==================== Use Cases ====================
   
@@ -241,6 +257,19 @@ class InjectionContainer {
   static GetAppointmentTypesUsecase get appointmentTypesUsecase =>
       GetAppointmentTypesUsecase(appointmentRepository);
 
+  static GetConversationsUsecase get _getConversationsUsecase =>
+      GetConversationsUsecase(chatRepository);
+  static GetConversationDetailUsecase get _getConversationDetailUsecase =>
+      GetConversationDetailUsecase(chatRepository);
+  static SendMessageUsecase get _sendMessageUsecase =>
+      SendMessageUsecase(chatRepository);
+  static CreateConversationUsecase get _createConversationUsecase =>
+      CreateConversationUsecase(chatRepository);
+  static MarkMessagesReadUsecase get _markMessagesReadUsecase =>
+      MarkMessagesReadUsecase(chatRepository);
+  static RequestSupportUsecase get _requestSupportUsecase =>
+      RequestSupportUsecase(chatRepository);
+
   // ==================== Blocs ====================
   
   static AuthBloc get authBloc => AuthBloc(
@@ -311,6 +340,15 @@ class InjectionContainer {
         createAppointmentUsecase: _createAppointmentUsecase,
         updateAppointmentUsecase: _updateAppointmentUsecase,
         cancelAppointmentUsecase: _cancelAppointmentUsecase,
+      );
+
+  static ChatBloc get chatBloc => ChatBloc(
+        getConversationsUsecase: _getConversationsUsecase,
+        getConversationDetailUsecase: _getConversationDetailUsecase,
+        sendMessageUsecase: _sendMessageUsecase,
+        createConversationUsecase: _createConversationUsecase,
+        markMessagesReadUsecase: _markMessagesReadUsecase,
+        requestSupportUsecase: _requestSupportUsecase,
       );
 
   // ==================== Reset ====================

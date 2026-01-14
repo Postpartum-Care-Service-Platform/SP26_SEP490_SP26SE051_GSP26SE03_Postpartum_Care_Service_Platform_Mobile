@@ -9,6 +9,10 @@ class AppAssets {
   static const String appIconSecond = 'assets/images/app_icon_2.svg';
   static const String appIconFirst = 'assets/images/app_icon_1.svg';
   static const String appIconThird = 'assets/images/app_icon_3.svg';
+  static const String menuFirst = 'assets/images/menu_1.svg';
+  static const String menuSecond = 'assets/images/menu_2.svg';
+  static const String menuThird = 'assets/images/menu_3.svg';
+
 
   // Home Screen
   static const String promotionBanner = 'assets/images/promotion_banner.jpg'; // Placeholder

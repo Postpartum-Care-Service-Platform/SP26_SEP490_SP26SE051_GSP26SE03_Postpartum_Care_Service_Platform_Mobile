@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
+import '../../../../core/widgets/app_widgets.dart';
 import '../../../../core/widgets/app_loading.dart';
 import '../../../../core/widgets/app_toast.dart';
 import '../../../../core/services/current_account_cache_service.dart';
@@ -265,19 +266,11 @@ class _FamilyProfileScreenState extends State<FamilyProfileScreen> {
               : state.members.isEmpty
                   ? _buildEmptyState(scale)
                   : _buildMembersList(scale, state.members, state.memberTypes),
-          floatingActionButton: FloatingActionButton.extended(
+          floatingActionButton: AppWidgets.primaryFabExtended(
+            context: context,
+            text: AppStrings.addFamilyMember,
+            icon: Icons.add_rounded,
             onPressed: _showAddMemberDrawer,
-            backgroundColor: AppColors.primary,
-            elevation: 2,
-            icon: Icon(Icons.add_rounded, color: AppColors.white, size: 20 * scale),
-            label: Text(
-              AppStrings.addFamilyMember,
-              style: AppTextStyles.arimo(
-                fontSize: 14 * scale,
-                color: AppColors.white,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
           ),
         );
       },

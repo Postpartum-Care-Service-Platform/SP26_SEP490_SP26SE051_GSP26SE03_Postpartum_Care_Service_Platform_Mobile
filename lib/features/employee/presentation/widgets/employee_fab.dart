@@ -1,7 +1,7 @@
 // lib/features/employee/presentation/widgets/employee_fab.dart
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/widgets/app_widgets.dart';
 
 class EmployeeFab extends StatelessWidget {
   final VoidCallback onTap;
@@ -10,10 +10,10 @@ class EmployeeFab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FloatingActionButton(
-      backgroundColor: AppColors.primary,
+    return AppWidgets.primaryFabIcon(
+      context: context,
+      icon: Icons.add_rounded,
       onPressed: onTap,
-      child: const Icon(Icons.add, color: AppColors.white),
     );
   }
 }
