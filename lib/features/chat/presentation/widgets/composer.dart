@@ -48,7 +48,9 @@ class Composer extends StatelessWidget {
               child: TextField(
                 controller: controller,
                 minLines: 1,
-                maxLines: 4,
+                maxLines: 6,
+                keyboardType: TextInputType.multiline,
+                textInputAction: TextInputAction.newline,
                 decoration: InputDecoration(
                   hintText: AppStrings.chatSendPlaceholder,
                   contentPadding: EdgeInsets.symmetric(

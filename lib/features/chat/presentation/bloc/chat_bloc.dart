@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/chat_conversation.dart';
 import '../../domain/entities/chat_message.dart';
+import '../../domain/entities/ai_structured_data.dart';
 import '../../domain/usecases/create_conversation_usecase.dart';
 import '../../domain/usecases/get_conversation_detail_usecase.dart';
 import '../../domain/usecases/get_conversations_usecase.dart';
@@ -40,6 +41,33 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   final MarkMessagesReadUsecase _markMessagesReadUsecase;
   final RequestSupportUsecase _requestSupportUsecase;
 
+  DateTime _conversationLastActivity(ChatConversation conversation) {
+    if (conversation.messages.isEmpty) return conversation.createdAt;
+    return conversation.messages
+        .map((m) => m.createdAt)
+        .reduce((a, b) => a.isAfter(b) ? a : b);
+  }
+
+  List<ChatConversation> _normalizeAndSortConversations(
+    List<ChatConversation> input,
+  ) {
+    final normalized = input
+        .map((c) {
+          if (c.messages.length <= 1) return c;
+          final sortedMessages = List<ChatMessage>.from(c.messages)
+            ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+          return c.copyWith(messages: sortedMessages);
+        })
+        .toList();
+
+    normalized.sort(
+      (a, b) => _conversationLastActivity(b).compareTo(
+        _conversationLastActivity(a),
+      ),
+    );
+    return normalized;
+  }
+
   String _formatError(Object e) {
     var message = e.toString();
     message = message.replaceAll('Exception: ', '');
@@ -59,7 +87,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   ) async {
     emit(state.copyWith(conversationsStatus: ChatStatus.loading, errorMessage: null));
     try {
-      final conversations = await _getConversationsUsecase();
+      final conversations =
+          _normalizeAndSortConversations(await _getConversationsUsecase());
       emit(state.copyWith(
         conversations: conversations,
         conversationsStatus: ChatStatus.success,
@@ -81,7 +110,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     Emitter<ChatState> emit,
   ) async {
     try {
-      final conversations = await _getConversationsUsecase();
+      final conversations =
+          _normalizeAndSortConversations(await _getConversationsUsecase());
       emit(state.copyWith(
         conversations: conversations,
         conversationsStatus: ChatStatus.success,
@@ -162,6 +192,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       senderName: null,
       createdAt: now,
       isRead: true,
+      hasJson: false,
+      formattedJson: null,
     );
 
     final optimisticMessages = List<ChatMessage>.from(selected.messages)
@@ -190,11 +222,18 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       final updatedConversation = selected.copyWith(messages: newMessages);
       final updatedList = _upsertConversation(updatedConversation);
 
+      final updatedStructured =
+          Map<int, AiStructuredData>.from(state.aiStructuredByMessageId);
+      if (result.aiMessage != null && result.aiStructuredData != null) {
+        updatedStructured[result.aiMessage!.id] = result.aiStructuredData!;
+      }
+
       emit(state.copyWith(
         selectedConversation: updatedConversation,
         conversations: updatedList,
         sendStatus: ChatSendStatus.success,
         isAiTyping: false,
+        aiStructuredByMessageId: updatedStructured,
       ));
     } catch (e) {
       emit(state.copyWith(
@@ -238,11 +277,11 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     final existingIndex =
         state.conversations.indexWhere((c) => c.id == conversation.id);
     if (existingIndex == -1) {
-      return [conversation, ...state.conversations];
+      return _normalizeAndSortConversations([conversation, ...state.conversations]);
     }
     final updated = List<ChatConversation>.from(state.conversations);
     updated[existingIndex] = conversation;
-    return updated;
+    return _normalizeAndSortConversations(updated);
   }
 }
 

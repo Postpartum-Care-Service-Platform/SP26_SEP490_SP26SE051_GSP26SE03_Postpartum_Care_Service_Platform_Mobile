@@ -9,6 +9,8 @@ class ChatMessage extends Equatable {
   final String? senderName;
   final DateTime createdAt;
   final bool isRead;
+  final bool hasJson;
+  final String? formattedJson;
 
   const ChatMessage({
     required this.id,
@@ -18,6 +20,8 @@ class ChatMessage extends Equatable {
     this.senderName,
     required this.createdAt,
     required this.isRead,
+    this.hasJson = false,
+    this.formattedJson,
   });
 
   @override
@@ -29,6 +33,8 @@ class ChatMessage extends Equatable {
         senderName,
         createdAt,
         isRead,
+        hasJson,
+        formattedJson,
       ];
 }
 

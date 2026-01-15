@@ -193,6 +193,7 @@ class ConversationDetail extends StatelessWidget {
                                 ? (currentAccount?.username ?? 'Bạn')
                                 : (message.senderName ?? 'NV')));
                     final avatarUrl = isMine ? currentAccount?.avatarUrl : null;
+                    final structured = state.aiStructuredByMessageId[message.id];
 
                     return MessageBubble(
                       message: message,
@@ -202,6 +203,7 @@ class ConversationDetail extends StatelessWidget {
                       isLastInGroup: isLastInGroup,
                       displayName: displayName,
                       avatarUrl: avatarUrl,
+                      structuredData: structured,
                     );
                   },
                 ),

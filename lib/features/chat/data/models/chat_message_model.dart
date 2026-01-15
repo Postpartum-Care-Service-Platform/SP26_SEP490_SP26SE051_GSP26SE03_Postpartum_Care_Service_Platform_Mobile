@@ -9,6 +9,8 @@ class ChatMessageModel extends ChatMessage {
     super.senderName,
     required super.createdAt,
     required super.isRead,
+    super.hasJson,
+    super.formattedJson,
   });
 
   factory ChatMessageModel.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,8 @@ class ChatMessageModel extends ChatMessage {
       senderName: json['senderName']?.toString(),
       createdAt: DateTime.parse(json['createdAt'] as String),
       isRead: json['isRead'] == true,
+      hasJson: json['hasJson'] == true,
+      formattedJson: json['formattedJson']?.toString(),
     );
   }
 
@@ -32,6 +36,8 @@ class ChatMessageModel extends ChatMessage {
       'senderName': senderName,
       'createdAt': createdAt.toIso8601String(),
       'isRead': isRead,
+      'hasJson': hasJson,
+      'formattedJson': formattedJson,
     };
   }
 }

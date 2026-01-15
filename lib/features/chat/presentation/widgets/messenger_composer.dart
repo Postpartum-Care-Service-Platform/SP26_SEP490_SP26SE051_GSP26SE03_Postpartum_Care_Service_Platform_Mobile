@@ -48,7 +48,6 @@ class MessengerComposer extends StatelessWidget {
         children: [
           Expanded(
             child: Container(
-              height: 36 * scale,
               decoration: BoxDecoration(
                 color: Colors.black.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(18 * scale),
@@ -59,9 +58,9 @@ class MessengerComposer extends StatelessWidget {
                     child: TextField(
                       controller: controller,
                       minLines: 1,
-                      maxLines: 4,
-                      textInputAction: TextInputAction.send,
-                      onSubmitted: (_) => _submit(),
+                      maxLines: 6,
+                      keyboardType: TextInputType.multiline,
+                      textInputAction: TextInputAction.newline,
                       decoration: InputDecoration(
                         hintText: AppStrings.chatInputHintShort,
                         hintStyle: TextStyle(

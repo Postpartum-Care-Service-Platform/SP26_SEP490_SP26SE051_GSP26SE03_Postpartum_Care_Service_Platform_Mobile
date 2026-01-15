@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/chat_conversation.dart';
 import '../../domain/entities/support_request.dart';
+import '../../domain/entities/ai_structured_data.dart';
 
 enum ChatStatus { initial, loading, success, failure }
 
@@ -18,6 +19,7 @@ class ChatState extends Equatable {
   final String? errorMessage;
   final SupportRequest? supportRequest;
   final bool isAiTyping;
+  final Map<int, AiStructuredData> aiStructuredByMessageId;
 
   const ChatState({
     this.conversations = const [],
@@ -29,6 +31,7 @@ class ChatState extends Equatable {
     this.errorMessage,
     this.supportRequest,
     this.isAiTyping = false,
+    this.aiStructuredByMessageId = const {},
   });
 
   ChatState copyWith({
@@ -41,6 +44,7 @@ class ChatState extends Equatable {
     String? errorMessage,
     SupportRequest? supportRequest,
     bool? isAiTyping,
+    Map<int, AiStructuredData>? aiStructuredByMessageId,
   }) {
     return ChatState(
       conversations: conversations ?? this.conversations,
@@ -53,6 +57,8 @@ class ChatState extends Equatable {
       errorMessage: errorMessage,
       supportRequest: supportRequest ?? this.supportRequest,
       isAiTyping: isAiTyping ?? this.isAiTyping,
+      aiStructuredByMessageId:
+          aiStructuredByMessageId ?? this.aiStructuredByMessageId,
     );
   }
 
@@ -67,6 +73,7 @@ class ChatState extends Equatable {
         errorMessage,
         supportRequest,
         isAiTyping,
+        aiStructuredByMessageId,
       ];
 }
 

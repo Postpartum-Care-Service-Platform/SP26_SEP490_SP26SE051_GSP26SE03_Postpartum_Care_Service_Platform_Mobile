@@ -55,6 +55,22 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
               message: state.message,
             );
           }
+
+          // Reload account by ID after password change success
+          if (state is AuthChangePasswordSuccess) {
+            // Show success toast immediately (loading is already hidden)
+            AppToast.showSuccess(
+              context,
+              message: state.message,
+            );
+            // Reload account data after a short delay to let toast appear
+            Future.delayed(const Duration(milliseconds: 500), () {
+              if (context.mounted) {
+                final authBloc = context.read<AuthBloc>();
+                authBloc.add(AuthGetAccountById(id: widget.userId));
+              }
+            });
+          }
         },
         child: PopScope(
           onPopInvokedWithResult: (didPop, result) {

@@ -6,6 +6,8 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
+import '../../domain/entities/chat_conversation.dart';
+import '../../domain/entities/chat_message.dart';
 import '../bloc/chat_bloc.dart';
 import '../bloc/chat_event.dart';
 import '../bloc/chat_state.dart';
@@ -21,6 +23,59 @@ class ConversationList extends StatelessWidget {
     required this.onCreate,
     this.onConversationTap,
   });
+
+  DateTime _lastActivityTime(ChatConversation conversation) {
+    var latest = conversation.createdAt;
+    for (final message in conversation.messages) {
+      if (message.createdAt.isAfter(latest)) {
+        latest = message.createdAt;
+      }
+    }
+    return latest;
+  }
+
+  ChatMessage? _latestMessage(ChatConversation conversation) {
+    if (conversation.messages.isEmpty) return null;
+    ChatMessage latest = conversation.messages.first;
+    for (final message in conversation.messages.skip(1)) {
+      if (message.createdAt.isAfter(latest.createdAt)) {
+        latest = message;
+      }
+    }
+    return latest;
+  }
+
+  String _buildPreviewText(ChatMessage? message) {
+    if (message == null) return AppStrings.chatTypingHint;
+    var text = message.content.trim();
+    if (text.isEmpty) return AppStrings.chatTypingHint;
+
+    // Bỏ các dòng bảng markdown và separator '---'
+    final lines = text.split('\n');
+    final buffer = <String>[];
+    for (final line in lines) {
+      final trimmed = line.trim();
+      if (trimmed.isEmpty) continue;
+      if (trimmed.startsWith('|')) continue;
+      if (trimmed.startsWith('---')) continue;
+      buffer.add(trimmed);
+    }
+    text = buffer.join(' ');
+
+    // Loại bỏ các ký hiệu markdown đơn giản: **bold**, _italic_, __bold__, ~~del~~
+    text = text
+        .replaceAllMapped(
+            RegExp(r'(\*\*|__)(.+?)(\*\*|__)'), (m) => m[2] ?? '')
+        .replaceAllMapped(RegExp(r'(\*|_)(.+?)(\*|_)'), (m) => m[2] ?? '')
+        .replaceAllMapped(
+            RegExp(r'(~~)(.+?)(~~)'), (m) => m[2] ?? '');
+
+    // Thu gọn khoảng trắng
+    text = text.replaceAll(RegExp(r'\s+'), ' ').trim();
+
+    if (text.isEmpty) return AppStrings.chatTypingHint;
+    return text;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -85,9 +140,8 @@ class ConversationList extends StatelessWidget {
                       final conversation = state.conversations[index];
                       final isSelected =
                           conversation.id == state.selectedConversation?.id;
-                      final lastMessage = conversation.messages.isNotEmpty
-                          ? conversation.messages.last
-                          : null;
+                      final lastMessage = _latestMessage(conversation);
+                      final previewText = _buildPreviewText(lastMessage);
                       return Material(
                         color: isSelected
                             ? AppColors.primary.withValues(alpha: 0.08)
@@ -149,7 +203,7 @@ class ConversationList extends StatelessWidget {
                                           ),
                                           Text(
                                             formatChatTime(
-                                              conversation.createdAt,
+                                              _lastActivityTime(conversation),
                                             ),
                                             style: AppTextStyles.arimo(
                                               fontSize: 11 * scale,
@@ -160,8 +214,7 @@ class ConversationList extends StatelessWidget {
                                       ),
                                       SizedBox(height: 4 * scale),
                                       Text(
-                                        lastMessage?.content ??
-                                            AppStrings.chatTypingHint,
+                                        previewText,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: AppTextStyles.arimo(
