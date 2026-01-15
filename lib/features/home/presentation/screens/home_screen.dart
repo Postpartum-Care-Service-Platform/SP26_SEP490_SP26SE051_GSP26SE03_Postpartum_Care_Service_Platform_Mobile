@@ -6,6 +6,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../../core/widgets/app_loading.dart';
 import '../../../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../../../features/auth/presentation/bloc/auth_state.dart';
 import '../../../../features/package/presentation/bloc/package_bloc.dart';
@@ -129,7 +130,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 return const Center(
                   child: Padding(
                     padding: EdgeInsets.all(24.0),
-                    child: CircularProgressIndicator(
+                    child: AppLoadingIndicator(
                       color: AppColors.primary,
                     ),
                   ),

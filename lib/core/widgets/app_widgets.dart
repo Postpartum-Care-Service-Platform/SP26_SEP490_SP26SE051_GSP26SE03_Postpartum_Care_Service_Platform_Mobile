@@ -58,6 +58,88 @@ class AppWidgets {
     );
   }
 
+  /// Primary Floating Action Button - icon only
+  static Widget primaryFabIcon({
+    required BuildContext context,
+    required IconData icon,
+    required VoidCallback onPressed,
+    EdgeInsets? margin,
+  }) {
+    final scale = AppResponsive.scaleFactor(context);
+    return Container(
+      margin: margin ?? EdgeInsets.only(bottom: 12 * scale, right: 4 * scale),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20 * scale),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.4),
+            blurRadius: 14 * scale,
+            offset: Offset(0, 3 * scale),
+          ),
+        ],
+      ),
+      child: SizedBox(
+        width: 56 * scale,
+        height: 56 * scale,
+        child: FloatingActionButton(
+          onPressed: onPressed,
+          backgroundColor: AppColors.primary,
+          foregroundColor: AppColors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18 * scale),
+          ),
+          child: Icon(icon, size: 24 * scale),
+        ),
+      ),
+    );
+  }
+
+  /// Primary Extended FAB - pill button with icon + label
+  static Widget primaryFabExtended({
+    required BuildContext context,
+    required String text,
+    required IconData icon,
+    required VoidCallback onPressed,
+    EdgeInsets? margin,
+  }) {
+    final scale = AppResponsive.scaleFactor(context);
+    return Container(
+      margin: margin ?? EdgeInsets.only(bottom: 12 * scale),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20 * scale),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.4),
+            blurRadius: 14 * scale,
+            offset: Offset(0, 3 * scale),
+          ),
+        ],
+      ),
+      child: SizedBox(
+        height: 44 * scale,
+        child: FloatingActionButton.extended(
+          onPressed: onPressed,
+          backgroundColor: AppColors.primary,
+          elevation: 0,
+          icon: Icon(
+            icon,
+            color: AppColors.white,
+            size: 20 * scale,
+          ),
+          label: Text(
+            text,
+            style: AppTextStyles.arimo(
+              fontSize: 14 * scale,
+              fontWeight: FontWeight.w700,
+              color: AppColors.white,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   /// Secondary Button - White background with black border
   static Widget secondaryButton({
     required String text,

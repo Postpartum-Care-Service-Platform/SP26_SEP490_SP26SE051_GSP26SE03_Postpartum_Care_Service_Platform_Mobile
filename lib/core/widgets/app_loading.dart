@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../constants/app_colors.dart';
 import '../utils/app_responsive.dart';
 
@@ -43,6 +44,68 @@ class AppLoading {
   }
 }
 
+/// Reusable loading indicator widget with rotating icon
+class AppLoadingIndicator extends StatefulWidget {
+  final double? size;
+  final Color? color;
+
+  const AppLoadingIndicator({
+    super.key,
+    this.size,
+    this.color,
+  });
+
+  @override
+  State<AppLoadingIndicator> createState() => _AppLoadingIndicatorState();
+}
+
+class _AppLoadingIndicatorState extends State<AppLoadingIndicator>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _rotationController;
+  late Animation<double> _rotationAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _rotationController = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..repeat();
+
+    _rotationAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _rotationController,
+      curve: Curves.linear,
+    ));
+  }
+
+  @override
+  void dispose() {
+    _rotationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+    final size = widget.size ?? (48 * scale);
+
+    return RotationTransition(
+      turns: _rotationAnimation,
+      child: SvgPicture.asset(
+        'assets/images/app_icon_3.svg',
+        width: size,
+        height: size,
+        colorFilter: widget.color != null
+            ? ColorFilter.mode(widget.color!, BlendMode.srcIn)
+            : null,
+      ),
+    );
+  }
+}
+
 class _LoadingWidget extends StatefulWidget {
   final String? message;
   final bool barrierDismissible;
@@ -59,13 +122,16 @@ class _LoadingWidget extends StatefulWidget {
 }
 
 class _LoadingWidgetState extends State<_LoadingWidget>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _opacityAnimation;
+  late AnimationController _rotationController;
+  late Animation<double> _rotationAnimation;
 
   @override
   void initState() {
     super.initState();
+    // Fade animation controller
     _controller = AnimationController(
       duration: const Duration(milliseconds: 200),
       vsync: this,
@@ -79,12 +145,27 @@ class _LoadingWidgetState extends State<_LoadingWidget>
       curve: Curves.easeOut,
     ));
 
+    // Rotation animation controller
+    _rotationController = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..repeat();
+
+    _rotationAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _rotationController,
+      curve: Curves.linear,
+    ));
+
     _controller.forward();
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _rotationController.dispose();
     super.dispose();
   }
 
@@ -130,14 +211,12 @@ class _LoadingWidgetState extends State<_LoadingWidget>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    SizedBox(
-                      width: 48 * scale,
-                      height: 48 * scale,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 4 * scale,
-                        valueColor: const AlwaysStoppedAnimation<Color>(
-                          AppColors.primary,
-                        ),
+                    RotationTransition(
+                      turns: _rotationAnimation,
+                      child: SvgPicture.asset(
+                        'assets/images/app_icon_3.svg',
+                        width: 64 * scale,
+                        height: 64 * scale,
                       ),
                     ),
                     if (widget.message != null) ...[

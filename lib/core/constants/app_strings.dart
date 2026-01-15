@@ -51,6 +51,7 @@ class AppStrings {
   static const String needAnAccount = 'Need an account?';
   static const String forgotPassword = 'Forgot your password?';
   static const String resetIt = 'Reset it';
+  static const String send = 'Gửi';
 
   // Home Screen
   static const String goodMorning = 'Chào buổi sáng';
@@ -180,6 +181,33 @@ class AppStrings {
   static const String servicesScreen = 'Services Screen';
   static const String scheduleScreen = 'Schedule Screen';
   static const String chatScreen = 'Chat Screen';
+  static const String chatTitle = 'Tư vấn & Chat AI';
+  static const String chatSubtitle =
+      'Trao đổi nhanh với trợ lý AI hoặc yêu cầu nhân viên hỗ trợ';
+  static const String chatNewConversation = 'Cuộc trò chuyện mới';
+  static const String chatNewConversationPlaceholder = 'Nhập tên chủ đề...';
+  static const String chatSendPlaceholder = 'Nhập tin nhắn...';
+  static const String chatRequestSupport = 'Yêu cầu nhân viên hỗ trợ';
+  static const String chatRequestSupportReason =
+      'Bạn cần nhân viên hỗ trợ gì?';
+  static const String chatRequestSupportSuccess =
+      'Đã gửi yêu cầu hỗ trợ tới nhân viên';
+  static const String chatEmptyMessage =
+      'Bắt đầu trò chuyện để nhận tư vấn từ AI';
+  static const String chatNoConversation = 'Chưa có cuộc trò chuyện';
+  static const String chatLoadError =
+      'Không thể tải cuộc trò chuyện. Vui lòng thử lại.';
+  static const String chatTypingHint =
+      'AI đang sẵn sàng hỗ trợ mẹ và bé sau sinh';
+  static const String chatSearchHint = 'Tìm kiếm cuộc trò chuyện...';
+  static const String chatAiTypingStatus = 'AI đang trả lời';
+  static const String chatAiAssistantTitle = 'Trợ lý AI';
+  static const String chatAiIntroLine1 =
+      'Dùng mô hình AI để tư vấn chăm sóc mẹ & bé.';
+  static const String chatAiIntroLine2 =
+      'Một số câu trả lời có thể chưa hoàn hảo. Vui lòng kiểm tra lại thông tin quan trọng.';
+  static const String chatInputHintShort = 'Aa';
+  static const String chatMessengerLabel = 'Messenger';
 
   // Bottom Navigation Bar
   static const String bottomNavHome = 'Home';

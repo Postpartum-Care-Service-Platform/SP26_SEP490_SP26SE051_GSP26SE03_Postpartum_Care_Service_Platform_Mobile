@@ -3,6 +3,16 @@
 class ApiEndpoints {
   ApiEndpoints._();
 
+  // Chat endpoints
+  static const String chatConversations = '/Chat/conversations';
+  static String chatConversationById(int id) => '/Chat/conversations/$id';
+  static String chatConversationMessages(int id) =>
+      '/Chat/conversations/$id/messages';
+  static String chatConversationMarkRead(int id) =>
+      '/Chat/conversations/$id/messages/read';
+  static String chatConversationRequestSupport(int id) =>
+      '/Chat/conversations/$id/request-support';
+
   // Auth endpoints
   static const String login = '/Auth/login';
   static const String register = '/Auth/register';

@@ -61,7 +61,7 @@ class HomeHeader extends StatelessWidget {
                           children: [
                             Flexible(
                               child: Text(
-                                userName ?? 'Mom',
+                                userName ?? 'User',
                                 style: AppTextStyles.tinos(
                                   fontSize: 20 * scale,
                                   fontWeight: FontWeight.bold,

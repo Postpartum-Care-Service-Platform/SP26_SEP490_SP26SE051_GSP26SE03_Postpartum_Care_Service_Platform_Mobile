@@ -50,12 +50,11 @@ class _ChangePasswordFormState extends State<ChangePasswordForm> {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthChangePasswordSuccess) {
-          AppToast.showSuccess(context, message: state.message);
+          // Clear form fields
           _currentPasswordController.clear();
           _newPasswordController.clear();
           _confirmNewPasswordController.clear();
-          // Refresh current account to update UI
-          context.read<AuthBloc>().add(const AuthLoadCurrentAccount());
+          // Toast and reload will be handled by AccountDetailsScreen
         }
       },
       child: Form(
