@@ -32,6 +32,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     on<ChatCreateConversationSubmitted>(_onCreateConversation);
     on<ChatSendMessageSubmitted>(_onSendMessage);
     on<ChatRequestSupportSubmitted>(_onRequestSupport);
+    on<ChatSearchQueryChanged>(_onSearchQueryChanged);
   }
 
   final GetConversationsUsecase _getConversationsUsecase;
@@ -282,6 +283,13 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     final updated = List<ChatConversation>.from(state.conversations);
     updated[existingIndex] = conversation;
     return _normalizeAndSortConversations(updated);
+  }
+
+  void _onSearchQueryChanged(
+    ChatSearchQueryChanged event,
+    Emitter<ChatState> emit,
+  ) {
+    emit(state.copyWith(searchQuery: event.query));
   }
 }
 

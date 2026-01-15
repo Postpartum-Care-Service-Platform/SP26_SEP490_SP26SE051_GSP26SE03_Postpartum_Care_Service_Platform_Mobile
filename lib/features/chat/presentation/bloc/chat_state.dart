@@ -20,6 +20,7 @@ class ChatState extends Equatable {
   final SupportRequest? supportRequest;
   final bool isAiTyping;
   final Map<int, AiStructuredData> aiStructuredByMessageId;
+  final String searchQuery;
 
   const ChatState({
     this.conversations = const [],
@@ -32,6 +33,7 @@ class ChatState extends Equatable {
     this.supportRequest,
     this.isAiTyping = false,
     this.aiStructuredByMessageId = const {},
+    this.searchQuery = '',
   });
 
   ChatState copyWith({
@@ -45,6 +47,7 @@ class ChatState extends Equatable {
     SupportRequest? supportRequest,
     bool? isAiTyping,
     Map<int, AiStructuredData>? aiStructuredByMessageId,
+    String? searchQuery,
   }) {
     return ChatState(
       conversations: conversations ?? this.conversations,
@@ -59,6 +62,7 @@ class ChatState extends Equatable {
       isAiTyping: isAiTyping ?? this.isAiTyping,
       aiStructuredByMessageId:
           aiStructuredByMessageId ?? this.aiStructuredByMessageId,
+      searchQuery: searchQuery ?? this.searchQuery,
     );
   }
 
@@ -74,6 +78,7 @@ class ChatState extends Equatable {
         supportRequest,
         isAiTyping,
         aiStructuredByMessageId,
+        searchQuery,
       ];
 }
 

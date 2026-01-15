@@ -12,8 +12,8 @@ import '../../../../core/services/auth_service.dart';
 import '../../../../core/services/current_account_cache_service.dart';
 import '../../../employee/presentation/screens/employee_portal_screen.dart';
 import '../../../../core/widgets/app_scaffold.dart';
+import '../../../../core/widgets/app_loading.dart';
 import '../../../auth/presentation/screens/login_screen.dart';
-import '../widgets/loading_indicator.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -22,7 +22,8 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen>
+    with TickerProviderStateMixin {
   late AnimationController _introController;
   late AnimationController _floatingController;
   late Animation<double> _fadeAnimation;
@@ -45,7 +46,10 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       duration: const Duration(seconds: 5),
     )..repeat(reverse: true);
 
-    final introCurve = CurvedAnimation(parent: _introController, curve: Curves.easeInOut);
+    final introCurve = CurvedAnimation(
+      parent: _introController,
+      curve: Curves.easeInOut,
+    );
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(introCurve);
     _scaleAnimation = Tween<double>(begin: 0.9, end: 1.0).animate(introCurve);
 
@@ -54,7 +58,10 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       TweenSequenceItem(tween: Tween(begin: -4, end: 0), weight: 50),
     ]).animate(_floatingController);
 
-    _rotateAnimation = Tween<double>(begin: -0.5, end: 0.5).animate(_floatingController);
+    _rotateAnimation = Tween<double>(
+      begin: -0.5,
+      end: 0.5,
+    ).animate(_floatingController);
 
     _highlightAnimation = Tween<double>(begin: -0.2, end: 1.2).animate(
       CurvedAnimation(parent: _floatingController, curve: Curves.easeInOut),
@@ -84,18 +91,21 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       // Try to read cached account to decide portal
       final cached = await CurrentAccountCacheService.getCurrentAccount();
       final role = cached?.roleName.toLowerCase();
-      final isEmployee = role == 'staff' || role == 'manager' || role == 'admin';
-      destination = isEmployee ? const EmployeePortalScreen() : const AppScaffold();
+      final isEmployee =
+          role == 'staff' || role == 'manager' || role == 'admin';
+      destination = isEmployee
+          ? const EmployeePortalScreen()
+          : const AppScaffold();
     }
 
-        Navigator.of(context).pushReplacement(
-          PageRouteBuilder(
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
         pageBuilder: (_, __, ___) => destination,
-            transitionsBuilder: (_, animation, __, child) =>
-                FadeTransition(opacity: animation, child: child),
-            transitionDuration: const Duration(milliseconds: 800),
-          ),
-        );
+        transitionsBuilder: (_, animation, __, child) =>
+            FadeTransition(opacity: animation, child: child),
+        transitionDuration: const Duration(milliseconds: 800),
+      ),
+    );
   }
 
   @override
@@ -135,6 +145,8 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                   child: _buildIconContent(scale),
                 ),
                 const Spacer(flex: 2),
+                AppLoadingIndicator(size: 38 * scale, color: AppColors.primary),
+                SizedBox(height: 16 * scale),
                 Text(
                   AppStrings.loading,
                   style: AppTextStyles.arimo(
@@ -142,8 +154,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                     color: AppColors.textSecondary,
                   ),
                 ),
-                SizedBox(height: 16 * scale),
-                LoadingIndicator(size: 24 * scale, strokeWidth: 3 * scale),
                 SizedBox(height: 60 * scale),
               ],
             ),
@@ -182,11 +192,23 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                SvgPicture.asset(AppAssets.appIconFirst, width: 80 * scale, height: 80 * scale),
+                SvgPicture.asset(
+                  AppAssets.appIconFirst,
+                  width: 80 * scale,
+                  height: 80 * scale,
+                ),
                 SizedBox(width: 16 * scale),
-                SvgPicture.asset(AppAssets.appIcon, width: 80 * scale, height: 80 * scale),
+                SvgPicture.asset(
+                  AppAssets.appIcon,
+                  width: 80 * scale,
+                  height: 80 * scale,
+                ),
                 SizedBox(width: 16 * scale),
-                SvgPicture.asset(AppAssets.appIconSecond, width: 80 * scale, height: 80 * scale),
+                SvgPicture.asset(
+                  AppAssets.appIconSecond,
+                  width: 80 * scale,
+                  height: 80 * scale,
+                ),
               ],
             ),
             SizedBox(height: 32 * scale),

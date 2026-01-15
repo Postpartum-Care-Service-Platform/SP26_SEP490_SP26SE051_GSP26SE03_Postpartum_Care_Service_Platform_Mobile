@@ -258,9 +258,9 @@ class _FamilyProfileScreenState extends State<FamilyProfileScreen> {
             ),
           ),
           body: state.isLoading
-              ? Center(
-                  child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+              ? const Center(
+                  child: AppLoadingIndicator(
+                    color: AppColors.primary,
                   ),
                 )
               : state.members.isEmpty

@@ -3,6 +3,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
+import '../../../../core/widgets/app_loading.dart';
 
 /// Notification loading state widget
 class NotificationLoadingState extends StatelessWidget {
@@ -14,13 +15,9 @@ class NotificationLoadingState extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          SizedBox(
-            width: 56 * AppResponsive.scaleFactor(context),
-            height: 56 * AppResponsive.scaleFactor(context),
-            child: const CircularProgressIndicator(
-              color: AppColors.primary,
-              strokeWidth: 4,
-            ),
+          AppLoadingIndicator(
+            size: 56 * AppResponsive.scaleFactor(context),
+            color: AppColors.primary,
           ),
           SizedBox(height: 24 * AppResponsive.scaleFactor(context)),
           Text(

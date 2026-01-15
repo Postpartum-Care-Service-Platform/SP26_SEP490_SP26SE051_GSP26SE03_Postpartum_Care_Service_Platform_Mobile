@@ -134,7 +134,14 @@ class _ConversationScreenState extends State<ConversationListScreen> {
                         ),
                       ),
                       SizedBox(height: 12 * scale),
-                      _SearchBar(controller: _searchController),
+                      _SearchBar(
+                        controller: _searchController,
+                        onChanged: (query) {
+                          contextWithBloc.read<ChatBloc>().add(
+                                ChatSearchQueryChanged(query),
+                              );
+                        },
+                      ),
                       SizedBox(height: 16 * scale),
                       Expanded(
                         child: ConversationList(
@@ -163,8 +170,12 @@ class _ConversationScreenState extends State<ConversationListScreen> {
 
 class _SearchBar extends StatelessWidget {
   final TextEditingController controller;
+  final ValueChanged<String>? onChanged;
 
-  const _SearchBar({required this.controller});
+  const _SearchBar({
+    required this.controller,
+    this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -184,6 +195,7 @@ class _SearchBar extends StatelessWidget {
       ),
       child: TextField(
         controller: controller,
+        onChanged: onChanged,
         decoration: InputDecoration(
           prefixIcon: Icon(
             Icons.search_rounded,

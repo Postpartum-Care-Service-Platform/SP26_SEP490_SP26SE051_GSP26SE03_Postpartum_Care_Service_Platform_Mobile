@@ -5,6 +5,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../../core/widgets/app_loading.dart';
 import '../bloc/notification_bloc.dart';
 import '../bloc/notification_event.dart';
 import '../bloc/notification_state.dart';
@@ -62,7 +63,7 @@ class NotificationDrawer extends StatelessWidget {
                   builder: (context, state) {
                     if (state is NotificationLoading) {
                       return const Center(
-                        child: CircularProgressIndicator(
+                        child: AppLoadingIndicator(
                           color: AppColors.primary,
                         ),
                       );

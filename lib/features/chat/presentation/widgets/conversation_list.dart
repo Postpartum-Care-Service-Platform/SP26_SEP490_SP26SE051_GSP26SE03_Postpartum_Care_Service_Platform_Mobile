@@ -6,6 +6,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
+import '../../../../core/widgets/app_loading.dart';
 import '../../domain/entities/chat_conversation.dart';
 import '../../domain/entities/chat_message.dart';
 import '../bloc/chat_bloc.dart';
@@ -77,6 +78,32 @@ class ConversationList extends StatelessWidget {
     return text;
   }
 
+  List<ChatConversation> _filterConversations(
+    List<ChatConversation> conversations,
+    String searchQuery,
+  ) {
+    if (searchQuery.isEmpty) {
+      return conversations;
+    }
+    
+    final query = searchQuery.toLowerCase().trim();
+    return conversations.where((conversation) {
+      // Search in conversation name
+      if (conversation.name.toLowerCase().contains(query)) {
+        return true;
+      }
+      
+      // Search in message content
+      for (final message in conversation.messages) {
+        if (message.content.toLowerCase().contains(query)) {
+          return true;
+        }
+      }
+      
+      return false;
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
@@ -84,13 +111,22 @@ class ConversationList extends StatelessWidget {
       buildWhen: (p, c) =>
           p.conversations != c.conversations ||
           p.conversationsStatus != c.conversationsStatus ||
-          p.selectedConversation?.id != c.selectedConversation?.id,
+          p.selectedConversation?.id != c.selectedConversation?.id ||
+          p.searchQuery != c.searchQuery,
       builder: (context, state) {
-        if (state.conversationsStatus == ChatStatus.loading) {
+        final filteredConversations = _filterConversations(
+          state.conversations,
+          state.searchQuery,
+        );
+        // Show loading if initial or loading state
+        if (state.conversationsStatus == ChatStatus.initial ||
+            state.conversationsStatus == ChatStatus.loading) {
           return const Center(
-            child: CircularProgressIndicator(color: AppColors.primary),
+            child: AppLoadingIndicator(color: AppColors.primary),
           );
         }
+        
+        // Show error state if failed
         if (state.conversationsStatus == ChatStatus.failure) {
           return EmptyPlaceholder(
             icon: Icons.wifi_off,
@@ -100,13 +136,36 @@ class ConversationList extends StatelessWidget {
                 context.read<ChatBloc>().add(const ChatRefreshRequested()),
           );
         }
-        if (state.conversations.isEmpty) {
-          return EmptyPlaceholder(
-            icon: Icons.chat_bubble_outline_rounded,
-            title: AppStrings.chatNoConversation,
-            subtitle: AppStrings.chatEmptyMessage,
-            actionLabel: AppStrings.chatNewConversation,
-            onAction: onCreate,
+        
+        // Only show empty state if we have successfully loaded
+        if (state.conversationsStatus == ChatStatus.success) {
+          // Show empty state if no conversations at all
+          if (state.conversations.isEmpty) {
+            return EmptyPlaceholder(
+              icon: Icons.chat_bubble_outline_rounded,
+              title: AppStrings.chatNoConversation,
+              subtitle: AppStrings.chatEmptyMessage,
+              actionLabel: AppStrings.chatNewConversation,
+              onAction: onCreate,
+            );
+          }
+          
+          // Show no results if search query doesn't match any conversations
+          if (state.searchQuery.isNotEmpty && filteredConversations.isEmpty) {
+            return EmptyPlaceholder(
+              icon: Icons.search_off_rounded,
+              title: 'Không tìm thấy kết quả',
+              subtitle: 'Thử tìm kiếm với từ khóa khác',
+              actionLabel: AppStrings.chatNewConversation,
+              onAction: onCreate,
+            );
+          }
+        }
+        
+        // If not success state, show loading as fallback
+        if (state.conversationsStatus != ChatStatus.success) {
+          return const Center(
+            child: AppLoadingIndicator(color: AppColors.primary),
           );
         }
 
@@ -134,10 +193,10 @@ class ConversationList extends StatelessWidget {
                     await Future.delayed(const Duration(milliseconds: 600));
                   },
                   child: ListView.separated(
-                    itemCount: state.conversations.length,
+                    itemCount: filteredConversations.length,
                     separatorBuilder: (_, __) => SizedBox(height: 8 * scale),
                     itemBuilder: (context, index) {
-                      final conversation = state.conversations[index];
+                      final conversation = filteredConversations[index];
                       final isSelected =
                           conversation.id == state.selectedConversation?.id;
                       final lastMessage = _latestMessage(conversation);

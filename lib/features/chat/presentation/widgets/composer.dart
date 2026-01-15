@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
+import '../../../../core/widgets/app_loading.dart';
 
 class Composer extends StatelessWidget {
   final void Function(String text) onSend;
@@ -76,13 +77,9 @@ class Composer extends StatelessWidget {
                 padding: EdgeInsets.symmetric(horizontal: 16 * scale),
               ),
               child: sending
-                  ? SizedBox(
-                      width: 16 * scale,
-                      height: 16 * scale,
-                      child: const CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
-                      ),
+                  ? AppLoadingIndicator(
+                      size: 16 * scale,
+                      color: AppColors.white,
                     )
                   : const Icon(Icons.send_rounded, size: 18),
             ),

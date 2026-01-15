@@ -33,13 +33,13 @@ class AppointmentStateHandler extends StatelessWidget {
         if (state is AppointmentSuccess) {
           _handleSuccessState(context);
           return const Center(
-            child: CircularProgressIndicator(color: AppColors.primary),
+            child: AppLoadingIndicator(color: AppColors.primary),
           );
         }
 
         if (state is AppointmentLoading) {
           return const Center(
-            child: CircularProgressIndicator(color: AppColors.primary),
+            child: AppLoadingIndicator(color: AppColors.primary),
           );
         }
 

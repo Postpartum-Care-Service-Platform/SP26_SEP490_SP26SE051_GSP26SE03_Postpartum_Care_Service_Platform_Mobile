@@ -56,3 +56,11 @@ class ChatRequestSupportSubmitted extends ChatEvent {
   List<Object?> get props => [reason];
 }
 
+class ChatSearchQueryChanged extends ChatEvent {
+  final String query;
+
+  const ChatSearchQueryChanged(this.query);
+
+  @override
+  List<Object?> get props => [query];
+}

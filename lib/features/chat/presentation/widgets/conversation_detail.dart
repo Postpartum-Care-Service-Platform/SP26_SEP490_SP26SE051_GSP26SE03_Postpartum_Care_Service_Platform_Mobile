@@ -6,6 +6,7 @@ import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/services/current_account_cache_service.dart';
 import '../../../../core/widgets/app_toast.dart';
+import '../../../../core/widgets/app_loading.dart';
 import '../../../../core/constants/app_assets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../domain/entities/chat_message.dart';
@@ -67,7 +68,7 @@ class ConversationDetail extends StatelessWidget {
       builder: (context, state) {
         final conversation = state.selectedConversation;
         if (state.conversationDetailStatus == ChatStatus.loading) {
-          return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+          return const Center(child: AppLoadingIndicator(color: AppColors.primary));
         }
         if (conversation == null) {
           return const EmptyPlaceholder(

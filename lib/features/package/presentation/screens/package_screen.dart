@@ -4,6 +4,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
+import '../../../../core/widgets/app_loading.dart';
 import '../bloc/package_bloc.dart';
 import '../bloc/package_event.dart';
 import '../bloc/package_state.dart';
@@ -46,7 +47,7 @@ class _PackageScreenState extends State<PackageScreen> {
         builder: (context, state) {
           if (state is PackageLoading) {
             return const Center(
-              child: CircularProgressIndicator(
+              child: AppLoadingIndicator(
                 color: AppColors.primary,
               ),
             );
