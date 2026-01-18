@@ -87,6 +87,21 @@ import '../../features/chat/domain/usecases/create_conversation_usecase.dart';
 import '../../features/chat/domain/usecases/mark_messages_read_usecase.dart';
 import '../../features/chat/domain/usecases/request_support_usecase.dart';
 import '../../features/chat/presentation/bloc/chat_bloc.dart';
+import '../../features/booking/data/datasources/booking_remote_datasource.dart';
+import '../../features/booking/data/repositories/booking_repository_impl.dart';
+import '../../features/booking/domain/repositories/booking_repository.dart';
+import '../../features/booking/domain/usecases/create_booking_usecase.dart';
+import '../../features/booking/domain/usecases/get_booking_by_id_usecase.dart';
+import '../../features/booking/domain/usecases/get_bookings_usecase.dart';
+import '../../features/booking/domain/usecases/create_payment_link_usecase.dart';
+import '../../features/booking/domain/usecases/check_payment_status_usecase.dart';
+import '../../features/booking/presentation/bloc/booking_bloc.dart';
+import '../../features/contract/data/datasources/contract_remote_datasource.dart';
+import '../../features/contract/data/repositories/contract_repository_impl.dart';
+import '../../features/contract/domain/repositories/contract_repository.dart';
+import '../../features/contract/domain/usecases/get_contract_by_booking_id_usecase.dart';
+import '../../features/contract/domain/usecases/export_contract_pdf_usecase.dart';
+import '../../features/contract/presentation/bloc/contract_bloc.dart';
 import '../apis/api_client.dart';
 
 /// Centralized dependency injection container
@@ -129,6 +144,12 @@ class InjectionContainer {
   static ChatRemoteDataSource get _chatRemoteDataSource =>
       ChatRemoteDataSourceImpl(dio: ApiClient.dio);
 
+  static BookingRemoteDataSource get _bookingRemoteDataSource =>
+      BookingRemoteDataSourceImpl(dio: ApiClient.dio);
+
+  static ContractRemoteDataSource get _contractRemoteDataSource =>
+      ContractRemoteDataSourceImpl(dio: ApiClient.dio);
+
   // ==================== Repositories ====================
   
   static AuthRepository get authRepository =>
@@ -165,6 +186,12 @@ class InjectionContainer {
 
   static ChatRepository get chatRepository =>
       ChatRepositoryImpl(remoteDataSource: _chatRemoteDataSource);
+
+  static BookingRepository get bookingRepository =>
+      BookingRepositoryImpl(remoteDataSource: _bookingRemoteDataSource);
+
+  static ContractRepository get contractRepository =>
+      ContractRepositoryImpl(remoteDataSource: _contractRemoteDataSource);
 
   // ==================== Use Cases ====================
   
@@ -270,6 +297,22 @@ class InjectionContainer {
   static RequestSupportUsecase get _requestSupportUsecase =>
       RequestSupportUsecase(chatRepository);
 
+  static CreateBookingUsecase get _createBookingUsecase =>
+      CreateBookingUsecase(bookingRepository);
+  static GetBookingByIdUsecase get _getBookingByIdUsecase =>
+      GetBookingByIdUsecase(bookingRepository);
+  static GetBookingsUsecase get _getBookingsUsecase =>
+      GetBookingsUsecase(bookingRepository);
+  static CreatePaymentLinkUsecase get _createPaymentLinkUsecase =>
+      CreatePaymentLinkUsecase(bookingRepository);
+  static CheckPaymentStatusUsecase get _checkPaymentStatusUsecase =>
+      CheckPaymentStatusUsecase(bookingRepository);
+
+  static GetContractByBookingIdUsecase get _getContractByBookingIdUsecase =>
+      GetContractByBookingIdUsecase(contractRepository);
+  static ExportContractPdfUsecase get _exportContractPdfUsecase =>
+      ExportContractPdfUsecase(contractRepository);
+
   // ==================== Blocs ====================
   
   static AuthBloc get authBloc => AuthBloc(
@@ -349,6 +392,21 @@ class InjectionContainer {
         createConversationUsecase: _createConversationUsecase,
         markMessagesReadUsecase: _markMessagesReadUsecase,
         requestSupportUsecase: _requestSupportUsecase,
+      );
+
+  static BookingBloc get bookingBloc => BookingBloc(
+        createBookingUsecase: _createBookingUsecase,
+        getBookingByIdUsecase: _getBookingByIdUsecase,
+        getBookingsUsecase: _getBookingsUsecase,
+        createPaymentLinkUsecase: _createPaymentLinkUsecase,
+        checkPaymentStatusUsecase: _checkPaymentStatusUsecase,
+        getPackagesUsecase: _getPackagesUsecase,
+        getAllRooms: _getAllRooms,
+      );
+
+  static ContractBloc get contractBloc => ContractBloc(
+        getContractByBookingIdUsecase: _getContractByBookingIdUsecase,
+        exportContractPdfUsecase: _exportContractPdfUsecase,
       );
 
   // ==================== Reset ====================

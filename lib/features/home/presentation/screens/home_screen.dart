@@ -42,14 +42,14 @@ class _HomeScreenState extends State<HomeScreen> {
           bool isLoading = true;
 
           if (authState is AuthCurrentAccountLoaded) {
-            username = authState.account.username;
+            username = authState.account.displayName;
             avatarUrl = authState.account.avatarUrl;
             isEmailVerified = authState.account.isEmailVerified;
             isLoading = false;
           } else if (authState is AuthLoading) {
             isLoading = true;
           } else if (authState is AuthError) {
-            username = 'Mom'; // Fallback to default
+            username = 'User'; // Fallback to default
             isLoading = false;
           } else {
             isLoading = true;

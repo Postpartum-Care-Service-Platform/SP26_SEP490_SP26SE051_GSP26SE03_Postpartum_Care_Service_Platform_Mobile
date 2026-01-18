@@ -72,7 +72,7 @@ class AccountSummaryCard extends StatelessWidget {
                 // Avatar with border and verified badge
                 AvatarWidget(
                   imageUrl: account.avatarUrl,
-                  displayName: account.username,
+                  displayName: account.displayName,
                   size: 100,
                   showVerifiedBadge: true,
                   isVerified: account.isEmailVerified,
@@ -81,13 +81,13 @@ class AccountSummaryCard extends StatelessWidget {
                   borderColor: AppColors.white,
                 ),
                 SizedBox(height: 20 * scale),
-                // Username with verified icon
+                // Display name with verified icon
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Flexible(
                       child: Text(
-                        account.username,
+                        account.displayName,
                         style: AppTextStyles.tinos(
                           fontSize: 24 * scale,
                           fontWeight: FontWeight.w700,

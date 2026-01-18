@@ -12,6 +12,7 @@ import '../../../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../../../features/auth/presentation/bloc/auth_state.dart';
 import '../../../auth/presentation/screens/login_screen.dart';
 import '../../../family_profile/presentation/screens/family_profile_screen.dart';
+import '../../../booking/presentation/screens/booking_history_screen.dart';
 import '../widgets/profile_header.dart';
 import '../widgets/profile_menu_item.dart';
 import 'account_details_screen.dart';
@@ -74,7 +75,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         if (authState is AuthCurrentAccountLoaded) {
           userId = authState.account.id;
-          userName = authState.account.username;
+          userName = authState.account.displayName;
           userEmail = authState.account.email;
           avatarUrl = authState.account.avatarUrl;
           isEmailVerified = authState.account.isEmailVerified;
@@ -166,7 +167,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         icon: Icons.history_rounded,
                         title: AppStrings.bookingHistory,
                         onTap: () {
-                          // TODO: Navigate to booking history
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const BookingHistoryScreen(),
+                            ),
+                          );
                         },
                       ),
                     ],

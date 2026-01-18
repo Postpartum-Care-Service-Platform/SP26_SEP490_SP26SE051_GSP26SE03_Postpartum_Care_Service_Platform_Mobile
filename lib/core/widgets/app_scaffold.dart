@@ -13,14 +13,19 @@ import '../../features/notification/presentation/widgets/notification_drawer.dar
 import 'app_bottom_navigation_bar.dart';
 
 class AppScaffold extends StatefulWidget {
-  const AppScaffold({super.key});
+  final AppBottomTab? initialTab;
+
+  const AppScaffold({
+    super.key,
+    this.initialTab,
+  });
 
   @override
   State<AppScaffold> createState() => _AppScaffoldState();
 }
 
 class _AppScaffoldState extends State<AppScaffold> {
-  AppBottomTab _currentTab = AppBottomTab.home;
+  late AppBottomTab _currentTab;
   late final PageController _pageController;
 
   int get _currentIndex => _currentTab.index;
@@ -36,6 +41,7 @@ class _AppScaffoldState extends State<AppScaffold> {
   @override
   void initState() {
     super.initState();
+    _currentTab = widget.initialTab ?? AppBottomTab.home;
     _pageController = PageController(initialPage: _currentIndex);
   }
 

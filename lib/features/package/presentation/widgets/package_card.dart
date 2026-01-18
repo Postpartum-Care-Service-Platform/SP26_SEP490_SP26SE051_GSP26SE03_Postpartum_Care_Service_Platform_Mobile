@@ -17,16 +17,21 @@ class PackageCard extends StatelessWidget {
 
   String _formatPrice(double price) {
     // Format price as Vietnamese currency (VND)
-    final formatter = price.toStringAsFixed(0);
-    final reversed = formatter.split('').reversed.join();
-    final chunks = <String>[];
-    for (int i = 0; i < reversed.length; i += 3) {
-      chunks.add(reversed.substring(
-        i,
-        i + 3 > reversed.length ? reversed.length : i + 3,
-      ));
+    final priceInt = price.toInt();
+    final priceStr = priceInt.toString();
+    
+    // Format with thousand separators
+    final buffer = StringBuffer();
+    final length = priceStr.length;
+    
+    for (int i = 0; i < length; i++) {
+      if (i > 0 && (length - i) % 3 == 0) {
+        buffer.write('.');
+      }
+      buffer.write(priceStr[i]);
     }
-    return chunks.reversed.join('.') + AppStrings.currencyUnit;
+    
+    return buffer.toString() + AppStrings.currencyUnit;
   }
 
   IconData _getPackageIcon(String packageName) {

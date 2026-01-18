@@ -77,8 +77,10 @@ class AppStrings {
   static const String errorInputEmailRequired = 'Please enter your email';
   static const String errorInputEmailInvalid = 'Please enter a valid email';
   static const String errorInputPasswordRequired = 'Please enter your password';
-  static const String errorInputPasswordMinLength = 'Password must be at least 6 characters';
-  static const String errorInputConfirmPassword = 'Please confirm your password';
+  static const String errorInputPasswordMinLength =
+      'Password must be at least 6 characters';
+  static const String errorInputConfirmPassword =
+      'Please confirm your password';
   static const String errorInputPasswordsNotMatch = 'Passwords do not match';
   static const String errorFillAllFields = 'Please fill in all fields';
   static const String errorOtpInvalid = 'Please enter a valid 6-digit OTP';
@@ -98,7 +100,8 @@ class AppStrings {
 
   // OTP Verification Screen
   static const String otpVerificationTitle = 'Xác thực Email';
-  static const String otpVerificationDescription = 'Nhập mã OTP đã được gửi đến';
+  static const String otpVerificationDescription =
+      'Nhập mã OTP đã được gửi đến';
   static const String otpVerificationButton = 'Xác thực';
   static const String resendOtp = 'Gửi lại OTP';
   static const String resendOtpCountdown = 'Gửi lại OTP sau {seconds}s';
@@ -111,13 +114,13 @@ class AppStrings {
   static const String logoutConfirmation = 'Bạn có chắc chắn muốn đăng xuất?';
   static const String cancel = 'Hủy';
   static const String logout = 'Đăng xuất';
-  
+
   // Profile Menu Items
   static const String myAccount = 'Tài khoản của tôi';
   static const String familyProfile = 'Hồ sơ gia đình';
   static const String notifications = 'Thông báo';
   static const String medicalRecords = 'Hồ sơ y tế';
-  
+
   // Family Profile Screen
   static const String familyProfileTitle = 'Hồ sơ gia đình';
   static const String addFamilyMember = 'Thêm thành viên';
@@ -150,22 +153,31 @@ class AppStrings {
   static const String updateFailed = 'Cập nhật thất bại';
   static const String updating = 'Đang cập nhật...';
   static const String confirmDelete = 'Xác nhận xóa';
-  static const String confirmDeleteMessage = 'Bạn có chắc chắn muốn xóa {name}?';
+  static const String confirmDeleteMessage =
+      'Bạn có chắc chắn muốn xóa {name}?';
   static const String delete = 'Xóa';
-  static const String featureUnderDevelopment = 'Tính năng đang được phát triển';
-  static const String addMemberFeatureUnderDevelopment = 'Tính năng thêm thành viên đang được phát triển';
-  static const String deleteFeatureUnderDevelopment = 'Tính năng xóa đang được phát triển';
+  static const String featureUnderDevelopment =
+      'Tính năng đang được phát triển';
+  static const String addMemberFeatureUnderDevelopment =
+      'Tính năng thêm thành viên đang được phát triển';
+  static const String deleteFeatureUnderDevelopment =
+      'Tính năng xóa đang được phát triển';
   static const String edit = 'Chỉnh sửa';
   static const String takePhoto = 'Chụp ảnh';
   static const String chooseFromLibrary = 'Chọn từ thư viện';
   static const String pleaseEnterFullName = 'Vui lòng nhập họ và tên';
   static const String invalidPhoneNumber = 'Số điện thoại không hợp lệ';
-  static const String pleaseGrantPhotoPermission = 'Vui lòng cấp quyền truy cập ảnh trong phần Cài đặt ứng dụng.';
+  static const String pleaseGrantPhotoPermission =
+      'Vui lòng cấp quyền truy cập ảnh trong phần Cài đặt ứng dụng.';
   static const String photoPermissionDenied = 'Quyền truy cập ảnh bị từ chối.';
-  static const String pleaseGrantCameraPermission = 'Vui lòng cấp quyền sử dụng camera trong phần Cài đặt ứng dụng.';
-  static const String cameraPermissionDenied = 'Quyền sử dụng camera bị từ chối.';
-  static const String cannotOpenPhotoLibrary = 'Không thể mở thư viện ảnh. Vui lòng kiểm tra quyền truy cập (error: {code})';
-  static const String errorSelectingPhoto = 'Đã xảy ra lỗi khi chọn ảnh: {error}';
+  static const String pleaseGrantCameraPermission =
+      'Vui lòng cấp quyền sử dụng camera trong phần Cài đặt ứng dụng.';
+  static const String cameraPermissionDenied =
+      'Quyền sử dụng camera bị từ chối.';
+  static const String cannotOpenPhotoLibrary =
+      'Không thể mở thư viện ảnh. Vui lòng kiểm tra quyền truy cập (error: {code})';
+  static const String errorSelectingPhoto =
+      'Đã xảy ra lỗi khi chọn ảnh: {error}';
   static const String viewMode = 'Đang xem';
   static const String editMode = 'Đang chỉnh sửa';
   static const String contract = 'Hợp đồng';
@@ -188,8 +200,7 @@ class AppStrings {
   static const String chatNewConversationPlaceholder = 'Nhập tên chủ đề...';
   static const String chatSendPlaceholder = 'Nhập tin nhắn...';
   static const String chatRequestSupport = 'Yêu cầu nhân viên hỗ trợ';
-  static const String chatRequestSupportReason =
-      'Bạn cần nhân viên hỗ trợ gì?';
+  static const String chatRequestSupportReason = 'Bạn cần nhân viên hỗ trợ gì?';
   static const String chatRequestSupportSuccess =
       'Đã gửi yêu cầu hỗ trợ tới nhân viên';
   static const String chatEmptyMessage =
@@ -262,7 +273,8 @@ class AppStrings {
 
   // Care Plan Screen
   static const String carePlanTitle = 'Lịch trình nghỉ dưỡng';
-  static const String noCarePlanDetails = 'Gói dịch vụ này chưa có lịch trình nghỉ dưỡng';
+  static const String noCarePlanDetails =
+      'Gói dịch vụ này chưa có lịch trình nghỉ dưỡng';
   static const String day = 'Ngày';
   static const String activity = 'Hoạt động';
   static const String time = 'Thời gian';
@@ -284,7 +296,8 @@ class AppStrings {
   static const String selectAppointmentTime = 'Chọn giờ';
   static const String appointmentType = 'Loại lịch hẹn';
   static const String selectAppointmentType = 'Chọn loại lịch hẹn';
-  static const String pleaseSelectAppointmentType = 'Vui lòng chọn loại lịch hẹn';
+  static const String pleaseSelectAppointmentType =
+      'Vui lòng chọn loại lịch hẹn';
   static const String appointmentLocation = 'Địa điểm';
   static const String appointmentLocationName = 'The Joyful Nest';
   static const String appointmentLocationAddress =
@@ -293,8 +306,10 @@ class AppStrings {
   static const String staff = 'Nhân viên';
   static const String noStaffAssigned = 'Chưa có nhân viên';
   static const String confirmCancel = 'Xác nhận hủy';
-  static const String confirmCancelMessage = 'Bạn có chắc chắn muốn hủy lịch hẹn này?';
-  static const String loadAppointmentsError = 'Không thể tải danh sách lịch hẹn';
+  static const String confirmCancelMessage =
+      'Bạn có chắc chắn muốn hủy lịch hẹn này?';
+  static const String loadAppointmentsError =
+      'Không thể tải danh sách lịch hẹn';
   static const String createAppointmentError = 'Không thể tạo lịch hẹn';
   static const String updateAppointmentError = 'Không thể cập nhật lịch hẹn';
   static const String cancelAppointmentError = 'Không thể hủy lịch hẹn';
@@ -304,18 +319,126 @@ class AppStrings {
   static const String pleaseEnterAppointmentName = 'Vui lòng nhập tên lịch hẹn';
   static const String pleaseSelectDate = 'Vui lòng chọn ngày';
   static const String pleaseSelectTime = 'Vui lòng chọn giờ';
-  
+
   // Appointment Status
   static const String statusScheduled = 'Đã lên lịch';
   static const String statusRescheduled = 'Đã đổi lịch';
   static const String statusCompleted = 'Hoàn thành';
   static const String statusPending = 'Đang chờ';
   static const String statusCancelled = 'Đã hủy';
-  
+
   // Appointment Filter
   static const String filterAll = 'Tất cả';
   static const String filterUpcoming = 'Lịch sắp tới';
   static const String filterCompleted = 'Đã hoàn thành';
   static const String filterCancelled = 'Đã hủy';
-}
 
+  // Booking Screen
+  static const String bookingTitle = 'Đặt gói dịch vụ';
+  static const String bookingStep1 = 'Gói';
+  static const String bookingStep2 = 'Phòng';
+  static const String bookingStep3 = 'Ngày';
+  static const String bookingStep4 = 'Xác nhận';
+  static const String bookingNext = 'Tiếp theo';
+  static const String bookingPrevious = 'Quay lại';
+  static const String bookingConfirm = 'Xác nhận đặt phòng';
+  static const String bookingSelectPackage = 'Gói';
+  static const String bookingSelectRoom = 'Phòng';
+  static const String bookingSelectDate = 'Ngày';
+  static const String bookingSummary = 'Tóm tắt đặt phòng';
+  static const String bookingPackage = 'Gói dịch vụ';
+  static const String bookingRoom = 'Phòng';
+  static const String bookingCheckIn = 'Ngày check-in';
+  static const String bookingCheckOut = 'Ngày check-out';
+  static const String bookingDuration = 'Thời gian';
+  static const String bookingTotalPrice = 'Tổng tiền';
+  static const String bookingDiscount = 'Giảm giá';
+  static const String bookingFinalAmount = 'Thành tiền';
+  static const String bookingDeposit = 'Đặt cọc';
+  static const String bookingRemaining = 'Còn lại';
+  static const String bookingCreateSuccess = 'Đặt phòng thành công';
+  static const String bookingCreateError = 'Đặt phòng thất bại';
+  static const String bookingNoPackages = 'Không có gói dịch vụ nào';
+  static const String bookingNoRooms = 'Không có phòng trống';
+  static const String bookingPleaseSelectPackage = 'Vui lòng chọn gói dịch vụ';
+  static const String bookingPleaseSelectRoom = 'Vui lòng chọn phòng';
+  static const String bookingPleaseSelectDate = 'Vui lòng chọn ngày check-in';
+  static const String bookingDays = 'ngày';
+  static const String bookingFloor = 'Tầng';
+  static const String bookingRoomType = 'Loại phòng';
+  static const String bookingStatus = 'Trạng thái';
+  static const String bookingEstimatedPrice = 'Giá tạm tính';
+  static const String bookingAvailable = 'Trống';
+  static const String bookingOccupied = 'Đang sử dụng';
+  static const String bookingMaintenance = 'Bảo trì';
+
+  // Payment Screen
+  static const String paymentTitle = 'Thanh toán đặt cọc';
+  static const String paymentDeposit = 'Đặt cọc';
+  static const String paymentRemaining = 'Thanh toán còn lại';
+  static const String paymentAmount = 'Số tiền';
+  static const String paymentMethod = 'Phương thức thanh toán';
+  static const String paymentPayOS = 'PayOS';
+  static const String paymentQRCode = 'Mã QR thanh toán';
+  static const String paymentScanQR = 'Quét mã QR để thanh toán';
+  static const String paymentOr = 'Hoặc';
+  static const String paymentOpenLink = 'Mở link thanh toán';
+  static const String paymentChecking =
+      'Đang kiểm tra trạng thái thanh toán...';
+  static const String paymentSuccess = 'Thanh toán thành công';
+  static const String paymentFailed = 'Thanh toán thất bại';
+  static const String paymentPending = 'Đang chờ thanh toán';
+  static const String paymentCheckStatus = 'Kiểm tra trạng thái';
+  static const String paymentCreateError = 'Không thể tạo link thanh toán';
+
+  // Invoice Screen
+  static const String invoiceTitle = 'Hóa đơn';
+  static const String invoiceCode = 'Mã hóa đơn';
+  static const String invoiceDate = 'Ngày tạo';
+  static const String invoiceCustomer = 'Khách hàng';
+  static const String invoiceEmail = 'Email';
+  static const String invoicePhone = 'Số điện thoại';
+  static const String invoiceBookingDetails = 'Chi tiết đặt phòng';
+  static const String invoicePackage = 'Gói dịch vụ';
+  static const String invoiceRoom = 'Phòng';
+  static const String invoiceCheckIn = 'Check-in';
+  static const String invoiceCheckOut = 'Check-out';
+  static const String invoiceDuration = 'Thời gian';
+  static const String invoicePriceDetails = 'Chi tiết giá';
+  static const String invoiceTotalPrice = 'Tổng tiền';
+  static const String invoiceDiscount = 'Giảm giá';
+  static const String invoiceFinalAmount = 'Thành tiền';
+  static const String invoicePaidAmount = 'Đã thanh toán';
+  static const String invoiceRemainingAmount = 'Còn lại';
+  static const String invoiceTransactions = 'Lịch sử giao dịch';
+  static const String invoiceTransactionDate = 'Ngày giao dịch';
+  static const String invoiceTransactionAmount = 'Số tiền';
+  static const String invoiceTransactionType = 'Loại';
+  static const String invoiceTransactionStatus = 'Trạng thái';
+  static const String transactionTypeDeposit = 'Đặt cọc';
+  static const String transactionTypeRemaining = 'Còn lại';
+  static const String invoiceContract = 'Hợp đồng';
+  static const String invoiceContractCode = 'Mã hợp đồng';
+  static const String invoiceContractStatus = 'Trạng thái hợp đồng';
+  static const String invoiceDownloadContract = 'Tải hợp đồng';
+  static const String invoiceNoContract = 'Chưa có hợp đồng';
+  static const String invoiceLoadError = 'Không thể tải hóa đơn';
+
+  // Contract strings
+  static const String contractTitle = 'Hợp đồng';
+  static const String contractCode = 'Mã hợp đồng';
+  static const String contractDate = 'Ngày tạo hợp đồng';
+  static const String contractEffectiveFrom = 'Có hiệu lực từ';
+  static const String contractEffectiveTo = 'Đến ngày';
+  static const String contractSignedDate = 'Ngày ký';
+  static const String contractStatus = 'Trạng thái';
+  static const String contractCheckinDate = 'Ngày check-in';
+  static const String contractCheckoutDate = 'Ngày check-out';
+  static const String contractCustomer = 'Khách hàng';
+  static const String contractDownloadPdf = 'Tải hợp đồng PDF';
+  static const String contractLoading = 'Đang tải hợp đồng...';
+  static const String contractLoadError = 'Không thể tải hợp đồng';
+  static const String contractStatusDraft = 'Bản nháp';
+  static const String contractStatusSigned = 'Đã ký';
+  static const String contractNotSigned = 'Chưa ký';
+}

@@ -250,7 +250,7 @@ class _FamilyProfileScreenState extends State<FamilyProfileScreen> {
             elevation: 0,
             leading: IconButton(
               icon: Icon(
-                Icons.arrow_back_rounded,
+                Icons.arrow_back_ios_new_rounded,
                 color: AppColors.textPrimary,
                 size: 20 * scale,
               ),

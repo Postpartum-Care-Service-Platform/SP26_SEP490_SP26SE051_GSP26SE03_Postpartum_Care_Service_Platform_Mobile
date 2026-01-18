@@ -80,6 +80,17 @@ class ApiEndpoints {
   // Care Plan endpoints
   static String getCarePlanDetailsByPackage(int packageId) => '/care-plan-details/by-package/$packageId';
 
+  // Booking endpoints
+  static const String createBooking = '/Booking';
+  static String getBookingById(int id) => '/Booking/$id';
+  static const String getBookings = '/Booking';
+  static const String createPaymentLink = '/Transaction/create-payment-link';
+  static String checkPaymentStatus(String orderCode) => '/Transaction/check-status/$orderCode';
+
+  // Contract endpoints
+  static String getContractByBookingId(int bookingId) => '/Contract/my/$bookingId';
+  static String exportContractPdf(int contractId) => '/Contract/$contractId/export-pdf';
+
   // ==========================================
   // Employee - Appointment endpoints
   // ==========================================
