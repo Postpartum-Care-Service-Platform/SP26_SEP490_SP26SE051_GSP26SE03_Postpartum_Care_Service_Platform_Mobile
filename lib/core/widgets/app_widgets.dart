@@ -44,12 +44,17 @@ class AppWidgets {
               icon,
               const SizedBox(width: 8),
             ],
-            Text(
-              text,
-              style: AppTextStyles.arimo(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textOnPrimary,
+            Flexible(
+              child: Text(
+                text,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.arimo(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textOnPrimary,
+                ),
               ),
             ),
           ],

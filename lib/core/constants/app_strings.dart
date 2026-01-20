@@ -365,12 +365,13 @@ class AppStrings {
   static const String bookingPleaseSelectDate = 'Vui lòng chọn ngày check-in';
   static const String bookingDays = 'ngày';
   static const String bookingFloor = 'Tầng';
-  static const String bookingRoomType = 'Loại phòng';
+  static const String bookingRoomType = 'Loại';
   static const String bookingStatus = 'Trạng thái';
   static const String bookingEstimatedPrice = 'Giá tạm tính';
   static const String bookingAvailable = 'Trống';
   static const String bookingOccupied = 'Đang sử dụng';
   static const String bookingMaintenance = 'Bảo trì';
+  static const String bookingPriceNotAvailable = '--';
 
   // Payment Screen
   static const String paymentTitle = 'Thanh toán đặt cọc';
@@ -441,4 +442,49 @@ class AppStrings {
   static const String contractStatusDraft = 'Bản nháp';
   static const String contractStatusSigned = 'Đã ký';
   static const String contractNotSigned = 'Chưa ký';
+  static const String contractStatusSent = 'Đã gửi';
+  static const String contractStatusWaitingForSignature = 'Đợi ký';
+  static const String contractStatusScheduleCompleted = 'Đã hoàn thành lịch trình';
+
+  // Booking Status
+  static const String bookingStatusDraft = 'Bản nháp';
+  static const String bookingStatusConfirmed = 'Đã xác nhận';
+  static const String bookingStatusCompleted = 'Đã hoàn thành';
+
+  // Transaction Status
+  static const String transactionStatusPaid = 'Đã thanh toán';
+  static const String transactionStatusFailed = 'Thất bại';
+  static const String transactionStatusRefunded = 'Đã hoàn tiền';
+
+  // Services Screen
+  static const String servicesCurrentPackage = 'Gói hiện tại: ';
+  static const String servicesBookingInfo = 'Thông tin đặt phòng';
+  static const String servicesRoomNumber = 'Số phòng';
+  static const String servicesTapToFlipCard = 'Chạm để lật thẻ';
+  static const String servicesFloor = 'Tầng';
+  static const String servicesRemainingDays = 'Ngày còn lại';
+  static const String servicesPendingPaymentMessage =
+      'Bạn đang có một đặt phòng đang chờ hoàn tất thanh toán.';
+  static const String servicesDepositPaid = 'Đã thanh toán đặt cọc';
+  static const String servicesRemainingPaymentMessage =
+      'Phần thanh toán còn lại sẽ được mở sau khi hợp đồng được ký.';
+  static const String servicesAwaitingActivationMessage =
+      'Bạn đã thanh toán đủ. Dịch vụ sẽ kích hoạt khi đến ngày check-in.';
+  static const String servicesPayRemaining = 'Thanh toán phần còn lại';
+  static const String servicesResortExperience = 'Trải nghiệm nghỉ dưỡng của bạn';
+  static const String servicesResortExperienceDescription =
+      'Theo dõi lịch trình, thực đơn mỗi ngày và đăng ký dịch vụ tiện ích.';
+  static const String servicesResortAmenities = 'Tiện ích trong kỳ nghỉ';
+  static const String servicesDailySchedule = 'Lịch trình mỗi ngày';
+  static const String servicesDailyScheduleDescription =
+      'Xem hoạt động chăm sóc mẹ & bé theo từng ngày.';
+  static const String servicesTodayMenu = 'Thực đơn hôm nay';
+  static const String servicesTodayMenuDescription =
+      'Xem các bữa ăn được chuẩn bị cho mẹ và bé.';
+  static const String servicesSpaRegistration = 'Đăng ký dịch vụ Spa';
+  static const String servicesSpaRegistrationDescription =
+      'Thư giãn và chăm sóc chuyên sâu cho mẹ.';
+  static const String servicesAmenityRequest = 'Yêu cầu tiện ích';
+  static const String servicesAmenityRequestDescription =
+      'Gọi nước, đồ dùng em bé, dọn phòng,...';
 }

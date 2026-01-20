@@ -1,15 +1,19 @@
+import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/chat_conversation.dart';
 import '../../domain/entities/chat_message.dart';
 import '../../domain/entities/ai_structured_data.dart';
+import '../../domain/entities/chat_realtime_events.dart';
 import '../../domain/usecases/create_conversation_usecase.dart';
 import '../../domain/usecases/get_conversation_detail_usecase.dart';
 import '../../domain/usecases/get_conversations_usecase.dart';
 import '../../domain/usecases/mark_messages_read_usecase.dart';
 import '../../domain/usecases/request_support_usecase.dart';
 import '../../domain/usecases/send_message_usecase.dart';
+import '../../domain/entities/support_request.dart';
 import 'chat_event.dart';
 import 'chat_state.dart';
+import '../services/chat_hub_service.dart';
 
 class ChatBloc extends Bloc<ChatEvent, ChatState> {
   ChatBloc({
@@ -19,12 +23,14 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     required CreateConversationUsecase createConversationUsecase,
     required MarkMessagesReadUsecase markMessagesReadUsecase,
     required RequestSupportUsecase requestSupportUsecase,
+    required ChatHubService chatHubService,
   })  : _getConversationsUsecase = getConversationsUsecase,
         _getConversationDetailUsecase = getConversationDetailUsecase,
         _sendMessageUsecase = sendMessageUsecase,
         _createConversationUsecase = createConversationUsecase,
         _markMessagesReadUsecase = markMessagesReadUsecase,
         _requestSupportUsecase = requestSupportUsecase,
+        _chatHubService = chatHubService,
         super(const ChatState()) {
     on<ChatStarted>(_onStarted);
     on<ChatRefreshRequested>(_onRefresh);
@@ -33,6 +39,12 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     on<ChatSendMessageSubmitted>(_onSendMessage);
     on<ChatRequestSupportSubmitted>(_onRequestSupport);
     on<ChatSearchQueryChanged>(_onSearchQueryChanged);
+    on<ChatRealtimeMessageReceived>(_onRealtimeMessageReceived);
+    on<ChatRealtimeMessagesReadReceived>(_onRealtimeMessagesReadReceived);
+    on<ChatRealtimeSupportCreatedReceived>(_onRealtimeSupportCreatedReceived);
+    on<ChatRealtimeStaffJoinedReceived>(_onRealtimeStaffJoinedReceived);
+    on<ChatRealtimeSupportResolvedReceived>(_onRealtimeSupportResolvedReceived);
+    on<ChatRealtimeErrorReceived>(_onRealtimeErrorReceived);
   }
 
   final GetConversationsUsecase _getConversationsUsecase;
@@ -41,6 +53,16 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   final CreateConversationUsecase _createConversationUsecase;
   final MarkMessagesReadUsecase _markMessagesReadUsecase;
   final RequestSupportUsecase _requestSupportUsecase;
+   final ChatHubService _chatHubService;
+
+  bool _hubStarted = false;
+  String? _lastSupportReason;
+  StreamSubscription<ChatRealtimeMessage>? _messageSub;
+  StreamSubscription<ChatRealtimeMessagesRead>? _messagesReadSub;
+  StreamSubscription<ChatRealtimeSupportRequestCreated>? _supportCreatedSub;
+  StreamSubscription<ChatRealtimeStaffJoined>? _staffJoinedSub;
+  StreamSubscription<ChatRealtimeSupportResolved>? _supportResolvedSub;
+  StreamSubscription<String>? _errorSub;
 
   DateTime _conversationLastActivity(ChatConversation conversation) {
     if (conversation.messages.isEmpty) return conversation.createdAt;
@@ -95,6 +117,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         conversationsStatus: ChatStatus.success,
       ));
 
+      await _ensureHubStarted(emit);
+
       if (event.autoSelectFirstConversation && conversations.isNotEmpty) {
         add(ChatConversationSelected(conversations.first.id));
       }
@@ -130,28 +154,59 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     ChatConversationSelected event,
     Emitter<ChatState> emit,
   ) async {
+    final existing = state.conversations.firstWhere(
+      (c) => c.id == event.conversationId,
+      orElse: () => ChatConversation(
+        id: -1,
+        name: '',
+        createdAt: DateTime.fromMillisecondsSinceEpoch(0),
+        messages: const [],
+        hasActiveSupport: false,
+        customerInfo: null,
+      ),
+    );
+    final hasExisting = existing.id != -1;
+
     emit(state.copyWith(
       conversationDetailStatus: ChatStatus.loading,
       sendStatus: ChatSendStatus.idle,
       supportStatus: ChatSupportStatus.idle,
       isAiTyping: false,
       errorMessage: null,
+      selectedConversation: hasExisting ? existing : state.selectedConversation,
     ));
 
     try {
-      final conversation = await _getConversationDetailUsecase(event.conversationId);
-      await _markMessagesReadUsecase(event.conversationId);
+      await _ensureHubStarted(emit);
+      final conversation =
+          await _getConversationDetailUsecase(event.conversationId);
 
+      // Update UI immediately with full conversation detail
       final updatedList = _upsertConversation(conversation);
       emit(state.copyWith(
         selectedConversation: conversation,
         conversations: updatedList,
         conversationDetailStatus: ChatStatus.success,
       ));
+
+      // Best-effort mark read & join; don't block UI or fail the detail view
+      try {
+        await _markMessagesReadUsecase(event.conversationId);
+      } catch (_) {}
+
+      try {
+        await _chatHubService.markAsRead(event.conversationId);
+      } catch (_) {}
+
+      try {
+        await _chatHubService.joinConversation(event.conversationId);
+      } catch (_) {}
     } catch (e) {
       emit(state.copyWith(
         conversationDetailStatus: ChatStatus.failure,
         errorMessage: _formatError(e),
+        selectedConversation:
+            hasExisting ? existing : state.selectedConversation,
       ));
     }
   }
@@ -162,17 +217,21 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   ) async {
     emit(state.copyWith(errorMessage: null));
     try {
+      await _ensureHubStarted(emit);
       final conversation = await _createConversationUsecase(event.name);
       final updated = [conversation, ...state.conversations];
       emit(state.copyWith(
         conversations: updated,
         conversationsStatus: ChatStatus.success,
       ));
+      await _chatHubService.joinConversation(conversation.id);
       add(ChatConversationSelected(conversation.id));
     } catch (e) {
       emit(state.copyWith(
-        errorMessage: e.toString(),
-        conversationsStatus: ChatStatus.failure,
+        errorMessage: _formatError(e),
+        conversationsStatus: state.conversations.isEmpty
+            ? ChatStatus.failure
+            : state.conversationsStatus,
       ));
     }
   }
@@ -188,7 +247,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     final tempUserMessage = ChatMessage(
       id: -now.millisecondsSinceEpoch,
       content: event.content,
-      senderType: 'customer',
+      senderType: selected.hasActiveSupport ? 'customer' : 'customer',
       senderId: null,
       senderName: null,
       createdAt: now,
@@ -215,6 +274,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       final result = await _sendMessageUsecase(
         conversationId: selected.id,
         content: event.content,
+        toStaffChannel: selected.hasActiveSupport,
       );
       // Replace optimistic message list with server truth (user + AI responses)
       final newMessages = List<ChatMessage>.from(selected.messages)
@@ -257,20 +317,39 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       errorMessage: null,
     ));
 
+    _lastSupportReason = event.reason;
+
     try {
-      final request = await _requestSupportUsecase(
-        conversationId: selected.id,
-        reason: event.reason,
-      );
+      await _ensureHubStarted(emit);
+      await _chatHubService.requestSupport(selected.id, event.reason);
+      _setConversationActiveSupport(selected.id, true, emit);
       emit(state.copyWith(
         supportStatus: ChatSupportStatus.success,
-        supportRequest: request,
+        supportRequest: SupportRequest(
+          id: -1,
+          conversationId: selected.id,
+          reason: event.reason,
+          status: 'pending',
+          createdAt: DateTime.now(),
+        ),
       ));
     } catch (e) {
-      emit(state.copyWith(
-        supportStatus: ChatSupportStatus.failure,
-        errorMessage: _formatError(e),
-      ));
+      try {
+        final request = await _requestSupportUsecase(
+          conversationId: selected.id,
+          reason: event.reason,
+        );
+        _setConversationActiveSupport(selected.id, true, emit);
+        emit(state.copyWith(
+          supportStatus: ChatSupportStatus.success,
+          supportRequest: request,
+        ));
+      } catch (err) {
+        emit(state.copyWith(
+          supportStatus: ChatSupportStatus.failure,
+          errorMessage: _formatError(err),
+        ));
+      }
     }
   }
 
@@ -290,6 +369,227 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     Emitter<ChatState> emit,
   ) {
     emit(state.copyWith(searchQuery: event.query));
+  }
+
+  Future<void> _ensureHubStarted(Emitter<ChatState> emit) async {
+    if (_hubStarted) return;
+    try {
+      await _chatHubService.start();
+      _hubStarted = true;
+      _subscribeHubStreams();
+    } catch (e) {
+      emit(state.copyWith(
+        errorMessage: _formatError(e),
+      ));
+    }
+  }
+
+  void _subscribeHubStreams() {
+    _messageSub ??= _chatHubService.messages.listen(
+      (data) => add(ChatRealtimeMessageReceived(data)),
+    );
+    _messagesReadSub ??= _chatHubService.messagesRead.listen(
+      (data) => add(ChatRealtimeMessagesReadReceived(data)),
+    );
+    _supportCreatedSub ??= _chatHubService.supportCreated.listen(
+      (data) => add(ChatRealtimeSupportCreatedReceived(data)),
+    );
+    _staffJoinedSub ??= _chatHubService.staffJoined.listen(
+      (data) => add(ChatRealtimeStaffJoinedReceived(data)),
+    );
+    _supportResolvedSub ??= _chatHubService.supportResolved.listen(
+      (data) => add(ChatRealtimeSupportResolvedReceived(data)),
+    );
+    _errorSub ??= _chatHubService.errors.listen(
+      (message) => add(ChatRealtimeErrorReceived(message)),
+    );
+  }
+
+  Future<void> _onRealtimeMessageReceived(
+    ChatRealtimeMessageReceived event,
+    Emitter<ChatState> emit,
+  ) async {
+    final index = state.conversations.indexWhere(
+      (c) => c.id == event.data.conversationId,
+    );
+    if (index == -1) return;
+
+    final conversation = state.conversations[index];
+    final messages = List<ChatMessage>.from(conversation.messages)
+      ..add(event.data.message);
+    final updatedConversation = conversation.copyWith(messages: messages);
+    final updatedList = _upsertConversation(updatedConversation);
+
+    emit(state.copyWith(
+      conversations: updatedList,
+      selectedConversation: state.selectedConversation?.id == updatedConversation.id
+          ? updatedConversation
+          : state.selectedConversation,
+      isAiTyping: false,
+    ));
+  }
+
+  Future<void> _onRealtimeMessagesReadReceived(
+    ChatRealtimeMessagesReadReceived event,
+    Emitter<ChatState> emit,
+  ) async {
+    final index = state.conversations.indexWhere(
+      (c) => c.id == event.data.conversationId,
+    );
+    if (index == -1) return;
+
+    final conversation = state.conversations[index];
+    final updatedMessages = conversation.messages
+        .map(
+          (m) => ChatMessage(
+            id: m.id,
+            content: m.content,
+            senderType: m.senderType,
+            senderId: m.senderId,
+            senderName: m.senderName,
+            createdAt: m.createdAt,
+            isRead: true,
+            hasJson: m.hasJson,
+            formattedJson: m.formattedJson,
+          ),
+        )
+        .toList();
+
+    final updatedConversation = conversation.copyWith(messages: updatedMessages);
+    final updatedList = _upsertConversation(updatedConversation);
+
+    emit(state.copyWith(
+      conversations: updatedList,
+      selectedConversation: state.selectedConversation?.id == updatedConversation.id
+          ? updatedConversation
+          : state.selectedConversation,
+    ));
+  }
+
+  Future<void> _onRealtimeSupportCreatedReceived(
+    ChatRealtimeSupportCreatedReceived event,
+    Emitter<ChatState> emit,
+  ) async {
+    _setConversationActiveSupport(event.data.conversationId, true, emit);
+    emit(state.copyWith(
+      supportStatus: ChatSupportStatus.success,
+      supportRequest: SupportRequest(
+        id: event.data.requestId,
+        conversationId: event.data.conversationId,
+        reason: _lastSupportReason ?? '',
+        status: 'pending',
+        createdAt: event.data.timestamp,
+      ),
+    ));
+  }
+
+  Future<void> _onRealtimeStaffJoinedReceived(
+    ChatRealtimeStaffJoinedReceived event,
+    Emitter<ChatState> emit,
+  ) async {
+    final currentRequest = state.supportRequest;
+    _setConversationActiveSupport(event.data.conversationId, true, emit);
+    emit(state.copyWith(
+      supportStatus: ChatSupportStatus.success,
+      supportRequest: currentRequest == null
+          ? SupportRequest(
+              id: event.data.requestId,
+              conversationId: event.data.conversationId,
+              reason: _lastSupportReason ?? '',
+              status: 'assigned',
+              createdAt: event.data.timestamp,
+              assignedAt: event.data.timestamp,
+              staff: event.data.staffName,
+            )
+          : SupportRequest(
+              id: currentRequest.id == -1
+                  ? event.data.requestId
+                  : currentRequest.id,
+              conversationId: currentRequest.conversationId,
+              reason: currentRequest.reason,
+              status: 'assigned',
+              createdAt: currentRequest.createdAt,
+              assignedAt: event.data.timestamp,
+              staff: event.data.staffName,
+              customer: currentRequest.customer,
+            ),
+    ));
+  }
+
+  Future<void> _onRealtimeSupportResolvedReceived(
+    ChatRealtimeSupportResolvedReceived event,
+    Emitter<ChatState> emit,
+  ) async {
+    final currentRequest = state.supportRequest;
+    _setConversationActiveSupport(event.data.conversationId, false, emit);
+    emit(state.copyWith(
+      supportStatus: ChatSupportStatus.success,
+      supportRequest: currentRequest == null
+          ? SupportRequest(
+              id: event.data.requestId,
+              conversationId: event.data.conversationId,
+              reason: _lastSupportReason ?? '',
+              status: 'resolved',
+              createdAt: event.data.timestamp,
+              resolvedAt: event.data.timestamp,
+              staff: event.data.staffName,
+            )
+          : SupportRequest(
+              id: currentRequest.id == -1
+                  ? event.data.requestId
+                  : currentRequest.id,
+              conversationId: currentRequest.conversationId,
+              reason: currentRequest.reason,
+              status: 'resolved',
+              createdAt: currentRequest.createdAt,
+              assignedAt: currentRequest.assignedAt,
+              resolvedAt: event.data.timestamp,
+              staff: event.data.staffName,
+              customer: currentRequest.customer,
+            ),
+    ));
+  }
+
+  Future<void> _onRealtimeErrorReceived(
+    ChatRealtimeErrorReceived event,
+    Emitter<ChatState> emit,
+  ) async {
+    emit(state.copyWith(errorMessage: event.message));
+  }
+
+  void _setConversationActiveSupport(
+    int conversationId,
+    bool isActive,
+    Emitter<ChatState> emit,
+  ) {
+    final index = state.conversations.indexWhere(
+      (conversation) => conversation.id == conversationId,
+    );
+    if (index == -1) return;
+
+    final updatedList = List<ChatConversation>.from(state.conversations);
+    final updatedConversation =
+        updatedList[index].copyWith(hasActiveSupport: isActive);
+    updatedList[index] = updatedConversation;
+
+    emit(state.copyWith(
+      conversations: _normalizeAndSortConversations(updatedList),
+      selectedConversation: state.selectedConversation?.id == conversationId
+          ? updatedConversation
+          : state.selectedConversation,
+    ));
+  }
+
+  @override
+  Future<void> close() async {
+    await _messageSub?.cancel();
+    await _messagesReadSub?.cancel();
+    await _supportCreatedSub?.cancel();
+    await _staffJoinedSub?.cancel();
+    await _supportResolvedSub?.cancel();
+    await _errorSub?.cancel();
+    await _chatHubService.stop();
+    return super.close();
   }
 }
 

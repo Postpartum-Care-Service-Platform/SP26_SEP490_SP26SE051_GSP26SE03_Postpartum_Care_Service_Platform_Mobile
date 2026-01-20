@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../domain/entities/chat_realtime_events.dart';
 
 abstract class ChatEvent extends Equatable {
   const ChatEvent();
@@ -63,4 +64,58 @@ class ChatSearchQueryChanged extends ChatEvent {
 
   @override
   List<Object?> get props => [query];
+}
+
+class ChatRealtimeMessageReceived extends ChatEvent {
+  final ChatRealtimeMessage data;
+
+  const ChatRealtimeMessageReceived(this.data);
+
+  @override
+  List<Object?> get props => [data];
+}
+
+class ChatRealtimeMessagesReadReceived extends ChatEvent {
+  final ChatRealtimeMessagesRead data;
+
+  const ChatRealtimeMessagesReadReceived(this.data);
+
+  @override
+  List<Object?> get props => [data];
+}
+
+class ChatRealtimeSupportCreatedReceived extends ChatEvent {
+  final ChatRealtimeSupportRequestCreated data;
+
+  const ChatRealtimeSupportCreatedReceived(this.data);
+
+  @override
+  List<Object?> get props => [data];
+}
+
+class ChatRealtimeStaffJoinedReceived extends ChatEvent {
+  final ChatRealtimeStaffJoined data;
+
+  const ChatRealtimeStaffJoinedReceived(this.data);
+
+  @override
+  List<Object?> get props => [data];
+}
+
+class ChatRealtimeSupportResolvedReceived extends ChatEvent {
+  final ChatRealtimeSupportResolved data;
+
+  const ChatRealtimeSupportResolvedReceived(this.data);
+
+  @override
+  List<Object?> get props => [data];
+}
+
+class ChatRealtimeErrorReceived extends ChatEvent {
+  final String message;
+
+  const ChatRealtimeErrorReceived(this.message);
+
+  @override
+  List<Object?> get props => [message];
 }

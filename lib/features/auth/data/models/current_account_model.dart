@@ -74,6 +74,166 @@ class OwnerProfileModel extends Equatable {
       ];
 }
 
+/// Transaction info for the current package (nowPackage.nowTransactionResponses)
+class NowTransactionResponseModel extends Equatable {
+  final String transactionId;
+  final double amount;
+  final String type;
+  final String transactionStatus;
+
+  const NowTransactionResponseModel({
+    required this.transactionId,
+    required this.amount,
+    required this.type,
+    required this.transactionStatus,
+  });
+
+  factory NowTransactionResponseModel.fromJson(Map<String, dynamic> json) {
+    final rawAmount = json['amount'];
+    final parsedAmount = rawAmount is num ? rawAmount.toDouble() : 0.0;
+
+    return NowTransactionResponseModel(
+      transactionId: json['transactionId'] as String,
+      amount: parsedAmount,
+      type: json['type'] as String,
+      transactionStatus: json['transactionStatus'] as String,
+    );
+  }
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+        'transactionId': transactionId,
+        'amount': amount,
+        'type': type,
+        'transactionStatus': transactionStatus,
+      };
+
+  @override
+  List<Object?> get props => [
+        transactionId,
+        amount,
+        type,
+        transactionStatus,
+      ];
+}
+
+/// Information about the customer's current/active package (nowPackage)
+class NowPackageModel extends Equatable {
+  final bool serviceIsActive;
+  final int bookingId;
+  final String bookingStatus;
+  final double paidAmount;
+  final double remainingAmount;
+  final int packageId;
+  final String packageName;
+  final DateTime checkinDate;
+  final DateTime checkoutDate;
+  final int roomTypeId;
+  final String roomTypeName;
+  final String? roomName;
+  final int? floor;
+  final int contractId;
+  final String contractCode;
+  final String contractStatus;
+  final List<NowTransactionResponseModel> nowTransactionResponses;
+
+  const NowPackageModel({
+    required this.serviceIsActive,
+    required this.bookingId,
+    required this.bookingStatus,
+    required this.paidAmount,
+    required this.remainingAmount,
+    required this.packageId,
+    required this.packageName,
+    required this.checkinDate,
+    required this.checkoutDate,
+    required this.roomTypeId,
+    required this.roomTypeName,
+    this.roomName,
+    this.floor,
+    required this.contractId,
+    required this.contractCode,
+    required this.contractStatus,
+    this.nowTransactionResponses = const [],
+  });
+
+  factory NowPackageModel.fromJson(Map<String, dynamic> json) {
+    final rawPaidAmount = json['paidAmount'];
+    final paidAmount = rawPaidAmount is num ? rawPaidAmount.toDouble() : 0.0;
+    final rawRemainingAmount = json['remainingAmount'];
+    final remainingAmount =
+        rawRemainingAmount is num ? rawRemainingAmount.toDouble() : 0.0;
+
+    return NowPackageModel(
+      serviceIsActive: json['serviceIsActive'] as bool? ?? false,
+      bookingId: json['bookingId'] as int,
+      bookingStatus: json['bookingStatus'] as String,
+      paidAmount: paidAmount,
+      remainingAmount: remainingAmount,
+      packageId: json['packageId'] as int,
+      packageName: json['packageName'] as String,
+      checkinDate: DateTime.parse(json['checkinDate'] as String),
+      checkoutDate: DateTime.parse(json['checkoutDate'] as String),
+      roomTypeId: json['roomTypeId'] as int,
+      roomTypeName: json['roomTypeName'] as String,
+      roomName: json['roomName'] as String?,
+      floor: json['floor'] as int?,
+      contractId: json['contractId'] as int,
+      contractCode: json['contractCode'] as String,
+      contractStatus: json['contractStatus'] as String,
+      nowTransactionResponses: (json['nowTransactionResponses'] as List<dynamic>?)
+              ?.map(
+                (e) => NowTransactionResponseModel.fromJson(
+                  e as Map<String, dynamic>,
+                ),
+              )
+              .toList() ??
+          const [],
+    );
+  }
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+        'serviceIsActive': serviceIsActive,
+        'bookingId': bookingId,
+        'bookingStatus': bookingStatus,
+        'paidAmount': paidAmount,
+        'remainingAmount': remainingAmount,
+        'packageId': packageId,
+        'packageName': packageName,
+        'checkinDate': checkinDate.toIso8601String(),
+        'checkoutDate': checkoutDate.toIso8601String(),
+        'roomTypeId': roomTypeId,
+        'roomTypeName': roomTypeName,
+        'roomName': roomName,
+        'floor': floor,
+        'contractId': contractId,
+        'contractCode': contractCode,
+        'contractStatus': contractStatus,
+        'nowTransactionResponses':
+            nowTransactionResponses.map((e) => e.toJson()).toList(),
+      };
+
+  @override
+  List<Object?> get props => [
+        serviceIsActive,
+        bookingId,
+        bookingStatus,
+        paidAmount,
+        remainingAmount,
+        packageId,
+        packageName,
+        checkinDate,
+        checkoutDate,
+        roomTypeId,
+        roomTypeName,
+        roomName,
+        floor,
+        contractId,
+        contractCode,
+        contractStatus,
+        nowTransactionResponses,
+      ];
+}
+
 /// Current account model from GetCurrentAccount API
 class CurrentAccountModel extends Equatable {
   final String id;
@@ -88,6 +248,7 @@ class CurrentAccountModel extends Equatable {
   final bool isEmailVerified;
   final String? avatarUrl;
   final OwnerProfileModel? ownerProfile;
+  final NowPackageModel? nowPackage;
 
   const CurrentAccountModel({
     required this.id,
@@ -102,6 +263,7 @@ class CurrentAccountModel extends Equatable {
     required this.isEmailVerified,
     this.avatarUrl,
     this.ownerProfile,
+    this.nowPackage,
   });
 
   /// Get display name - prefer fullName from ownerProfile, fallback to username
@@ -122,7 +284,13 @@ class CurrentAccountModel extends Equatable {
         avatarUrl: json['avatarUrl'] as String?,
         ownerProfile: json['ownerProfile'] != null
             ? OwnerProfileModel.fromJson(
-                json['ownerProfile'] as Map<String, dynamic>)
+                json['ownerProfile'] as Map<String, dynamic>,
+              )
+            : null,
+        nowPackage: json['nowPackage'] != null
+            ? NowPackageModel.fromJson(
+                json['nowPackage'] as Map<String, dynamic>,
+              )
             : null,
       );
 
@@ -156,6 +324,7 @@ class CurrentAccountModel extends Equatable {
                 'isOwner': ownerProfile!.isOwner,
               }
             : null,
+        'nowPackage': nowPackage?.toJson(),
       };
 
   UserEntity toEntity() => UserEntity(
@@ -179,5 +348,6 @@ class CurrentAccountModel extends Equatable {
         isEmailVerified,
         avatarUrl,
         ownerProfile,
+        nowPackage,
       ];
 }

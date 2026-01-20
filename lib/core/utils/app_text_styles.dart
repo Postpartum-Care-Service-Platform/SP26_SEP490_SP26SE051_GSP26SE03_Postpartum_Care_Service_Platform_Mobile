@@ -11,11 +11,13 @@ class AppTextStyles {
     double fontSize = 24,
     FontWeight fontWeight = FontWeight.normal,
     Color? color,
+    double? letterSpacing,
   }) {
     return GoogleFonts.tinos(
       fontSize: fontSize,
       fontWeight: fontWeight,
       color: color,
+      letterSpacing: letterSpacing,
     );
   }
 
@@ -24,11 +26,13 @@ class AppTextStyles {
     double fontSize = 14,
     FontWeight fontWeight = FontWeight.normal,
     Color? color,
+    double? letterSpacing,
   }) {
     return GoogleFonts.arimo(
       fontSize: fontSize,
       fontWeight: fontWeight,
       color: color,
+      letterSpacing: letterSpacing,
     );
   }
 }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
@@ -18,7 +17,6 @@ import '../widgets/home_header.dart';
 import '../widgets/quick_action_card.dart';
 import '../widgets/section_header.dart';
 import '../widgets/upcoming_schedule_card.dart';
-import '../widgets/promotion_banner.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -28,12 +26,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => InjectionContainer.packageBloc
-        ..add(const PackageLoadRequested()),
+      create: (context) =>
+          InjectionContainer.packageBloc..add(const PackageLoadRequested()),
       child: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, authState) {
           String? username;
@@ -62,136 +59,71 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                // Top inset is already handled by SafeArea.
-                const SizedBox(height: 8),
-                HomeHeader(
-                  userName: username,
-                  avatarUrl: avatarUrl,
-                  isEmailVerified: isEmailVerified,
-                  isLoading: isLoading,
-                ),
-            const SizedBox(height: 32),
-
-            // Quick Actions Section
-            const SectionHeader(title: AppStrings.quickActions),
-          const SizedBox(height: 16),
-          GridView.count(
-            crossAxisCount: 4,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            children: [
-              QuickActionCard(icon: Icons.spa_outlined, title: AppStrings.spaAndCare, onTap: () {}),
-              QuickActionCard(icon: Icons.child_care_outlined, title: AppStrings.babyActivities, onTap: () {}),
-              QuickActionCard(icon: Icons.restaurant_menu_outlined, title: AppStrings.nutritionMenu, onTap: () {}),
-              QuickActionCard(icon: Icons.map_outlined, title: AppStrings.resortMap, onTap: () {}),
-            ],
-          ),
-          const SizedBox(height: 32),
-
-          // Upcoming Schedule Section
-          SectionHeader(
-            title: AppStrings.upcomingSchedule,
-            actionText: AppStrings.viewAll,
-            onActionPressed: () {},
-          ),
-          const SizedBox(height: 16),
-          const UpcomingScheduleCard(
-            time: '10:00 AM',
-            title: 'Yoga cho mẹ bầu',
-            location: 'Phòng Zen',
-          ),
-          const SizedBox(height: 32),
-
-          // Promotions Section
-          Builder(
-            builder: (homeContext) => SectionHeader(
-              title: AppStrings.promotions,
-              actionText: AppStrings.viewAll,
-              onActionPressed: () {
-                final bloc = homeContext.read<PackageBloc>();
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => BlocProvider.value(
-                      value: bloc,
-                      child: const PackageScreen(),
-                    ),
+                  // Top inset is already handled by SafeArea.
+                  const SizedBox(height: 8),
+                  HomeHeader(
+                    userName: username,
+                    avatarUrl: avatarUrl,
+                    isEmailVerified: isEmailVerified,
+                    isLoading: isLoading,
                   ),
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 16),
-          BlocBuilder<PackageBloc, PackageState>(
-            builder: (context, state) {
-              if (state is PackageLoading) {
-                return const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(24.0),
-                    child: AppLoadingIndicator(
-                      color: AppColors.primary,
-                    ),
-                  ),
-                );
-              }
+                  const SizedBox(height: 32),
 
-              if (state is PackageError) {
-                return Container(
-                  padding: const EdgeInsets.all(16),
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.red.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Row(
+                  // Quick Actions Section
+                  const SectionHeader(title: AppStrings.quickActions),
+                  const SizedBox(height: 16),
+                  GridView.count(
+                    crossAxisCount: 4,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
                     children: [
-                      Icon(Icons.error_outline, color: Colors.red[300]),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          AppStrings.loadPackagesError,
-                          style: AppTextStyles.arimo(
-                            fontSize: 14,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
+                      QuickActionCard(
+                        icon: Icons.spa_outlined,
+                        title: AppStrings.spaAndCare,
+                        onTap: () {},
+                      ),
+                      QuickActionCard(
+                        icon: Icons.child_care_outlined,
+                        title: AppStrings.babyActivities,
+                        onTap: () {},
+                      ),
+                      QuickActionCard(
+                        icon: Icons.restaurant_menu_outlined,
+                        title: AppStrings.nutritionMenu,
+                        onTap: () {},
+                      ),
+                      QuickActionCard(
+                        icon: Icons.map_outlined,
+                        title: AppStrings.resortMap,
+                        onTap: () {},
                       ),
                     ],
                   ),
-                );
-              }
+                  const SizedBox(height: 32),
 
-              if (state is PackageLoaded) {
-                if (state.packages.isEmpty) {
-                  return Container(
-                    padding: const EdgeInsets.all(16),
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      AppStrings.noPackages,
-                      style: AppTextStyles.arimo(
-                        fontSize: 14,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  );
-                }
+                  // Upcoming Schedule Section
+                  SectionHeader(
+                    title: AppStrings.upcomingSchedule,
+                    actionText: AppStrings.viewAll,
+                    onActionPressed: () {},
+                  ),
+                  const SizedBox(height: 16),
+                  const UpcomingScheduleCard(
+                    time: '10:00 AM',
+                    title: 'Yoga cho mẹ bầu',
+                    location: 'Phòng Zen',
+                  ),
+                  const SizedBox(height: 32),
 
-                // Show packages in carousel slides
-                return Builder(
-                  builder: (homeContext) {
-                    final bloc = homeContext.read<PackageBloc>();
-                    return PackageCarousel(
-                      packages: state.packages,
-                      onViewAll: () {
+                  // Promotions Section
+                  Builder(
+                    builder: (homeContext) => SectionHeader(
+                      title: AppStrings.promotions,
+                      actionText: AppStrings.viewAll,
+                      onActionPressed: () {
+                        final bloc = homeContext.read<PackageBloc>();
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -202,47 +134,106 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         );
                       },
-                      onPackageTap: (package) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => BlocProvider.value(
-                              value: bloc,
-                              child: const PackageScreen(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  BlocBuilder<PackageBloc, PackageState>(
+                    builder: (context, state) {
+                      if (state is PackageLoading) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(24.0),
+                            child: AppLoadingIndicator(
+                              color: AppColors.primary,
                             ),
                           ),
                         );
-                      },
-                    );
-                  },
-                );
-              }
+                      }
 
-              // Fallback to static banner if no state
-              return Builder(
-                builder: (homeContext) {
-                  final bloc = homeContext.read<PackageBloc>();
-                  return PromotionBanner(
-                    title: 'Ưu đãi 20% Spa',
-                    subtitle: 'Gói phục hồi sau sinh',
-                    imagePath: AppAssets.promotionBanner,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => BlocProvider.value(
-                            value: bloc,
-                            child: const PackageScreen(),
+                      if (state is PackageError) {
+                        return Container(
+                          padding: const EdgeInsets.all(16),
+                          margin: const EdgeInsets.only(bottom: 16),
+                          decoration: BoxDecoration(
+                            color: AppColors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.red.withValues(alpha: 0.3),
+                            ),
                           ),
-                        ),
-                      );
+                          child: Row(
+                            children: [
+                              Icon(Icons.error_outline, color: Colors.red[300]),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  AppStrings.loadPackagesError,
+                                  style: AppTextStyles.arimo(
+                                    fontSize: 14,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      if (state is PackageLoaded) {
+                        if (state.packages.isEmpty) {
+                          return Container(
+                            padding: const EdgeInsets.all(16),
+                            margin: const EdgeInsets.only(bottom: 16),
+                            decoration: BoxDecoration(
+                              color: AppColors.white,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              AppStrings.noPackages,
+                              style: AppTextStyles.arimo(
+                                fontSize: 14,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          );
+                        }
+
+                        // Show packages in carousel slides
+                        return Builder(
+                          builder: (homeContext) {
+                            final bloc = homeContext.read<PackageBloc>();
+                            return PackageCarousel(
+                              packages: state.packages,
+                              onViewAll: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => BlocProvider.value(
+                                      value: bloc,
+                                      child: const PackageScreen(),
+                                    ),
+                                  ),
+                                );
+                              },
+                              onPackageTap: (package) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => BlocProvider.value(
+                                      value: bloc,
+                                      child: const PackageScreen(),
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        );
+                      }
+                      return const SizedBox.shrink();
                     },
-                  );
-                },
-              );
-            },
-          ),
-          const SizedBox(height: 24),
+                  ),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),

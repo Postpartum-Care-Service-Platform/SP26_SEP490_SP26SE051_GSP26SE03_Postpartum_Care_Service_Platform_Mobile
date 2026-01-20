@@ -8,6 +8,8 @@ class ApiEndpoints {
   static String chatConversationById(int id) => '/Chat/conversations/$id';
   static String chatConversationMessages(int id) =>
       '/Chat/conversations/$id/messages';
+  static String chatConversationStaffMessage(int id) =>
+      '/Chat/conversations/$id/staff-message';
   static String chatConversationMarkRead(int id) =>
       '/Chat/conversations/$id/messages/read';
   static String chatConversationRequestSupport(int id) =>

@@ -44,10 +44,12 @@ class ChatRepositoryImpl implements ChatRepository {
   Future<ChatSendResult> sendMessage({
     required int conversationId,
     required String content,
+    bool toStaffChannel = false,
   }) {
     return remoteDataSource.sendMessage(
       conversationId: conversationId,
       content: content,
+      toStaffChannel: toStaffChannel,
     );
   }
 }

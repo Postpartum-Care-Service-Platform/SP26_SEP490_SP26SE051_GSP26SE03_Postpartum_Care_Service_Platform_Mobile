@@ -87,6 +87,7 @@ import '../../features/chat/domain/usecases/create_conversation_usecase.dart';
 import '../../features/chat/domain/usecases/mark_messages_read_usecase.dart';
 import '../../features/chat/domain/usecases/request_support_usecase.dart';
 import '../../features/chat/presentation/bloc/chat_bloc.dart';
+import '../../features/chat/presentation/services/chat_hub_service.dart';
 import '../../features/booking/data/datasources/booking_remote_datasource.dart';
 import '../../features/booking/data/repositories/booking_repository_impl.dart';
 import '../../features/booking/domain/repositories/booking_repository.dart';
@@ -143,6 +144,9 @@ class InjectionContainer {
 
   static ChatRemoteDataSource get _chatRemoteDataSource =>
       ChatRemoteDataSourceImpl(dio: ApiClient.dio);
+  static ChatHubService? _chatHubService;
+  static ChatHubService get chatHubService =>
+      _chatHubService ??= ChatHubService();
 
   static BookingRemoteDataSource get _bookingRemoteDataSource =>
       BookingRemoteDataSourceImpl(dio: ApiClient.dio);
@@ -392,6 +396,7 @@ class InjectionContainer {
         createConversationUsecase: _createConversationUsecase,
         markMessagesReadUsecase: _markMessagesReadUsecase,
         requestSupportUsecase: _requestSupportUsecase,
+        chatHubService: chatHubService,
       );
 
   static BookingBloc get bookingBloc => BookingBloc(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
@@ -202,6 +203,66 @@ class BookingStep4Summary extends StatelessWidget {
                       ),
                     ),
                   ],
+                ),
+              ),
+              SizedBox(height: 16 * scale),
+              // Payment method section
+              _SummarySection(
+                title: AppStrings.paymentMethod,
+                child: Container(
+                  padding: EdgeInsets.all(8 * scale),
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(12 * scale),
+                    border: Border.all(
+                      color: AppColors.borderLight,
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      // PayOS Logo
+                      Container(
+                        width: 80 * scale,
+                        height: 40 * scale,
+                        padding: EdgeInsets.all(2 * scale),
+                        child: SvgPicture.asset(
+                          'assets/images/payos_logo.svg',
+                          fit: BoxFit.contain,
+                          colorFilter: ColorFilter.mode(AppColors.verified, BlendMode.srcIn),
+                        ),
+                      ),
+                      // Payment method text
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              AppStrings.paymentPayOS,
+                              style: AppTextStyles.tinos(
+                                fontSize: 18 * scale,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            SizedBox(height: 4 * scale),
+                            Text(
+                              'Thanh toán qua PayOS',
+                              style: AppTextStyles.arimo(
+                                fontSize: 13 * scale,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(
+                        Icons.check_circle,
+                        size: 24 * scale,
+                        color: AppColors.verified,
+                      ),
+                    ],
+                  ),
                 ),
               ),
               SizedBox(height: 16 * scale),

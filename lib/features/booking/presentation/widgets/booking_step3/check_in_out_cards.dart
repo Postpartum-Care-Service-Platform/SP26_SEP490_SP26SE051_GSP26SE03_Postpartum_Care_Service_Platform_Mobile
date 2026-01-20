@@ -54,7 +54,9 @@ class CheckInOutCards extends StatelessWidget {
             date: checkOutDate,
             getDayName: _getDayName,
             getDateString: _getDateString,
-            borderColor: checkOutDate != null ? AppColors.verified : AppColors.borderLight,
+            borderColor: checkOutDate != null
+                ? AppColors.primary
+                : AppColors.borderLight,
           ),
         ),
       ],
@@ -92,10 +94,7 @@ class _DateCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(16 * scale),
-        border: Border.all(
-          color: borderColor,
-          width: date != null ? 2 : 1,
-        ),
+        border: Border.all(color: borderColor, width: date != null ? 2 : 1),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -127,8 +126,9 @@ class _DateCard extends StatelessWidget {
           Text(
             label,
             style: AppTextStyles.arimo(
-              fontSize: 12 * scale,
-              color: AppColors.textSecondary,
+              fontSize: 14 * scale,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
             ),
             textAlign: TextAlign.center,
           ),
@@ -139,20 +139,18 @@ class _DateCard extends StatelessWidget {
                   children: [
                     Text(
                       getDayName(date!),
-                      style: AppTextStyles.tinos(
+                      style: AppTextStyles.arimo(
                         fontSize: 14 * scale,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                        color: AppColors.textSecondary,
                       ),
                       textAlign: TextAlign.center,
                     ),
                     SizedBox(height: 2 * scale),
                     Text(
                       getDateString(date!),
-                      style: AppTextStyles.tinos(
-                        fontSize: 13 * scale,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                      style: AppTextStyles.arimo(
+                        fontSize: 12 * scale,
+                        color: AppColors.textSecondary,
                       ),
                       textAlign: TextAlign.center,
                     ),

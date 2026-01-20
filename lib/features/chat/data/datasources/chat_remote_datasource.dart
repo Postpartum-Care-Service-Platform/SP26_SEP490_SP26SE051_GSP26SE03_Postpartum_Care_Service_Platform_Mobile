@@ -11,6 +11,7 @@ abstract class ChatRemoteDataSource {
   Future<ChatSendResultModel> sendMessage({
     required int conversationId,
     required String content,
+    bool toStaffChannel,
   });
   Future<ChatConversationModel> createConversation(String name);
   Future<void> markMessagesRead(int conversationId);
@@ -59,10 +60,15 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
   Future<ChatSendResultModel> sendMessage({
     required int conversationId,
     required String content,
+    bool toStaffChannel = false,
   }) async {
     try {
+      final endpoint = toStaffChannel
+          ? ApiEndpoints.chatConversationStaffMessage(conversationId)
+          : ApiEndpoints.chatConversationMessages(conversationId);
+
       final response = await _dio.post(
-        ApiEndpoints.chatConversationMessages(conversationId),
+        endpoint,
         data: {'content': content},
       );
       final data = response.data;

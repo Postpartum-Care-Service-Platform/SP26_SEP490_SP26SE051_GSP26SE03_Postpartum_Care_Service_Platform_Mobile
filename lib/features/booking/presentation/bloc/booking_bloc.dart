@@ -210,7 +210,14 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     Emitter<BookingState> emit,
   ) async {
     final currentState = state;
-    if (currentState is! BookingCreated) {
+    int? bookingId;
+
+    // Support both BookingCreated and BookingLoaded states
+    if (currentState is BookingCreated) {
+      bookingId = currentState.booking.id;
+    } else if (currentState is BookingLoaded) {
+      bookingId = currentState.booking.id;
+    } else {
       emit(const BookingError('Vui lòng tạo booking trước'));
       return;
     }
@@ -218,7 +225,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     emit(const BookingLoading());
     try {
       final paymentLink = await createPaymentLinkUsecase(
-        bookingId: currentState.booking.id,
+        bookingId: bookingId,
         type: event.type,
       );
       emit(BookingPaymentLinkCreated(paymentLink));

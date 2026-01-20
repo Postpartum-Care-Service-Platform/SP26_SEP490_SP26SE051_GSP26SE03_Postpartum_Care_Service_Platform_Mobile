@@ -13,9 +13,5 @@ class AppAssets {
   static const String menuSecond = 'assets/images/menu_2.svg';
   static const String menuThird = 'assets/images/menu_3.svg';
 
-
-  // Home Screen
-  static const String promotionBanner = 'assets/images/promotion_banner.jpg'; // Placeholder
-
 }
 

@@ -20,10 +20,12 @@ import '../widgets/payment/payment_helpers.dart';
 
 class PaymentScreen extends StatefulWidget {
   final BookingEntity booking;
+  final String paymentType; // 'Deposit' or 'Remaining'
 
   const PaymentScreen({
     super.key,
     required this.booking,
+    this.paymentType = 'Deposit',
   });
 
   @override
@@ -38,10 +40,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
   @override
   void initState() {
     super.initState();
-    // Create payment link for deposit after the widget is built
+    // Create payment link after the widget is built
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        context.read<BookingBloc>().add(const BookingCreatePaymentLink('Deposit'));
+        context.read<BookingBloc>().add(BookingCreatePaymentLink(widget.paymentType));
       }
     });
   }
@@ -144,7 +146,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   SizedBox(height: 24 * scale),
                   ElevatedButton(
                     onPressed: () {
-                      context.read<BookingBloc>().add(const BookingCreatePaymentLink('Deposit'));
+                      context.read<BookingBloc>().add(BookingCreatePaymentLink(widget.paymentType));
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
