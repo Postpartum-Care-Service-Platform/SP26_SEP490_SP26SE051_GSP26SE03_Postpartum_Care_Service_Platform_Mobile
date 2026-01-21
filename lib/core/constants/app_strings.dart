@@ -127,6 +127,7 @@ class AppStrings {
   static const String editFamilyMember = 'Chỉnh sửa';
   static const String deleteFamilyMember = 'Xóa';
   static const String owner = 'Chủ tài khoản';
+  static const String account = 'Tài khoản';
   static const String member = 'Thành viên';
   static const String noFamilyMembers = 'Chưa có thành viên nào';
   static const String addFirstMember = 'Thêm thành viên đầu tiên';
@@ -487,4 +488,6 @@ class AppStrings {
   static const String servicesAmenityRequest = 'Yêu cầu tiện ích';
   static const String servicesAmenityRequestDescription =
       'Gọi nước, đồ dùng em bé, dọn phòng,...';
+
+      static const String helpandPolicy = 'Hỗ trợ và pháp lý';
 }
