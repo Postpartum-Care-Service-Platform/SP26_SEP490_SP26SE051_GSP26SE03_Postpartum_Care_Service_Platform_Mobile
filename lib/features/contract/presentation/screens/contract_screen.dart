@@ -8,6 +8,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_loading.dart';
+import '../../../../core/widgets/app_app_bar.dart';
 import '../../../../core/widgets/app_toast.dart';
 import '../../../../core/di/injection_container.dart';
 import '../bloc/contract_bloc.dart';
@@ -106,18 +107,11 @@ class _ContractScreenState extends State<ContractScreen> {
       create: (context) => InjectionContainer.contractBloc,
       child: Scaffold(
         backgroundColor: AppColors.background,
-        appBar: AppBar(
-          backgroundColor: AppColors.background,
-          elevation: 0,
-          title: Text(
-            AppStrings.contractTitle,
-            style: AppTextStyles.tinos(
-              fontSize: 24 * scale,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
-            ),
-          ),
+        appBar: AppAppBar(
+          title: AppStrings.contractTitle,
           centerTitle: true,
+          titleFontSize: 20 * scale,
+          titleFontWeight: FontWeight.w700,
         ),
         body: BlocConsumer<ContractBloc, ContractState>(
           listener: (context, state) {

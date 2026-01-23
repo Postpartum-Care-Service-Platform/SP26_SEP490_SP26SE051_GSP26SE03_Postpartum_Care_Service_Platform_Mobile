@@ -7,10 +7,10 @@ import '../../../../core/di/injection_container.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_loading.dart';
+import '../../../../core/widgets/app_app_bar.dart';
 import '../bloc/booking_bloc.dart';
 import '../bloc/booking_event.dart';
 import '../bloc/booking_state.dart';
-import 'booking_history_screen.dart';
 import '../widgets/invoice/booking_details_card.dart';
 import '../widgets/invoice/customer_info_card.dart';
 import '../widgets/invoice/invoice_header.dart';
@@ -51,46 +51,18 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
     final scale = AppResponsive.scaleFactor(context);
 
     return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) async {
-        if (!didPop) {
-          // Always navigate to BookingHistoryScreen when back is pressed
-          final bookingBloc = context.read<BookingBloc>();
-          if (context.mounted) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (_) => BlocProvider.value(
-                  value: bookingBloc,
-                  child: const BookingHistoryScreen(),
-                ),
-              ),
-            );
-          }
-        }
-      },
+      canPop: true,
       child: BlocProvider(
         create: (context) => InjectionContainer.bookingBloc
           ..add(BookingLoadById(widget.bookingId)),
         child: Scaffold(
           backgroundColor: AppColors.background,
-          appBar: AppBar(
-            backgroundColor: AppColors.background,
-            elevation: 0,
+          appBar: AppAppBar(
+            title: AppStrings.invoiceTitle,
             centerTitle: true,
-            automaticallyImplyLeading: false,
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary, size: 22 * scale),
-              onPressed: _navigateBack,
-              tooltip: 'Quay lại',
-            ),
-            title: Text(
-              AppStrings.invoiceTitle,
-              style: AppTextStyles.tinos(
-                fontSize: 24 * scale,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
-            ),
+            titleFontSize: 20 * scale,
+            titleFontWeight: FontWeight.w700,
+            onBackPressed: _navigateBack,
           ),
           body: BlocBuilder<BookingBloc, BookingState>(
             builder: (context, state) {
@@ -141,32 +113,35 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
               if (state is BookingLoaded) {
                 final booking = state.booking;
 
-                return SingleChildScrollView(
-                  padding: EdgeInsets.all(16 * scale),
+                return SafeArea(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Fixed invoice header card
-                      InvoiceHeader(
-                        bookingId: booking.id,
-                        status: booking.status,
-                        createdAt: booking.createdAt,
-                        getStatusLabel: InvoiceHelpers.getStatusLabel,
-                        formatDateTime: InvoiceHelpers.formatDateTime,
-                      ),
-                      SizedBox(height: 16 * scale),
-
-                      // Pager controls
-                      _PaneTabs(
-                        currentIndex: _currentPage,
-                        onTap: _animateToPage,
-                        scale: scale,
+                      Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          16 * scale,
+                          16 * scale,
+                          16 * scale,
+                          0,
+                        ),
+                        child: InvoiceHeader(
+                          bookingId: booking.id,
+                          status: booking.status,
+                          createdAt: booking.createdAt,
+                          getStatusLabel: InvoiceHelpers.getStatusLabel,
+                          formatDateTime: InvoiceHelpers.formatDateTime,
+                        ),
                       ),
                       SizedBox(height: 12 * scale),
-
-                      // Pager content
-                      SizedBox(
-                        height: 520 * scale,
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16 * scale),
+                        child: _PaneTabs(
+                          currentIndex: _currentPage,
+                          onTap: _goToPane,
+                          scale: scale,
+                        ),
+                      ),
+                      SizedBox(height: 12 * scale),
+                      Expanded(
                         child: PageView(
                           controller: _pageController,
                           onPageChanged: (index) {
@@ -174,7 +149,6 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                           },
                           children: [
                             _PaneScaffold(
-                              title: _paneTitles[0],
                               scale: scale,
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -199,7 +173,6 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                               ),
                             ),
                             _PaneScaffold(
-                              title: _paneTitles[1],
                               scale: scale,
                               child: booking.customer != null
                                   ? CustomerInfoCard(customer: booking.customer!)
@@ -209,27 +182,22 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                                     ),
                             ),
                             _PaneScaffold(
-                              title: _paneTitles[2],
                               scale: scale,
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  // Transactions
                                   Container(
                                     width: double.infinity,
                                     padding: EdgeInsets.all(16 * scale),
                                     decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                        colors: [
-                                          AppColors.background,
-                                          AppColors.white,
-                                        ],
-                                      ),
-                                      borderRadius: BorderRadius.circular(16 * scale),
+                                      color: AppColors.white,
+                                      borderRadius:
+                                          BorderRadius.circular(16 * scale),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.black.withValues(alpha: 0.05),
+                                          color:
+                                              Colors.black.withValues(alpha: 0.05),
                                           blurRadius: 12 * scale,
                                           offset: Offset(0, 4 * scale),
                                         ),
@@ -237,7 +205,8 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                                     ),
                                     child: booking.transactions.isNotEmpty
                                         ? Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
                                               Text(
                                                 AppStrings.invoiceTransactions,
@@ -253,8 +222,8 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                                                     .map((transaction) {
                                                   return TransactionItem(
                                                     transaction: transaction,
-                                                    formatDateTime:
-                                                        InvoiceHelpers.formatDateTime,
+                                                    formatDateTime: InvoiceHelpers
+                                                        .formatDateTime,
                                                     formatPrice:
                                                         InvoiceHelpers.formatPrice,
                                                     getTransactionTypeLabel:
@@ -274,148 +243,84 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                                           ),
                                   ),
                                   SizedBox(height: 12 * scale),
+                                  // Contract
                                   if (booking.contract != null &&
                                       booking.contract!.fileUrl != null)
-                                    Container(
-                                      width: double.infinity,
-                                      padding: EdgeInsets.all(16 * scale),
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
-                                          colors: [
-                                            AppColors.background,
-                                            AppColors.white,
-                                          ],
-                                        ),
-                                        borderRadius: BorderRadius.circular(16 * scale),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black.withValues(alpha: 0.05),
-                                            blurRadius: 12 * scale,
-                                            offset: Offset(0, 4 * scale),
-                                          ),
-                                        ],
-                                      ),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
+                                    Material(
+                                      color: AppColors.white,
+                                      borderRadius:
+                                          BorderRadius.circular(16 * scale),
+                                      child: InkWell(
+                                        borderRadius:
+                                            BorderRadius.circular(16 * scale),
+                                        onTap: () => _openContract(
+                                            booking.contract!.fileUrl!),
+                                        child: Container(
+                                          width: double.infinity,
+                                          padding: EdgeInsets.all(16 * scale),
+                                          child: Row(
                                             children: [
                                               Container(
-                                                padding: EdgeInsets.all(8 * scale),
+                                                padding:
+                                                    EdgeInsets.all(10 * scale),
                                                 decoration: BoxDecoration(
-                                                  color: AppColors.primary.withValues(alpha: 0.12),
-                                                  borderRadius: BorderRadius.circular(12 * scale),
+                                                  color: AppColors.primary
+                                                      .withValues(alpha: 0.12),
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          12 * scale),
                                                 ),
                                                 child: Icon(
                                                   Icons.receipt_long_rounded,
                                                   color: AppColors.primary,
-                                                  size: 18 * scale,
+                                                  size: 20 * scale,
                                                 ),
                                               ),
-                                              SizedBox(width: 10 * scale),
+                                              SizedBox(width: 12 * scale),
                                               Expanded(
                                                 child: Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
                                                   children: [
                                                     Text(
                                                       AppStrings.invoiceContract,
-                                                      style: AppTextStyles.arimo(
-                                                        fontSize: 13 * scale,
-                                                        fontWeight: FontWeight.w700,
-                                                        color: AppColors.textSecondary,
+                                                      style:
+                                                          AppTextStyles.arimo(
+                                                        fontSize: 12 * scale,
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                        color: AppColors
+                                                            .textSecondary,
                                                       ),
                                                     ),
                                                     SizedBox(height: 4 * scale),
                                                     Text(
-                                                      booking.contract!.contractCode,
-                                                      style: AppTextStyles.tinos(
-                                                        fontSize: 20 * scale,
-                                                        fontWeight: FontWeight.bold,
-                                                        color: AppColors.textPrimary,
+                                                      booking.contract!
+                                                          .contractCode,
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow
+                                                          .ellipsis,
+                                                      style:
+                                                          AppTextStyles.tinos(
+                                                        fontSize: 18 * scale,
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                        color: AppColors
+                                                            .textPrimary,
                                                       ),
                                                     ),
                                                   ],
                                                 ),
                                               ),
-                                              SizedBox(width: 10 * scale),
-                                              Container(
-                                                padding: EdgeInsets.symmetric(
-                                                  horizontal: 10 * scale,
-                                                  vertical: 5 * scale,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color: AppColors.white,
-                                                  borderRadius: BorderRadius.circular(20 * scale),
-                                                  border: Border.all(
-                                                    color: AppColors.borderLight,
-                                                  ),
-                                                ),
-                                                child: Text(
-                                                  InvoiceHelpers.getContractStatusLabel(
-                                                    booking.contract!.status,
-                                                  ),
-                                                  style: AppTextStyles.arimo(
-                                                    fontSize: 11 * scale,
-                                                    fontWeight: FontWeight.w700,
-                                                    color: AppColors.textPrimary,
-                                                  ),
-                                                ),
-                                              ),
-                                              SizedBox(width: 8 * scale),
-                                              InkWell(
-                                                borderRadius: BorderRadius.circular(16 * scale),
-                                                onTap: () => _openContract(booking.contract!.fileUrl!),
-                                                child: Container(
-                                                  padding: EdgeInsets.all(8 * scale),
-                                                  decoration: BoxDecoration(
-                                                    color: AppColors.primary.withValues(alpha: 0.12),
-                                                    shape: BoxShape.circle,
-                                                  ),
-                                                  child: Icon(
-                                                    Icons.visibility_rounded,
-                                                    color: AppColors.primary,
-                                                    size: 20 * scale,
-                                                  ),
-                                                ),
+                                              SizedBox(width: 12 * scale),
+                                              Icon(
+                                                Icons.chevron_right_rounded,
+                                                color: AppColors.textSecondary,
+                                                size: 22 * scale,
                                               ),
                                             ],
                                           ),
-                                          SizedBox(height: 6 * scale),
-                                          Divider(height: 1, color: AppColors.borderLight),
-                                          SizedBox(height: 8 * scale),
-                                          Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Text(
-                                                'Tap để xem chi tiết',
-                                                style: AppTextStyles.arimo(
-                                                  fontSize: 11.5 * scale,
-                                                  color: AppColors.textSecondary,
-                                                ),
-                                              ),
-                                              Row(
-                                                children: [
-                                                  Icon(
-                                                    Icons.link_rounded,
-                                                    size: 14 * scale,
-                                                    color: AppColors.textSecondary,
-                                                  ),
-                                                  SizedBox(width: 4 * scale),
-                                                  Text(
-                                                    'Mở file',
-                                                    style: AppTextStyles.arimo(
-                                                      fontSize: 12 * scale,
-                                                      fontWeight: FontWeight.w700,
-                                                      color: AppColors.primary,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ],
+                                        ),
                                       ),
                                     )
                                   else
@@ -442,8 +347,17 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
     );
   }
 
-  void _animateToPage(int index) {
+  void _goToPane(int index) {
+    if (index == _currentPage) return;
+    final diff = (index - _currentPage).abs();
     setState(() => _currentPage = index);
+
+    // If jumping across multiple panes, jump directly (no sequential slide)
+    if (diff > 1) {
+      _pageController.jumpToPage(index);
+      return;
+    }
+
     _pageController.animateToPage(
       index,
       duration: const Duration(milliseconds: 220),
@@ -459,16 +373,8 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
   }
 
   void _navigateBack() {
-    final bookingBloc = context.read<BookingBloc>();
     if (context.mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => BlocProvider.value(
-            value: bookingBloc,
-            child: const BookingHistoryScreen(),
-          ),
-        ),
-      );
+      Navigator.of(context).pop();
     }
   }
 }
@@ -488,69 +394,79 @@ class _PaneTabs extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = _InvoiceScreenState._paneTitles;
 
-    return Row(
-      children: List.generate(items.length, (index) {
-        final selected = index == currentIndex;
-        return Expanded(
-          child: GestureDetector(
-            onTap: () => onTap(index),
-            child: Container(
-              padding: EdgeInsets.symmetric(
-                vertical: 10 * scale,
-                horizontal: 12 * scale,
-              ),
-              margin: EdgeInsets.only(right: index == items.length - 1 ? 0 : 8 * scale),
-              decoration: BoxDecoration(
-                color: selected
-                    ? AppColors.primary.withValues(alpha: 0.12)
-                    : AppColors.white,
-                borderRadius: BorderRadius.circular(12 * scale),
-                border: Border.all(
-                  color: selected
-                      ? AppColors.primary
-                      : AppColors.borderLight,
-                  width: 1,
-                ),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                items[index],
-                textAlign: TextAlign.center,
-                style: AppTextStyles.arimo(
-                  fontSize: 12 * scale,
-                  fontWeight: FontWeight.w600,
-                  color: selected ? AppColors.primary : AppColors.textSecondary,
+    return Container(
+      padding: EdgeInsets.all(4 * scale),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(14 * scale),
+        border: Border.all(color: AppColors.borderLight),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10 * scale,
+            offset: Offset(0, 4 * scale),
+          ),
+        ],
+      ),
+      child: Row(
+        children: List.generate(items.length, (index) {
+          final selected = index == currentIndex;
+          return Expanded(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 3 * scale),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12 * scale),
+                  onTap: () => onTap(index),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 160),
+                    curve: Curves.easeOut,
+                    padding: EdgeInsets.symmetric(
+                      vertical: 10 * scale,
+                      horizontal: 10 * scale,
+                    ),
+                    decoration: BoxDecoration(
+                      color: selected ? AppColors.primary : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12 * scale),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      items[index],
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: AppTextStyles.arimo(
+                        fontSize: 12 * scale,
+                        fontWeight: FontWeight.w700,
+                        color: selected ? AppColors.white : AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
-        );
-      }),
+          );
+        }),
+      ),
     );
   }
 }
 
 class _PaneScaffold extends StatelessWidget {
-  final String title;
   final Widget child;
   final double scale;
 
   const _PaneScaffold({
-    required this.title,
     required this.child,
     required this.scale,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(12 * scale),
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(14 * scale),
-        border: Border.all(color: AppColors.borderLight, width: 1),
-      ),
-      child: SingleChildScrollView(child: child),
+    return SingleChildScrollView(
+      padding: EdgeInsets.fromLTRB(16 * scale, 0, 16 * scale, 16 * scale),
+      child: child,
     );
   }
 }

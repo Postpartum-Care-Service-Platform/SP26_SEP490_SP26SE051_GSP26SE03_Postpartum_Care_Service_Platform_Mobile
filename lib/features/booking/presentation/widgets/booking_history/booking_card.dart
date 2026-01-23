@@ -33,78 +33,84 @@ class BookingCard extends StatelessWidget {
     final notchRadius = notchHeight / 2;
     final notchCenterY = headerHeight + (notchHeight / 2);
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Padding(
-        padding: EdgeInsets.only(bottom: 16 * scale),
-        child: PhysicalShape(
-          color: AppColors.white,
-          elevation: 6 * scale,
-          shadowColor: Colors.black.withValues(alpha: 0.18),
-          clipper: _BoardingPassClipper(
-            borderRadius: 16 * scale,
-            notchCenterY: notchCenterY,
-            notchRadius: notchRadius,
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: CustomPaint(
-            foregroundPainter: _BoardingPassBorderPainter(
+    return Padding(
+      padding: EdgeInsets.only(bottom: 16 * scale),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16 * scale),
+          splashColor: AppColors.primary.withValues(alpha: 0.1),
+          highlightColor: AppColors.primary.withValues(alpha: 0.05),
+          child: PhysicalShape(
+            color: AppColors.white,
+            elevation: 6 * scale,
+            shadowColor: Colors.black.withValues(alpha: 0.18),
+            clipper: _BoardingPassClipper(
               borderRadius: 16 * scale,
               notchCenterY: notchCenterY,
               notchRadius: notchRadius,
-              strokeWidth: 2 * scale,
-              color: AppColors.primary.withValues(alpha: 0.45),
             ),
-            child: Column(
-              children: [
-                // Header section với màu primary
-                _BoardingPassHeader(
-                  bookingId: booking.id,
-                  status: booking.status,
-                  getStatusLabel: getStatusLabel,
-                  getStatusColor: getStatusColor,
-                  height: headerHeight,
-                ),
+            clipBehavior: Clip.antiAlias,
+            child: CustomPaint(
+              foregroundPainter: _BoardingPassBorderPainter(
+                borderRadius: 16 * scale,
+                notchCenterY: notchCenterY,
+                notchRadius: notchRadius,
+                strokeWidth: 2 * scale,
+                color: AppColors.primary.withValues(alpha: 0.45),
+              ),
+              child: Column(
+                children: [
+                  // Header section với màu primary
+                  _BoardingPassHeader(
+                    bookingId: booking.id,
+                    status: booking.status,
+                    getStatusLabel: getStatusLabel,
+                    getStatusColor: getStatusColor,
+                    height: headerHeight,
+                  ),
 
-                // Perforated edge effect
-                _PerforatedEdge(height: notchHeight),
+                  // Perforated edge effect
+                  _PerforatedEdge(height: notchHeight),
 
-                // Main content section
-                Padding(
-                  padding: EdgeInsets.all(20 * scale),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Date section - Check-in và Check-out như Departure/Arrival
-                      _DateSection(
-                        startDate: booking.startDate,
-                        endDate: booking.endDate,
-                        formatDate: formatDate,
-                      ),
-
-                      SizedBox(height: 20 * scale),
-
-                      // Package và Room info cùng một dòng
-                      if (booking.package != null || booking.room != null)
-                        _PackageRoomRow(
-                          packageName: booking.package?.packageName,
-                          roomName: booking.room?.name,
-                          roomFloor: booking.room?.floor,
+                  // Main content section
+                  Padding(
+                    padding: EdgeInsets.all(20 * scale),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Date section - Check-in và Check-out như Departure/Arrival
+                        _DateSection(
+                          startDate: booking.startDate,
+                          endDate: booking.endDate,
+                          formatDate: formatDate,
                         ),
 
-                      SizedBox(height: 20 * scale),
+                        SizedBox(height: 20 * scale),
 
-                      // Price section
-                      _PriceSection(
-                        finalAmount: booking.finalAmount,
-                        paidAmount: booking.paidAmount,
-                        remainingAmount: booking.remainingAmount,
-                        formatPrice: formatPrice,
-                      ),
-                    ],
+                        // Package và Room info cùng một dòng
+                        if (booking.package != null || booking.room != null)
+                          _PackageRoomRow(
+                            packageName: booking.package?.packageName,
+                            roomName: booking.room?.name,
+                            roomFloor: booking.room?.floor,
+                          ),
+
+                        SizedBox(height: 20 * scale),
+
+                        // Price section
+                        _PriceSection(
+                          finalAmount: booking.finalAmount,
+                          paidAmount: booking.paidAmount,
+                          remainingAmount: booking.remainingAmount,
+                          formatPrice: formatPrice,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

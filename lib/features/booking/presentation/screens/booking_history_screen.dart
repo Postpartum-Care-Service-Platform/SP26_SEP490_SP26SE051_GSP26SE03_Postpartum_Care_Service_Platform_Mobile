@@ -12,6 +12,7 @@ import '../bloc/booking_state.dart';
 import 'invoice_screen.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/app_bottom_navigation_bar.dart';
+import '../../../../core/widgets/app_app_bar.dart';
 import '../widgets/booking_history/booking_card.dart';
 import '../widgets/booking_history/booking_history_helpers.dart';
 
@@ -24,7 +25,7 @@ class BookingHistoryScreen extends StatelessWidget {
 
   return PopScope(
     canPop: false,
-    onPopInvoked: (didPop) async {
+    onPopInvokedWithResult: (didPop, result) async {
       if (!didPop) {
         // Navigate back to AppScaffold with profile tab selected
         if (context.mounted) {
@@ -43,18 +44,11 @@ class BookingHistoryScreen extends StatelessWidget {
           InjectionContainer.bookingBloc..add(const BookingLoadAll()),
       child: Scaffold(
         backgroundColor: AppColors.background,
-        appBar: AppBar(
-          backgroundColor: AppColors.background,
-          elevation: 0,
-          title: Text(
-            AppStrings.bookingHistory,
-            style: AppTextStyles.tinos(
-              fontSize: 24 * scale,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
-            ),
-          ),
+        appBar: AppAppBar(
+          title: AppStrings.bookingHistory,
           centerTitle: true,
+          titleFontSize: 20 * scale,
+          titleFontWeight: FontWeight.w700,
         ),
         body: BlocBuilder<BookingBloc, BookingState>(
           builder: (context, state) {

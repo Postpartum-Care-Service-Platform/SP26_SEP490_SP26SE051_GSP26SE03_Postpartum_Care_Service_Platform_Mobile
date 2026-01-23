@@ -13,6 +13,8 @@ import '../../../../features/auth/presentation/bloc/auth_state.dart';
 import '../../../auth/presentation/screens/login_screen.dart';
 import '../../../family_profile/presentation/screens/family_profile_screen.dart';
 import '../../../booking/presentation/screens/booking_history_screen.dart';
+import '../../../../core/routing/app_router.dart';
+import '../../../../core/routing/app_routes.dart';
 import '../widgets/profile_header.dart';
 import '../widgets/profile_menu_item.dart';
 import 'account_details_screen.dart';
@@ -183,37 +185,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ProfileMenuItem(
                             icon: Icons.help_outline_rounded,
                             title: AppStrings.help,
-                            onTap: () {
-                 
-                            },
+                            onTap: () => AppRouter.push(context, AppRoutes.help),
                           ),
                           ProfileMenuItem(
                             icon: Icons.contact_support_outlined,
                             title: AppStrings.contact,
-                            onTap: () {
-            
-                            },
+                            onTap: () => AppRouter.push(context, AppRoutes.contact),
                           ),
                           ProfileMenuItem(
                             icon: Icons.info_outline_rounded,
                             title: AppStrings.about,
-                            onTap: () {
-            
-                            },
+                            onTap: () => AppRouter.push(context, AppRoutes.about),
                           ),
                           ProfileMenuItem(
                             icon: Icons.description_outlined,
                             title: AppStrings.terms,
-                            onTap: () {
-           
-                            },
+                            onTap: () => AppRouter.push(context, AppRoutes.terms),
                           ),
                           ProfileMenuItem(
                             icon: Icons.lock_outline_rounded,
                             title: AppStrings.privacy,
-                            onTap: () {
-              
-                            },
+                            onTap: () => AppRouter.push(context, AppRoutes.privacy),
                           ),
                         ],
                       ),

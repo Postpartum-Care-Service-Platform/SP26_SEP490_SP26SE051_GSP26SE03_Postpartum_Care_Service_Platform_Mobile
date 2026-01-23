@@ -7,6 +7,7 @@ import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_loading.dart';
 import '../../../../core/widgets/app_toast.dart';
+import '../../../../core/widgets/app_app_bar.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
@@ -30,6 +31,8 @@ class AccountDetailsScreen extends StatefulWidget {
 }
 
 class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
+  CurrentAccountModel? _cachedAccount;
+
   @override
   void initState() {
     super.initState();
@@ -71,6 +74,11 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
               }
             });
           }
+
+          // Cache account data when successfully loaded
+          if (state is AuthGetAccountByIdSuccess) {
+            _cachedAccount = state.account;
+          }
         },
         child: PopScope(
           onPopInvokedWithResult: (didPop, result) {
@@ -83,22 +91,18 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
           },
           child: Scaffold(
             backgroundColor: AppColors.background,
-            appBar: AppBar(
-              backgroundColor: AppColors.background,
-              elevation: 0,
-              iconTheme: const IconThemeData(color: AppColors.textPrimary),
-              title: Text(
-                AppStrings.myAccount,
-                style: AppTextStyles.tinos(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
+            appBar: AppAppBar(
+              title: AppStrings.myAccount,
               centerTitle: true,
             ),
           body: BlocBuilder<AuthBloc, AuthState>(
             builder: (context, state) {
+              // If we have cached account data, always show it (even if there's an error)
+              // This ensures change password errors don't replace the form
+              if (_cachedAccount != null) {
+                return _AccountDetailsContent(account: _cachedAccount!);
+              }
+
               if (state is AuthLoading && state is! AuthGetAccountByIdSuccess) {
                 return const Center(
                   child: CircularProgressIndicator(

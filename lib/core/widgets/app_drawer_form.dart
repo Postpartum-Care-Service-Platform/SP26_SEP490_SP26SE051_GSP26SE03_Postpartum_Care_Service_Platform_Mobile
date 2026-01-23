@@ -25,22 +25,26 @@ class AppDrawerForm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
+    
+    // Cache color calculations
+    final handleBarColor = AppColors.textSecondary.withValues(alpha: 0.3);
 
     return SafeArea(
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: AppColors.background,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24 * scale)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 24 * scale,
-              offset: Offset(0, -8 * scale),
-            ),
-          ],
-        ),
-        child: Column(
+      child: RepaintBoundary(
+        child: Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: AppColors.background,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24 * scale)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 24 * scale,
+                offset: Offset(0, -8 * scale),
+              ),
+            ],
+          ),
+          child: Column(
           mainAxisSize: isCompact ? MainAxisSize.min : MainAxisSize.max,
           children: [
             // Handle bar
@@ -50,7 +54,7 @@ class AppDrawerForm extends StatelessWidget {
                 width: 48 * scale,
                 height: 5 * scale,
                 decoration: BoxDecoration(
-                  color: AppColors.textSecondary.withValues(alpha: 0.3),
+                  color: handleBarColor,
                   borderRadius: BorderRadius.circular(12 * scale),
                 ),
               ),
@@ -86,6 +90,8 @@ class AppDrawerForm extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                         color: AppColors.textPrimary,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   SizedBox(width: 40 * scale), // balance with close button space
@@ -109,6 +115,7 @@ class AppDrawerForm extends StatelessWidget {
             else
               Expanded(
                 child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
                   padding: EdgeInsets.symmetric(
                     horizontal: 16 * scale,
                     vertical: 8 * scale,
@@ -148,9 +155,9 @@ class AppDrawerForm extends StatelessWidget {
                         ? SizedBox(
                             width: 22 * scale,
                             height: 22 * scale,
-                            child: CircularProgressIndicator(
+                            child: const CircularProgressIndicator(
                               strokeWidth: 2.5,
-                              valueColor: const AlwaysStoppedAnimation<Color>(
+                              valueColor: AlwaysStoppedAnimation<Color>(
                                 AppColors.white,
                               ),
                             ),
@@ -167,6 +174,7 @@ class AppDrawerForm extends StatelessWidget {
                 ),
               ),
           ],
+          ),
         ),
       ),
     );

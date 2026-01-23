@@ -7,6 +7,7 @@ import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_loading.dart';
 import '../../../../core/widgets/app_toast.dart';
+import '../../../../core/widgets/app_app_bar.dart';
 import '../../domain/entities/booking_entity.dart';
 import '../../domain/entities/payment_link_entity.dart';
 import '../bloc/booking_bloc.dart';
@@ -72,18 +73,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        title: Text(
-          AppStrings.paymentTitle,
-          style: AppTextStyles.tinos(
-            fontSize: 24 * scale,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-        ),
+      appBar: AppAppBar(
+        title: AppStrings.paymentTitle,
         centerTitle: true,
+        titleFontSize: 20 * scale,
+        titleFontWeight: FontWeight.w700,
       ),
       body: BlocConsumer<BookingBloc, BookingState>(
         listener: (context, state) {
