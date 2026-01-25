@@ -70,4 +70,7 @@ class AppRoutes {
   static const String employeeMealPlan = '/employee-meal-plan';
   static const String employeeCheckInOut = '/employee-check-in-out';
   static const String serviceBooking = '/service-booking';
+
+  // Menu Routes
+  static const String myMenu = '/my-menu';
 }

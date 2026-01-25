@@ -103,6 +103,17 @@ import '../../features/contract/domain/repositories/contract_repository.dart';
 import '../../features/contract/domain/usecases/get_contract_by_booking_id_usecase.dart';
 import '../../features/contract/domain/usecases/export_contract_pdf_usecase.dart';
 import '../../features/contract/presentation/bloc/contract_bloc.dart';
+import '../../features/services/data/datasources/menu_remote_datasource.dart';
+import '../../features/services/data/repositories/menu_repository_impl.dart';
+import '../../features/services/domain/repositories/menu_repository.dart';
+import '../../features/services/domain/usecases/get_menus_usecase.dart';
+import '../../features/services/domain/usecases/get_menu_types_usecase.dart';
+import '../../features/services/domain/usecases/get_my_menu_records_usecase.dart';
+import '../../features/services/domain/usecases/get_my_menu_records_by_date_usecase.dart';
+import '../../features/services/domain/usecases/create_menu_records_usecase.dart';
+import '../../features/services/domain/usecases/update_menu_records_usecase.dart';
+import '../../features/services/domain/usecases/delete_menu_record_usecase.dart';
+import '../../features/services/presentation/bloc/menu_bloc.dart';
 import '../apis/api_client.dart';
 
 /// Centralized dependency injection container
@@ -154,6 +165,9 @@ class InjectionContainer {
   static ContractRemoteDataSource get _contractRemoteDataSource =>
       ContractRemoteDataSourceImpl(dio: ApiClient.dio);
 
+  static MenuRemoteDataSource get _menuRemoteDataSource =>
+      MenuRemoteDataSourceImpl(dio: ApiClient.dio);
+
   // ==================== Repositories ====================
   
   static AuthRepository get authRepository =>
@@ -196,6 +210,9 @@ class InjectionContainer {
 
   static ContractRepository get contractRepository =>
       ContractRepositoryImpl(remoteDataSource: _contractRemoteDataSource);
+
+  static MenuRepository get menuRepository =>
+      MenuRepositoryImpl(_menuRemoteDataSource);
 
   // ==================== Use Cases ====================
   
@@ -317,6 +334,21 @@ class InjectionContainer {
   static ExportContractPdfUsecase get _exportContractPdfUsecase =>
       ExportContractPdfUsecase(contractRepository);
 
+  static GetMenusUsecase get _getMenusUsecase =>
+      GetMenusUsecase(menuRepository);
+  static GetMenuTypesUsecase get _getMenuTypesUsecase =>
+      GetMenuTypesUsecase(menuRepository);
+  static GetMyMenuRecordsUsecase get _getMyMenuRecordsUsecase =>
+      GetMyMenuRecordsUsecase(menuRepository);
+  static GetMyMenuRecordsByDateUsecase get _getMyMenuRecordsByDateUsecase =>
+      GetMyMenuRecordsByDateUsecase(menuRepository);
+  static CreateMenuRecordsUsecase get _createMenuRecordsUsecase =>
+      CreateMenuRecordsUsecase(menuRepository);
+  static UpdateMenuRecordsUsecase get _updateMenuRecordsUsecase =>
+      UpdateMenuRecordsUsecase(menuRepository);
+  static DeleteMenuRecordUsecase get _deleteMenuRecordUsecase =>
+      DeleteMenuRecordUsecase(menuRepository);
+
   // ==================== Blocs ====================
   
   static AuthBloc get authBloc => AuthBloc(
@@ -412,6 +444,16 @@ class InjectionContainer {
   static ContractBloc get contractBloc => ContractBloc(
         getContractByBookingIdUsecase: _getContractByBookingIdUsecase,
         exportContractPdfUsecase: _exportContractPdfUsecase,
+      );
+
+  static MenuBloc get menuBloc => MenuBloc(
+        getMenusUsecase: _getMenusUsecase,
+        getMenuTypesUsecase: _getMenuTypesUsecase,
+        getMyMenuRecordsUsecase: _getMyMenuRecordsUsecase,
+        getMyMenuRecordsByDateUsecase: _getMyMenuRecordsByDateUsecase,
+        createMenuRecordsUsecase: _createMenuRecordsUsecase,
+        updateMenuRecordsUsecase: _updateMenuRecordsUsecase,
+        deleteMenuRecordUsecase: _deleteMenuRecordUsecase,
       );
 
   // ==================== Reset ====================

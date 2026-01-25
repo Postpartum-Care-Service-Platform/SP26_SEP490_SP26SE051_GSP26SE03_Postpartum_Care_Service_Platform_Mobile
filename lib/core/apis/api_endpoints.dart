@@ -155,5 +155,30 @@ class ApiEndpoints {
   
   /// Complete ticket
   static String completeTicket(int ticketId) => '/ServiceBooking/$ticketId/complete';
+
+  // ==========================================
+  // Menu endpoints
+  // ==========================================
+  
+  /// Get all menus
+  static const String menus = '/Menu';
+  
+  /// Get all menu types
+  static const String menuTypes = '/MenuType';
+  
+  /// Get my menu records
+  static const String myMenuRecords = '/MenuRecord/my';
+  
+  /// Get my menu records by date
+  static const String myMenuRecordsByDate = '/MenuRecord/my/date';
+  
+  /// Create menu records
+  static const String createMenuRecord = '/MenuRecord';
+  
+  /// Update menu records
+  static const String updateMenuRecord = '/MenuRecord';
+  
+  /// Delete menu record (soft delete)
+  static String deleteMenuRecord(int id) => '/MenuRecord/$id';
 }
 

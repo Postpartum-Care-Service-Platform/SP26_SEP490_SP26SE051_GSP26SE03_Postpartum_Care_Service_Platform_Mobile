@@ -66,10 +66,13 @@ class AppWidgets {
   /// Primary Floating Action Button - icon only
   static Widget primaryFabIcon({
     required BuildContext context,
-    required IconData icon,
+    IconData? icon,
+    Widget? iconWidget,
     required VoidCallback onPressed,
     EdgeInsets? margin,
   }) {
+    assert(icon != null || iconWidget != null,
+        'Either icon or iconWidget must be provided');
     final scale = AppResponsive.scaleFactor(context);
     return Container(
       margin: margin ?? EdgeInsets.only(bottom: 12 * scale, right: 4 * scale),
@@ -94,7 +97,7 @@ class AppWidgets {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18 * scale),
           ),
-          child: Icon(icon, size: 24 * scale),
+          child: iconWidget ?? Icon(icon, size: 24 * scale),
         ),
       ),
     );

@@ -488,6 +488,55 @@ class AppStrings {
   static const String servicesAmenityRequest = 'Tiện ích';
   static const String servicesAmenityRequestDescription =
       'Gọi nước, đồ dùng em bé, dọn phòng,...';
+  static const String servicesExploreAmenities = 'Khám phá các dịch vụ tiện ích';
+
+  // Menu Screen
+  static const String menuNoMenuToDelete = 'Không có menu nào để xóa';
+  static const String menuSelectMealToDelete = 'Chọn bữa ăn muốn xóa';
+  static const String menuSelectMeal = 'Chọn bữa ăn';
+  static const String menuDelete = 'Xóa';
+  static const String menuDeleteCount = 'Xóa ({count})';
+  static const String menuDeletedCount = 'Đã xóa {count} menu';
+  static const String menuPleaseSelectAtLeastOne = 'Vui lòng chọn ít nhất một menu';
+  static const String menuSaveSuccess = 'Lưu menu thành công';
+  static const String menuSaveCount = 'Lưu menu ({count})';
+  static const String menuSelect = 'Chọn menu';
+  static const String menuNotSelected = 'Chưa chọn menu';
+  static const String menuNotSelectedForDate = 'Chưa chọn menu cho ngày {date}';
+  static const String menuSelectThis = 'Chọn menu này';
+  static const String menuSelectForType = 'Chọn menu {type}';
+  static const String menuForType = 'Menu {type}';
+  static const String menuNoMenuForType = 'Không có menu {type}';
+  static const String menuNoFoods = 'Menu này chưa có món ăn';
+  static const String menuFoodsList = 'Danh sách món ăn';
+  static const String menuFoodsListCount = 'Danh sách món ăn ({count})';
+  static const String menuSelecting = 'Menu đang chọn - {date}';
+  static const String menuSelected = 'Menu đã chọn - {date}';
+  static const String menuNotSaved = 'Chưa lưu';
+  static const String menuWaitingCheckIn = 'Chờ check-in';
+
+  // Months
+  static const String month1 = 'Tháng 1';
+  static const String month2 = 'Tháng 2';
+  static const String month3 = 'Tháng 3';
+  static const String month4 = 'Tháng 4';
+  static const String month5 = 'Tháng 5';
+  static const String month6 = 'Tháng 6';
+  static const String month7 = 'Tháng 7';
+  static const String month8 = 'Tháng 8';
+  static const String month9 = 'Tháng 9';
+  static const String month10 = 'Tháng 10';
+  static const String month11 = 'Tháng 11';
+  static const String month12 = 'Tháng 12';
+
+  // Week Days
+  static const String weekDayMonday = 'T2';
+  static const String weekDayTuesday = 'T3';
+  static const String weekDayWednesday = 'T4';
+  static const String weekDayThursday = 'T5';
+  static const String weekDayFriday = 'T6';
+  static const String weekDaySaturday = 'T7';
+  static const String weekDaySunday = 'CN';
 
   // Support and Policy
       static const String helpandPolicy = 'Hỗ trợ và pháp lý';

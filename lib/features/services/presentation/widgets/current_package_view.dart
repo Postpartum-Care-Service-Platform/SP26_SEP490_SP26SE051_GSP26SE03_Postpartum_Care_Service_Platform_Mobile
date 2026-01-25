@@ -166,7 +166,7 @@ class CurrentPackageView extends StatelessWidget {
                 SizedBox(height: 18 * scale),
                 if (isFullyPaid)
                   AppWidgets.primaryButton(
-                    text: 'Chờ check-in',
+                    text: AppStrings.menuWaitingCheckIn,
                     isEnabled: false,
                     onPressed: () {},
                   )

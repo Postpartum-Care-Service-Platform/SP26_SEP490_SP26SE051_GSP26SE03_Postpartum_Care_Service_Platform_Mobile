@@ -28,6 +28,8 @@ import '../../features/chat/presentation/screens/conversation_list_screen.dart';
 import '../../features/chat/presentation/screens/conversation_detail_screen.dart';
 import '../../features/chat/presentation/screens/chat_shell_screen.dart';
 import '../../features/family/presentation/screens/family_portal_screen.dart';
+import '../../features/services/presentation/screens/my_menu_screen.dart';
+import '../../features/services/presentation/bloc/menu_event.dart';
 import '../../core/widgets/app_scaffold.dart';
 import '../../core/di/injection_container.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
@@ -276,6 +278,16 @@ class AppRouter {
       case AppRoutes.familyPortal:
         return MaterialPageRoute(
           builder: (_) => const FamilyPortalScreen(),
+        );
+
+      // Menu Routes
+      case AppRoutes.myMenu:
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (_) => InjectionContainer.menuBloc
+              ..add(const MenuLoadRequested()),
+            child: const MyMenuScreen(),
+          ),
         );
 
       default:
