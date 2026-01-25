@@ -181,6 +181,11 @@ class CurrentPackageView extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context, double scale) {
+    // Ẩn "Đặt gói dịch vụ" khi dịch vụ đã được kích hoạt
+    if (nowPackage.serviceIsActive) {
+      return const SizedBox.shrink();
+    }
+
     return Padding(
       padding: EdgeInsets.only(bottom: 12 * scale),
       child: Row(

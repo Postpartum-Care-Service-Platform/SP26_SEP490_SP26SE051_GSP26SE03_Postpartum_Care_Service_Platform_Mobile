@@ -124,20 +124,20 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                           0,
                         ),
                         child: InvoiceHeader(
-                          bookingId: booking.id,
-                          status: booking.status,
-                          createdAt: booking.createdAt,
-                          getStatusLabel: InvoiceHelpers.getStatusLabel,
-                          formatDateTime: InvoiceHelpers.formatDateTime,
-                        ),
+                        bookingId: booking.id,
+                        status: booking.status,
+                        createdAt: booking.createdAt,
+                        getStatusLabel: InvoiceHelpers.getStatusLabel,
+                        formatDateTime: InvoiceHelpers.formatDateTime,
+                      ),
                       ),
                       SizedBox(height: 12 * scale),
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: 16 * scale),
                         child: _PaneTabs(
-                          currentIndex: _currentPage,
+                        currentIndex: _currentPage,
                           onTap: _goToPane,
-                          scale: scale,
+                        scale: scale,
                         ),
                       ),
                       SizedBox(height: 12 * scale),
@@ -256,8 +256,8 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                                         onTap: () => _openContract(
                                             booking.contract!.fileUrl!),
                                         child: Container(
-                                          width: double.infinity,
-                                          padding: EdgeInsets.all(16 * scale),
+                                      width: double.infinity,
+                                      padding: EdgeInsets.all(16 * scale),
                                           child: Row(
                                             children: [
                                               Container(
@@ -313,9 +313,9 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                                                 ),
                                               ),
                                               SizedBox(width: 12 * scale),
-                                              Icon(
+                                                  Icon(
                                                 Icons.chevron_right_rounded,
-                                                color: AppColors.textSecondary,
+                                                    color: AppColors.textSecondary,
                                                 size: 22 * scale,
                                               ),
                                             ],
@@ -409,45 +409,45 @@ class _PaneTabs extends StatelessWidget {
         ],
       ),
       child: Row(
-        children: List.generate(items.length, (index) {
-          final selected = index == currentIndex;
-          return Expanded(
+      children: List.generate(items.length, (index) {
+        final selected = index == currentIndex;
+        return Expanded(
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 3 * scale),
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
                   borderRadius: BorderRadius.circular(12 * scale),
-                  onTap: () => onTap(index),
+            onTap: () => onTap(index),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 160),
                     curve: Curves.easeOut,
-                    padding: EdgeInsets.symmetric(
-                      vertical: 10 * scale,
+              padding: EdgeInsets.symmetric(
+                vertical: 10 * scale,
                       horizontal: 10 * scale,
-                    ),
-                    decoration: BoxDecoration(
+              ),
+              decoration: BoxDecoration(
                       color: selected ? AppColors.primary : Colors.transparent,
-                      borderRadius: BorderRadius.circular(12 * scale),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      items[index],
+                borderRadius: BorderRadius.circular(12 * scale),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                items[index],
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: AppTextStyles.arimo(
-                        fontSize: 12 * scale,
+                textAlign: TextAlign.center,
+                style: AppTextStyles.arimo(
+                  fontSize: 12 * scale,
                         fontWeight: FontWeight.w700,
                         color: selected ? AppColors.white : AppColors.textSecondary,
                       ),
                     ),
-                  ),
                 ),
               ),
             ),
-          );
-        }),
+          ),
+        );
+      }),
       ),
     );
   }

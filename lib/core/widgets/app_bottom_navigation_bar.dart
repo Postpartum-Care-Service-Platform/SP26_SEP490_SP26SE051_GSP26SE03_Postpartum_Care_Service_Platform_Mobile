@@ -18,7 +18,7 @@ extension AppBottomTabX on AppBottomTab {
   IconData? get icon {
     switch (this) {
       case AppBottomTab.home:
-        return Icons.home_rounded;
+        return Icons.home_outlined;
       case AppBottomTab.appointment:
         return Icons.calendar_month_outlined;
       case AppBottomTab.services:

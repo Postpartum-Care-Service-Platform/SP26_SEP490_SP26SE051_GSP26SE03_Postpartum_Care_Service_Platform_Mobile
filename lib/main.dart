@@ -2,10 +2,11 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'features/splash/presentation/screens/splash_screen.dart';
 import 'core/constants/app_colors.dart';
 import 'core/config/app_config.dart';
 import 'core/utils/bad_cert_http_override.dart';
+import 'core/routing/app_router.dart';
+import 'core/routing/app_routes.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -45,8 +46,9 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: AppColors.background,
         useMaterial3: true,
       ),
-      // NOTE: Khôi phục flow chuẩn: Splash -> Login.
-      home: const SplashScreen(),
+      // Use AppRouter for centralized route management
+      initialRoute: AppRoutes.splash,
+      onGenerateRoute: AppRouter.generateRoute,
     );
   }
 }

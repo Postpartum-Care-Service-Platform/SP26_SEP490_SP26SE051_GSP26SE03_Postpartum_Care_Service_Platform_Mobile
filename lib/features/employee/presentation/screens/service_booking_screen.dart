@@ -453,7 +453,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                       return Chip(
                         label: Text(service.name),
                         onDeleted: () => _toggleService(service),
-                        backgroundColor: AppColors.primary.withOpacity(0.1),
+                        backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                         deleteIconColor: AppColors.primary,
                       );
                     }).toList(),

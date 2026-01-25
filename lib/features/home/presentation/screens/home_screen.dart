@@ -12,7 +12,8 @@ import '../../../../features/package/presentation/bloc/package_bloc.dart';
 import '../../../../features/package/presentation/bloc/package_event.dart';
 import '../../../../features/package/presentation/bloc/package_state.dart';
 import '../../../../features/package/presentation/widgets/package_carousel.dart';
-import '../../../../features/package/presentation/screens/package_screen.dart';
+import '../../../../core/routing/app_router.dart';
+import '../../../../core/routing/app_routes.dart';
 import '../widgets/home_header.dart';
 import '../widgets/quick_action_card.dart';
 import '../widgets/section_header.dart';
@@ -123,16 +124,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       title: AppStrings.promotions,
                       actionText: AppStrings.viewAll,
                       onActionPressed: () {
-                        final bloc = homeContext.read<PackageBloc>();
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => BlocProvider.value(
-                              value: bloc,
-                              child: const PackageScreen(),
-                            ),
-                          ),
-                        );
+                        AppRouter.push(context, AppRoutes.package);
                       },
                     ),
                   ),
@@ -199,34 +191,13 @@ class _HomeScreenState extends State<HomeScreen> {
                         }
 
                         // Show packages in carousel slides
-                        return Builder(
-                          builder: (homeContext) {
-                            final bloc = homeContext.read<PackageBloc>();
-                            return PackageCarousel(
-                              packages: state.packages,
-                              onViewAll: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => BlocProvider.value(
-                                      value: bloc,
-                                      child: const PackageScreen(),
-                                    ),
-                                  ),
-                                );
-                              },
-                              onPackageTap: (package) {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => BlocProvider.value(
-                                      value: bloc,
-                                      child: const PackageScreen(),
-                                    ),
-                                  ),
-                                );
-                              },
-                            );
+                        return PackageCarousel(
+                          packages: state.packages,
+                          onViewAll: () {
+                            AppRouter.push(context, AppRoutes.package);
+                          },
+                          onPackageTap: (package) {
+                            AppRouter.push(context, AppRoutes.package);
                           },
                         );
                       }

@@ -12,6 +12,8 @@ class AppAssets {
   static const String menuFirst = 'assets/images/menu_1.svg';
   static const String menuSecond = 'assets/images/menu_2.svg';
   static const String menuThird = 'assets/images/menu_3.svg';
+  static const String serviceAmenity = 'assets/images/serviceAmenity.svg';
+  static const String helper = 'assets/images/helper.svg';
 
 }
 

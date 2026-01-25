@@ -9,8 +9,8 @@ import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../booking/presentation/bloc/booking_bloc.dart';
 import '../../../booking/presentation/bloc/booking_event.dart';
 import '../../../booking/presentation/bloc/booking_state.dart';
-import '../../../booking/presentation/screens/invoice_screen.dart';
-import '../../../booking/presentation/screens/payment_screen.dart';
+import '../../../../core/routing/app_router.dart';
+import '../../../../core/routing/app_routes.dart';
 import '../widgets/current_package_view.dart';
 import '../widgets/service_dashboard.dart';
 import '../widgets/services_booking_flow.dart';
@@ -58,26 +58,25 @@ class ServicesScreen extends StatelessWidget {
   void _handleBookingSideEffects(BuildContext context, BookingState state) {
             if (state is BookingCreated) {
               final bookingBloc = context.read<BookingBloc>();
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => BlocProvider.value(
-                    value: bookingBloc,
-                    child: PaymentScreen(booking: state.booking),
-                  ),
-                ),
+              AppRouter.push(
+                context,
+                AppRoutes.payment,
+                arguments: {
+                  'booking': state.booking,
+                  'bookingBloc': bookingBloc,
+                  'paymentType': 'Deposit',
+                },
               );
             } else if (state is BookingPaymentStatusChecked) {
               if (state.paymentStatus.status == 'Paid') {
                 final bookingBloc = context.read<BookingBloc>();
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                    builder: (context) => BlocProvider.value(
-                      value: bookingBloc,
-                      child: InvoiceScreen(
-                        bookingId: state.paymentStatus.bookingId,
-                      ),
-                    ),
-                  ),
+                AppRouter.pushReplacement(
+                  context,
+                  AppRoutes.invoice,
+                  arguments: {
+                    'bookingId': state.paymentStatus.bookingId,
+                    'bookingBloc': bookingBloc,
+                  },
                 );
               }
             } else if (state is BookingError) {

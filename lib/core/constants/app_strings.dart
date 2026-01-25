@@ -474,18 +474,18 @@ class AppStrings {
   static const String servicesPayRemaining = 'Thanh toán phần còn lại';
   static const String servicesResortExperience = 'Trải nghiệm nghỉ dưỡng của bạn';
   static const String servicesResortExperienceDescription =
-      'Theo dõi lịch trình, thực đơn mỗi ngày và đăng ký dịch vụ tiện ích.';
-  static const String servicesResortAmenities = 'Tiện ích trong kỳ nghỉ';
-  static const String servicesDailySchedule = 'Lịch trình mỗi ngày';
+      'Theo dõi lịch trình và các tiện ích của bạn.';
+  static const String servicesResortAmenities = 'Dịch vụ trong kỳ nghỉ';
+  static const String servicesDailySchedule = 'Lịch trình';
   static const String servicesDailyScheduleDescription =
       'Xem hoạt động chăm sóc mẹ & bé theo từng ngày.';
-  static const String servicesTodayMenu = 'Thực đơn hôm nay';
+  static const String servicesTodayMenu = 'Thực đơn';
   static const String servicesTodayMenuDescription =
       'Xem các bữa ăn được chuẩn bị cho mẹ và bé.';
-  static const String servicesSpaRegistration = 'Đăng ký dịch vụ Spa';
+  static const String feedBackForService = 'Đánh giá dịch vụ';
   static const String servicesSpaRegistrationDescription =
       'Thư giãn và chăm sóc chuyên sâu cho mẹ.';
-  static const String servicesAmenityRequest = 'Yêu cầu tiện ích';
+  static const String servicesAmenityRequest = 'Tiện ích';
   static const String servicesAmenityRequestDescription =
       'Gọi nước, đồ dùng em bé, dọn phòng,...';
 

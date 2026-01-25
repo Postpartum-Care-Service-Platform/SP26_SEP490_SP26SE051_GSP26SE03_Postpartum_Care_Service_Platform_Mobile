@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:signalr_netcore/signalr_client.dart';
-import '../../../../core/config/app_config.dart';
 import '../../../../core/storage/secure_storage_service.dart';
 import '../../domain/entities/chat_message.dart';
 import '../../domain/entities/chat_realtime_events.dart';
@@ -9,7 +8,7 @@ import '../../domain/entities/chat_realtime_events.dart';
 class ChatHubService {
   HubConnection? _connection;
   bool _handlersRegistered = false;
-  bool _loggingEnabled = true;
+  final bool _loggingEnabled = true;
   bool _starting = false;
 
   final _messageController = StreamController<ChatRealtimeMessage>.broadcast();

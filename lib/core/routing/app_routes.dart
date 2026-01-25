@@ -49,4 +49,25 @@ class AppRoutes {
 
   // Family Routes
   static const String familyPortal = '/family-portal';
+  static const String familyServicesBooking = '/family-services-booking';
+  static const String familyMealPlan = '/family-meal-plan';
+  static const String familyMealSelection = '/family-meal-selection';
+  static const String familyDailyMeal = '/family-daily-meal';
+  static const String familyChat = '/family-chat';
+  static const String familyBabyDailyReport = '/family-baby-daily-report';
+  static const String familyFeedback = '/family-feedback';
+
+  // Chat Routes
+  static const String conversationList = '/conversation-list';
+  static const String conversationDetail = '/conversation-detail';
+  static const String chatShell = '/chat-shell';
+
+  // Employee Routes (additional)
+  static const String employeeSchedule = '/employee-schedule';
+  static const String employeeTasks = '/employee-tasks';
+  static const String employeeRequests = '/employee-requests';
+  static const String employeeServiceBooking = '/employee-service-booking';
+  static const String employeeMealPlan = '/employee-meal-plan';
+  static const String employeeCheckInOut = '/employee-check-in-out';
+  static const String serviceBooking = '/service-booking';
 }

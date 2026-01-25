@@ -215,7 +215,6 @@ class _FamilyProfileScreenState extends State<FamilyProfileScreen> {
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
-              // TODO: Implement delete
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text(AppStrings.deleteFeatureUnderDevelopment)),
               );

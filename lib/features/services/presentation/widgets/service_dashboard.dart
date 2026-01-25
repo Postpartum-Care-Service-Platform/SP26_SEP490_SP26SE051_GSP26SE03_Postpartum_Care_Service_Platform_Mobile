@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_toast.dart';
-import '../../../../core/widgets/app_widgets.dart';
 import '../../../auth/data/models/current_account_model.dart';
 import 'resort_key_card.dart';
 import 'service_action_card.dart';
@@ -22,98 +23,211 @@ class ServiceDashboard extends StatelessWidget {
     final scale = AppResponsive.scaleFactor(context);
 
     return SafeArea(
-      child: SingleChildScrollView(
-        padding:
-            EdgeInsets.fromLTRB(20 * scale, 16 * scale, 20 * scale, 24 * scale),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(scale),
-            SizedBox(height: 12 * scale),
-            Text(
-              AppStrings.servicesResortExperience,
-              style: AppTextStyles.tinos(
-                fontSize: 22 * scale,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            SizedBox(height: 4 * scale),
-            Text(
-              AppStrings.servicesResortExperienceDescription,
-              style: AppTextStyles.arimo(
-                fontSize: 13 * scale,
-                color: AppColors.textSecondary,
-              ),
-            ),
-            SizedBox(height: 20 * scale),
-            ResortKeyCard(nowPackage: nowPackage),
-            SizedBox(height: 20 * scale),
-            AppWidgets.sectionHeader(
-              context,
-              title: AppStrings.servicesResortAmenities,
-            ),
-            GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisSpacing: 12 * scale,
-              mainAxisSpacing: 12 * scale,
-              childAspectRatio: 1.2,
-              children: [
-                ServiceActionCard(
-                  icon: Icons.schedule_rounded,
-                  title: AppStrings.servicesDailySchedule,
-                  subtitle: AppStrings.servicesDailyScheduleDescription,
-                  onTap: () => _showComingSoon(context),
-                ),
-                ServiceActionCard(
-                  icon: Icons.restaurant_menu_rounded,
-                  title: AppStrings.servicesTodayMenu,
-                  subtitle: AppStrings.servicesTodayMenuDescription,
-                  onTap: () => _showComingSoon(context),
-                ),
-                ServiceActionCard(
-                  icon: Icons.spa_rounded,
-                  title: AppStrings.servicesSpaRegistration,
-                  subtitle: AppStrings.servicesSpaRegistrationDescription,
-                  onTap: () => _showComingSoon(context),
-                ),
-                ServiceActionCard(
-                  icon: Icons.room_service_rounded,
-                  title: AppStrings.servicesAmenityRequest,
-                  subtitle: AppStrings.servicesAmenityRequestDescription,
-                  onTap: () => _showComingSoon(context),
-                ),
-              ],
-            ),
-          ],
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AppColors.background,
+              AppColors.background,
+            ],
+          ),
+        ),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(
+            20 * scale,
+            20 * scale,
+            20 * scale,
+            24 * scale,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Welcome Section
+              _buildWelcomeSection(context, scale),
+              SizedBox(height: 24 * scale),
+              
+              // Key Card - First element after header
+              ResortKeyCard(nowPackage: nowPackage),
+              SizedBox(height: 24 * scale),
+              
+              // Services Section
+              _buildServicesSection(context, scale),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildHeader(double scale) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 8 * scale),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 52 * scale,
-            child: const SizedBox.shrink(),
+  Widget _buildWelcomeSection(BuildContext context, double scale) {
+    final hour = DateTime.now().hour;
+    String greeting;
+    if (hour < 12) {
+      greeting = 'Chào buổi sáng';
+    } else if (hour < 18) {
+      greeting = 'Chào buổi chiều';
+    } else {
+      greeting = 'Chào buổi tối';
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          greeting,
+          style: AppTextStyles.tinos(
+            fontSize: 28 * scale,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
           ),
-          Expanded(
-            child: Text(
-              AppStrings.bookingTitle,
-              style: AppTextStyles.tinos(
-                fontSize: 22 * scale,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+        ),
+        SizedBox(height: 6 * scale),
+        Text(
+          AppStrings.servicesResortExperienceDescription,
+          style: AppTextStyles.arimo(
+            fontSize: 14 * scale,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildServicesSection(BuildContext context, double scale) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Banner Header
+        _buildServicesBanner(context, scale),
+        SizedBox(height: 20 * scale),
+        
+        // Services Grid
+        GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisSpacing: 16 * scale,
+          mainAxisSpacing: 16 * scale,
+          childAspectRatio: 1.0,
+          children: [
+            ServiceActionCard(
+              icon: Icons.calendar_month_rounded,
+              title: AppStrings.servicesDailySchedule,
+              onTap: () => _showComingSoon(context),
+            ),
+            ServiceActionCard(
+              iconWidget: SvgPicture.asset(
+                AppAssets.menuFirst,
+                fit: BoxFit.contain,
+                colorFilter: const ColorFilter.mode(
+                  AppColors.primary,
+                  BlendMode.srcIn,
+                ),
               ),
-              textAlign: TextAlign.center,
+              title: AppStrings.servicesTodayMenu,
+              onTap: () => _showComingSoon(context),
+            ),
+            ServiceActionCard(
+              iconWidget: SvgPicture.asset(
+                AppAssets.menuSecond,
+                fit: BoxFit.contain,
+                colorFilter: const ColorFilter.mode(
+                  AppColors.primary,
+                  BlendMode.srcIn,
+                ),
+              ),
+              title: AppStrings.feedBackForService,
+              onTap: () => _showComingSoon(context),
+            ),
+            ServiceActionCard(
+              iconWidget: SvgPicture.asset(
+                AppAssets.serviceAmenity,
+                fit: BoxFit.contain,
+                colorFilter: const ColorFilter.mode(
+                  AppColors.primary,
+                  BlendMode.srcIn,
+                ),
+              ),
+              title: AppStrings.servicesAmenityRequest,
+              onTap: () => _showComingSoon(context),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildServicesBanner(BuildContext context, double scale) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(20 * scale),
+        border: Border.all(
+          color: AppColors.borderLight,
+          width: 1.2 * scale,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 12 * scale,
+            offset: Offset(0, 4 * scale),
+          ),
+        ],
+      ),
+      padding: EdgeInsets.symmetric(
+        horizontal: 16 * scale,
+        vertical: 16 * scale,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Icon with decorative background
+          Container(
+            padding: EdgeInsets.all(8 * scale),
+            child: SvgPicture.asset(
+              AppAssets.helper,
+              fit: BoxFit.contain,
+              width: 28 * scale,
+              height: 28 * scale,
             ),
           ),
-          SizedBox(width: 52 * scale),
+          SizedBox(width: 12 * scale),
+          // Title Section - Centered
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                AppStrings.servicesResortAmenities,
+                style: AppTextStyles.tinos(
+                  fontSize: 20 * scale,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              SizedBox(height: 2 * scale),
+              Text(
+                'Khám phá các dịch vụ tiện ích',
+                style: AppTextStyles.arimo(
+                  fontSize: 12 * scale,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(width: 12 * scale),
+          // Helper icon at the end
+          Container(
+            padding: EdgeInsets.all(8 * scale),
+            child: SvgPicture.asset(
+              AppAssets.helper,
+              fit: BoxFit.contain,
+              width: 28 * scale,
+              height: 28 * scale,
+            ),
+          ),
         ],
       ),
     );

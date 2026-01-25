@@ -98,9 +98,15 @@ class QRCodeSection extends StatelessWidget {
                     data: paymentLink.qrCode,
                     version: QrVersions.auto,
                     size: 220 * scale,
-                    backgroundColor: AppColors.white,
-                    foregroundColor: AppColors.textPrimary,
                     padding: EdgeInsets.zero,
+                    eyeStyle: const QrEyeStyle(
+                      eyeShape: QrEyeShape.square,
+                      color: AppColors.textPrimary,
+                    ),
+                    dataModuleStyle: const QrDataModuleStyle(
+                      dataModuleShape: QrDataModuleShape.square,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ),
                 IgnorePointer(

@@ -7,10 +7,11 @@ import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_widgets.dart';
 import '../../../../core/widgets/app_drawer_form.dart';
+import '../../../../core/routing/app_router.dart';
+import '../../../../core/routing/app_routes.dart';
 import '../bloc/chat_bloc.dart';
 import '../bloc/chat_event.dart';
 import '../widgets/conversation_list.dart';
-import 'conversation_detail_screen.dart';
 
 class ConversationListScreen extends StatefulWidget {
   const ConversationListScreen({super.key});
@@ -80,13 +81,10 @@ class _ConversationScreenState extends State<ConversationListScreen> {
 
   void _openConversation(BuildContext context, int conversationId) {
     final chatBloc = context.read<ChatBloc>()..add(ChatConversationSelected(conversationId));
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => BlocProvider.value(
-          value: chatBloc,
-          child: const ConversationDetailScreen(),
-        ),
-      ),
+    AppRouter.push(
+      context,
+      AppRoutes.conversationDetail,
+      arguments: {'chatBloc': chatBloc},
     );
   }
 

@@ -16,6 +16,7 @@ import '../../features/booking/presentation/screens/payment_screen.dart';
 import '../../features/booking/presentation/screens/invoice_screen.dart';
 import '../../features/contract/presentation/screens/contract_screen.dart';
 import '../../features/package/presentation/screens/package_screen.dart';
+import '../../features/package/presentation/bloc/package_event.dart';
 import '../../features/supportAndPolicy/presentation/screens/support_and_policy_screen.dart';
 import '../../features/supportAndPolicy/presentation/screens/help_screen.dart';
 import '../../features/supportAndPolicy/presentation/screens/contact_screen.dart';
@@ -23,10 +24,17 @@ import '../../features/supportAndPolicy/presentation/screens/about_screen.dart';
 import '../../features/supportAndPolicy/presentation/screens/terms_screen.dart';
 import '../../features/supportAndPolicy/presentation/screens/privacy_screen.dart';
 import '../../features/employee/presentation/screens/employee_portal_screen.dart';
+import '../../features/chat/presentation/screens/conversation_list_screen.dart';
+import '../../features/chat/presentation/screens/conversation_detail_screen.dart';
+import '../../features/chat/presentation/screens/chat_shell_screen.dart';
+import '../../features/family/presentation/screens/family_portal_screen.dart';
+import '../../core/widgets/app_scaffold.dart';
 import '../../core/di/injection_container.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/booking/domain/entities/booking_entity.dart';
 import '../../features/booking/presentation/bloc/booking_event.dart';
+import '../../features/chat/presentation/bloc/chat_bloc.dart';
+import '../../features/chat/presentation/bloc/chat_event.dart';
 import 'app_routes.dart';
 
 /// App Router - Centralized navigation management
@@ -93,7 +101,10 @@ class AppRouter {
       case AppRoutes.chat:
       case AppRoutes.profile:
         // These are handled by AppScaffold, not individual routes
-        return null;
+        // Return AppScaffold as fallback
+        return MaterialPageRoute(
+          builder: (_) => const AppScaffold(),
+        );
 
       // Profile Routes
       case AppRoutes.accountDetails:
@@ -194,7 +205,13 @@ class AppRouter {
 
       // Package Routes
       case AppRoutes.package:
-        return MaterialPageRoute(builder: (_) => const PackageScreen());
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (_) => InjectionContainer.packageBloc
+              ..add(const PackageLoadRequested()),
+            child: const PackageScreen(),
+          ),
+        );
 
       // Support & Policy Routes
       case AppRoutes.supportAndPolicy:
@@ -221,6 +238,44 @@ class AppRouter {
       case AppRoutes.employeePortal:
         return MaterialPageRoute(
           builder: (_) => const EmployeePortalScreen(),
+        );
+
+      // Chat Routes
+      case AppRoutes.conversationList:
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (_) => InjectionContainer.chatBloc
+              ..add(const ChatStarted(autoSelectFirstConversation: false)),
+            child: const ConversationListScreen(),
+          ),
+        );
+      
+      case AppRoutes.conversationDetail:
+        if (args is Map<String, dynamic>) {
+          final chatBloc = args['chatBloc'] as ChatBloc?;
+          if (chatBloc != null) {
+            return MaterialPageRoute(
+              builder: (_) => BlocProvider.value(
+                value: chatBloc,
+                child: const ConversationDetailScreen(),
+              ),
+            );
+          }
+        }
+        return null;
+      
+      case AppRoutes.chatShell:
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (_) => InjectionContainer.chatBloc..add(const ChatStarted()),
+            child: const ChatShellScreen(),
+          ),
+        );
+
+      // Family Routes
+      case AppRoutes.familyPortal:
+        return MaterialPageRoute(
+          builder: (_) => const FamilyPortalScreen(),
         );
 
       default:
