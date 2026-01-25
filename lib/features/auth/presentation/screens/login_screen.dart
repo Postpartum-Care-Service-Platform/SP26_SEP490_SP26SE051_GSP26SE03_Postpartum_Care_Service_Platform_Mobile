@@ -15,10 +15,9 @@ import '../widgets/login_form_widget.dart';
 import '../widgets/login_footer_widget.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/widgets/app_toast.dart';
-import 'reset_password_screen.dart';
-import 'sign_up_screen.dart';
+import '../../../../core/routing/app_router.dart';
+import '../../../../core/routing/app_routes.dart';
 import '../../../../core/widgets/app_scaffold.dart';
-import '../../../employee/presentation/screens/employee_portal_screen.dart';
 import '../../../../core/config/app_config.dart';
 
 // Google Sign-In configuration using Web Client ID from AppConfig
@@ -45,12 +44,11 @@ class LoginScreen extends StatelessWidget {
             final role = state.user?.role.toLowerCase();
             final isEmployee =
                 role == 'staff' || role == 'manager' || role == 'admin';
-            final destination = isEmployee
-                ? const EmployeePortalScreen()
-                : const AppScaffold();
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => destination),
-            );
+            if (isEmployee) {
+              AppRouter.pushReplacement(context, AppRoutes.employeePortal);
+            } else {
+              AppRouter.pushReplacement(context, AppRoutes.home);
+            }
           } else if (state is AuthError) {
             AppLoading.hide(context);
             AppToast.showError(context, message: state.message);
@@ -61,18 +59,10 @@ class LoginScreen extends StatelessWidget {
           body: AuthScaffold(
             footer: LoginFooterWidget(
               onSignUp: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const SignUpScreen()),
-                );
+                AppRouter.push(context, AppRoutes.signUp);
               },
               onForgotPassword: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const ResetPasswordScreen(),
-                  ),
-                );
+                AppRouter.push(context, AppRoutes.resetPassword);
               },
             ),
             children: [

@@ -277,17 +277,17 @@ class MessageBubble extends StatelessWidget {
       return _buildPlainText(text, maxWidth, scale, AppColors.textPrimary);
     }
 
-    List<String> _parseRow(String line) {
+    List<String> parseRow(String line) {
       final trimmed = line.trim();
       final withoutPipes =
           trimmed.substring(1, trimmed.length - 1); // remove leading/trailing |
       return withoutPipes.split('|').map((c) => c.trim()).toList();
     }
 
-    final headers = _parseRow(lines.first);
+    final headers = parseRow(lines.first);
     final rows = <List<String>>[];
     for (var i = 2; i < lines.length; i++) {
-      rows.add(_parseRow(lines[i]));
+      rows.add(parseRow(lines[i]));
     }
 
     // Xác định index cột Giá (dựa trên header chứa từ 'giá' không phân biệt hoa thường)
@@ -307,7 +307,7 @@ class MessageBubble extends StatelessWidget {
       }
     }
 
-    TableColumnWidth _columnWidthForIndex(int index) {
+    TableColumnWidth columnWidthForIndex(int index) {
       // Tối ưu cho bảng 5 cột: STT | Tên Gói | Thời Gian | Giá | Mô Tả
       if (headers.length == 5) {
         switch (index) {
@@ -341,7 +341,7 @@ class MessageBubble extends StatelessWidget {
         ),
         child: Table(
           columnWidths: {
-            for (int i = 0; i < headers.length; i++) i: _columnWidthForIndex(i),
+            for (int i = 0; i < headers.length; i++) i: columnWidthForIndex(i),
           },
           border: TableBorder(
             horizontalInside: BorderSide(
@@ -411,7 +411,7 @@ class MessageBubble extends StatelessWidget {
     final blocks = <Widget>[];
     final buffer = <String>[];
 
-    bool _isHeaderLine(int index) {
+    bool isHeaderLine(int index) {
       if (index < 0 || index >= lines.length - 1) return false;
       final line = lines[index].trim();
       final next = lines[index + 1].trim();
@@ -422,7 +422,7 @@ class MessageBubble extends StatelessWidget {
 
     int i = 0;
     while (i < lines.length) {
-      if (_isHeaderLine(i)) {
+      if (isHeaderLine(i)) {
         // Đổ buffer hiện tại thành 1 block markdown text
         if (buffer.isNotEmpty) {
           final beforeText = buffer.join('\n').trim();
@@ -497,406 +497,6 @@ class MessageBubble extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: blocks,
-    );
-  }
-
-  Widget _buildPackagesTable(
-    AiStructuredData data,
-    String fallbackText,
-    double maxWidth,
-    double scale,
-    Color textColor,
-  ) {
-    final items = data.data;
-    if (items.isEmpty) {
-      return _buildMarkdownTable(fallbackText, maxWidth, scale);
-    }
-
-    String _formatDuration(Map<String, dynamic> item) {
-      final days = item['duration_days'];
-      if (days is int) return '$days ngày';
-      if (days is num) return '${days.toInt()} ngày';
-      return '';
-    }
-
-    String _formatPrice(Map<String, dynamic> item) {
-      final price = item['price'];
-    num? value;
-
-    if (price is num) {
-      value = price;
-    } else if (price is String && price.isNotEmpty) {
-      // Lấy toàn bộ chữ số trong chuỗi, bỏ dấu chấm, chữ cái (VD: "5.000.000 VNĐ" -> "5000000")
-      final digitMatches = RegExp(r'\d+').allMatches(price);
-      final digitString = digitMatches.map((m) => m.group(0)!).join();
-      if (digitString.isNotEmpty) {
-        value = int.tryParse(digitString);
-      }
-    }
-
-    if (value == null) return '';
-
-    final v = value.toInt();
-    if (v <= 0) return '$v đ';
-
-    // Ưu tiên tỉ
-    if (v >= 1000000000) {
-      final billions = v ~/ 1000000000;
-      final rem = v % 1000000000;
-      if (rem == 0) return '$billions tỉ';
-      final millions = rem ~/ 1000000;
-      if (rem % 1000000 == 0 && millions > 0) {
-        return '$billions tỉ $millions triệu';
-      }
-      return '$billions tỉ';
-    }
-
-    // Triệu, ví dụ: 2_600_000 => "2 triệu 6"
-    if (v >= 1000000) {
-      final millions = v ~/ 1000000; // phần nguyên
-      final rem = v % 1000000;
-      if (rem == 0) return '$millions triệu';
-
-      // Nếu dư bội số của 100_000 thì lấy thêm phần thập phân "triệu x"
-      if (rem % 100000 == 0) {
-        final tenth = rem ~/ 100000; // 1..9
-        return '$millions triệu $tenth';
-      }
-
-      return '$millions triệu';
-    }
-
-    // Ngàn
-    if (v >= 1000 && v % 1000 == 0) {
-      final unit = v ~/ 1000;
-      return '$unit ngàn';
-    }
-
-    // Trăm
-    if (v >= 100 && v % 100 == 0) {
-      final unit = v ~/ 100;
-      return '$unit trăm';
-    }
-
-    // Nếu không rơi vào case trên, fallback dạng số + đ
-    return '$v đ';
-    }
-
-    final introText = () {
-      final raw = data.text.trim();
-      if (raw.isEmpty) return '';
-      // Lấy phần mô tả phía trên, bỏ qua phần header bảng markdown
-      final lines = raw.split('\n');
-      final buffer = <String>[];
-      for (final line in lines) {
-        final trimmed = line.trim();
-        if (trimmed.startsWith('|')) break; // bắt đầu bảng markdown
-        if (trimmed.startsWith('---')) break; // ngăn cách nội dung/bảng
-        buffer.add(line);
-      }
-      return buffer.join('\n').trim();
-    }();
-
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxWidth: maxWidth),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (introText.isNotEmpty)
-            Padding(
-              padding: EdgeInsets.only(bottom: 8 * scale),
-              child: _buildMarkdownText(
-                introText,
-                maxWidth,
-                scale,
-                textColor,
-              ),
-            ),
-          Container(
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(12 * scale),
-              border: Border.all(
-                color: AppColors.primary.withValues(alpha: 0.15),
-                width: 1,
-              ),
-            ),
-            child: Table(
-              columnWidths: const {
-                // Gói | Mô tả | Thời gian | Giá
-                0: FlexColumnWidth(1),
-                1: FlexColumnWidth(1.4), // mô tả hẹp lại một chút
-                2: FlexColumnWidth(0.9),
-                3: FlexColumnWidth(1.7), // giá rộng hơn
-              },
-              border: TableBorder(
-                horizontalInside: BorderSide(
-                  color: Colors.grey.withValues(alpha: 0.3),
-                  width: 0.5,
-                ),
-              ),
-              children: [
-                TableRow(
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.06),
-                  ),
-                  children: [
-                    for (final h in ['Gói', 'Mô tả', 'Thời gian', 'Giá'])
-                      Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 8 * scale,
-                          vertical: 6 * scale,
-                        ),
-                        child: Text(
-                          h,
-                          style: AppTextStyles.arimo(
-                            fontSize: 12 * scale,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                for (final item in items)
-                  TableRow(
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 8 * scale,
-                          vertical: 6 * scale,
-                        ),
-                        child: Text(
-                          (item['name'] ?? '').toString(),
-                          style: AppTextStyles.arimo(
-                            fontSize: 12 * scale,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 8 * scale,
-                          vertical: 6 * scale,
-                        ),
-                        child: Text(
-                          (item['description'] ?? '').toString(),
-                          style: AppTextStyles.arimo(
-                            fontSize: 12 * scale,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 8 * scale,
-                          vertical: 6 * scale,
-                        ),
-                        child: Text(
-                          _formatDuration(item),
-                          style: AppTextStyles.arimo(
-                            fontSize: 12 * scale,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 8 * scale,
-                          vertical: 6 * scale,
-                        ),
-                        child: Text(
-                          _formatPrice(item),
-                          style: AppTextStyles.arimo(
-                            fontSize: 12 * scale,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAppointmentTable(
-    AiStructuredData data,
-    String fallbackText,
-    double maxWidth,
-    double scale,
-    Color textColor,
-  ) {
-    // Luôn lấy data từ structuredData, không parse từ markdown
-    final item = data.data.isNotEmpty 
-        ? data.data.first
-        : <String, dynamic>{};
-
-    String _intro() {
-      final raw = data.text.trim();
-      if (raw.isEmpty) return '';
-      // Lấy phần trước dòng bảng đầu tiên hoặc '---'
-      final lines = raw.split('\n');
-      final buffer = <String>[];
-      for (final line in lines) {
-        if (line.trim().startsWith('|')) break;
-        if (line.trim().startsWith('---')) break;
-        buffer.add(line);
-      }
-      return buffer.join('\n').trim();
-    }
-
-    String _statusText() {
-      final status = (item['status'] ?? '').toString();
-      switch (status.toLowerCase()) {
-        case 'pending':
-          return 'Đang chờ xác nhận';
-        case 'confirmed':
-          return 'Đã xác nhận';
-        case 'cancelled':
-          return 'Đã hủy';
-        default:
-          return status;
-      }
-    }
-
-    final introText = _intro();
-
-    final rows = <Map<String, String>>[
-      {
-        'label': '📅 Ngày',
-        'value': (item['date'] ?? '').toString(),
-      },
-      {
-        'label': '⏰ Giờ',
-        'value': (item['time'] ?? '').toString(),
-      },
-      {
-        'label': '📝 Loại lịch',
-        'value': (item['name'] ?? '').toString(),
-      },
-      {
-        'label': '🆔 Mã lịch hẹn',
-        'value': (item['appointment_id'] ?? '').toString(),
-      },
-      {
-        'label': '📌 Trạng thái',
-        'value': _statusText(),
-      },
-    ].where((r) => r['value']!.isNotEmpty).toList();
-
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxWidth: maxWidth),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (introText.isNotEmpty)
-            Padding(
-              padding: EdgeInsets.only(bottom: 8 * scale),
-              child: _buildMarkdownText(
-                introText,
-                maxWidth,
-                scale,
-                textColor,
-              ),
-            ),
-          Container(
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(12 * scale),
-              border: Border.all(
-                color: AppColors.primary.withValues(alpha: 0.15),
-                width: 1,
-              ),
-            ),
-            child: Table(
-              columnWidths: const {
-                0: FlexColumnWidth(1.2),
-                1: FlexColumnWidth(2),
-              },
-              border: TableBorder(
-                horizontalInside: BorderSide(
-                  color: Colors.grey.withValues(alpha: 0.3),
-                  width: 0.5,
-                ),
-              ),
-              children: [
-                TableRow(
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.06),
-                  ),
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 8 * scale,
-                        vertical: 6 * scale,
-                      ),
-                      child: Text(
-                        'Thông tin',
-                        style: AppTextStyles.arimo(
-                          fontSize: 12 * scale,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 8 * scale,
-                        vertical: 6 * scale,
-                      ),
-                      child: Text(
-                        'Chi tiết',
-                        style: AppTextStyles.arimo(
-                          fontSize: 12 * scale,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                for (final row in rows)
-                  TableRow(
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 8 * scale,
-                          vertical: 6 * scale,
-                        ),
-                        child: Text(
-                          row['label']!,
-                          style: AppTextStyles.arimo(
-                            fontSize: 12 * scale,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 8 * scale,
-                          vertical: 6 * scale,
-                        ),
-                        child: Text(
-                          row['value']!,
-                          style: AppTextStyles.arimo(
-                            fontSize: 12 * scale,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 

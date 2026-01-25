@@ -504,8 +504,23 @@ class _FamilyProfileFormDrawerState extends State<FamilyProfileFormDrawer> {
     );
   }
 
+  bool _isAllowedMemberTypeForUser(MemberTypeModel type) {
+    // User-facing requirement: chỉ hiển thị Mẹ / Con / Giám hộ
+    final raw = type.name.trim().toLowerCase();
+    // Handle some common variations without bringing in extra deps.
+    final normalized = raw.replaceAll(RegExp(r'\s+'), ' ');
+    return normalized == 'mẹ' ||
+        normalized == 'me' ||
+        normalized == 'con' ||
+        normalized == 'giám hộ' ||
+        normalized == 'giam ho';
+  }
+
   Widget _buildMemberTypeRadios(double scale) {
-    final items = widget.memberTypes.where((type) => type.isActive).toList();
+    final items = widget.memberTypes
+        .where((type) => type.isActive)
+        .where(_isAllowedMemberTypeForUser)
+        .toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

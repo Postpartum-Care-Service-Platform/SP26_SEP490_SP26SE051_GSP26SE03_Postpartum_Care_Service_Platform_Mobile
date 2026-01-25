@@ -11,9 +11,8 @@ import '../widgets/reset_password_footer_widget.dart';
 import '../widgets/login_logo_widget.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_state.dart';
-import 'sign_up_screen.dart';
-import 'login_screen.dart';
-import 'reset_otp_verification_screen.dart';
+import '../../../../core/routing/app_router.dart';
+import '../../../../core/routing/app_routes.dart';
 
 /// Reset Password Screen - UI based on Figma
 class ResetPasswordScreen extends StatelessWidget {
@@ -36,10 +35,10 @@ class ResetPasswordScreen extends StatelessWidget {
               context,
               message: state.message,
             );
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (_) => ResetOtpVerificationScreen(email: state.email),
-              ),
+            AppRouter.pushReplacement(
+              context,
+              AppRoutes.resetOtpVerification,
+              arguments: {'email': state.email},
             );
           } else if (state is AuthError) {
             AppToast.showError(
@@ -51,20 +50,10 @@ class ResetPasswordScreen extends StatelessWidget {
         child: AuthScaffold(
           footer: ResetPasswordFooterWidget(
             onSignIn: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const LoginScreen(),
-                ),
-              );
+              AppRouter.push(context, AppRoutes.login);
             },
             onSignUp: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const SignUpScreen(),
-                ),
-              );
+              AppRouter.push(context, AppRoutes.signUp);
             },
           ),
           children: [

@@ -10,10 +10,9 @@ import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../../core/services/current_account_cache_service.dart';
-import '../../../employee/presentation/screens/employee_portal_screen.dart';
-import '../../../../core/widgets/app_scaffold.dart';
+import '../../../../core/routing/app_router.dart';
+import '../../../../core/routing/app_routes.dart';
 import '../../../../core/widgets/app_loading.dart';
-import '../../../auth/presentation/screens/login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -84,28 +83,20 @@ class _SplashScreenState extends State<SplashScreen>
     if (!mounted) return;
 
     // Navigate based on authentication status + role
-    Widget destination;
     if (!isAuthenticated) {
-      destination = const LoginScreen();
+      AppRouter.pushReplacement(context, AppRoutes.login);
     } else {
       // Try to read cached account to decide portal
       final cached = await CurrentAccountCacheService.getCurrentAccount();
       final role = cached?.roleName.toLowerCase();
       final isEmployee =
           role == 'staff' || role == 'manager' || role == 'admin';
-      destination = isEmployee
-          ? const EmployeePortalScreen()
-          : const AppScaffold();
+      if (isEmployee) {
+        AppRouter.pushReplacement(context, AppRoutes.employeePortal);
+      } else {
+        AppRouter.pushReplacement(context, AppRoutes.home);
+      }
     }
-
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        pageBuilder: (_, __, ___) => destination,
-        transitionsBuilder: (_, animation, __, child) =>
-            FadeTransition(opacity: animation, child: child),
-        transitionDuration: const Duration(milliseconds: 800),
-      ),
-    );
   }
 
   @override

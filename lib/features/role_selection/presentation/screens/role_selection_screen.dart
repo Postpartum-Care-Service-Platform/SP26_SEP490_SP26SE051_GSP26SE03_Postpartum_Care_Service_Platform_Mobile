@@ -1,9 +1,9 @@
 // lib/features/role_selection/presentation/screens/role_selection_screen.dart
 import 'package:flutter/material.dart';
-import '../../../employee/presentation/screens/employee_portal_screen.dart';
-import '../../../family/presentation/screens/family_portal_screen.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_text_styles.dart';
+import '../../../../core/routing/app_router.dart';
+import '../../../../core/routing/app_routes.dart';
 
 class RoleSelectionScreen extends StatelessWidget {
   const RoleSelectionScreen({super.key});
@@ -37,12 +37,7 @@ class RoleSelectionScreen extends StatelessWidget {
                   ),
                 ),
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const EmployeePortalScreen(),
-                    ),
-                  );
+                  AppRouter.push(context, AppRoutes.employeePortal);
                 },
                 child: const Text('Employee Portal'),
               ),
@@ -58,12 +53,7 @@ class RoleSelectionScreen extends StatelessWidget {
                   ),
                 ),
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const FamilyPortalScreen(),
-                    ),
-                  );
+                  AppRouter.push(context, AppRoutes.familyPortal);
                 },
                 child: const Text('Family Portal'),
               ),

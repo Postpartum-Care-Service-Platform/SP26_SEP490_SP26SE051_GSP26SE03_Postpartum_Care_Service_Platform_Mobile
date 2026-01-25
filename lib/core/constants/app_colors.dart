@@ -28,7 +28,7 @@ class AppColors {
   static const Color googleButtonBorder = Color(0xFF000000); // Black
 
   // Family Portal Colors
-  static const Color familyPrimary = Color(0xFFFB8313);
+  static const Color familyPrimary = Color.fromARGB(255, 251, 131, 19);
   static const Color familyBackground = Color(0xFFF2F2F7);
 
   // Loading Colors

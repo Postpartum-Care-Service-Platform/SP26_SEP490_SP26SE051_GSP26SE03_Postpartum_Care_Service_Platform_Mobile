@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
-import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../domain/entities/notification_entity.dart';
 import '../bloc/notification_bloc.dart';
@@ -14,6 +13,7 @@ import '../widgets/notification_list_empty_state.dart';
 import '../widgets/notification_header.dart';
 import '../widgets/notification_list.dart';
 import '../widgets/notification_mark_all_read_button.dart';
+import '../../../../core/widgets/app_app_bar.dart';
 
 /// Notification screen with modern design
 class NotificationScreen extends StatefulWidget {
@@ -39,28 +39,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
         ..add(const NotificationLoadRequested()),
       child: Scaffold(
         backgroundColor: AppColors.background,
-        appBar: AppBar(
-          backgroundColor: AppColors.background,
-          elevation: 0,
-          surfaceTintColor: Colors.transparent,
-          leading: IconButton(
-            icon: const Icon(
-              Icons.arrow_back_rounded,
-              color: AppColors.textPrimary,
-              size: 22,
-            ),
-            onPressed: () => Navigator.of(context).pop(),
-            splashRadius: 24,
-          ),
-          title: Text(
-            AppStrings.notificationTitle,
-            style: AppTextStyles.tinos(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-            ),
-          ),
+        appBar: AppAppBar(
+          title: AppStrings.notificationTitle,
           centerTitle: true,
+          titleFontSize: 20,
+          titleFontWeight: FontWeight.w700,
           actions: const [
             NotificationMarkAllReadButton(),
           ],

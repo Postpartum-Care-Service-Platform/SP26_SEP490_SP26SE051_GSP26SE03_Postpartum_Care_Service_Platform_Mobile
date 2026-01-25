@@ -12,6 +12,7 @@ class NotificationModel extends NotificationEntity {
     required super.type,
   });
 
+@override
   NotificationModel copyWith({
     String? id,
     String? category,

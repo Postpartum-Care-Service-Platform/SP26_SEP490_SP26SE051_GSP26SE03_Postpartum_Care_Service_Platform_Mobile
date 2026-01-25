@@ -5,6 +5,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_loading.dart';
+import '../../../../core/widgets/app_app_bar.dart';
 import '../bloc/package_bloc.dart';
 import '../bloc/package_event.dart';
 import '../bloc/package_state.dart';
@@ -31,17 +32,11 @@ class _PackageScreenState extends State<PackageScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text(
-          AppStrings.promotions,
-          style: AppTextStyles.tinos(
-            fontSize: 20 * scale,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: AppColors.background,
-        elevation: 0,
+      appBar: AppAppBar(
+        title: AppStrings.promotions,
         centerTitle: true,
+        titleFontSize: 20 * scale,
+        titleFontWeight: FontWeight.w700,
       ),
       body: BlocBuilder<PackageBloc, PackageState>(
         builder: (context, state) {

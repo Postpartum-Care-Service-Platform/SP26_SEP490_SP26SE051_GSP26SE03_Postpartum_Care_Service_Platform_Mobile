@@ -13,7 +13,8 @@ import '../bloc/auth_state.dart';
 import '../widgets/login_logo_widget.dart';
 import '../widgets/sign_up_form_widget.dart';
 import '../widgets/sign_up_footer_widget.dart';
-import 'otp_verification_screen.dart';
+import '../../../../core/routing/app_router.dart';
+import '../../../../core/routing/app_routes.dart';
 
 /// Sign Up Screen - built based on existing auth screens
 class SignUpScreen extends StatelessWidget {
@@ -35,10 +36,10 @@ class SignUpScreen extends StatelessWidget {
               context,
               message: state.message,
             );
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (_) => OtpVerificationScreen(email: state.email),
-              ),
+            AppRouter.pushReplacement(
+              context,
+              AppRoutes.otpVerification,
+              arguments: {'email': state.email},
             );
           } else if (state is AuthError) {
             AppLoading.hide(context);
@@ -50,7 +51,7 @@ class SignUpScreen extends StatelessWidget {
         },
         child: AuthScaffold(
       footer: SignUpFooterWidget(
-        onSignIn: () => Navigator.pop(context),
+        onSignIn: () => AppRouter.pop(context),
       ),
       children: [
         const LoginLogoWidget(),

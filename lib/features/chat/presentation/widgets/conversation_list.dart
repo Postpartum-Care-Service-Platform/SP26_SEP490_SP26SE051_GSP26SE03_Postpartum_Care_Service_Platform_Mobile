@@ -7,13 +7,13 @@ import '../../../../core/constants/app_assets.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_loading.dart';
+import '../../../../core/widgets/app_widgets.dart';
 import '../../domain/entities/chat_conversation.dart';
 import '../../domain/entities/chat_message.dart';
 import '../bloc/chat_bloc.dart';
 import '../bloc/chat_event.dart';
 import '../bloc/chat_state.dart';
 import 'chat_time_utils.dart';
-import 'empty_placeholder.dart';
 
 class ConversationList extends StatelessWidget {
   final VoidCallback onCreate;
@@ -128,12 +128,55 @@ class ConversationList extends StatelessWidget {
         
         // Show error state if failed
         if (state.conversationsStatus == ChatStatus.failure) {
-          return EmptyPlaceholder(
-            icon: Icons.wifi_off,
-            title: AppStrings.chatLoadError,
-            actionLabel: AppStrings.retry,
-            onAction: () =>
-                context.read<ChatBloc>().add(const ChatRefreshRequested()),
+          return Container(
+            padding: EdgeInsets.all(24 * scale),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(20 * scale),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 18 * scale,
+                  offset: Offset(0, 8 * scale),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(16 * scale),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                    ),
+                    child: Icon(
+                      Icons.wifi_off_rounded,
+                      size: 48 * scale,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  SizedBox(height: 20 * scale),
+                  Text(
+                    AppStrings.chatLoadError,
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.arimo(
+                      fontSize: 15 * scale,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  SizedBox(height: 24 * scale),
+                  AppWidgets.primaryButton(
+                    text: AppStrings.retry,
+                    onPressed: () =>
+                        context.read<ChatBloc>().add(const ChatRefreshRequested()),
+                    height: 44 * scale,
+                  ),
+                ],
+              ),
+            ),
           );
         }
         
@@ -141,23 +184,108 @@ class ConversationList extends StatelessWidget {
         if (state.conversationsStatus == ChatStatus.success) {
           // Show empty state if no conversations at all
           if (state.conversations.isEmpty) {
-            return EmptyPlaceholder(
-              icon: Icons.chat_bubble_outline_rounded,
-              title: AppStrings.chatNoConversation,
-              subtitle: AppStrings.chatEmptyMessage,
-              actionLabel: AppStrings.chatNewConversation,
-              onAction: onCreate,
+            return Center(
+              child: Padding(
+                padding: EdgeInsets.all(40 * scale),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(24 * scale),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.chat_bubble_outline_rounded,
+                        size: 64 * scale,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    SizedBox(height: 24 * scale),
+                    Text(
+                      AppStrings.chatNoConversation,
+                      textAlign: TextAlign.center,
+                      style: AppTextStyles.arimo(
+                        fontSize: 18 * scale,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 8 * scale),
+                    Text(
+                      AppStrings.chatEmptyMessage,
+                      textAlign: TextAlign.center,
+                      style: AppTextStyles.arimo(
+                        fontSize: 14 * scale,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             );
           }
           
           // Show no results if search query doesn't match any conversations
           if (state.searchQuery.isNotEmpty && filteredConversations.isEmpty) {
-            return EmptyPlaceholder(
-              icon: Icons.search_off_rounded,
-              title: 'Không tìm thấy kết quả',
-              subtitle: 'Thử tìm kiếm với từ khóa khác',
-              actionLabel: AppStrings.chatNewConversation,
-              onAction: onCreate,
+            return Container(
+              padding: EdgeInsets.all(24 * scale),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(20 * scale),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 18 * scale,
+                    offset: Offset(0, 8 * scale),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(16 * scale),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                      ),
+                      child: Icon(
+                        Icons.search_off_rounded,
+                        size: 48 * scale,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    SizedBox(height: 20 * scale),
+                    Text(
+                      'Không tìm thấy kết quả',
+                      textAlign: TextAlign.center,
+                      style: AppTextStyles.tinos(
+                        fontSize: 18 * scale,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 8 * scale),
+                    Text(
+                      'Thử tìm kiếm với từ khóa khác',
+                      textAlign: TextAlign.center,
+                      style: AppTextStyles.arimo(
+                        fontSize: 14 * scale,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    SizedBox(height: 24 * scale),
+                    AppWidgets.primaryButton(
+                      text: AppStrings.chatNewConversation,
+                      onPressed: onCreate,
+                      height: 44 * scale,
+                    ),
+                  ],
+                ),
+              ),
             );
           }
         }

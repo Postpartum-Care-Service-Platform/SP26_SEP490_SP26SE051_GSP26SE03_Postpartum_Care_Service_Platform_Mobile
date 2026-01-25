@@ -12,6 +12,9 @@ import '../../../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../../../features/auth/presentation/bloc/auth_state.dart';
 import '../../../auth/presentation/screens/login_screen.dart';
 import '../../../family_profile/presentation/screens/family_profile_screen.dart';
+import '../../../booking/presentation/screens/booking_history_screen.dart';
+import '../../../../core/routing/app_router.dart';
+import '../../../../core/routing/app_routes.dart';
 import '../widgets/profile_header.dart';
 import '../widgets/profile_menu_item.dart';
 import 'account_details_screen.dart';
@@ -24,7 +27,6 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-
   Future<void> _handleLogout(BuildContext context) async {
     // Show confirmation dialog
     final confirmed = await AppWidgets.showConfirmDialog(
@@ -41,15 +43,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     // Clear authentication data
     await AuthService.logout();
-    
+
     // Reset API client
     ApiClient.reset();
 
     if (context.mounted) {
-      AppToast.showSuccess(
-        context,
-        message: AppStrings.successLogout,
-      );
+      AppToast.showSuccess(context, message: AppStrings.successLogout);
 
       // Navigate to login screen
       Navigator.of(context).pushAndRemoveUntil(
@@ -62,7 +61,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
-    
+
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, authState) {
         String? userId;
@@ -74,7 +73,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         if (authState is AuthCurrentAccountLoaded) {
           userId = authState.account.id;
-          userName = authState.account.username;
+          userName = authState.account.displayName;
           userEmail = authState.account.email;
           avatarUrl = authState.account.avatarUrl;
           isEmailVerified = authState.account.isEmailVerified;
@@ -99,151 +98,137 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   isLoading: isLoading,
                 ),
 
-            // Menu Items
-            Expanded(
-              child: ListView(
-                padding: EdgeInsets.symmetric(vertical: 8 * scale),
-                children: [
-                  AppWidgets.sectionHeader(context, title: 'Tài khoản'),
-                  AppWidgets.sectionContainer(
-                    context,
+                // Menu Items
+                Expanded(
+                  child: ListView(
+                    padding: EdgeInsets.symmetric(vertical: 8 * scale),
                     children: [
-                      ProfileMenuItem(
-                        icon: Icons.person_outline_rounded,
-                        title: AppStrings.myAccount,
-                        onTap: () {
-                          if (userId == null) return;
-                          // Get AuthBloc from context to share with AccountDetailsScreen
-                          final authBloc = context.read<AuthBloc>();
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => BlocProvider.value(
-                                value: authBloc,
-                                child: AccountDetailsScreen(
-                                  userId: userId!,
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      ProfileMenuItem(
-                        icon: Icons.people_outline,
-                        title: AppStrings.familyProfile,
-                        onTap: () {
-                          // Get AuthBloc from context to share with FamilyProfileScreen
-                          final authBloc = context.read<AuthBloc>();
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => MultiBlocProvider(
-                                providers: [
-                                  BlocProvider.value(value: authBloc),
-                                  BlocProvider(
-                                    create: (_) => InjectionContainer.familyProfileBloc,
+                      AppWidgets.sectionHeader(context, title: AppStrings.account),
+                      AppWidgets.sectionContainer(
+                        context,
+                        children: [
+                          ProfileMenuItem(
+                            icon: Icons.person_outline_rounded,
+                            title: AppStrings.myAccount,
+                            onTap: () {
+                              if (userId == null) return;
+                              // Get AuthBloc from context to share with AccountDetailsScreen
+                              final authBloc = context.read<AuthBloc>();
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => BlocProvider.value(
+                                    value: authBloc,
+                                    child: AccountDetailsScreen(
+                                      userId: userId!,
+                                    ),
                                   ),
-                                ],
-                                child: const FamilyProfileScreen(),
-                              ),
-                            ),
-                          );
-                        },
+                                ),
+                              );
+                            },
+                          ),
+                          ProfileMenuItem(
+                            icon: Icons.people_outline,
+                            title: AppStrings.familyProfile,
+                            onTap: () {
+                              // Get AuthBloc from context to share with FamilyProfileScreen
+                              final authBloc = context.read<AuthBloc>();
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => MultiBlocProvider(
+                                    providers: [
+                                      BlocProvider.value(value: authBloc),
+                                      BlocProvider(
+                                        create: (_) => InjectionContainer
+                                            .familyProfileBloc,
+                                      ),
+                                    ],
+                                    child: const FamilyProfileScreen(),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          ProfileMenuItem(
+                            icon: Icons.medical_information_outlined,
+                            title: AppStrings.medicalRecords,
+                            onTap: () {
+       
+                            },
+                          ),
+                          ProfileMenuItem(
+                            icon: Icons.description_outlined,
+                            title: AppStrings.contract,
+                            onTap: () {
+             
+                            },
+                          ),
+                          ProfileMenuItem(
+                            icon: Icons.history_rounded,
+                            title: AppStrings.bookingHistory,
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const BookingHistoryScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
                       ),
-                      ProfileMenuItem(
-                        icon: Icons.medical_information_outlined,
-                        title: AppStrings.medicalRecords,
-                        onTap: () {
-                          // TODO: Navigate to medical records
-                        },
+
+                      SizedBox(height: 12 * scale),
+
+                      AppWidgets.sectionHeader(context, title: AppStrings.helpandPolicy),
+                      AppWidgets.sectionContainer(
+                        context,
+                        children: [
+                          ProfileMenuItem(
+                            icon: Icons.help_outline_rounded,
+                            title: AppStrings.help,
+                            onTap: () => AppRouter.push(context, AppRoutes.help),
+                          ),
+                          ProfileMenuItem(
+                            icon: Icons.contact_support_outlined,
+                            title: AppStrings.contact,
+                            onTap: () => AppRouter.push(context, AppRoutes.contact),
+                          ),
+                          ProfileMenuItem(
+                            icon: Icons.info_outline_rounded,
+                            title: AppStrings.about,
+                            onTap: () => AppRouter.push(context, AppRoutes.about),
+                          ),
+                          ProfileMenuItem(
+                            icon: Icons.description_outlined,
+                            title: AppStrings.terms,
+                            onTap: () => AppRouter.push(context, AppRoutes.terms),
+                          ),
+                          ProfileMenuItem(
+                            icon: Icons.lock_outline_rounded,
+                            title: AppStrings.privacy,
+                            onTap: () => AppRouter.push(context, AppRoutes.privacy),
+                          ),
+                        ],
                       ),
-                      ProfileMenuItem(
-                        icon: Icons.description_outlined,
-                        title: AppStrings.contract,
-                        onTap: () {
-                          // TODO: Navigate to contract
-                        },
+
+                      SizedBox(height: 12 * scale),
+
+                      AppWidgets.sectionContainer(
+                        context,
+                        children: [
+                          ProfileMenuItem(
+                            icon: Icons.logout_rounded,
+                            title: AppStrings.logout,
+                            onTap: () => _handleLogout(context),
+                            iconColor: AppColors.logout,
+                            textColor: AppColors.logout,
+                          ),
+                        ],
                       ),
-                      ProfileMenuItem(
-                        icon: Icons.history_rounded,
-                        title: AppStrings.bookingHistory,
-                        onTap: () {
-                          // TODO: Navigate to booking history
-                        },
-                      ),
+
+                      SizedBox(height: 24 * scale),
                     ],
                   ),
-
-                  SizedBox(height: 12 * scale),
-
-                  AppWidgets.sectionHeader(context, title: 'Hỗ trợ'),
-                  AppWidgets.sectionContainer(
-                    context,
-                    children: [
-                      ProfileMenuItem(
-                        icon: Icons.help_outline_rounded,
-                        title: AppStrings.help,
-                        onTap: () {
-                          // TODO: Navigate to help
-                        },
-                      ),
-                      ProfileMenuItem(
-                        icon: Icons.contact_support_outlined,
-                        title: AppStrings.contact,
-                        onTap: () {
-                          // TODO: Navigate to contact
-                        },
-                      ),
-                      ProfileMenuItem(
-                        icon: Icons.info_outline_rounded,
-                        title: AppStrings.about,
-                        onTap: () {
-                          // TODO: Navigate to about
-                        },
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: 12 * scale),
-
-                  AppWidgets.sectionHeader(context, title: 'Pháp lý'),
-                  AppWidgets.sectionContainer(
-                    context,
-                    children: [
-                      ProfileMenuItem(
-                        icon: Icons.description_outlined,
-                        title: AppStrings.terms,
-                        onTap: () {
-                          // TODO: Navigate to terms
-                        },
-                      ),
-                      ProfileMenuItem(
-                        icon: Icons.lock_outline_rounded,
-                        title: AppStrings.privacy,
-                        onTap: () {
-                          // TODO: Navigate to privacy
-                        },
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: 12 * scale),
-
-                  AppWidgets.sectionContainer(
-                    context,
-                    children: [
-                      ProfileMenuItem(
-                        icon: Icons.logout_rounded,
-                        title: AppStrings.logout,
-                        onTap: () => _handleLogout(context),
-                        iconColor: AppColors.logout,
-                        textColor: AppColors.logout,
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: 24 * scale),
-                ],
-              ),
-            ),
+                ),
               ],
             ),
           ),

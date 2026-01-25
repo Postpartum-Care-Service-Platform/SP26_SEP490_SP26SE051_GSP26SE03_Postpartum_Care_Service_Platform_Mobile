@@ -191,7 +191,7 @@ class ConversationDetail extends StatelessWidget {
                         : (isStaff
                             ? 'NV'
                             : (isMine
-                                ? (currentAccount?.username ?? 'Bạn')
+                                ? (currentAccount?.displayName ?? 'Bạn')
                                 : (message.senderName ?? 'NV')));
                     final avatarUrl = isMine ? currentAccount?.avatarUrl : null;
                     final structured = state.aiStructuredByMessageId[message.id];

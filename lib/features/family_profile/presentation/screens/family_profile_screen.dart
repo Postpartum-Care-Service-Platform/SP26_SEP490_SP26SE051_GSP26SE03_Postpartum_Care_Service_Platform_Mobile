@@ -8,6 +8,7 @@ import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_widgets.dart';
 import '../../../../core/widgets/app_loading.dart';
 import '../../../../core/widgets/app_toast.dart';
+import '../../../../core/widgets/app_app_bar.dart';
 import '../../../../core/services/current_account_cache_service.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
@@ -214,7 +215,6 @@ class _FamilyProfileScreenState extends State<FamilyProfileScreen> {
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
-              // TODO: Implement delete
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text(AppStrings.deleteFeatureUnderDevelopment)),
               );
@@ -237,25 +237,11 @@ class _FamilyProfileScreenState extends State<FamilyProfileScreen> {
       builder: (context, state) {
         return Scaffold(
           backgroundColor: AppColors.background,
-          appBar: AppBar(
-            title: Text(
-              AppStrings.familyProfileTitle,
-              style: AppTextStyles.tinos(
-                fontSize: 24 * scale,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            backgroundColor: AppColors.background,
-            elevation: 0,
-            leading: IconButton(
-              icon: Icon(
-                Icons.arrow_back_rounded,
-                color: AppColors.textPrimary,
-                size: 20 * scale,
-              ),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
+          appBar: AppAppBar(
+            title: AppStrings.familyProfileTitle,
+            centerTitle: true,
+            titleFontSize: 20 * scale,
+            titleFontWeight: FontWeight.w700,
           ),
           body: state.isLoading
               ? const Center(

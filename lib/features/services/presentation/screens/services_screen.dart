@@ -1,12 +1,89 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_strings.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../../../core/widgets/app_loading.dart';
+import '../../../../core/widgets/app_toast.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../../booking/presentation/bloc/booking_bloc.dart';
+import '../../../booking/presentation/bloc/booking_event.dart';
+import '../../../booking/presentation/bloc/booking_state.dart';
+import '../../../../core/routing/app_router.dart';
+import '../../../../core/routing/app_routes.dart';
+import '../widgets/current_package_view.dart';
+import '../widgets/service_dashboard.dart';
+import '../widgets/services_booking_flow.dart';
 
 class ServicesScreen extends StatelessWidget {
   const ServicesScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const Center(child: Text(AppStrings.servicesScreen));
+    return BlocProvider(
+      create: (context) => InjectionContainer.bookingBloc
+        ..add(const BookingLoadPackages()),
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: BlocConsumer<BookingBloc, BookingState>(
+          listener: _handleBookingSideEffects,
+          builder: (context, _) {
+            final authState = context.watch<AuthBloc>().state;
+
+            if (authState is AuthLoading) {
+              return const Center(
+                child: AppLoadingIndicator(color: AppColors.primary),
+              );
+            }
+
+            if (authState is AuthCurrentAccountLoaded) {
+              final nowPackage = authState.account.nowPackage;
+
+              if (nowPackage != null) {
+                if (nowPackage.serviceIsActive) {
+                  return ServiceDashboard(nowPackage: nowPackage);
+                } else {
+                  return CurrentPackageView(nowPackage: nowPackage);
+                }
+              }
+            }
+
+            return const ServicesBookingFlow();
+          },
+        ),
+      ),
+    );
+  }
+
+  void _handleBookingSideEffects(BuildContext context, BookingState state) {
+            if (state is BookingCreated) {
+              final bookingBloc = context.read<BookingBloc>();
+              AppRouter.push(
+                context,
+                AppRoutes.payment,
+                arguments: {
+                  'booking': state.booking,
+                  'bookingBloc': bookingBloc,
+                  'paymentType': 'Deposit',
+                },
+              );
+            } else if (state is BookingPaymentStatusChecked) {
+              if (state.paymentStatus.status == 'Paid') {
+                final bookingBloc = context.read<BookingBloc>();
+                AppRouter.pushReplacement(
+                  context,
+                  AppRoutes.invoice,
+                  arguments: {
+                    'bookingId': state.paymentStatus.bookingId,
+                    'bookingBloc': bookingBloc,
+                  },
+                );
+              }
+            } else if (state is BookingError) {
+              AppToast.showError(
+                context,
+                message: state.message,
+              );
+            }
   }
 }
-
