@@ -17,7 +17,11 @@ class FoodModel extends FoodEntity {
     return FoodModel(
       id: json['id'] as int,
       name: json['name'] as String,
-      type: json['type'] as String,
+      // Backend field renamed to `foodType` and can be null.
+      // Fall back to `type` for backward compatibility, default to empty string.
+      type: (json['foodType'] as String?) ??
+          (json['type'] as String?) ??
+          '',
       description: json['description'] as String?,
       imageUrl: json['imageUrl'] as String?,
       isActive: json['isActive'] as bool? ?? true,
@@ -30,7 +34,8 @@ class FoodModel extends FoodEntity {
     return {
       'id': id,
       'name': name,
-      'type': type,
+      // Use `foodType` to match latest backend contract.
+      'foodType': type,
       'description': description,
       'imageUrl': imageUrl,
       'isActive': isActive,

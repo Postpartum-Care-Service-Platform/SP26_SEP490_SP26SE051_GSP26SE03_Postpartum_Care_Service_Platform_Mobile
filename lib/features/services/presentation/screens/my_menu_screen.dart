@@ -555,8 +555,8 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
             context: context,
             iconWidget: SvgPicture.asset(
               AppAssets.menuThird,
-              width: 24 * scale,
-              height: 24 * scale,
+              width: 36 * scale,
+              height: 36 * scale,
               colorFilter: const ColorFilter.mode(
                 AppColors.white,
                 BlendMode.srcIn,

@@ -44,6 +44,7 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
     return BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthLoading) {
@@ -94,6 +95,8 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
             appBar: AppAppBar(
               title: AppStrings.myAccount,
               centerTitle: true,
+              titleFontSize: 20 * scale,
+              titleFontWeight: FontWeight.w700,
             ),
           body: BlocBuilder<AuthBloc, AuthState>(
             builder: (context, state) {

@@ -293,6 +293,7 @@ class _FoodItem extends StatelessWidget {
       ),
       child: Stack(
         fit: StackFit.expand,
+        clipBehavior: Clip.none, // Cho phép badge vẽ ra ngoài khung ảnh
         children: [
           // Food image or placeholder - full fill
           ClipRRect(
@@ -364,44 +365,52 @@ class _FoodItem extends StatelessWidget {
             ),
           ),
 
-          // Food type badge - top right corner with glass effect
-          Positioned(
-            top: 8 * scale,
-            right: 8 * scale,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(6 * scale),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10 * scale, sigmaY: 10 * scale),
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 8 * scale,
-                    vertical: 4 * scale,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.white.withValues(alpha: 0.25),
-                    borderRadius: BorderRadius.circular(6 * scale),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 8 * scale,
-                        offset: Offset(0, 2 * scale),
-                      ),
-                    ],
-                  ),
-                  child: Text(
-                    food.type,
-                    style: AppTextStyles.arimo(
-                      fontSize: 10 * scale,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primary,
+          // Food type badge - top right corner with clearer contrast
+          if (food.type.trim().isNotEmpty)
+            Positioned(
+              // Half in, half out của khung ảnh: dịch lên nhiều hơn nhưng vẫn nằm trong card
+              top: -12 * scale,
+              right: 12 * scale,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8 * scale),
+                child: BackdropFilter(
+                  filter:
+                      ImageFilter.blur(sigmaX: 10 * scale, sigmaY: 10 * scale),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10 * scale,
+                      vertical: 4 * scale,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    decoration: BoxDecoration(
+                      // Darker semi-transparent background for better readability
+                      color: Colors.black.withValues(alpha: 0.45),
+                      borderRadius: BorderRadius.circular(8 * scale),
+                      border: Border.all(
+                        color: AppColors.white.withValues(alpha: 0.7),
+                        width: 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.12),
+                          blurRadius: 8 * scale,
+                          offset: Offset(0, 3 * scale),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      food.type,
+                      style: AppTextStyles.arimo(
+                        fontSize: 11 * scale,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.white,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );

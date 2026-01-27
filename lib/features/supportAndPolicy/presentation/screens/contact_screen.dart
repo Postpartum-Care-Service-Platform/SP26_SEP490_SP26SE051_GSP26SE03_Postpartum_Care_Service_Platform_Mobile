@@ -36,6 +36,9 @@ class ContactScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       appBar: AppAppBar(
         title: AppStrings.contactTitle,
+        centerTitle: true,
+        titleFontSize: 20 * scale,
+        titleFontWeight: FontWeight.w700,
       ),
       body: SafeArea(
         child: ListView(
