@@ -2,16 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
-import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
+import '../../../../core/utils/app_responsive.dart';
+import '../../../../core/widgets/app_loading.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../domain/entities/care_plan_entity.dart';
 import '../bloc/care_plan_bloc.dart';
 import '../bloc/care_plan_event.dart';
 import '../bloc/care_plan_state.dart';
-import 'care_plan_day_section.dart';
+import 'care_plan_timeline_view.dart';
 
-class CarePlanBottomSheet extends StatelessWidget {
+class CarePlanBottomSheet extends StatefulWidget {
   final int packageId;
   final String packageName;
 
@@ -21,13 +22,17 @@ class CarePlanBottomSheet extends StatelessWidget {
     required this.packageName,
   });
 
-  static void show(BuildContext context, {required int packageId, required String packageName}) {
+  static void show(
+    BuildContext context, {
+    required int packageId,
+    required String packageName,
+  }) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => BlocProvider(
-        create: (context) => InjectionContainer.carePlanBloc
+        create: (_) => InjectionContainer.carePlanBloc
           ..add(CarePlanLoadRequested(packageId)),
         child: CarePlanBottomSheet(
           packageId: packageId,
@@ -35,6 +40,48 @@ class CarePlanBottomSheet extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  @override
+  State<CarePlanBottomSheet> createState() => _CarePlanBottomSheetState();
+}
+
+class _CarePlanBottomSheetState extends State<CarePlanBottomSheet> {
+  late PageController _pageController;
+  int _currentDayIndex = 0;
+  List<int> _availableDays = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  List<int> _getAvailableDays(List<CarePlanEntity> carePlans) {
+    final days = carePlans.map((e) => e.dayNo).toSet().toList()..sort();
+    return days;
+  }
+
+  void _onPageChanged(int index) {
+    setState(() {
+      _currentDayIndex = index;
+    });
+  }
+
+  void _onDaySelected(int dayNo) {
+    final index = _availableDays.indexOf(dayNo);
+    if (index != -1 && index != _currentDayIndex) {
+      _pageController.jumpToPage(index);
+      setState(() {
+        _currentDayIndex = index;
+      });
+    }
   }
 
   @override
@@ -47,15 +94,15 @@ class CarePlanBottomSheet extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(24 * scale),
-          topRight: Radius.circular(24 * scale),
+          topLeft: Radius.circular(20 * scale),
+          topRight: Radius.circular(20 * scale),
         ),
       ),
       child: Column(
         children: [
           // Handle bar
           Container(
-            margin: EdgeInsets.only(top: 12 * scale, bottom: 8 * scale),
+            margin: EdgeInsets.only(top: 12 * scale),
             width: 40 * scale,
             height: 4 * scale,
             decoration: BoxDecoration(
@@ -65,7 +112,10 @@ class CarePlanBottomSheet extends StatelessWidget {
           ),
           // Header
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20 * scale, vertical: 16 * scale),
+            padding: EdgeInsets.symmetric(
+              horizontal: 20 * scale,
+              vertical: 16 * scale,
+            ),
             child: Row(
               children: [
                 Expanded(
@@ -75,14 +125,14 @@ class CarePlanBottomSheet extends StatelessWidget {
                       Text(
                         AppStrings.carePlanTitle,
                         style: AppTextStyles.tinos(
-                          fontSize: 24 * scale,
+                          fontSize: 22 * scale,
                           fontWeight: FontWeight.bold,
                           color: AppColors.textPrimary,
                         ),
                       ),
                       SizedBox(height: 4 * scale),
                       Text(
-                        packageName,
+                        widget.packageName,
                         style: AppTextStyles.arimo(
                           fontSize: 14 * scale,
                           color: AppColors.textSecondary,
@@ -94,22 +144,61 @@ class CarePlanBottomSheet extends StatelessWidget {
                 IconButton(
                   icon: Icon(
                     Icons.close_rounded,
-                    color: AppColors.textPrimary,
                     size: 24 * scale,
+                    color: AppColors.textPrimary,
                   ),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ],
             ),
           ),
-          const Divider(height: 1),
-          // Content
+          // Date picker (dayNo)
+          BlocBuilder<CarePlanBloc, CarePlanState>(
+            builder: (context, state) {
+              if (state is CarePlanLoaded) {
+                final availableDays = _getAvailableDays(state.carePlans);
+                if (availableDays.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+                
+                // Update current index if needed (after build)
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (_currentDayIndex >= availableDays.length) {
+                    setState(() {
+                      _currentDayIndex = 0;
+                    });
+                  }
+                  if (_availableDays != availableDays) {
+                    setState(() {
+                      _availableDays = availableDays;
+                    });
+                  }
+                });
+                
+                final selectedDayNo = availableDays.isNotEmpty &&
+                        _currentDayIndex < availableDays.length
+                    ? availableDays[_currentDayIndex]
+                    : availableDays.isNotEmpty
+                        ? availableDays[0]
+                        : null;
+                
+                return _DayNoPicker(
+                  availableDays: availableDays,
+                  selectedDayNo: selectedDayNo,
+                  onDaySelected: _onDaySelected,
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+          SizedBox(height: 16 * scale),
+          // Timeline view with horizontal scroll
           Expanded(
             child: BlocBuilder<CarePlanBloc, CarePlanState>(
               builder: (context, state) {
                 if (state is CarePlanLoading) {
                   return const Center(
-                    child: CircularProgressIndicator(
+                    child: AppLoadingIndicator(
                       color: AppColors.primary,
                     ),
                   );
@@ -134,38 +223,33 @@ class CarePlanBottomSheet extends StatelessWidget {
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        SizedBox(height: 24 * scale),
-                        ElevatedButton(
-                          onPressed: () {
-                            context.read<CarePlanBloc>().add(
-                                  CarePlanLoadRequested(packageId),
-                                );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: AppColors.white,
-                          ),
-                          child: Text(
-                            AppStrings.retry,
-                            style: AppTextStyles.arimo(
-                              fontSize: 14 * scale,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
                       ],
                     ),
                   );
                 }
 
                 if (state is CarePlanLoaded) {
-                  if (state.carePlans.isEmpty) {
+                  final availableDays = _getAvailableDays(state.carePlans);
+                  
+                  // Update state after build if needed
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (_availableDays != availableDays) {
+                      setState(() {
+                        _availableDays = availableDays;
+                        if (_currentDayIndex >= availableDays.length) {
+                          _currentDayIndex = 0;
+                        }
+                      });
+                    }
+                  });
+                  
+                  if (availableDays.isEmpty) {
                     return Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            Icons.event_busy_outlined,
+                            Icons.calendar_today_outlined,
                             size: 64 * scale,
                             color: AppColors.textSecondary,
                           ),
@@ -183,39 +267,22 @@ class CarePlanBottomSheet extends StatelessWidget {
                     );
                   }
 
-                  // Group activities by day
-                  final activitiesByDay = <int, List<CarePlanEntity>>{};
-                  for (final carePlan in state.carePlans) {
-                    activitiesByDay.putIfAbsent(carePlan.dayNo, () => []).add(carePlan);
-                  }
+                  return PageView.builder(
+                    controller: _pageController,
+                    onPageChanged: _onPageChanged,
+                    itemCount: availableDays.length,
+                    itemBuilder: (context, index) {
+                      final dayNo = availableDays[index];
+                      final dayActivities = state.carePlans
+                          .where((cp) => cp.dayNo == dayNo)
+                          .toList()
+                        ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
 
-                  // Sort days
-                  final sortedDays = activitiesByDay.keys.toList()..sort();
-
-                  return RefreshIndicator(
-                    onRefresh: () async {
-                      context.read<CarePlanBloc>().add(CarePlanRefresh(packageId));
+                      return CarePlanTimelineView(
+                        dayNo: dayNo,
+                        activities: dayActivities,
+                      );
                     },
-                    color: AppColors.primary,
-                    child: ListView.builder(
-                      padding: EdgeInsets.all(20 * scale),
-                      itemCount: sortedDays.length,
-                      itemBuilder: (context, index) {
-                        final dayNo = sortedDays[index];
-                        final activities = activitiesByDay[dayNo];
-                        if (activities == null) return const SizedBox.shrink();
-                        
-                        // Sort activities by sortOrder
-                        final sortedActivities = List<CarePlanEntity>.from(activities)
-                          ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-
-                        return CarePlanDaySection(
-                          dayNo: dayNo,
-                          activities: sortedActivities,
-                          isLast: index == sortedDays.length - 1,
-                        );
-                      },
-                    ),
                   );
                 }
 
@@ -224,6 +291,80 @@ class CarePlanBottomSheet extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _DayNoPicker extends StatelessWidget {
+  final List<int> availableDays;
+  final int? selectedDayNo;
+  final Function(int) onDaySelected;
+
+  const _DayNoPicker({
+    required this.availableDays,
+    this.selectedDayNo,
+    required this.onDaySelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+
+    return Container(
+      height: 60 * scale,
+      padding: EdgeInsets.symmetric(horizontal: 16 * scale),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: availableDays.length,
+        itemBuilder: (context, index) {
+          final dayNo = availableDays[index];
+          final isSelected = dayNo == selectedDayNo;
+
+          return GestureDetector(
+            onTap: () => onDaySelected(dayNo),
+            child: Container(
+              margin: EdgeInsets.only(right: 12 * scale),
+              padding: EdgeInsets.symmetric(
+                horizontal: 20 * scale,
+                vertical: 10 * scale,
+              ),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? AppColors.primary
+                    : AppColors.white,
+                borderRadius: BorderRadius.circular(12 * scale),
+                border: Border.all(
+                  color: isSelected
+                      ? AppColors.primary
+                      : AppColors.borderLight,
+                  width: 1.5,
+                ),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.3),
+                          blurRadius: 8 * scale,
+                          offset: Offset(0, 2 * scale),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Center(
+                child: Text(
+                  '${AppStrings.day} $dayNo',
+                  style: AppTextStyles.arimo(
+                    fontSize: 14 * scale,
+                    fontWeight: FontWeight.w600,
+                    color: isSelected
+                        ? AppColors.white
+                        : AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

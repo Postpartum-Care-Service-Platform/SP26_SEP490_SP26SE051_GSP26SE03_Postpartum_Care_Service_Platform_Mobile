@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_strings.dart';
+import '../constants/app_assets.dart';
 import '../utils/app_text_styles.dart';
 import '../utils/app_responsive.dart';
 
@@ -66,10 +68,13 @@ class AppWidgets {
   /// Primary Floating Action Button - icon only
   static Widget primaryFabIcon({
     required BuildContext context,
-    required IconData icon,
+    IconData? icon,
+    Widget? iconWidget,
     required VoidCallback onPressed,
     EdgeInsets? margin,
   }) {
+    assert(icon != null || iconWidget != null,
+        'Either icon or iconWidget must be provided');
     final scale = AppResponsive.scaleFactor(context);
     return Container(
       margin: margin ?? EdgeInsets.only(bottom: 12 * scale, right: 4 * scale),
@@ -94,7 +99,7 @@ class AppWidgets {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18 * scale),
           ),
-          child: Icon(icon, size: 24 * scale),
+          child: iconWidget ?? Icon(icon, size: 24 * scale),
         ),
       ),
     );
@@ -306,10 +311,14 @@ class AppWidgets {
 
               suffixIcon: isPassword
                   ? IconButton(
-                      icon: Icon(
-                        obscureText ? Icons.visibility : Icons.visibility_off,
-                        size: 19.993,
-                        color: AppColors.textPrimary,
+                      icon: SvgPicture.asset(
+                        obscureText ? AppAssets.eyeDisable : AppAssets.eye,
+                        width: 20,
+                        height: 20,
+                        colorFilter: ColorFilter.mode(
+                          AppColors.textPrimary,
+                          BlendMode.srcIn,
+                        ),
                       ),
                       onPressed: onTogglePassword,
                     )

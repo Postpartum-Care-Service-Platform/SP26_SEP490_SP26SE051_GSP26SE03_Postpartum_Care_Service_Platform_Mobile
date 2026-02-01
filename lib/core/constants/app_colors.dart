@@ -48,5 +48,15 @@ class AppColors {
   static const Color appointmentCompleted = Color(0xFF4CAF50); // Green
   static const Color appointmentPending = Color(0xFFFF8C00); // Amber
   static const Color appointmentCancelled = Color(0xFFF44336); // Red
+
+  // Schedule Status Colors
+  static const Color scheduleMissed = Color(0xFFF44336); // Red for missed activities
+  static const Color scheduleCancelled = Color(0xFF9E9E9E); // Grey for cancelled activities
+  static const Color scheduleScheduled = Color(0xFFFF8C00); // Orange for scheduled activities
+
+  // Shadow Colors
+  static const Color shadowLight = Color(0x0D000000); // Black with 5% opacity
+  static const Color shadowMedium = Color(0x14000000); // Black with 8% opacity
+  static const Color starRating = Color(0xFFFACC15); // Gold for star rating
 }
 

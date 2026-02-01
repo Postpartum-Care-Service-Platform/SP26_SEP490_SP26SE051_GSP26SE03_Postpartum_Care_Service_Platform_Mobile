@@ -19,103 +19,66 @@ class CarePlanActivityItem extends StatelessWidget {
     final scale = AppResponsive.scaleFactor(context);
 
     return Padding(
-      padding: EdgeInsets.only(bottom: isLast ? 0 : 16 * scale),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Time indicator
-          Column(
-            children: [
-              Container(
-                width: 12 * scale,
-                height: 12 * scale,
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              if (!isLast)
-                Container(
-                  width: 2 * scale,
-                  height: 60 * scale,
-                  color: AppColors.primary.withValues(alpha: 0.3),
-                ),
-            ],
-          ),
-          SizedBox(width: 16 * scale),
-          // Content
-          Expanded(
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 8 * scale),
             child: Container(
-              padding: EdgeInsets.all(16 * scale),
+        padding: EdgeInsets.all(12 * scale),
               decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(12 * scale),
+          color: AppColors.primary.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(10 * scale),
                 border: Border.all(
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 8 * scale,
-                    offset: Offset(0, 2 * scale),
+            color: AppColors.primary.withValues(alpha: 0.3),
+            width: 1.5,
+            style: BorderStyle.solid,
                   ),
-                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Activity name and time
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          carePlan.activityName,
-                          style: AppTextStyles.tinos(
-                            fontSize: 16 * scale,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                      ),
+            // Time badge
                       Container(
                         padding: EdgeInsets.symmetric(
-                          horizontal: 10 * scale,
-                          vertical: 6 * scale,
+                horizontal: 8 * scale,
+                vertical: 4 * scale,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8 * scale),
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(6 * scale),
                         ),
                         child: Text(
                           '${carePlan.startTime} - ${carePlan.endTime}',
                           style: AppTextStyles.arimo(
-                            fontSize: 12 * scale,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.primary,
+                  fontSize: 11 * scale,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.white,
                           ),
                         ),
                       ),
-                    ],
+            SizedBox(height: 8 * scale),
+            // Activity name
+            Text(
+              carePlan.activityName,
+              style: AppTextStyles.arimo(
+                fontSize: 15 * scale,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
                   ),
                   // Instruction
-                  if (carePlan.instruction.isNotEmpty && carePlan.instruction != 'string') ...[
-                    SizedBox(height: 8 * scale),
+            if (carePlan.instruction.isNotEmpty && 
+                carePlan.instruction != 'string') ...[
+              SizedBox(height: 6 * scale),
                       Text(
                       carePlan.instruction,
                       style: AppTextStyles.arimo(
-                        fontSize: 13 * scale,
+                  fontSize: 12 * scale,
                         color: AppColors.textSecondary,
                       ).copyWith(height: 1.4),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ],
               ),
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -10,7 +10,7 @@
     <uses-permission android:name="android.permission.CAMERA" />
     
     <application
-        android:label="postpartum_service"
+        android:label="Postpartum Service"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true"

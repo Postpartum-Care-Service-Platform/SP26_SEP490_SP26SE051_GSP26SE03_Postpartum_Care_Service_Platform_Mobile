@@ -17,7 +17,6 @@ import '../../../../core/di/injection_container.dart';
 import '../../../../core/widgets/app_toast.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/routing/app_routes.dart';
-import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/config/app_config.dart';
 
 // Google Sign-In configuration using Web Client ID from AppConfig

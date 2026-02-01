@@ -70,4 +70,13 @@ class AppRoutes {
   static const String employeeMealPlan = '/employee-meal-plan';
   static const String employeeCheckInOut = '/employee-check-in-out';
   static const String serviceBooking = '/service-booking';
+
+  // Menu Routes
+  static const String myMenu = '/my-menu';
+
+  // Family Schedule Routes
+  static const String familySchedule = '/family-schedule';
+
+  // Feedback Routes
+  static const String feedback = '/feedback';
 }

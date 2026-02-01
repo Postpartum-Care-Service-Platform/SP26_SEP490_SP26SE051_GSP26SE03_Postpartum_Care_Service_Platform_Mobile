@@ -6,6 +6,8 @@ import '../../../../core/constants/app_assets.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_toast.dart';
+import '../../../../core/routing/app_router.dart';
+import '../../../../core/routing/app_routes.dart';
 import '../../../auth/data/models/current_account_model.dart';
 import 'resort_key_card.dart';
 import 'service_action_card.dart';
@@ -113,9 +115,16 @@ class ServiceDashboard extends StatelessWidget {
           childAspectRatio: 1.0,
           children: [
             ServiceActionCard(
-              icon: Icons.calendar_month_rounded,
+              iconWidget: SvgPicture.asset(
+                AppAssets.calendarBold,
+                fit: BoxFit.contain,
+                colorFilter: const ColorFilter.mode(
+                  AppColors.primary,
+                  BlendMode.srcIn,
+                ),
+              ),
               title: AppStrings.servicesDailySchedule,
-              onTap: () => _showComingSoon(context),
+              onTap: () => AppRouter.push(context, AppRoutes.familySchedule),
             ),
             ServiceActionCard(
               iconWidget: SvgPicture.asset(
@@ -127,7 +136,7 @@ class ServiceDashboard extends StatelessWidget {
                 ),
               ),
               title: AppStrings.servicesTodayMenu,
-              onTap: () => _showComingSoon(context),
+              onTap: () => AppRouter.push(context, AppRoutes.myMenu),
             ),
             ServiceActionCard(
               iconWidget: SvgPicture.asset(
@@ -139,7 +148,7 @@ class ServiceDashboard extends StatelessWidget {
                 ),
               ),
               title: AppStrings.feedBackForService,
-              onTap: () => _showComingSoon(context),
+              onTap: () => AppRouter.push(context, AppRoutes.feedback),
             ),
             ServiceActionCard(
               iconWidget: SvgPicture.asset(
@@ -209,7 +218,7 @@ class ServiceDashboard extends StatelessWidget {
               ),
               SizedBox(height: 2 * scale),
               Text(
-                'Khám phá các dịch vụ tiện ích',
+                AppStrings.servicesExploreAmenities,
                 style: AppTextStyles.arimo(
                   fontSize: 12 * scale,
                   color: AppColors.textSecondary,

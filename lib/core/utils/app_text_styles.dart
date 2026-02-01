@@ -35,5 +35,19 @@ class AppTextStyles {
       letterSpacing: letterSpacing,
     );
   }
+
+   static TextStyle kavoon({
+    double fontSize = 14,
+    FontWeight fontWeight = FontWeight.normal,
+    Color? color,
+    double? letterSpacing,
+  }) {
+    return GoogleFonts.kavoon(
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      color: color,
+      letterSpacing: letterSpacing,
+    );
+  }
 }
 

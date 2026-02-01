@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/utils/app_responsive.dart';
 
 class MessengerComposer extends StatelessWidget {
@@ -78,10 +80,14 @@ class MessengerComposer extends StatelessWidget {
                   SizedBox(width: 4 * scale),
                   IconButton(
                     onPressed: sending ? null : _submit,
-                    icon: Icon(
-                      Icons.send_rounded,
-                      size: 20 * scale,
-                      color: sending ? AppColors.third : AppColors.primary,
+                    icon: SvgPicture.asset(
+                      AppAssets.send,
+                      width: 20 * scale,
+                      height: 20 * scale,
+                      colorFilter: ColorFilter.mode(
+                        sending ? AppColors.third : AppColors.primary,
+                        BlendMode.srcIn,
+                      ),
                     ),
                   ),
                 ],

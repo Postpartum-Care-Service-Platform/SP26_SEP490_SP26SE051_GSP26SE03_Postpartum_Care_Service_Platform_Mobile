@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/utils/app_responsive.dart';
 
 /// Profile menu item widget with icon, title and trailing chevron
 class ProfileMenuItem extends StatefulWidget {
-  final IconData icon;
+  final IconData? icon;
+  final String? svgIcon;
   final String title;
   final VoidCallback? onTap;
   final Color? iconColor;
@@ -14,13 +16,14 @@ class ProfileMenuItem extends StatefulWidget {
 
   const ProfileMenuItem({
     super.key,
-    required this.icon,
+    this.icon,
+    this.svgIcon,
     required this.title,
     this.onTap,
     this.iconColor,
     this.textColor,
     this.showTrailing = true,
-  });
+  }) : assert(icon != null || svgIcon != null, 'Either icon or svgIcon must be provided');
 
   @override
   State<ProfileMenuItem> createState() => _ProfileMenuItemState();
@@ -58,11 +61,21 @@ class _ProfileMenuItemState extends State<ProfileMenuItem> {
               ),
               child: Row(
                 children: [
-                  Icon(
-                    widget.icon,
-                    size: 20 * scale,
-                    color: defaultIconColor,
-                  ),
+                  widget.svgIcon != null
+                      ? SvgPicture.asset(
+                          widget.svgIcon!,
+                          width: 20 * scale,
+                          height: 20 * scale,
+                          colorFilter: ColorFilter.mode(
+                            defaultIconColor,
+                            BlendMode.srcIn,
+                          ),
+                        )
+                      : Icon(
+                          widget.icon,
+                          size: 20 * scale,
+                          color: defaultIconColor,
+                        ),
                   SizedBox(width: 14 * scale),
                   Expanded(
                     child: Text(
