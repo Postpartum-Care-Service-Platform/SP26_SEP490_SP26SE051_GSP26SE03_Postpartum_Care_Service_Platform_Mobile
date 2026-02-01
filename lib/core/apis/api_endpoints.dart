@@ -180,5 +180,25 @@ class ApiEndpoints {
   
   /// Delete menu record (soft delete)
   static String deleteMenuRecord(int id) => '/MenuRecord/$id';
+
+  // ==========================================
+  // Family Schedule endpoints
+  // ==========================================
+  
+  /// Get my family schedules
+  static const String familyScheduleMySchedules = '/FamilySchedule/my-schedules';
+
+  // ==========================================
+  // Feedback endpoints
+  // ==========================================
+  
+  /// Get feedback types
+  static const String feedbackTypes = '/FeedbackType';
+  
+  /// Get my feedbacks
+  static const String myFeedbacks = '/Feedback/my-feedback';
+  
+  /// Create feedback
+  static const String createFeedback = '/Feedback';
 }
 

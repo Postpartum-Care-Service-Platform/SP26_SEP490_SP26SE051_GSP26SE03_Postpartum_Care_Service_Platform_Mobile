@@ -37,6 +37,7 @@ class MenuBloc extends Bloc<MenuEvent, MenuState> {
     on<MenuRecordsCreateRequested>(_onMenuRecordsCreateRequested);
     on<MenuRecordsUpdateRequested>(_onMenuRecordsUpdateRequested);
     on<MenuRecordDeleteRequested>(_onMenuRecordDeleteRequested);
+    on<MenuRecordsDeleteRequested>(_onMenuRecordsDeleteRequested);
     on<MenuRecordsSaveRequested>(_onMenuRecordsSaveRequested);
     on<MenuRefresh>(_onMenuRefresh);
   }
@@ -203,13 +204,31 @@ class MenuBloc extends Bloc<MenuEvent, MenuState> {
   ) async {
     try {
       await deleteMenuRecordUsecase(event.id);
+      // Reload menu records from API to get latest data
+      final myMenuRecords = await getMyMenuRecordsUsecase();
       if (state is MenuLoaded) {
         final currentState = state as MenuLoaded;
-        // Remove deleted record from list (soft delete - isActive = false)
-        final updatedList = currentState.myMenuRecords
-            .where((record) => record.id != event.id || record.isActive)
-            .toList();
-        emit(currentState.copyWith(myMenuRecords: updatedList));
+        emit(currentState.copyWith(myMenuRecords: myMenuRecords));
+      }
+    } catch (e) {
+      emit(MenuError(e.toString()));
+    }
+  }
+
+  Future<void> _onMenuRecordsDeleteRequested(
+    MenuRecordsDeleteRequested event,
+    Emitter<MenuState> emit,
+  ) async {
+    try {
+      // Delete all records
+      for (final id in event.ids) {
+        await deleteMenuRecordUsecase(id);
+      }
+      // Reload menu records from API to get latest data
+      final myMenuRecords = await getMyMenuRecordsUsecase();
+      if (state is MenuLoaded) {
+        final currentState = state as MenuLoaded;
+        emit(currentState.copyWith(myMenuRecords: myMenuRecords));
       }
     } catch (e) {
       emit(MenuError(e.toString()));

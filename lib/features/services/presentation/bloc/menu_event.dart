@@ -64,6 +64,16 @@ class MenuRecordDeleteRequested extends MenuEvent {
   List<Object?> get props => [id];
 }
 
+/// Delete multiple menu records event
+class MenuRecordsDeleteRequested extends MenuEvent {
+  final List<int> ids;
+
+  const MenuRecordsDeleteRequested(this.ids);
+
+  @override
+  List<Object?> get props => [ids];
+}
+
 /// Save menu records event (create or update based on existing records)
 class MenuRecordsSaveRequested extends MenuEvent {
   final List<SaveMenuRecordRequest> requests;

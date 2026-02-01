@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_strings.dart';
+import '../constants/app_assets.dart';
 import '../utils/app_text_styles.dart';
 import '../utils/app_responsive.dart';
 
@@ -309,10 +311,14 @@ class AppWidgets {
 
               suffixIcon: isPassword
                   ? IconButton(
-                      icon: Icon(
-                        obscureText ? Icons.visibility : Icons.visibility_off,
-                        size: 19.993,
-                        color: AppColors.textPrimary,
+                      icon: SvgPicture.asset(
+                        obscureText ? AppAssets.eyeDisable : AppAssets.eye,
+                        width: 20,
+                        height: 20,
+                        colorFilter: ColorFilter.mode(
+                          AppColors.textPrimary,
+                          BlendMode.srcIn,
+                        ),
                       ),
                       onPressed: onTogglePassword,
                     )

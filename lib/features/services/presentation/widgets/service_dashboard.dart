@@ -115,9 +115,16 @@ class ServiceDashboard extends StatelessWidget {
           childAspectRatio: 1.0,
           children: [
             ServiceActionCard(
-              icon: Icons.calendar_month_rounded,
+              iconWidget: SvgPicture.asset(
+                AppAssets.calendarBold,
+                fit: BoxFit.contain,
+                colorFilter: const ColorFilter.mode(
+                  AppColors.primary,
+                  BlendMode.srcIn,
+                ),
+              ),
               title: AppStrings.servicesDailySchedule,
-              onTap: () => _showComingSoon(context),
+              onTap: () => AppRouter.push(context, AppRoutes.familySchedule),
             ),
             ServiceActionCard(
               iconWidget: SvgPicture.asset(
@@ -141,7 +148,7 @@ class ServiceDashboard extends StatelessWidget {
                 ),
               ),
               title: AppStrings.feedBackForService,
-              onTap: () => _showComingSoon(context),
+              onTap: () => AppRouter.push(context, AppRoutes.feedback),
             ),
             ServiceActionCard(
               iconWidget: SvgPicture.asset(

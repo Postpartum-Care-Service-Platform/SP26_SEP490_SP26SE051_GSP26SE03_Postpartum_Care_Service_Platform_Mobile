@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../../core/widgets/app_toast.dart';
 import '../../../../core/apis/api_client.dart';
@@ -127,7 +128,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             },
                           ),
                           ProfileMenuItem(
-                            icon: Icons.people_outline,
+                            svgIcon: AppAssets.family,
                             title: AppStrings.familyProfile,
                             onTap: () {
                               // Get AuthBloc from context to share with FamilyProfileScreen

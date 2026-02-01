@@ -6,36 +6,36 @@ import '../constants/app_strings.dart';
 import '../constants/app_assets.dart';
 import '../utils/app_responsive.dart';
 
-enum AppBottomTab {
-  home,
-  appointment,
-  services,
-  chat,
-  profile,
-}
+enum AppBottomTab { home, appointment, services, chat, profile }
 
 extension AppBottomTabX on AppBottomTab {
   IconData? get icon {
     switch (this) {
       case AppBottomTab.home:
-        return Icons.home_outlined;
+        return null; // Use SVG instead
       case AppBottomTab.appointment:
-        return Icons.calendar_month_outlined;
+        return null; // Use SVG instead
       case AppBottomTab.services:
         return null; // Use SVG instead
       case AppBottomTab.chat:
-        return Icons.chat_bubble_outline_rounded;
+        return null; // Use SVG instead
       case AppBottomTab.profile:
-        return Icons.person_outline_rounded;
+        return null;
     }
   }
 
   String? get svgIcon {
     switch (this) {
+      case AppBottomTab.home:
+        return AppAssets.home;
+      case AppBottomTab.appointment:
+        return AppAssets.calendar;
       case AppBottomTab.services:
         return AppAssets.appIconThird;
-      default:
-        return null;
+      case AppBottomTab.chat:
+        return AppAssets.chatMessage;
+      case AppBottomTab.profile:
+        return AppAssets.profile;
     }
   }
 
@@ -45,7 +45,7 @@ extension AppBottomTabX on AppBottomTab {
         return AppStrings.bottomNavHome;
       case AppBottomTab.appointment:
         return AppStrings.bottomNavSchedule;
-        case AppBottomTab.services:
+      case AppBottomTab.services:
         return AppStrings.bottomNavServices;
       case AppBottomTab.chat:
         return AppStrings.bottomNavChat;
@@ -130,27 +130,17 @@ class _PillBottomNavState extends State<_PillBottomNav>
       duration: const Duration(milliseconds: 250),
       vsync: this,
     );
-    
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.5),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _slideController,
-        curve: Curves.easeOutCubic,
-      ),
-    );
-    
+
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.5), end: Offset.zero).animate(
+          CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
+        );
+
     _scaleAnimation = Tween<double>(
       begin: 0.8,
       end: 1.0,
-    ).animate(
-      CurvedAnimation(
-        parent: _scaleController,
-        curve: Curves.easeOut,
-      ),
-    );
-    
+    ).animate(CurvedAnimation(parent: _scaleController, curve: Curves.easeOut));
+
     _slideController.forward();
     _scaleController.forward();
   }
@@ -191,15 +181,19 @@ class _PillBottomNavState extends State<_PillBottomNav>
         final shadowOffsetY = 4.0 * scale;
         final selectedShadowBlur = 16.0 * scale;
         final selectedShadowOffsetY = 0.0;
-        
+
         final availableWidth = constraints.maxWidth;
-        final barWidth = availableWidth.isFinite ? availableWidth : 360.0 * scale;
+        final barWidth = availableWidth.isFinite
+            ? availableWidth
+            : 360.0 * scale;
 
         final itemWidth = (barWidth - outerHPadding * 2) / itemCount;
         final selectedIndex = _indexOf(widget.currentTab);
 
         final selectedLeft =
-            outerHPadding + itemWidth * selectedIndex + (itemWidth - selectedPillWidth) / 2;
+            outerHPadding +
+            itemWidth * selectedIndex +
+            (itemWidth - selectedPillWidth) / 2;
 
         return SizedBox(
           width: barWidth,
@@ -347,12 +341,9 @@ class _NavIconButtonState extends State<_NavIconButton>
       vsync: this,
     );
     _scaleAnimation = Tween<double>(begin: 1.0, end: 0.85).animate(
-      CurvedAnimation(
-        parent: _scaleController,
-        curve: Curves.easeInOut,
-      ),
+      CurvedAnimation(parent: _scaleController, curve: Curves.easeInOut),
     );
-    
+
     if (widget.isSelected) {
       _scaleController.value = 1.0;
     }
@@ -388,8 +379,12 @@ class _NavIconButtonState extends State<_NavIconButton>
 
   @override
   Widget build(BuildContext context) {
-    final iconColor = widget.isSelected ? widget.selectedColor : widget.unselectedColor;
-    final textColor = widget.isSelected ? widget.selectedColor : widget.unselectedColor;
+    final iconColor = widget.isSelected
+        ? widget.selectedColor
+        : widget.unselectedColor;
+    final textColor = widget.isSelected
+        ? widget.selectedColor
+        : widget.unselectedColor;
     final iconSize = 22.0 * widget.scale;
     final selectedIconSize = 24.0 * widget.scale;
     final fontSize = 10.0 * widget.scale;
@@ -438,7 +433,9 @@ class _NavIconButtonState extends State<_NavIconButton>
               duration: const Duration(milliseconds: 200),
               style: TextStyle(
                 fontSize: widget.isSelected ? selectedFontSize : fontSize,
-                fontWeight: widget.isSelected ? FontWeight.w600 : FontWeight.w500,
+                fontWeight: widget.isSelected
+                    ? FontWeight.w600
+                    : FontWeight.w500,
                 color: textColor,
                 height: 1.2,
               ),
@@ -454,4 +451,3 @@ class _NavIconButtonState extends State<_NavIconButton>
     );
   }
 }
-

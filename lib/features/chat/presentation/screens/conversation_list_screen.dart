@@ -117,7 +117,7 @@ class _ConversationScreenState extends State<ConversationListScreen> {
                     children: [
                       Text(
                         AppStrings.chatTitle,
-                        style: AppTextStyles.tinos(
+                        style: AppTextStyles.arimo(
                           fontSize: 22 * scale,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textPrimary,

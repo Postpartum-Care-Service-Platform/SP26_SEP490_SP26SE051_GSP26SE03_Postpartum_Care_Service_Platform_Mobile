@@ -34,6 +34,8 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
   late DateTime _selectedDate;
   // Unsaved selections (user is currently selecting, not yet saved)
   final Map<int, MenuEntity> _unsavedSelections = {}; // menuTypeId -> MenuEntity
+  // Track deletion state
+  int? _deletingCount;
 
   @override
   void initState() {
@@ -303,15 +305,16 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
   void _handleDeleteSavedRecords(List<int> recordIds) {
     if (recordIds.isEmpty) return;
 
-    // Delete records one by one (or batch if API supports)
-    for (final recordId in recordIds) {
-      context.read<MenuBloc>().add(MenuRecordDeleteRequested(recordId));
-    }
+    // Track deletion count
+    setState(() {
+      _deletingCount = recordIds.length;
+    });
 
-    AppToast.showSuccess(
-      context,
-      message: AppStrings.menuDeletedCount.replaceAll('{count}', '${recordIds.length}'),
-    );
+    // Show loading
+    AppLoading.show(context, message: AppStrings.deleting);
+
+    // Delete all records in batch and reload
+    context.read<MenuBloc>().add(MenuRecordsDeleteRequested(recordIds));
   }
 
   void _handleSaveMenus() {
@@ -385,10 +388,14 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
             actions: savedRecords.isNotEmpty
                 ? [
                     IconButton(
-                      icon: Icon(
-                        Icons.delete_outline,
-                        color: AppColors.red,
-                        size: 24 * scale,
+                      icon: SvgPicture.asset(
+                        AppAssets.trash,
+                        width: 20 * scale,
+                        height: 20 * scale,
+                        colorFilter: ColorFilter.mode(
+                          AppColors.red,
+                          BlendMode.srcIn,
+                        ),
                       ),
                       onPressed: () {
                         if (state is MenuLoaded) {
@@ -402,9 +409,28 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
       body: BlocConsumer<MenuBloc, MenuState>(
         listener: (context, state) {
           if (state is MenuError) {
+            // Hide loading on error
+            AppLoading.hide(context);
+            // Clear deletion tracking
+            if (_deletingCount != null) {
+              setState(() {
+                _deletingCount = null;
+              });
+            }
             AppToast.showError(context, message: state.message);
+          } else if (state is MenuLoaded && _deletingCount != null) {
+            // Hide loading after successful deletion and reload
+            AppLoading.hide(context);
+            // Show success message
+            final count = _deletingCount!;
+            setState(() {
+              _deletingCount = null;
+            });
+            AppToast.showSuccess(
+              context,
+              message: AppStrings.menuDeletedCount.replaceAll('{count}', '$count'),
+            );
           }
-          // Note: Success messages are handled in specific event handlers
         },
         builder: (context, state) {
           if (state is MenuLoading) {

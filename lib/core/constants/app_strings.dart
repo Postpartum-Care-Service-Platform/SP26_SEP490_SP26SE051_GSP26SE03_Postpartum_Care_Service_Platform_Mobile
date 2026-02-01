@@ -46,6 +46,7 @@ class AppStrings {
   static const String tagline = 'Tổ ấm hạnh phúc của bạn.';
   static const String loading = 'Loading...';
   static const String processing = 'Đang xử lý...';
+  static const String deleting = 'Đang xóa...';
 
   // Links
   static const String needAnAccount = 'Need an account?';
@@ -489,6 +490,42 @@ class AppStrings {
   static const String servicesAmenityRequestDescription =
       'Gọi nước, đồ dùng em bé, dọn phòng,...';
   static const String servicesExploreAmenities = 'Khám phá các dịch vụ tiện ích';
+
+  // Feedback Screen
+  static const String feedbackTitle = 'Đánh giá dịch vụ';
+  static const String feedbackWrite = 'Viết feedback';
+  static const String feedbackWriteFirst = 'Viết feedback đầu tiên';
+  static const String feedbackNoFeedback = 'Chưa có feedback nào';
+  static const String feedbackShareExperience = 'Hãy chia sẻ trải nghiệm của bạn';
+  static const String feedbackType = 'Loại feedback';
+  static const String feedbackSelectType = 'Chọn loại feedback';
+  static const String feedbackTitleLabel = 'Tiêu đề';
+  static const String feedbackTitlePlaceholder = 'Nhập tiêu đề feedback';
+  static const String feedbackContentLabel = 'Nội dung';
+  static const String feedbackContentPlaceholder = 'Nhập nội dung feedback';
+  static const String feedbackRating = 'Đánh giá';
+  static const String feedbackImages = 'Ảnh đính kèm (tùy chọn)';
+  static const String feedbackSubmit = 'Gửi feedback';
+  static const String feedbackSubmitSuccess = 'Gửi feedback thành công';
+  static const String feedbackPleaseSelectType = 'Vui lòng chọn loại feedback';
+  static const String feedbackPleaseRate = 'Vui lòng đánh giá sao';
+  static const String feedbackMaxImages = 'Bạn chỉ có thể thêm tối đa {max} ảnh';
+  static const String feedbackAddImage = 'Thêm ảnh';
+
+  // Schedule Screen
+  static const String scheduleNoScheduleForDay = 'Không có lịch trình cho ngày này';
+  static const String scheduleDay = 'Ngày';
+  static const String scheduleMissed = 'Đã bỏ lỡ';
+  static const String scheduleCancelled = 'Đã hủy';
+  static const String scheduleStaffAssigned = 'Điều dưỡng tiếp quản';
+  static const String scheduleNoStaffAssigned = 'Chưa có điều dưỡng được phân công';
+  static const String scheduleNote = 'Ghi chú';
+  static const String scheduleNoNote = 'Chưa có ghi chú';
+  static const String scheduleStaff = 'Điều dưỡng';
+  static const String scheduleCompleted = 'Đã hoàn thành';
+  static const String scheduleNotCompleted = 'Chưa hoàn thành';
+  static const String scheduleManager = 'Quản lý';
+  static const String scheduleCompletedAt = 'Hoàn thành lúc';
 
   // Menu Screen
   static const String menuNoMenuToDelete = 'Không có menu nào để xóa';

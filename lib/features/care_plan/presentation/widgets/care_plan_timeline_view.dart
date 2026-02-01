@@ -74,7 +74,7 @@ class _CarePlanTimelineViewState extends State<CarePlanTimelineView> {
         controller: _scrollController,
         padding: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 8 * scale),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: hourSlots.map((hour) {
             final hourActivities = groupedActivities[hour] ?? [];
@@ -86,7 +86,7 @@ class _CarePlanTimelineViewState extends State<CarePlanTimelineView> {
             return Padding(
               padding: EdgeInsets.only(bottom: 16 * scale),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
                 children: hourActivities.asMap().entries.map((entry) {
                   final index = entry.key;

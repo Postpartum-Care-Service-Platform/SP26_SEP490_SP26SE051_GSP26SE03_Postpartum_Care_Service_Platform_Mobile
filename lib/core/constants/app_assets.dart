@@ -14,6 +14,19 @@ class AppAssets {
   static const String menuThird = 'assets/images/menu_3.svg';
   static const String serviceAmenity = 'assets/images/serviceAmenity.svg';
   static const String helper = 'assets/images/helper.svg';
-
+  static const String eyeDisable = 'assets/images/eye-disable.svg';
+  static const String calendar = 'assets/images/calendar.svg';
+  static const String chatMessage = 'assets/images/chatMessage.svg';
+  static const String eye = 'assets/images/eye.svg';
+  static const String home = 'assets/images/home.svg';
+  static const String moon = 'assets/images/moon.svg';
+  static const String send = 'assets/images/send.svg';
+  static const String sun = 'assets/images/sun.svg';
+  static const String trash = 'assets/images/trash.svg';
+  static const String profile = 'assets/images/user.svg';
+  static const String family = 'assets/images/family.svg';
+  static const String calendarBold = 'assets/images/calendar_bold.svg';
+  static const String starRating = 'assets/images/starRating.svg';
+  static const String pencilFeedback = 'assets/images/pencil_feedback.svg';
 }
 

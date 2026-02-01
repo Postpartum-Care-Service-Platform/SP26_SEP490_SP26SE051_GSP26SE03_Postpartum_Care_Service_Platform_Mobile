@@ -29,7 +29,10 @@ import '../../features/chat/presentation/screens/conversation_detail_screen.dart
 import '../../features/chat/presentation/screens/chat_shell_screen.dart';
 import '../../features/family/presentation/screens/family_portal_screen.dart';
 import '../../features/services/presentation/screens/my_menu_screen.dart';
+import '../../features/services/presentation/screens/family_schedule_screen.dart';
+import '../../features/services/presentation/screens/feedback_screen.dart';
 import '../../features/services/presentation/bloc/menu_event.dart';
+import '../../features/services/presentation/bloc/family_schedule_event.dart';
 import '../../core/widgets/app_scaffold.dart';
 import '../../core/di/injection_container.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
@@ -287,6 +290,25 @@ class AppRouter {
             create: (_) => InjectionContainer.menuBloc
               ..add(const MenuLoadRequested()),
             child: const MyMenuScreen(),
+          ),
+        );
+
+      // Family Schedule Routes
+      case AppRoutes.familySchedule:
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (_) => InjectionContainer.familyScheduleBloc
+              ..add(const FamilyScheduleLoadRequested()),
+            child: const FamilyScheduleScreen(),
+          ),
+        );
+
+      // Feedback Routes
+      case AppRoutes.feedback:
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (_) => InjectionContainer.feedbackBloc,
+            child: const FeedbackScreen(),
           ),
         );
 

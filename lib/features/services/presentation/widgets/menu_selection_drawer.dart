@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/utils/app_formatters.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
@@ -75,17 +77,27 @@ class _MenuSelectionDrawerState extends State<MenuSelectionDrawer> {
     return '${date.day} ${AppFormatters.getMonthName(date.month)} ${date.year}';
   }
 
-  IconData _getMenuTypeIcon(String menuTypeName) {
+  Widget _getMenuTypeIcon(String menuTypeName, double size, Color color) {
     if (menuTypeName.contains('Sáng') && !menuTypeName.contains('Phụ')) {
-      return Icons.sunny_snowing;
+      return Icon(Icons.sunny_snowing, size: size, color: color);
     } else if (menuTypeName.contains('Trưa')) {
-      return Icons.wb_sunny;
+      return SvgPicture.asset(
+        AppAssets.sun,
+        width: size,
+        height: size,
+        colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+      );
     } else if (menuTypeName.contains('Tối')) {
-      return Icons.nightlight;
+      return SvgPicture.asset(
+        AppAssets.moon,
+        width: size,
+        height: size,
+        colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+      );
     } else if (menuTypeName.contains('Phụ')) {
-      return Icons.cookie;
+      return Icon(Icons.cookie, size: size, color: color);
     }
-    return Icons.restaurant;
+    return Icon(Icons.restaurant, size: size, color: color);
   }
 
   void _handleRemoveSelection(int menuTypeId) {
@@ -263,15 +275,7 @@ class _MenuSelectionDrawerState extends State<MenuSelectionDrawer> {
                                           : AppColors.white,
                                       borderRadius: BorderRadius.circular(10 * scale),
                                     ),
-                                    child: Icon(
-                                      _getMenuTypeIcon(menuType.name),
-                                      color: isSelected
-                                          ? (hasSavedSelection
-                                              ? AppColors.verified
-                                              : AppColors.primary)
-                                          : AppColors.textSecondary,
-                                      size: 24 * scale,
-                                    ),
+                                    child: _getMenuTypeIcon(menuType.name, 24 * scale, isSelected ? (hasSavedSelection ? AppColors.verified : AppColors.primary) : AppColors.textSecondary),
                                   ),
                                   SizedBox(width: 16 * scale),
                                   // Menu type name and current selection

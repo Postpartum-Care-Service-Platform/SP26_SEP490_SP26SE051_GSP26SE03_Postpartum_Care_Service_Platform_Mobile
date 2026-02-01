@@ -114,6 +114,18 @@ import '../../features/services/domain/usecases/create_menu_records_usecase.dart
 import '../../features/services/domain/usecases/update_menu_records_usecase.dart';
 import '../../features/services/domain/usecases/delete_menu_record_usecase.dart';
 import '../../features/services/presentation/bloc/menu_bloc.dart';
+import '../../features/services/data/datasources/family_schedule_remote_datasource.dart';
+import '../../features/services/data/repositories/family_schedule_repository_impl.dart';
+import '../../features/services/domain/repositories/family_schedule_repository.dart';
+import '../../features/services/domain/usecases/get_my_schedules_usecase.dart';
+import '../../features/services/presentation/bloc/family_schedule_bloc.dart';
+import '../../features/services/data/datasources/feedback_remote_datasource.dart';
+import '../../features/services/data/repositories/feedback_repository_impl.dart';
+import '../../features/services/domain/repositories/feedback_repository.dart';
+import '../../features/services/domain/usecases/get_feedback_types_usecase.dart';
+import '../../features/services/domain/usecases/get_my_feedbacks_usecase.dart';
+import '../../features/services/domain/usecases/create_feedback_usecase.dart';
+import '../../features/services/presentation/bloc/feedback_bloc.dart';
 import '../apis/api_client.dart';
 
 /// Centralized dependency injection container
@@ -168,6 +180,12 @@ class InjectionContainer {
   static MenuRemoteDataSource get _menuRemoteDataSource =>
       MenuRemoteDataSourceImpl(dio: ApiClient.dio);
 
+  static FamilyScheduleRemoteDataSource get _familyScheduleRemoteDataSource =>
+      FamilyScheduleRemoteDataSourceImpl(dio: ApiClient.dio);
+
+  static FeedbackRemoteDataSource get _feedbackRemoteDataSource =>
+      FeedbackRemoteDataSourceImpl(dio: ApiClient.dio);
+
   // ==================== Repositories ====================
   
   static AuthRepository get authRepository =>
@@ -213,6 +231,12 @@ class InjectionContainer {
 
   static MenuRepository get menuRepository =>
       MenuRepositoryImpl(_menuRemoteDataSource);
+
+  static FamilyScheduleRepository get familyScheduleRepository =>
+      FamilyScheduleRepositoryImpl(remoteDataSource: _familyScheduleRemoteDataSource);
+
+  static FeedbackRepository get feedbackRepository =>
+      FeedbackRepositoryImpl(_feedbackRemoteDataSource);
 
   // ==================== Use Cases ====================
   
@@ -349,6 +373,18 @@ class InjectionContainer {
   static DeleteMenuRecordUsecase get _deleteMenuRecordUsecase =>
       DeleteMenuRecordUsecase(menuRepository);
 
+  static GetMySchedulesUsecase get _getMySchedulesUsecase =>
+      GetMySchedulesUsecase(familyScheduleRepository);
+
+  static GetFeedbackTypesUsecase get _getFeedbackTypesUsecase =>
+      GetFeedbackTypesUsecase(feedbackRepository);
+
+  static GetMyFeedbacksUsecase get _getMyFeedbacksUsecase =>
+      GetMyFeedbacksUsecase(feedbackRepository);
+
+  static CreateFeedbackUsecase get _createFeedbackUsecase =>
+      CreateFeedbackUsecase(feedbackRepository);
+
   // ==================== Blocs ====================
   
   static AuthBloc get authBloc => AuthBloc(
@@ -454,6 +490,16 @@ class InjectionContainer {
         createMenuRecordsUsecase: _createMenuRecordsUsecase,
         updateMenuRecordsUsecase: _updateMenuRecordsUsecase,
         deleteMenuRecordUsecase: _deleteMenuRecordUsecase,
+      );
+
+  static FamilyScheduleBloc get familyScheduleBloc => FamilyScheduleBloc(
+        getMySchedulesUsecase: _getMySchedulesUsecase,
+      );
+
+  static FeedbackBloc get feedbackBloc => FeedbackBloc(
+        getFeedbackTypesUsecase: _getFeedbackTypesUsecase,
+        getMyFeedbacksUsecase: _getMyFeedbacksUsecase,
+        createFeedbackUsecase: _createFeedbackUsecase,
       );
 
   // ==================== Reset ====================

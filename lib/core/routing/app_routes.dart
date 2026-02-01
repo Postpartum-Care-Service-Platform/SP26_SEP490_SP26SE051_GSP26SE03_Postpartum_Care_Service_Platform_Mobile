@@ -73,4 +73,10 @@ class AppRoutes {
 
   // Menu Routes
   static const String myMenu = '/my-menu';
+
+  // Family Schedule Routes
+  static const String familySchedule = '/family-schedule';
+
+  // Feedback Routes
+  static const String feedback = '/feedback';
 }
