@@ -386,22 +386,40 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
   void _subscribeHubStreams() {
     _messageSub ??= _chatHubService.messages.listen(
-      (data) => add(ChatRealtimeMessageReceived(data)),
+      (data) {
+        if (isClosed) return;
+        add(ChatRealtimeMessageReceived(data));
+      },
     );
     _messagesReadSub ??= _chatHubService.messagesRead.listen(
-      (data) => add(ChatRealtimeMessagesReadReceived(data)),
+      (data) {
+        if (isClosed) return;
+        add(ChatRealtimeMessagesReadReceived(data));
+      },
     );
     _supportCreatedSub ??= _chatHubService.supportCreated.listen(
-      (data) => add(ChatRealtimeSupportCreatedReceived(data)),
+      (data) {
+        if (isClosed) return;
+        add(ChatRealtimeSupportCreatedReceived(data));
+      },
     );
     _staffJoinedSub ??= _chatHubService.staffJoined.listen(
-      (data) => add(ChatRealtimeStaffJoinedReceived(data)),
+      (data) {
+        if (isClosed) return;
+        add(ChatRealtimeStaffJoinedReceived(data));
+      },
     );
     _supportResolvedSub ??= _chatHubService.supportResolved.listen(
-      (data) => add(ChatRealtimeSupportResolvedReceived(data)),
+      (data) {
+        if (isClosed) return;
+        add(ChatRealtimeSupportResolvedReceived(data));
+      },
     );
     _errorSub ??= _chatHubService.errors.listen(
-      (message) => add(ChatRealtimeErrorReceived(message)),
+      (message) {
+        if (isClosed) return;
+        add(ChatRealtimeErrorReceived(message));
+      },
     );
   }
 

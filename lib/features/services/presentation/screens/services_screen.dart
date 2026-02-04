@@ -56,34 +56,22 @@ class ServicesScreen extends StatelessWidget {
   }
 
   void _handleBookingSideEffects(BuildContext context, BookingState state) {
-            if (state is BookingCreated) {
-              final bookingBloc = context.read<BookingBloc>();
-              AppRouter.push(
-                context,
-                AppRoutes.payment,
-                arguments: {
-                  'booking': state.booking,
-                  'bookingBloc': bookingBloc,
-                  'paymentType': 'Deposit',
-                },
-              );
-            } else if (state is BookingPaymentStatusChecked) {
-              if (state.paymentStatus.status == 'Paid') {
-                final bookingBloc = context.read<BookingBloc>();
-                AppRouter.pushReplacement(
-                  context,
-                  AppRoutes.invoice,
-                  arguments: {
-                    'bookingId': state.paymentStatus.bookingId,
-                    'bookingBloc': bookingBloc,
-                  },
-                );
-              }
-            } else if (state is BookingError) {
-              AppToast.showError(
-                context,
-                message: state.message,
-              );
-            }
+    if (state is BookingCreated) {
+      final bookingBloc = context.read<BookingBloc>();
+      AppRouter.push(
+        context,
+        AppRoutes.payment,
+        arguments: {
+          'booking': state.booking,
+          'bookingBloc': bookingBloc,
+          'paymentType': 'Deposit',
+        },
+      );
+    } else if (state is BookingError) {
+      AppToast.showError(
+        context,
+        message: state.message,
+      );
+    }
   }
 }

@@ -37,6 +37,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
   PaymentLinkEntity? _paymentLink;
   Timer? _statusCheckTimer;
   bool _isCheckingStatus = false;
+  bool _paymentSuccess = false;
+  int? _paidBookingId;
 
   @override
   void initState() {
@@ -90,21 +92,27 @@ class _PaymentScreenState extends State<PaymentScreen> {
             setState(() {
               _isCheckingStatus = false;
             });
-            
-            if (state.paymentStatus.status == 'Paid') {
+
+            if (state.paymentStatus.status == 'Paid' && !_paymentSuccess) {
               _statusCheckTimer?.cancel();
+              _paymentSuccess = true;
+              _paidBookingId = state.paymentStatus.bookingId;
+
               AppToast.showSuccess(context, message: AppStrings.paymentSuccess);
-              // Get BookingBloc from listener context before navigating
+
+              // Sau 5s chuyển sang màn hình hóa đơn
               final bookingBloc = context.read<BookingBloc>();
-              // Navigate to invoice screen
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(
-                  builder: (context) => BlocProvider.value(
-                    value: bookingBloc,
-                    child: InvoiceScreen(bookingId: state.paymentStatus.bookingId),
+              Timer(const Duration(seconds: 3), () {
+                if (!mounted || _paidBookingId == null) return;
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (context) => BlocProvider.value(
+                      value: bookingBloc,
+                      child: InvoiceScreen(bookingId: _paidBookingId!),
+                    ),
                   ),
-                ),
-              );
+                );
+              });
             }
           } else if (state is BookingError) {
             setState(() {
@@ -155,6 +163,42 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
           if (_paymentLink == null) {
             return const SizedBox();
+          }
+
+          // Khi thanh toán thành công: hiển thị màn hình success trong 5s
+          if (_paymentSuccess) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.check_circle_outline,
+                    size: 80 * scale,
+                    color: AppColors.verified,
+                  ),
+                  SizedBox(height: 24 * scale),
+                  Text(
+                    AppStrings.paymentSuccess,
+                    style: AppTextStyles.arimo(
+                      fontSize: 20 * scale,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 8 * scale),
+                  Text(
+                    'Đang chuyển đến hóa đơn của bạn...',
+                    style: AppTextStyles.arimo(
+                      fontSize: 14 * scale,
+                      color: AppColors.textSecondary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            );
           }
 
           return Center(
