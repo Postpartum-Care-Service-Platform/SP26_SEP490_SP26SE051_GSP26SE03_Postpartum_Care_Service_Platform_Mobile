@@ -25,6 +25,8 @@ class NotificationLoaded extends NotificationState {
   final int unreadCount;
   final NotificationEntity? viewingDetail;
 
+  static const Object _viewingDetailNoChange = Object();
+
   const NotificationLoaded({
     required this.notifications,
     required this.unreadCount,
@@ -37,12 +39,14 @@ class NotificationLoaded extends NotificationState {
   NotificationLoaded copyWith({
     List<NotificationEntity>? notifications,
     int? unreadCount,
-    NotificationEntity? viewingDetail,
+    Object? viewingDetail = _viewingDetailNoChange,
   }) {
     return NotificationLoaded(
       notifications: notifications ?? this.notifications,
       unreadCount: unreadCount ?? this.unreadCount,
-      viewingDetail: viewingDetail ?? this.viewingDetail,
+      viewingDetail: identical(viewingDetail, _viewingDetailNoChange)
+          ? this.viewingDetail
+          : viewingDetail as NotificationEntity?,
     );
   }
 }
