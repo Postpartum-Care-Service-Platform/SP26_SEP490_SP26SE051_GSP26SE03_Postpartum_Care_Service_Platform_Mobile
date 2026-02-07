@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../screens/notification_screen.dart';
@@ -25,7 +26,7 @@ class NotificationFilterTabs extends StatelessWidget {
       children: [
         _FilterTab(
           scale: scale,
-          label: 'Tất cả',
+          label: AppStrings.notificationAll,
           filter: NotificationFilter.all,
           isSelected: currentFilter == NotificationFilter.all,
           onTap: () => onFilterChanged(NotificationFilter.all),
@@ -33,7 +34,7 @@ class NotificationFilterTabs extends StatelessWidget {
         SizedBox(width: 8 * scale),
         _FilterTab(
           scale: scale,
-          label: 'Chưa đọc',
+          label: AppStrings.notificationUnread,
           filter: NotificationFilter.unread,
           isSelected: currentFilter == NotificationFilter.unread,
           badge: unreadCount > 0 ? unreadCount : null,
@@ -42,7 +43,7 @@ class NotificationFilterTabs extends StatelessWidget {
         SizedBox(width: 8 * scale),
         _FilterTab(
           scale: scale,
-          label: 'Đã đọc',
+          label: AppStrings.notificationRead,
           filter: NotificationFilter.read,
           isSelected: currentFilter == NotificationFilter.read,
           onTap: () => onFilterChanged(NotificationFilter.read),

@@ -71,6 +71,7 @@ class NotificationItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
     final typeColor = _getColorForType(notification.type);
+    final isUnread = !notification.isRead;
 
     return Material(
       color: Colors.transparent,
@@ -80,21 +81,20 @@ class NotificationItem extends StatelessWidget {
         child: Container(
           padding: EdgeInsets.all(18 * scale),
           decoration: BoxDecoration(
-            color: AppColors.white,
+            // Email-like: unread looks "brighter", read looks slightly muted.
+            color: isUnread ? AppColors.white : AppColors.textSecondary.withValues(alpha: 0.02),
             borderRadius: BorderRadius.circular(18 * scale),
             border: Border.all(
-              color: notification.isRead
-                  ? AppColors.borderLight
-                  : typeColor.withValues(alpha: 0.3),
-              width: notification.isRead ? 1 : 1.5,
+              color: isUnread
+                  ? AppColors.borderLight.withValues(alpha: 0.8)
+                  : AppColors.borderLight,
+              width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: notification.isRead
-                    ? Colors.black.withValues(alpha: 0.04)
-                    : typeColor.withValues(alpha: 0.08),
-                blurRadius: 12 * scale,
-                offset: Offset(0, 4 * scale),
+                color: Colors.black.withValues(alpha: isUnread ? 0.06 : 0.03),
+                blurRadius: isUnread ? 14 * scale : 10 * scale,
+                offset: Offset(0, isUnread ? 5 * scale : 3 * scale),
               ),
             ],
           ),
@@ -118,20 +118,20 @@ class NotificationItem extends StatelessWidget {
                       color: typeColor,
                     ),
                   ),
-                  // Unread indicator
-                  if (!notification.isRead)
+                  // Unread dot (email-like)
+                  if (isUnread)
                     Positioned(
                       right: -2 * scale,
                       top: -2 * scale,
                       child: Container(
-                        width: 14 * scale,
-                        height: 14 * scale,
+                        width: 16 * scale,
+                        height: 16 * scale,
                         decoration: BoxDecoration(
-                          color: typeColor,
+                          color: AppColors.primary,
                           shape: BoxShape.circle,
                           border: Border.all(
                             color: AppColors.white,
-                            width: 2.5 * scale,
+                            width: 3 * scale,
                           ),
                         ),
                       ),
@@ -144,14 +144,11 @@ class NotificationItem extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Title
                     Text(
                       notification.title,
                       style: AppTextStyles.arimo(
                         fontSize: 16 * scale,
-                        fontWeight: notification.isRead
-                            ? FontWeight.w600
-                            : FontWeight.w700,
+                        fontWeight: isUnread ? FontWeight.w800 : FontWeight.w600,
                         color: AppColors.textPrimary,
                       ).copyWith(
                         letterSpacing: -0.3,
@@ -163,12 +160,12 @@ class NotificationItem extends StatelessWidget {
                     if (notification.description != null &&
                         notification.description!.isNotEmpty) ...[
                       SizedBox(height: 8 * scale),
-                      // Description
                       Text(
                         notification.description!,
                         style: AppTextStyles.arimo(
                           fontSize: 14 * scale,
-                          fontWeight: FontWeight.normal,
+                          fontWeight:
+                              isUnread ? FontWeight.w700 : FontWeight.normal,
                           color: AppColors.textSecondary,
                         ).copyWith(height: 1.5),
                         maxLines: 2,
@@ -176,7 +173,6 @@ class NotificationItem extends StatelessWidget {
                       ),
                     ],
                     SizedBox(height: 10 * scale),
-                    // Time ago with icon
                     Row(
                       children: [
                         Icon(
@@ -189,7 +185,8 @@ class NotificationItem extends StatelessWidget {
                           _formatTimeAgo(notification.createdAt),
                           style: AppTextStyles.arimo(
                             fontSize: 12 * scale,
-                            fontWeight: FontWeight.normal,
+                            fontWeight:
+                                isUnread ? FontWeight.w700 : FontWeight.normal,
                             color: AppColors.textSecondary.withValues(alpha: 0.7),
                           ),
                         ),

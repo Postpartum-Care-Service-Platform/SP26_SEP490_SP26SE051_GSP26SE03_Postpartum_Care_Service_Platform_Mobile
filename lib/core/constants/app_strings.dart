@@ -7,51 +7,51 @@ class AppStrings {
   static const String appName = 'The Joyful Nest';
 
   // Login Screen
-  static const String signInTitle = 'Sign In to The Joyful Nest';
-  static const String signIn = 'Sign in';
-  static const String signUp = 'Sign up';
+  static const String signInTitle = 'Đăng nhập vào The Joyful Nest';
+  static const String signIn = 'Đăng nhập';
+  static const String signUp = 'Đăng ký';
   static const String google = 'Google';
-  static const String or = 'or';
+  static const String or = 'hoặc';
 
   // Form Labels
   static const String email = 'Email';
-  static const String password = 'Password';
-  static const String username = 'Username';
-  static const String phone = 'Phone';
+  static const String password = 'Mật khẩu';
+  static const String username = 'Tên đăng nhập';
+  static const String phone = 'Số điện thoại';
 
   // Placeholders
-  static const String emailPlaceholder = 'your@email.com';
-  static const String passwordPlaceholder = 'password';
-  static const String usernamePlaceholder = 'Enter your username';
-  static const String phonePlaceholder = 'Enter your phone number';
+  static const String emailPlaceholder = 'Nhập email';
+  static const String passwordPlaceholder = 'Nhập mật khẩu';
+  static const String usernamePlaceholder = 'Nhập tên đăng nhập';
+  static const String phonePlaceholder = 'Nhập số điện thoại';
 
   // Reset Password Screen
-  static const String resetYourPassword = 'Reset Your Password';
+  static const String resetYourPassword = 'Đặt lại mật khẩu';
   static const String resetPasswordDescription =
-      "Enter your email address and we'll send you a password reset link.";
-  static const String resetPassword = 'Reset Password';
-  static const String rememberYourPassword = 'Remember your password?';
+      'Nhập email của bạn, chúng tôi sẽ gửi liên kết đặt lại mật khẩu.';
+  static const String resetPassword = 'Đặt lại mật khẩu';
+  static const String rememberYourPassword = 'Bạn đã nhớ mật khẩu?';
 
   // Sign Up Screen
-  static const String signUpTitle = 'Create your account';
+  static const String signUpTitle = 'Tạo tài khoản';
   static const String signUpDescription =
-      'Enter your details below to create a new account.';
-  static const String fullName = 'Full name';
-  static const String confirmPassword = 'Confirm password';
-  static const String fullNamePlaceholder = 'Your name';
-  static const String confirmPasswordPlaceholder = 'Re-enter your password';
-  static const String alreadyHaveAccount = 'Already have an account?';
+      'Nhập thông tin bên dưới để tạo tài khoản mới.';
+  static const String fullName = 'Họ và tên';
+  static const String confirmPassword = 'Xác nhận mật khẩu';
+  static const String fullNamePlaceholder = 'Nhập họ và tên';
+  static const String confirmPasswordPlaceholder = 'Nhập lại mật khẩu';
+  static const String alreadyHaveAccount = 'Bạn đã có tài khoản?';
 
   // Splash Screen
   static const String tagline = 'Tổ ấm hạnh phúc của bạn.';
-  static const String loading = 'Loading...';
+  static const String loading = 'Đang tải...';
   static const String processing = 'Đang xử lý...';
   static const String deleting = 'Đang xóa...';
 
   // Links
-  static const String needAnAccount = 'Need an account?';
-  static const String forgotPassword = 'Forgot your password?';
-  static const String resetIt = 'Reset it';
+  static const String needAnAccount = 'Bạn chưa có tài khoản?';
+  static const String forgotPassword = 'Quên mật khẩu?';
+  static const String resetIt = 'Quên mật khẩu?';
   static const String send = 'Gửi';
 
   // Home Screen
@@ -71,20 +71,20 @@ class AppStrings {
   static const String resortMap = 'Bản đồ Resort';
 
   //Error Input
-  static const String errorInputEmail = 'Please enter your email or username';
-  static const String errorInputPassword = 'Please enter your password';
-  static const String errorInputUsername = 'Please enter your username';
-  static const String errorInputPhone = 'Please enter your phone number';
-  static const String errorInputEmailRequired = 'Please enter your email';
-  static const String errorInputEmailInvalid = 'Please enter a valid email';
-  static const String errorInputPasswordRequired = 'Please enter your password';
+  static const String errorInputEmail = 'Vui lòng nhập email hoặc tên đăng nhập';
+  static const String errorInputPassword = 'Vui lòng nhập mật khẩu';
+  static const String errorInputUsername = 'Vui lòng nhập tên đăng nhập';
+  static const String errorInputPhone = 'Vui lòng nhập số điện thoại';
+  static const String errorInputEmailRequired = 'Vui lòng nhập email';
+  static const String errorInputEmailInvalid = 'Vui lòng nhập email hợp lệ';
+  static const String errorInputPasswordRequired = 'Vui lòng nhập mật khẩu';
   static const String errorInputPasswordMinLength =
-      'Password must be at least 6 characters';
+      'Mật khẩu phải có ít nhất 6 ký tự';
   static const String errorInputConfirmPassword =
-      'Please confirm your password';
-  static const String errorInputPasswordsNotMatch = 'Passwords do not match';
-  static const String errorFillAllFields = 'Please fill in all fields';
-  static const String errorOtpInvalid = 'Please enter a valid 6-digit OTP';
+      'Vui lòng xác nhận mật khẩu';
+  static const String errorInputPasswordsNotMatch = 'Mật khẩu không khớp';
+  static const String errorFillAllFields = 'Vui lòng điền đầy đủ thông tin';
+  static const String errorOtpInvalid = 'Vui lòng nhập mã OTP 6 chữ số hợp lệ';
 
   //Toast Message
   static const String successLogin = 'Đăng nhập thành công';
@@ -97,7 +97,8 @@ class AppStrings {
   static const String errorUpdateProfile = 'Cập nhật thông tin thất bại';
   static const String successVerifyEmail = 'Xác thực email thành công';
   static const String errorVerifyEmail = 'Xác thực email thất bại';
-  static const String successResetPassword = 'Reset link sent!';
+  static const String successResetPassword =
+      'Đã gửi liên kết đặt lại mật khẩu!';
 
   // OTP Verification Screen
   static const String otpVerificationTitle = 'Xác thực Email';
@@ -108,9 +109,9 @@ class AppStrings {
   static const String resendOtpCountdown = 'Gửi lại OTP sau {seconds}s';
 
   // Profile Screen
-  static const String profileTitle = 'Profile';
-  static const String profileScreen = 'Profile Screen';
-  static const String welcomeBack = 'Welcome Back';
+  static const String profileTitle = 'Hồ sơ';
+  static const String profileScreen = 'Màn hình hồ sơ';
+  static const String welcomeBack = 'Chào mừng bạn quay lại';
   static const String logoutTitle = 'Đăng xuất';
   static const String logoutConfirmation = 'Bạn có chắc chắn muốn đăng xuất?';
   static const String cancel = 'Hủy';
@@ -192,9 +193,9 @@ class AppStrings {
   static const String privacy = 'Chính sách bảo mật';
 
   // Other Screens
-  static const String servicesScreen = 'Services Screen';
-  static const String scheduleScreen = 'Schedule Screen';
-  static const String chatScreen = 'Chat Screen';
+  static const String servicesScreen = 'Màn hình dịch vụ';
+  static const String scheduleScreen = 'Màn hình lịch hẹn';
+  static const String chatScreen = 'Màn hình tư vấn';
   static const String chatTitle = 'Tư vấn & Chat AI';
   static const String chatSubtitle =
       'Trao đổi nhanh với trợ lý AI hoặc yêu cầu nhân viên hỗ trợ';
@@ -223,14 +224,14 @@ class AppStrings {
   static const String chatMessengerLabel = 'Messenger';
 
   // Bottom Navigation Bar
-  static const String bottomNavHome = 'Home';
+  static const String bottomNavHome = 'Trang chủ';
   static const String bottomNavServices = 'Dịch vụ';
   static const String bottomNavSchedule = 'Lịch hẹn';
   static const String bottomNavChat = 'Tư vấn';
   static const String bottomNavProfile = 'Tôi';
 
   // Error Messages
-  static const String errorLoginFailed = 'Login failed';
+  static const String errorLoginFailed = 'Đăng nhập thất bại';
 
   // Account Details Screen
   static const String accountDetailsTitle = 'Thông tin chi tiết';
@@ -251,9 +252,12 @@ class AppStrings {
   static const String noAccountData = 'Không có dữ liệu tài khoản.';
 
   // Notification Screen
-  static const String notificationTitle = 'Notification';
-  static const String latestNotification = 'Latest notification';
-  static const String sortBy = 'Sort By';
+  static const String notificationAll = 'Tất cả';
+  static const String notificationUnread = 'Chưa đọc';
+  static const String notificationRead = 'Đã đọc';
+  static const String notificationTitle = 'Thông báo';
+  static const String latestNotification = 'Thông báo mới nhất';
+  static const String sortBy = 'Sắp xếp theo';
   static const String noNotifications = 'Không có thông báo nào';
   static const String minutesAgo = '{minutes} phút trước';
   static const String hoursAgo = '{hours} giờ trước';
@@ -266,6 +270,8 @@ class AppStrings {
   static const String notificationStatus = 'Trạng thái';
   static const String notificationStatusRead = 'Đã đọc';
   static const String notificationStatusUnread = 'Chưa đọc';
+  static const String notificationUnreadSummary = 'Bạn có {count} thông báo chưa đọc';
+  static const String notificationUnreadCta = 'Xem ngay';
 
   // Package Screen
   static const String noPackages = 'Chưa có gói dịch vụ nào';

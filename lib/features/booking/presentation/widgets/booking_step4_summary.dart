@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../booking/presentation/bloc/booking_bloc.dart';
@@ -227,7 +228,7 @@ class BookingStep4Summary extends StatelessWidget {
                         height: 40 * scale,
                         padding: EdgeInsets.all(2 * scale),
                         child: SvgPicture.asset(
-                          'assets/images/payos_logo.svg',
+                          AppAssets.payosLogo,
                           fit: BoxFit.contain,
                           colorFilter: ColorFilter.mode(AppColors.verified, BlendMode.srcIn),
                         ),

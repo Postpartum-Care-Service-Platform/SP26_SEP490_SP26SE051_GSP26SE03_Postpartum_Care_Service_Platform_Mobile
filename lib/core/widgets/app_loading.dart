@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../constants/app_colors.dart';
 import '../utils/app_responsive.dart';
+import '../constants/app_assets.dart';
 
 /// Loading overlay widget - Full screen loading cover
 class AppLoading {
@@ -95,7 +96,7 @@ class _AppLoadingIndicatorState extends State<AppLoadingIndicator>
     return RotationTransition(
       turns: _rotationAnimation,
       child: SvgPicture.asset(
-        'assets/images/app_icon_3.svg',
+        AppAssets.appIconThird,
         width: size,
         height: size,
         colorFilter: widget.color != null
@@ -214,7 +215,7 @@ class _LoadingWidgetState extends State<_LoadingWidget>
                     RotationTransition(
                       turns: _rotationAnimation,
                       child: SvgPicture.asset(
-                        'assets/images/app_icon_3.svg',
+                        AppAssets.appIconThird,
                         width: 64 * scale,
                         height: 64 * scale,
                       ),

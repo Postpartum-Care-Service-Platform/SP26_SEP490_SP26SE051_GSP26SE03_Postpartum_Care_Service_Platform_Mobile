@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_widgets.dart';
@@ -38,7 +39,7 @@ class AboutScreen extends StatelessWidget {
                 ),
                 padding: EdgeInsets.all(20 * scale),
                 child: SvgPicture.asset(
-                  'assets/images/app_icon_3.svg',
+                  AppAssets.appIconThird,
                   width: 80 * scale,
                   height: 80 * scale,
                 ),
