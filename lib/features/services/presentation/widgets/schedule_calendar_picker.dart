@@ -101,6 +101,11 @@ class _ScheduleCalendarPickerState extends State<ScheduleCalendarPicker> {
     return widget.datesWithSchedules.any((d) => _isSameDay(d, date));
   }
 
+  bool _isToday(DateTime date) {
+    final now = DateTime.now();
+    return _isSameDay(date, now);
+  }
+
   @override
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
@@ -182,6 +187,7 @@ class _ScheduleCalendarPickerState extends State<ScheduleCalendarPicker> {
               final dayLabel = weekDays[index];
               final isSelected = _isSameDay(date, _selectedDate);
               final hasSchedule = _hasSchedule(date);
+              final isToday = _isToday(date);
 
               return GestureDetector(
                 onTap: () => _selectDate(date),
@@ -194,7 +200,9 @@ class _ScheduleCalendarPickerState extends State<ScheduleCalendarPicker> {
                   decoration: BoxDecoration(
                     color: isSelected
                         ? AppColors.primary
-                        : Colors.transparent,
+                        : isToday
+                            ? Colors.grey.shade200
+                            : Colors.transparent,
                     borderRadius: BorderRadius.circular(12 * scale),
                   ),
                   child: Column(

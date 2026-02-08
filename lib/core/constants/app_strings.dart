@@ -399,16 +399,23 @@ class AppStrings {
   static const String paymentPending = 'Đang chờ thanh toán';
   static const String paymentCheckStatus = 'Kiểm tra trạng thái';
   static const String paymentCreateError = 'Không thể tạo link thanh toán';
+    // Booking History Screen
+  static const String noBookingHistory = 'Chưa có lịch sử đặt phòng';
+  static const String noCustomerInformation = 'Chưa có thông tin khách hàng';
+  static const String noTransactions = 'Chưa có giao dịch';
+  static const String noContract = 'Chưa có hợp đồng';
 
   // Invoice Screen
   static const String invoiceTitle = 'Hóa đơn';
+  static const String invoiceBookingDetails = 'Chi tiết đặt phòng';
+  static const String invoiceCustomerInformation = 'Thông tin khách hàng';
+  static const String invoiceTransactionsAndContract = 'Giao dịch và hợp đồng';
+  static const String invoicePackage = 'Gói dịch vụ';
   static const String invoiceCode = 'Mã hóa đơn';
   static const String invoiceDate = 'Ngày tạo';
   static const String invoiceCustomer = 'Khách hàng';
   static const String invoiceEmail = 'Email';
   static const String invoicePhone = 'Số điện thoại';
-  static const String invoiceBookingDetails = 'Chi tiết đặt phòng';
-  static const String invoicePackage = 'Gói dịch vụ';
   static const String invoiceRoom = 'Phòng';
   static const String invoiceCheckIn = 'Check-in';
   static const String invoiceCheckOut = 'Check-out';

@@ -32,9 +32,9 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
   int _currentPage = 0;
 
   static const _paneTitles = [
-    'Chi tiết đặt phòng',
-    'Thông tin khách hàng',
-    'Giao dịch và hợp đồng',
+    AppStrings.invoiceBookingDetails,
+    AppStrings.invoiceCustomerInformation,
+    AppStrings.invoiceTransactionsAndContract,
   ];
 
   @override
@@ -181,7 +181,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                             child: booking.customer != null
                                 ? CustomerInfoCard(customer: booking.customer!)
                                 : _PaneEmpty(
-                                    label: 'Chưa có thông tin khách hàng',
+                                    label: AppStrings.noCustomerInformation,
                                     scale: scale,
                                   ),
                           ),
@@ -245,7 +245,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                                           ],
                                         )
                                       : _PaneEmpty(
-                                          label: 'Chưa có giao dịch',
+                                          label: AppStrings.noTransactions,
                                           scale: scale,
                                         ),
                                 ),
@@ -336,7 +336,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                                   )
                                 else
                                   _PaneEmpty(
-                                    label: 'Chưa có hợp đồng',
+                                    label: AppStrings.noContract,
                                     scale: scale,
                                   ),
                               ],

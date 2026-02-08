@@ -95,6 +95,13 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     var message = e.toString();
     message = message.replaceAll('Exception: ', '');
 
+    // Remove technical error details that are not user-friendly
+    if (message.contains('status code 500') ||
+        message.contains('validateStatus') ||
+        message.contains('RequestOptions')) {
+      return 'Không thể gửi tin nhắn: Lỗi máy chủ. Vui lòng thử lại sau.';
+    }
+
     if (message.contains('request took longer') ||
         message.contains('receiveTimeout') ||
         message.contains('RequestOptions.receiveTimeout')) {
@@ -276,11 +283,26 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         content: event.content,
         toStaffChannel: selected.hasActiveSupport,
       );
-      // Replace optimistic message list with server truth (user + AI responses)
-      final newMessages = List<ChatMessage>.from(selected.messages)
-        ..addAll(result.messagesToAppend);
+      
+      // Use current state to get the latest conversation (may have been updated by Hub)
+      final currentConversation = state.selectedConversation ?? selected;
+      
+      // Remove optimistic messages (negative IDs) and replace with server truth
+      final messagesWithoutOptimistic = currentConversation.messages
+          .where((m) => m.id >= 0) // Remove optimistic messages (negative IDs)
+          .toList();
+      
+      // Add server messages, avoiding duplicates
+      final existingIds = messagesWithoutOptimistic.map((m) => m.id).toSet();
+      final newMessages = List<ChatMessage>.from(messagesWithoutOptimistic);
+      for (final msg in result.messagesToAppend) {
+        if (!existingIds.contains(msg.id)) {
+          newMessages.add(msg);
+          existingIds.add(msg.id);
+        }
+      }
 
-      final updatedConversation = selected.copyWith(messages: newMessages);
+      final updatedConversation = currentConversation.copyWith(messages: newMessages);
       final updatedList = _upsertConversation(updatedConversation);
 
       final updatedStructured =
@@ -289,15 +311,25 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         updatedStructured[result.aiMessage!.id] = result.aiStructuredData!;
       }
 
+      // Only set isAiTyping to false if:
+      // 1. Has human support (toStaffChannel = true) - no AI reply expected
+      // 2. Or AI message is already in the result (AI replied immediately)
+      // Otherwise, keep isAiTyping true until AI message arrives via Hub
+      final shouldStopTyping = selected.hasActiveSupport || result.aiMessage != null;
+
       emit(state.copyWith(
         selectedConversation: updatedConversation,
         conversations: updatedList,
         sendStatus: ChatSendStatus.success,
-        isAiTyping: false,
+        isAiTyping: !shouldStopTyping,
         aiStructuredByMessageId: updatedStructured,
       ));
     } catch (e) {
+      // Remove optimistic message on failure - restore original conversation
+      final originalList = _upsertConversation(selected);
       emit(state.copyWith(
+        selectedConversation: selected,
+        conversations: originalList,
         sendStatus: ChatSendStatus.failure,
         isAiTyping: false,
         errorMessage: _formatError(e),
@@ -433,17 +465,41 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     if (index == -1) return;
 
     final conversation = state.conversations[index];
-    final messages = List<ChatMessage>.from(conversation.messages)
+    
+    // Check if message already exists to avoid duplicates
+    final messageExists = conversation.messages
+        .any((m) => m.id == event.data.message.id);
+    
+    if (messageExists) {
+      // Message already exists, just update isAiTyping if needed
+      if (event.data.message.senderType.toLowerCase() == 'ai') {
+        emit(state.copyWith(isAiTyping: false));
+      }
+      return;
+    }
+
+    // Remove optimistic messages (negative IDs) when receiving real message from Hub
+    // This prevents duplicate messages when Hub sends the same message that was already added via API
+    final messagesWithoutOptimistic = conversation.messages
+        .where((m) => m.id >= 0) // Keep only real messages (non-negative IDs)
+        .toList();
+    
+    final messages = List<ChatMessage>.from(messagesWithoutOptimistic)
       ..add(event.data.message);
     final updatedConversation = conversation.copyWith(messages: messages);
     final updatedList = _upsertConversation(updatedConversation);
+
+    // Only set isAiTyping to false when receiving AI message
+    // For customer messages, keep the current isAiTyping state
+    final isAiMessage = event.data.message.senderType.toLowerCase() == 'ai';
+    final shouldStopTyping = isAiMessage;
 
     emit(state.copyWith(
       conversations: updatedList,
       selectedConversation: state.selectedConversation?.id == updatedConversation.id
           ? updatedConversation
           : state.selectedConversation,
-      isAiTyping: false,
+      isAiTyping: shouldStopTyping ? false : state.isAiTyping,
     ));
   }
 

@@ -101,7 +101,7 @@ class BookingHistoryScreen extends StatelessWidget {
                       ),
                       SizedBox(height: 16 * scale),
                       Text(
-                        'Chưa có lịch sử đặt phòng',
+                        AppStrings.noBookingHistory,
                         style: AppTextStyles.arimo(
                           fontSize: 16 * scale,
                           color: AppColors.textSecondary,

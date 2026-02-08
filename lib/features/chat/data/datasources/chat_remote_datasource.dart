@@ -77,8 +77,41 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
       }
       throw Exception('Phản hồi gửi tin không hợp lệ');
     } on DioException catch (e) {
-      throw Exception('Không thể gửi tin nhắn: ${e.message}');
+      final errorMessage = _getErrorMessage(e);
+      throw Exception(errorMessage);
     }
+  }
+
+  String _getErrorMessage(DioException error) {
+    if (error.response != null) {
+      final statusCode = error.response!.statusCode;
+      
+      switch (statusCode) {
+        case 400:
+          return 'Không thể gửi tin nhắn: Dữ liệu không hợp lệ.';
+        case 401:
+          return 'Không thể gửi tin nhắn: Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.';
+        case 403:
+          return 'Không thể gửi tin nhắn: Bạn không có quyền thực hiện thao tác này.';
+        case 404:
+          return 'Không thể gửi tin nhắn: Không tìm thấy cuộc trò chuyện.';
+        case 500:
+          return 'Không thể gửi tin nhắn: Lỗi máy chủ. Vui lòng thử lại sau.';
+        case 502:
+        case 503:
+        case 504:
+          return 'Không thể gửi tin nhắn: Máy chủ tạm thời không khả dụng. Vui lòng thử lại sau.';
+        default:
+          return 'Không thể gửi tin nhắn: Lỗi ${statusCode}.';
+      }
+    } else if (error.type == DioExceptionType.connectionTimeout ||
+        error.type == DioExceptionType.receiveTimeout) {
+      return 'Không thể gửi tin nhắn: Máy chủ phản hồi chậm. Vui lòng thử lại sau.';
+    } else if (error.type == DioExceptionType.connectionError) {
+      return 'Không thể gửi tin nhắn: Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.';
+    }
+
+    return 'Không thể gửi tin nhắn: ${error.message ?? "Lỗi không xác định"}';
   }
 
   @override

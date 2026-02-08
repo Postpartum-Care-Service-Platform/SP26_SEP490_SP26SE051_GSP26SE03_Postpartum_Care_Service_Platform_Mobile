@@ -100,6 +100,11 @@ class _MenuCalendarPickerState extends State<MenuCalendarPicker> {
     return widget.datesWithMenus.any((d) => _isSameDay(d, date));
   }
 
+  bool _isToday(DateTime date) {
+    final now = DateTime.now();
+    return _isSameDay(date, now);
+  }
+
   @override
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
@@ -181,6 +186,7 @@ class _MenuCalendarPickerState extends State<MenuCalendarPicker> {
               final dayLabel = weekDays[index];
               final isSelected = _isSameDay(date, _selectedDate);
               final hasMenu = _hasMenu(date);
+              final isToday = _isToday(date);
 
               return GestureDetector(
                 onTap: () => _selectDate(date),
@@ -193,7 +199,9 @@ class _MenuCalendarPickerState extends State<MenuCalendarPicker> {
                   decoration: BoxDecoration(
                     color: isSelected
                         ? AppColors.primary
-                        : Colors.transparent,
+                        : isToday
+                            ? Colors.grey.shade200
+                            : Colors.transparent,
                     borderRadius: BorderRadius.circular(12 * scale),
                   ),
                   child: Column(

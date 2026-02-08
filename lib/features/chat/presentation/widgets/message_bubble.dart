@@ -199,6 +199,7 @@ class MessageBubble extends StatelessWidget {
 
     // Với AI: luôn render dựa trên markdown (text + nhiều bảng), không dùng aiStructuredData nữa
     return _buildMarkdownWithTables(
+      context,
       formatted,
       maxWidth,
       scale,
@@ -264,6 +265,7 @@ class MessageBubble extends StatelessWidget {
   }
 
   Widget _buildMarkdownTable(
+    BuildContext context,
     String text,
     double maxWidth,
     double scale,
@@ -307,101 +309,209 @@ class MessageBubble extends StatelessWidget {
       }
     }
 
-    TableColumnWidth columnWidthForIndex(int index) {
-      // Tối ưu cho bảng 5 cột: STT | Tên Gói | Thời Gian | Giá | Mô Tả
-      if (headers.length == 5) {
-        switch (index) {
-          case 0: // STT
-            return const FlexColumnWidth(0.6);
-          case 1: // Tên gói
-            return const FlexColumnWidth(1.1);
-          case 2: // Thời gian
-            // tăng nhẹ để \"14 ngày\" hiển thị trên một dòng
-            return const FlexColumnWidth(1.2);
-          case 3: // Giá
-            return const FlexColumnWidth(1.1);
-          case 4: // Mô tả
-            return const FlexColumnWidth(1.6);
+    // Tính toán width tối thiểu cho mỗi cột dựa trên nội dung
+    double calculateMinColumnWidth(int index) {
+      double maxWidth = 0;
+      // Kiểm tra header
+      final headerText = headers[index];
+      final headerWidth = headerText.length * 8.0 * scale;
+      maxWidth = headerWidth > maxWidth ? headerWidth : maxWidth;
+      
+      // Kiểm tra các cell trong cột
+      for (final row in rows) {
+        if (index < row.length) {
+          final cellText = row[index];
+          final cellWidth = cellText.length * 8.0 * scale;
+          maxWidth = cellWidth > maxWidth ? cellWidth : maxWidth;
         }
       }
-      // Mặc định: chia đều
-      return const FlexColumnWidth();
+      
+      // Đảm bảo width tối thiểu
+      return (maxWidth + 32 * scale).clamp(80 * scale, double.infinity);
     }
 
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxWidth: maxWidth),
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(12 * scale),
-          border: Border.all(
-            color: AppColors.primary.withValues(alpha: 0.15),
-            width: 1,
+    final columnWidths = <int, TableColumnWidth>{};
+    double totalMinWidth = 0;
+    for (int i = 0; i < headers.length; i++) {
+      final minWidth = calculateMinColumnWidth(i);
+      columnWidths[i] = FixedColumnWidth(minWidth);
+      totalMinWidth += minWidth;
+    }
+
+    // Tạo bảng với scroll ngang
+    final tableWidget = Container(
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(12 * scale),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.15),
+          width: 1,
+        ),
+      ),
+      child: Table(
+        columnWidths: columnWidths,
+        border: TableBorder(
+          horizontalInside: BorderSide(
+            color: Colors.grey.withValues(alpha: 0.3),
+            width: 0.5,
+          ),
+          verticalInside: BorderSide(
+            color: Colors.grey.withValues(alpha: 0.3),
+            width: 0.5,
           ),
         ),
-        child: Table(
-          columnWidths: {
-            for (int i = 0; i < headers.length; i++) i: columnWidthForIndex(i),
-          },
-          border: TableBorder(
-            horizontalInside: BorderSide(
-              color: Colors.grey.withValues(alpha: 0.3),
-              width: 0.5,
+        children: [
+          TableRow(
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.06),
             ),
+            children: [
+              for (final h in headers)
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 8 * scale,
+                    vertical: 8 * scale,
+                  ),
+                  child: _buildInlineMarkdownText(
+                    h,
+                    scale,
+                    AppColors.textPrimary,
+                    isBaseBold: true,
+                    baseFontSize: 13,
+                  ),
+                ),
+            ],
           ),
-          children: [
+          for (final row in rows)
             TableRow(
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.06),
-              ),
               children: [
-                for (final h in headers)
+                for (var i = 0; i < headers.length; i++)
                   Padding(
                     padding: EdgeInsets.symmetric(
                       horizontal: 8 * scale,
-                      vertical: 6 * scale,
+                      vertical: 8 * scale,
                     ),
-                    child: _buildInlineMarkdownText(
-                      h,
+                    child: _buildTableCellText(
+                      i < row.length
+                          ? (priceColumnIndex != null &&
+                                  i == priceColumnIndex
+                              ? _formatPriceFromString(row[i])
+                              : (durationColumnIndex != null &&
+                                      i == durationColumnIndex
+                                  ? _formatDurationFromString(row[i])
+                                  : row[i]))
+                          : '',
                       scale,
                       AppColors.textPrimary,
-                      isBaseBold: true,
                     ),
                   ),
               ],
             ),
-            for (final row in rows)
-              TableRow(
-                children: [
-                  for (var i = 0; i < headers.length; i++)
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 8 * scale,
-                        vertical: 6 * scale,
-                      ),
-                      child: _buildInlineMarkdownText(
-                        i < row.length
-                            ? (priceColumnIndex != null &&
-                                    i == priceColumnIndex
-                                ? _formatPriceFromString(row[i])
-                                : (durationColumnIndex != null &&
-                                        i == durationColumnIndex
-                                    ? _formatDurationFromString(row[i])
-                                    : row[i]))
-                            : '',
-                        scale,
-                        AppColors.textPrimary,
-                      ),
-                    ),
-                ],
+        ],
+      ),
+    );
+
+    // Wrap trong SingleChildScrollView để cho phép scroll ngang
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: maxWidth),
+      child: Stack(
+        children: [
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minWidth: totalMinWidth.clamp(0, maxWidth),
               ),
-          ],
-        ),
+              child: tableWidget,
+            ),
+          ),
+          // Nút expand ở góc trên bên phải
+          Positioned(
+            top: 4 * scale,
+            right: 4 * scale,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => _showExpandedTable(
+                  context,
+                  text,
+                  scale,
+                  headers,
+                  rows,
+                  priceColumnIndex,
+                  durationColumnIndex,
+                ),
+                borderRadius: BorderRadius.circular(20 * scale),
+                child: Container(
+                  padding: EdgeInsets.all(6 * scale),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20 * scale),
+                    border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.open_in_full,
+                    size: 16 * scale,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
+  void _showExpandedTable(
+    BuildContext context,
+    String text,
+    double scale,
+    List<String> headers,
+    List<List<String>> rows,
+    int? priceColumnIndex,
+    int? durationColumnIndex,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => _TableExpandDialog(
+        text: text,
+        scale: scale,
+        headers: headers,
+        rows: rows,
+        priceColumnIndex: priceColumnIndex,
+        durationColumnIndex: durationColumnIndex,
+      ),
+    );
+  }
+
+  Widget _buildTableCellText(
+    String text,
+    double scale,
+    Color color,
+  ) {
+    // Text trong cell không wrap, cho phép scroll ngang ở cấp bảng
+    final spans = _buildMarkdownSpans(
+      text: text,
+      scale: scale,
+      color: color,
+      isBaseBold: false,
+      baseFontSize: 13,
+    );
+    
+    return RichText(
+      text: TextSpan(children: spans),
+      textAlign: TextAlign.left,
+      softWrap: false, // Không wrap text
+      overflow: TextOverflow.clip, // Clip text thay vì ellipsis để có thể scroll
+    );
+  }
+
   Widget _buildMarkdownWithTables(
+    BuildContext context,
     String text,
     double maxWidth,
     double scale,
@@ -455,6 +565,7 @@ class MessageBubble extends StatelessWidget {
         if (tableLines.length >= 2) {
           blocks.add(
             _buildMarkdownTable(
+              context,
               tableLines.join('\n'),
               maxWidth,
               scale,
@@ -718,3 +829,369 @@ class MessageBubble extends StatelessWidget {
   }
 }
 
+class _TableExpandDialog extends StatelessWidget {
+  final String text;
+  final double scale;
+  final List<String> headers;
+  final List<List<String>> rows;
+  final int? priceColumnIndex;
+  final int? durationColumnIndex;
+
+  const _TableExpandDialog({
+    required this.text,
+    required this.scale,
+    required this.headers,
+    required this.rows,
+    this.priceColumnIndex,
+    this.durationColumnIndex,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    
+    // Tính toán width tối thiểu cho mỗi cột
+    double calculateMinColumnWidth(int index) {
+      double maxWidth = 0;
+      final headerText = headers[index];
+      final headerWidth = headerText.length * 10.0 * scale;
+      maxWidth = headerWidth > maxWidth ? headerWidth : maxWidth;
+      
+      for (final row in rows) {
+        if (index < row.length) {
+          final cellText = row[index];
+          final cellWidth = cellText.length * 10.0 * scale;
+          maxWidth = cellWidth > maxWidth ? cellWidth : maxWidth;
+        }
+      }
+      
+      return (maxWidth + 40 * scale).clamp(100 * scale, double.infinity);
+    }
+
+    final columnWidths = <int, TableColumnWidth>{};
+    double totalMinWidth = 0;
+    for (int i = 0; i < headers.length; i++) {
+      final minWidth = calculateMinColumnWidth(i);
+      columnWidths[i] = FixedColumnWidth(minWidth);
+      totalMinWidth += minWidth;
+    }
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: EdgeInsets.all(16 * scale),
+      child: Container(
+        constraints: BoxConstraints(
+          maxWidth: screenWidth - 32 * scale,
+          maxHeight: screenHeight * 0.9,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(16 * scale),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header với nút đóng
+            Container(
+              padding: EdgeInsets.all(16 * scale),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: Colors.grey.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Bảng chi tiết',
+                    style: AppTextStyles.arimo(
+                      fontSize: 18 * scale,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.close, size: 24 * scale),
+                    onPressed: () => Navigator.of(context).pop(),
+                    color: AppColors.textPrimary,
+                  ),
+                ],
+              ),
+            ),
+            // Bảng với scroll cả ngang và dọc
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: SingleChildScrollView(
+                  child: Container(
+                    constraints: BoxConstraints(
+                      minWidth: totalMinWidth,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(12 * scale),
+                      border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.15),
+                        width: 1,
+                      ),
+                    ),
+                    margin: EdgeInsets.all(16 * scale),
+                    child: Table(
+                      columnWidths: columnWidths,
+                      border: TableBorder(
+                        horizontalInside: BorderSide(
+                          color: Colors.grey.withValues(alpha: 0.3),
+                          width: 0.5,
+                        ),
+                        verticalInside: BorderSide(
+                          color: Colors.grey.withValues(alpha: 0.3),
+                          width: 0.5,
+                        ),
+                      ),
+                      children: [
+                        TableRow(
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.06),
+                          ),
+                          children: [
+                            for (final h in headers)
+                              Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 12 * scale,
+                                  vertical: 12 * scale,
+                                ),
+                                child: _buildInlineMarkdownText(
+                                  h,
+                                  scale,
+                                  AppColors.textPrimary,
+                                  isBaseBold: true,
+                                  baseFontSize: 14,
+                                ),
+                              ),
+                          ],
+                        ),
+                        for (final row in rows)
+                          TableRow(
+                            children: [
+                              for (var i = 0; i < headers.length; i++)
+                                Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 12 * scale,
+                                    vertical: 12 * scale,
+                                  ),
+                                  child: _buildTableCellText(
+                                    i < row.length
+                                        ? (priceColumnIndex != null &&
+                                                i == priceColumnIndex
+                                            ? _formatPriceFromString(row[i])
+                                            : (durationColumnIndex != null &&
+                                                    i == durationColumnIndex
+                                                ? _formatDurationFromString(row[i])
+                                                : row[i]))
+                                        : '',
+                                    scale,
+                                    AppColors.textPrimary,
+                                  ),
+                                ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInlineMarkdownText(
+    String text,
+    double scale,
+    Color color, {
+    bool isBaseBold = false,
+    double baseFontSize = 14,
+  }) {
+    final baseStyle = AppTextStyles.arimo(
+      fontSize: baseFontSize * scale,
+      color: color,
+      fontWeight: isBaseBold ? FontWeight.w700 : FontWeight.w500,
+    ).copyWith(height: 1.4);
+
+    final pattern = RegExp(
+      r'(\*\*.+?\*\*|__.+?__|\*.+?\*|_.+?_+|~~.+?~~)',
+      dotAll: true,
+    );
+
+    final spans = <TextSpan>[];
+    var currentIndex = 0;
+
+    for (final match in pattern.allMatches(text)) {
+      if (match.start > currentIndex) {
+        spans.add(TextSpan(
+          text: text.substring(currentIndex, match.start),
+          style: baseStyle,
+        ));
+      }
+
+      final matchText = match.group(0)!;
+      TextStyle style = baseStyle;
+      String content = matchText;
+
+      if ((matchText.startsWith('**') && matchText.endsWith('**')) ||
+          (matchText.startsWith('__') && matchText.endsWith('__'))) {
+        content = matchText.substring(2, matchText.length - 2);
+        style = baseStyle.copyWith(fontWeight: FontWeight.w800);
+      } else if ((matchText.startsWith('*') && matchText.endsWith('*')) ||
+          (matchText.startsWith('_') && matchText.endsWith('_'))) {
+        content = matchText.substring(1, matchText.length - 1);
+        style = baseStyle.copyWith(fontStyle: FontStyle.italic);
+      } else if (matchText.startsWith('~~') && matchText.endsWith('~~')) {
+        content = matchText.substring(2, matchText.length - 2);
+        style = baseStyle.copyWith(decoration: TextDecoration.lineThrough);
+      }
+
+      spans.add(TextSpan(text: content, style: style));
+      currentIndex = match.end;
+    }
+
+    if (currentIndex < text.length) {
+      spans.add(TextSpan(
+        text: text.substring(currentIndex),
+        style: baseStyle,
+      ));
+    }
+
+    return RichText(
+      text: TextSpan(children: spans),
+      textAlign: TextAlign.left,
+      softWrap: true,
+    );
+  }
+
+  Widget _buildTableCellText(
+    String text,
+    double scale,
+    Color color,
+  ) {
+    final baseStyle = AppTextStyles.arimo(
+      fontSize: 13 * scale,
+      color: color,
+      fontWeight: FontWeight.w500,
+    ).copyWith(height: 1.4);
+
+    final pattern = RegExp(
+      r'(\*\*.+?\*\*|__.+?__|\*.+?\*|_.+?_+|~~.+?~~)',
+      dotAll: true,
+    );
+
+    final spans = <TextSpan>[];
+    var currentIndex = 0;
+
+    for (final match in pattern.allMatches(text)) {
+      if (match.start > currentIndex) {
+        spans.add(TextSpan(
+          text: text.substring(currentIndex, match.start),
+          style: baseStyle,
+        ));
+      }
+
+      final matchText = match.group(0)!;
+      TextStyle style = baseStyle;
+      String content = matchText;
+
+      if ((matchText.startsWith('**') && matchText.endsWith('**')) ||
+          (matchText.startsWith('__') && matchText.endsWith('__'))) {
+        content = matchText.substring(2, matchText.length - 2);
+        style = baseStyle.copyWith(fontWeight: FontWeight.w800);
+      } else if ((matchText.startsWith('*') && matchText.endsWith('*')) ||
+          (matchText.startsWith('_') && matchText.endsWith('_'))) {
+        content = matchText.substring(1, matchText.length - 1);
+        style = baseStyle.copyWith(fontStyle: FontStyle.italic);
+      } else if (matchText.startsWith('~~') && matchText.endsWith('~~')) {
+        content = matchText.substring(2, matchText.length - 2);
+        style = baseStyle.copyWith(decoration: TextDecoration.lineThrough);
+      }
+
+      spans.add(TextSpan(text: content, style: style));
+      currentIndex = match.end;
+    }
+
+    if (currentIndex < text.length) {
+      spans.add(TextSpan(
+        text: text.substring(currentIndex),
+        style: baseStyle,
+      ));
+    }
+
+    return RichText(
+      text: TextSpan(children: spans),
+      textAlign: TextAlign.left,
+      softWrap: false,
+      overflow: TextOverflow.clip,
+    );
+  }
+
+  String _formatPriceFromString(String raw) {
+    final matches = RegExp(r'\d+').allMatches(raw);
+    final digits = matches.map((m) => m.group(0)!).join();
+    if (digits.isEmpty) return raw;
+
+    final value = int.tryParse(digits);
+    if (value == null) return raw;
+
+    final v = value;
+    if (v <= 0) return '$v đ';
+
+    if (v >= 1000000000) {
+      final billions = v ~/ 1000000000;
+      final rem = v % 1000000000;
+      if (rem == 0) return '$billions tỉ';
+      final millions = rem ~/ 1000000;
+      if (rem % 1000000 == 0 && millions > 0) {
+        return '$billions tỉ $millions triệu';
+      }
+      return '$billions tỉ';
+    }
+
+    if (v >= 1000000) {
+      final millions = v ~/ 1000000;
+      final rem = v % 1000000;
+      if (rem == 0) return '$millions triệu';
+
+      if (rem % 100000 == 0) {
+        final tenth = rem ~/ 100000;
+        return '$millions triệu $tenth';
+      }
+      return '$millions triệu';
+    }
+
+    if (v >= 1000 && v % 1000 == 0) {
+      final unit = v ~/ 1000;
+      return '$unit ngàn';
+    }
+
+    if (v >= 100 && v % 100 == 0) {
+      final unit = v ~/ 100;
+      return '$unit trăm';
+    }
+
+    return '$v đ';
+  }
+
+  String _formatDurationFromString(String raw) {
+    final match = RegExp(r'\d+').firstMatch(raw);
+    if (match == null) return raw;
+    final digits = match.group(0);
+    if (digits == null) return raw;
+    final v = int.tryParse(digits);
+    if (v == null) return raw;
+    return '$v ngày';
+  }
+}
