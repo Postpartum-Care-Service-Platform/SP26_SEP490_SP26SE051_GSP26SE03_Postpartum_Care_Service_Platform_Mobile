@@ -6,6 +6,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
+import '../../../../core/utils/app_markdown_utils.dart';
 import '../../../../core/widgets/app_loading.dart';
 import '../../../../core/widgets/app_widgets.dart';
 import '../../domain/entities/chat_conversation.dart';
@@ -48,34 +49,9 @@ class ConversationList extends StatelessWidget {
 
   String _buildPreviewText(ChatMessage? message) {
     if (message == null) return AppStrings.chatTypingHint;
-    var text = message.content.trim();
+    final text = message.content.trim();
     if (text.isEmpty) return AppStrings.chatTypingHint;
-
-    // Bỏ các dòng bảng markdown và separator '---'
-    final lines = text.split('\n');
-    final buffer = <String>[];
-    for (final line in lines) {
-      final trimmed = line.trim();
-      if (trimmed.isEmpty) continue;
-      if (trimmed.startsWith('|')) continue;
-      if (trimmed.startsWith('---')) continue;
-      buffer.add(trimmed);
-    }
-    text = buffer.join(' ');
-
-    // Loại bỏ các ký hiệu markdown đơn giản: **bold**, _italic_, __bold__, ~~del~~
-    text = text
-        .replaceAllMapped(
-            RegExp(r'(\*\*|__)(.+?)(\*\*|__)'), (m) => m[2] ?? '')
-        .replaceAllMapped(RegExp(r'(\*|_)(.+?)(\*|_)'), (m) => m[2] ?? '')
-        .replaceAllMapped(
-            RegExp(r'(~~)(.+?)(~~)'), (m) => m[2] ?? '');
-
-    // Thu gọn khoảng trắng
-    text = text.replaceAll(RegExp(r'\s+'), ' ').trim();
-
-    if (text.isEmpty) return AppStrings.chatTypingHint;
-    return text;
+    return AppMarkdownUtils.buildPreviewText(text);
   }
 
   List<ChatConversation> _filterConversations(
@@ -260,7 +236,7 @@ class ConversationList extends StatelessWidget {
                     ),
                     SizedBox(height: 20 * scale),
                     Text(
-                      'Không tìm thấy kết quả',
+                      AppStrings.chatSearchNoResults,
                       textAlign: TextAlign.center,
                       style: AppTextStyles.tinos(
                         fontSize: 18 * scale,
@@ -270,7 +246,7 @@ class ConversationList extends StatelessWidget {
                     ),
                     SizedBox(height: 8 * scale),
                     Text(
-                      'Thử tìm kiếm với từ khóa khác',
+                      AppStrings.chatSearchTryDifferent,
                       textAlign: TextAlign.center,
                       style: AppTextStyles.arimo(
                         fontSize: 14 * scale,

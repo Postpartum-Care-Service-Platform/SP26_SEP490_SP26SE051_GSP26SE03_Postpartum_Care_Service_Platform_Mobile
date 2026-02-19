@@ -69,7 +69,7 @@ class BookingStep1PackageSelection extends StatelessWidget {
               }
 
               if (packageState is PackageLoaded) {
-                if (packageState.packages.isEmpty) {
+                if (packageState.centerPackages.isEmpty) {
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -102,9 +102,9 @@ class BookingStep1PackageSelection extends StatelessWidget {
                     mainAxisSpacing: 12 * scale,
                     childAspectRatio: 0.75,
                   ),
-                  itemCount: packageState.packages.length,
+                  itemCount: packageState.centerPackages.length,
                   itemBuilder: (context, index) {
-                    final package = packageState.packages[index];
+                    final package = packageState.centerPackages[index];
                     final isSelected = selectedPackageId == package.id;
 
                     return GestureDetector(

@@ -29,9 +29,13 @@ import '../../features/notification/domain/usecases/mark_notification_read_useca
 import '../../features/notification/domain/usecases/get_unread_count_usecase.dart';
 import '../../features/notification/presentation/bloc/notification_bloc.dart';
 import '../../features/package/data/datatsources/package_remote_datasource.dart';
+import '../../features/package/data/datatsources/package_type_remote_datasource.dart';
 import '../../features/package/data/repositories/package_repository_impl.dart';
+import '../../features/package/data/repositories/package_type_repository_impl.dart';
 import '../../features/package/domain/repositories/package_repository.dart';
+import '../../features/package/domain/repositories/package_type_repository.dart';
 import '../../features/package/domain/usecases/get_packages_usecase.dart';
+import '../../features/package/domain/usecases/get_package_types_usecase.dart';
 import '../../features/package/presentation/bloc/package_bloc.dart';
 import '../../features/care_plan/data/datasources/care_plan_remote_datasource.dart';
 import '../../features/care_plan/data/repositories/care_plan_repository_impl.dart';
@@ -147,6 +151,9 @@ class InjectionContainer {
   static PackageRemoteDataSource get _packageRemoteDataSource =>
       PackageRemoteDataSourceImpl();
   
+  static PackageTypeRemoteDataSource get _packageTypeRemoteDataSource =>
+      PackageTypeRemoteDataSourceImpl();
+  
   static CarePlanRemoteDataSource get _carePlanRemoteDataSource =>
       CarePlanRemoteDataSourceImpl();
 
@@ -201,6 +208,9 @@ class InjectionContainer {
   
   static PackageRepository get packageRepository =>
       PackageRepositoryImpl(_packageRemoteDataSource);
+  
+  static PackageTypeRepository get packageTypeRepository =>
+      PackageTypeRepositoryImpl(_packageTypeRemoteDataSource);
   
   static CarePlanRepository get carePlanRepository =>
       CarePlanRepositoryImpl(_carePlanRemoteDataSource);
@@ -278,6 +288,9 @@ class InjectionContainer {
   
   static GetPackagesUsecase get _getPackagesUsecase =>
       GetPackagesUsecase(packageRepository);
+  
+  static GetPackageTypesUsecase get _getPackageTypesUsecase =>
+      GetPackageTypesUsecase(packageTypeRepository);
   
   static GetCarePlanDetailsUsecase get _getCarePlanDetailsUsecase =>
       GetCarePlanDetailsUsecase(carePlanRepository);

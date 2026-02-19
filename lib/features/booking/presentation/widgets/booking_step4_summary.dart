@@ -65,7 +65,9 @@ class BookingStep4Summary extends StatelessWidget {
         final package = state.package;
         final room = state.room;
         final startDate = state.startDate;
-        final endDate = startDate.add(Duration(days: package.durationDays));
+        final endDate = package.durationDays != null
+            ? startDate.add(Duration(days: package.durationDays!))
+            : startDate;
         final totalPrice = package.basePrice;
         final depositAmount = totalPrice * 0.1; // 10% deposit
 
@@ -97,13 +99,14 @@ class BookingStep4Summary extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                     ),
                     SizedBox(height: 4 * scale),
-                    Text(
-                      '${package.durationDays} ${AppStrings.bookingDays}',
-                      style: AppTextStyles.arimo(
-                        fontSize: 14 * scale,
-                        color: AppColors.textSecondary,
+                    if (package.durationDays != null)
+                      Text(
+                        '${package.durationDays} ${AppStrings.bookingDays}',
+                        style: AppTextStyles.arimo(
+                          fontSize: 14 * scale,
+                          color: AppColors.textSecondary,
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),
@@ -193,7 +196,9 @@ class BookingStep4Summary extends StatelessWidget {
                           ),
                           SizedBox(width: 8 * scale),
                           Text(
-                            '${package.durationDays} ${AppStrings.bookingDays}',
+                            package.durationDays != null
+                                ? '${package.durationDays} ${AppStrings.bookingDays}'
+                                : AppStrings.bookingDays,
                             style: AppTextStyles.arimo(
                               fontSize: 14 * scale,
                               fontWeight: FontWeight.w600,

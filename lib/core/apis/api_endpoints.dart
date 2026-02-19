@@ -77,7 +77,8 @@ class ApiEndpoints {
   static const String getMemberTypes = '/member-types';
 
   // Package endpoints
-  static const String packages = '/Packages';
+  static const String packages = '/Packages/center';
+  static const String packageTypes = '/PackageType';
 
   // Care Plan endpoints
   static String getCarePlanDetailsByPackage(int packageId) => '/care-plan-details/by-package/$packageId';

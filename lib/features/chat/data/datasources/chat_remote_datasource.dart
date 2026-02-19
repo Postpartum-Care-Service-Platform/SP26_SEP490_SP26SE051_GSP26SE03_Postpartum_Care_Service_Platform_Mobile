@@ -77,6 +77,14 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
       }
       throw Exception('Phản hồi gửi tin không hợp lệ');
     } on DioException catch (e) {
+      // Log chi tiết để debug lỗi server khi gửi tin nhắn
+      // ignore: avoid_print
+      print('[ChatRemoteDataSource] sendMessage DioException: ${e.message}');
+      // ignore: avoid_print
+      print(
+        '[ChatRemoteDataSource] sendMessage status=${e.response?.statusCode}, data=${e.response?.data}',
+      );
+
       final errorMessage = _getErrorMessage(e);
       throw Exception(errorMessage);
     }

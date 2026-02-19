@@ -28,6 +28,23 @@ class ApiClient {
   static bool _isRefreshing = false;
   static final List<_PendingRequest> _pendingRequests = [];
 
+  /// Ẩn bớt các header nhạy cảm khi log
+  static Map<String, dynamic> _safeHeaders(Map<String, dynamic> headers) {
+    final copy = Map<String, dynamic>.from(headers);
+    if (copy.containsKey('Authorization')) {
+      copy['Authorization'] = '***';
+    }
+    return copy;
+  }
+
+  /// Rút gọn body để log, tránh in dữ liệu quá dài
+  static String _shortBody(dynamic body, {int max = 1000}) {
+    if (body == null) return 'null';
+    final asString = body.toString();
+    if (asString.length <= max) return asString;
+    return '${asString.substring(0, max)}... (truncated, length=${asString.length})';
+  }
+
   static Dio get dio {
     if (_dio != null) return _dio!;
 
@@ -92,12 +109,67 @@ class ApiClient {
             }
           }
 
+          // Logging request (chỉ bật ở debug / profile)
+          if (!kReleaseMode) {
+            final method = options.method;
+            final url = '${options.baseUrl}${options.path}';
+            // ignore: avoid_print
+            print(
+              '[API][REQUEST] $method $url '
+              'query=${options.queryParameters} '
+              'headers=${_safeHeaders(options.headers)}',
+            );
+            if (options.data != null) {
+              // ignore: avoid_print
+              print('[API][REQUEST][BODY] ${_shortBody(options.data)}');
+            }
+          }
+
           return handler.next(options);
         },
         onResponse: (response, handler) {
+          if (!kReleaseMode) {
+            final req = response.requestOptions;
+            final url = '${req.baseUrl}${req.path}';
+            // ignore: avoid_print
+            print(
+              '[API][RESPONSE] ${req.method} $url '
+              'status=${response.statusCode}',
+            );
+            // Chỉ log body nếu kích thước nhỏ để tránh spam log
+            final data = response.data;
+            final asString = data?.toString() ?? '';
+            if (asString.length <= 2000) {
+              // ignore: avoid_print
+              print('[API][RESPONSE][BODY] $asString');
+            } else {
+              // ignore: avoid_print
+              print('[API][RESPONSE][BODY] (truncated, length=${asString.length})');
+            }
+          }
           return handler.next(response);
         },
         onError: (error, handler) async {
+          if (!kReleaseMode) {
+            final req = error.requestOptions;
+            final url = '${req.baseUrl}${req.path}';
+            // ignore: avoid_print
+            print(
+              '[API][ERROR] ${req.method} $url '
+              'status=${error.response?.statusCode} '
+              'message=${error.message}',
+            );
+            final data = error.response?.data;
+            if (data != null) {
+              final asString = data.toString();
+              final bodyForLog = asString.length <= 2000
+                  ? asString
+                  : '${asString.substring(0, 2000)}... (truncated, length=${asString.length})';
+              // ignore: avoid_print
+              print('[API][ERROR][BODY] $bodyForLog');
+            }
+          }
+
           // Handle 401 Unauthorized errors by refreshing token
           if (error.response?.statusCode == 401) {
             final requestOptions = error.requestOptions;
@@ -148,11 +220,81 @@ class ApiClient {
       ),
     );
 
-    // Add logging interceptor in debug mode
-    // _dio!.interceptors.add(LogInterceptor(
-    //   requestBody: true,
-    //   responseBody: true,
-    // ));
+    // Global logging interceptor (chỉ bật ở debug) để quan sát toàn bộ request/response
+    if (!kReleaseMode) {
+      _dio!.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            final startTime = DateTime.now();
+            options.extra['startTime'] = startTime;
+
+            final uri = options.uri;
+            final method = options.method;
+
+            // Sao chép headers và ẩn Authorization cho dễ đọc & tránh lộ token
+            final headers = Map<String, dynamic>.from(options.headers);
+            if (headers.containsKey('Authorization')) {
+              headers['Authorization'] = '*** HIDDEN ***';
+            }
+
+            // ignore: avoid_print
+            print(
+              '\n================== API REQUEST ==================\n'
+              '➡️  $method ${uri.toString()}\n'
+              'Headers: $headers\n'
+              'Query: ${uri.queryParameters}\n'
+              'Data: ${options.data}\n'
+              '================================================\n',
+            );
+
+            return handler.next(options);
+          },
+          onResponse: (response, handler) {
+            final startTime = response.requestOptions.extra['startTime'];
+            final duration = startTime is DateTime
+                ? DateTime.now().difference(startTime)
+                : null;
+
+            final uri = response.requestOptions.uri;
+            final method = response.requestOptions.method;
+
+            // ignore: avoid_print
+            print(
+              '\n================== API RESPONSE =================\n'
+              '⬅️  $method ${uri.toString()}\n'
+              'Status: ${response.statusCode}\n'
+              'Duration: ${duration?.inMilliseconds} ms\n'
+              'Data: ${response.data}\n'
+              '================================================\n',
+            );
+
+            return handler.next(response);
+          },
+          onError: (error, handler) {
+            final startTime = error.requestOptions.extra['startTime'];
+            final duration = startTime is DateTime
+                ? DateTime.now().difference(startTime)
+                : null;
+
+            final uri = error.requestOptions.uri;
+            final method = error.requestOptions.method;
+
+            // ignore: avoid_print
+            print(
+              '\n================== API ERROR ====================\n'
+              '❌ $method ${uri.toString()}\n'
+              'Status: ${error.response?.statusCode}\n'
+              'Duration: ${duration?.inMilliseconds} ms\n'
+              'Error: ${error.message}\n'
+              'Response data: ${error.response?.data}\n'
+              '================================================\n',
+            );
+
+            return handler.next(error);
+          },
+        ),
+      );
+    }
 
     return _dio!;
   }

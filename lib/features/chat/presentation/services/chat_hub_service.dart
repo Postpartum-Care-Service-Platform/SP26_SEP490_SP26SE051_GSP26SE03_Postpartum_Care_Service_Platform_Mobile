@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:signalr_netcore/signalr_client.dart';
 import '../../../../core/storage/secure_storage_service.dart';
+import '../../../../core/config/app_config.dart';
 import '../../domain/entities/chat_message.dart';
 import '../../domain/entities/chat_realtime_events.dart';
 
@@ -46,7 +47,7 @@ class ChatHubService {
     _connection ??= HubConnectionBuilder()
         .withAutomaticReconnect()
         .withUrl(
-          'https://10.0.2.2:7267/hubs/chat',
+          '${AppConfig.baseUrl}/hubs/chat',
           options: HttpConnectionOptions(
             accessTokenFactory: () async =>
                 await SecureStorageService.getAccessToken() ?? '',

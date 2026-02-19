@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_assets.dart';
+import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
+import '../../../../core/utils/app_markdown_utils.dart';
+import '../../../../core/utils/app_formatters.dart';
 import '../../../../core/widgets/avatar_widget.dart';
 import '../../domain/entities/chat_message.dart';
 import '../../domain/entities/ai_structured_data.dart';
@@ -34,25 +37,7 @@ class MessageBubble extends StatelessWidget {
   String _formatContent() {
     final raw = message.content.trimRight();
     if (!isAI) return raw;
-    // Chuẩn hoá xuống dòng: bỏ bớt các dòng trống liên tiếp và loại bỏ dòng markdown ---
-    final lines = raw.split('\n');
-    final buffer = <String>[];
-    var lastBlank = false;
-    for (final line in lines) {
-      final trimmed = line.trim();
-      final isBlank = trimmed.isEmpty;
-      // Bỏ các dòng chỉ chứa --- (horizontal rule markdown)
-      final isHorizontalRule = RegExp(r'^-{3,}$').hasMatch(trimmed);
-      if (isHorizontalRule) continue;
-      
-      if (isBlank) {
-        if (!lastBlank) buffer.add('');
-      } else {
-        buffer.add(line.trimRight());
-      }
-      lastBlank = isBlank;
-    }
-    return buffer.join('\n');
+    return AppMarkdownUtils.normalizeContent(raw);
   }
 
   @override
@@ -279,35 +264,30 @@ class MessageBubble extends StatelessWidget {
       return _buildPlainText(text, maxWidth, scale, AppColors.textPrimary);
     }
 
-    List<String> parseRow(String line) {
-      final trimmed = line.trim();
-      final withoutPipes =
-          trimmed.substring(1, trimmed.length - 1); // remove leading/trailing |
-      return withoutPipes.split('|').map((c) => c.trim()).toList();
-    }
-
-    final headers = parseRow(lines.first);
+    final headers = AppMarkdownUtils.parseTableRow(lines.first);
     final rows = <List<String>>[];
     for (var i = 2; i < lines.length; i++) {
-      rows.add(parseRow(lines[i]));
+      final row = AppMarkdownUtils.parseTableRow(lines[i]);
+      if (row.isNotEmpty) {
+        rows.add(row);
+      }
     }
 
-    // Xác định index cột Giá (dựa trên header chứa từ 'giá' không phân biệt hoa thường)
-    int? priceColumnIndex;
-    // Xác định index cột Thời gian (header chứa 'thời gian' hoặc 'ngày')
-    int? durationColumnIndex;
-    for (var i = 0; i < headers.length; i++) {
-      final headerLower = headers[i].toLowerCase();
-      if (headerLower.contains('giá') || headerLower.contains('gia')) {
-        priceColumnIndex = i;
-      }
-      if (headerLower.contains('thời gian') ||
-          headerLower.contains('thoi gian') ||
-          headerLower.contains('ngày') ||
-          headerLower.contains('ngay')) {
-        durationColumnIndex = i;
-      }
-    }
+    // Xác định index cột Giá, Thời gian (giờ), và Duration (ngày)
+    final priceColumnIndex = AppMarkdownUtils.findColumnIndexByKeyword(
+      headers,
+      ['giá', 'gia', 'price'],
+    );
+    // Thời gian = giờ (07:00, 09:00-10:30)
+    final timeColumnIndex = AppMarkdownUtils.findColumnIndexByKeyword(
+      headers,
+      ['thời gian', 'thoi gian', 'time', 'giờ', 'gio'],
+    );
+    // Duration = ngày (14 ngày, 30 ngày)
+    final durationColumnIndex = AppMarkdownUtils.findColumnIndexByKeyword(
+      headers,
+      ['duration', 'ngày', 'ngay', 'số ngày', 'so ngay'],
+    );
 
     // Tính toán width tối thiểu cho mỗi cột dựa trên nội dung
     double calculateMinColumnWidth(int index) {
@@ -393,13 +373,15 @@ class MessageBubble extends StatelessWidget {
                     ),
                     child: _buildTableCellText(
                       i < row.length
-                          ? (priceColumnIndex != null &&
-                                  i == priceColumnIndex
-                              ? _formatPriceFromString(row[i])
+                          ? (timeColumnIndex != null && i == timeColumnIndex
+                              ? AppFormatters.formatTimeFromString(row[i])
                               : (durationColumnIndex != null &&
                                       i == durationColumnIndex
-                                  ? _formatDurationFromString(row[i])
-                                  : row[i]))
+                                  ? AppFormatters.formatDurationFromString(row[i])
+                                  : (priceColumnIndex != null &&
+                                          i == priceColumnIndex
+                                      ? AppFormatters.formatPriceFromString(row[i])
+                                      : row[i])))
                           : '',
                       scale,
                       AppColors.textPrimary,
@@ -439,6 +421,7 @@ class MessageBubble extends StatelessWidget {
                   headers,
                   rows,
                   priceColumnIndex,
+                  timeColumnIndex,
                   durationColumnIndex,
                 ),
                 borderRadius: BorderRadius.circular(20 * scale),
@@ -473,6 +456,7 @@ class MessageBubble extends StatelessWidget {
     List<String> headers,
     List<List<String>> rows,
     int? priceColumnIndex,
+    int? timeColumnIndex,
     int? durationColumnIndex,
   ) {
     showDialog(
@@ -483,6 +467,7 @@ class MessageBubble extends StatelessWidget {
         headers: headers,
         rows: rows,
         priceColumnIndex: priceColumnIndex,
+        timeColumnIndex: timeColumnIndex,
         durationColumnIndex: durationColumnIndex,
       ),
     );
@@ -494,7 +479,7 @@ class MessageBubble extends StatelessWidget {
     Color color,
   ) {
     // Text trong cell không wrap, cho phép scroll ngang ở cấp bảng
-    final spans = _buildMarkdownSpans(
+    final spans = AppMarkdownUtils.buildMarkdownSpans(
       text: text,
       scale: scale,
       color: color,
@@ -525,9 +510,7 @@ class MessageBubble extends StatelessWidget {
       if (index < 0 || index >= lines.length - 1) return false;
       final line = lines[index].trim();
       final next = lines[index + 1].trim();
-      return line.startsWith('|') &&
-          line.endsWith('|') &&
-          RegExp(r'^\|(?:\s*:?-+:?\s*\|)+\s*$').hasMatch(next);
+      return AppMarkdownUtils.isTableHeaderLine(line, next);
     }
 
     int i = 0;
@@ -630,123 +613,7 @@ class MessageBubble extends StatelessWidget {
     );
   }
 
-  String _formatPriceFromString(String raw) {
-    final matches = RegExp(r'\d+').allMatches(raw);
-    final digits = matches.map((m) => m.group(0)!).join();
-    if (digits.isEmpty) return raw;
 
-    final value = int.tryParse(digits);
-    if (value == null) return raw;
-
-    final v = value;
-    if (v <= 0) return '$v đ';
-
-    if (v >= 1000000000) {
-      final billions = v ~/ 1000000000;
-      final rem = v % 1000000000;
-      if (rem == 0) return '$billions tỉ';
-      final millions = rem ~/ 1000000;
-      if (rem % 1000000 == 0 && millions > 0) {
-        return '$billions tỉ $millions triệu';
-      }
-      return '$billions tỉ';
-    }
-
-    if (v >= 1000000) {
-      final millions = v ~/ 1000000;
-      final rem = v % 1000000;
-      if (rem == 0) return '$millions triệu';
-
-      if (rem % 100000 == 0) {
-        final tenth = rem ~/ 100000;
-        return '$millions triệu $tenth';
-      }
-      return '$millions triệu';
-    }
-
-    if (v >= 1000 && v % 1000 == 0) {
-      final unit = v ~/ 1000;
-      return '$unit ngàn';
-    }
-
-    if (v >= 100 && v % 100 == 0) {
-      final unit = v ~/ 100;
-      return '$unit trăm';
-    }
-
-    return '$v đ';
-  }
-
-  String _formatDurationFromString(String raw) {
-    // Lấy phần số ngày trong chuỗi, ví dụ: "30 d", "14d", "14 ngày" -> 30, 14...
-    final match = RegExp(r'\d+').firstMatch(raw);
-    if (match == null) return raw;
-    final digits = match.group(0);
-    if (digits == null) return raw;
-    final v = int.tryParse(digits);
-    if (v == null) return raw;
-    return '$v ngày';
-  }
-
-  List<TextSpan> _buildMarkdownSpans({
-    required String text,
-    required double scale,
-    required Color color,
-    required bool isBaseBold,
-    double baseFontSize = 14,
-  }) {
-    final baseStyle = AppTextStyles.arimo(
-      fontSize: baseFontSize * scale,
-      color: color,
-      fontWeight: isBaseBold ? FontWeight.w700 : FontWeight.w500,
-    ).copyWith(height: 1.4);
-
-    final pattern = RegExp(
-      r'(\*\*.+?\*\*|__.+?__|\*.+?\*|_.+?_+|~~.+?~~)',
-      dotAll: true,
-    );
-
-    final spans = <TextSpan>[];
-    var currentIndex = 0;
-
-    for (final match in pattern.allMatches(text)) {
-      if (match.start > currentIndex) {
-        spans.add(TextSpan(
-          text: text.substring(currentIndex, match.start),
-          style: baseStyle,
-        ));
-      }
-
-      final matchText = match.group(0)!;
-      TextStyle style = baseStyle;
-      String content = matchText;
-
-      if ((matchText.startsWith('**') && matchText.endsWith('**')) ||
-          (matchText.startsWith('__') && matchText.endsWith('__'))) {
-        content = matchText.substring(2, matchText.length - 2);
-        style = baseStyle.copyWith(fontWeight: FontWeight.w800);
-      } else if ((matchText.startsWith('*') && matchText.endsWith('*')) ||
-          (matchText.startsWith('_') && matchText.endsWith('_'))) {
-        content = matchText.substring(1, matchText.length - 1);
-        style = baseStyle.copyWith(fontStyle: FontStyle.italic);
-      } else if (matchText.startsWith('~~') && matchText.endsWith('~~')) {
-        content = matchText.substring(2, matchText.length - 2);
-        style = baseStyle.copyWith(decoration: TextDecoration.lineThrough);
-      }
-
-      spans.add(TextSpan(text: content, style: style));
-      currentIndex = match.end;
-    }
-
-    if (currentIndex < text.length) {
-      spans.add(TextSpan(
-        text: text.substring(currentIndex),
-        style: baseStyle,
-      ));
-    }
-
-    return spans;
-  }
 
   Widget _buildInlineMarkdownText(
     String text,
@@ -755,7 +622,7 @@ class MessageBubble extends StatelessWidget {
     bool isBaseBold = false,
     double baseFontSize = 14,
   }) {
-    final spans = _buildMarkdownSpans(
+    final spans = AppMarkdownUtils.buildMarkdownSpans(
       text: text,
       scale: scale,
       color: color,
@@ -835,6 +702,7 @@ class _TableExpandDialog extends StatelessWidget {
   final List<String> headers;
   final List<List<String>> rows;
   final int? priceColumnIndex;
+  final int? timeColumnIndex;
   final int? durationColumnIndex;
 
   const _TableExpandDialog({
@@ -843,6 +711,7 @@ class _TableExpandDialog extends StatelessWidget {
     required this.headers,
     required this.rows,
     this.priceColumnIndex,
+    this.timeColumnIndex,
     this.durationColumnIndex,
   });
 
@@ -907,7 +776,7 @@ class _TableExpandDialog extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Bảng chi tiết',
+                    AppStrings.chatTableDetailTitle,
                     style: AppTextStyles.arimo(
                       fontSize: 18 * scale,
                       fontWeight: FontWeight.bold,
@@ -985,13 +854,15 @@ class _TableExpandDialog extends StatelessWidget {
                                   ),
                                   child: _buildTableCellText(
                                     i < row.length
-                                        ? (priceColumnIndex != null &&
-                                                i == priceColumnIndex
-                                            ? _formatPriceFromString(row[i])
+                                        ? (timeColumnIndex != null && i == timeColumnIndex
+                                            ? AppFormatters.formatTimeFromString(row[i])
                                             : (durationColumnIndex != null &&
                                                     i == durationColumnIndex
-                                                ? _formatDurationFromString(row[i])
-                                                : row[i]))
+                                                ? AppFormatters.formatDurationFromString(row[i])
+                                                : (priceColumnIndex != null &&
+                                                        i == priceColumnIndex
+                                                    ? AppFormatters.formatPriceFromString(row[i])
+                                                    : row[i])))
                                         : '',
                                     scale,
                                     AppColors.textPrimary,
@@ -1018,55 +889,13 @@ class _TableExpandDialog extends StatelessWidget {
     bool isBaseBold = false,
     double baseFontSize = 14,
   }) {
-    final baseStyle = AppTextStyles.arimo(
-      fontSize: baseFontSize * scale,
+    final spans = AppMarkdownUtils.buildMarkdownSpans(
+      text: text,
+      scale: scale,
       color: color,
-      fontWeight: isBaseBold ? FontWeight.w700 : FontWeight.w500,
-    ).copyWith(height: 1.4);
-
-    final pattern = RegExp(
-      r'(\*\*.+?\*\*|__.+?__|\*.+?\*|_.+?_+|~~.+?~~)',
-      dotAll: true,
+      isBaseBold: isBaseBold,
+      baseFontSize: baseFontSize,
     );
-
-    final spans = <TextSpan>[];
-    var currentIndex = 0;
-
-    for (final match in pattern.allMatches(text)) {
-      if (match.start > currentIndex) {
-        spans.add(TextSpan(
-          text: text.substring(currentIndex, match.start),
-          style: baseStyle,
-        ));
-      }
-
-      final matchText = match.group(0)!;
-      TextStyle style = baseStyle;
-      String content = matchText;
-
-      if ((matchText.startsWith('**') && matchText.endsWith('**')) ||
-          (matchText.startsWith('__') && matchText.endsWith('__'))) {
-        content = matchText.substring(2, matchText.length - 2);
-        style = baseStyle.copyWith(fontWeight: FontWeight.w800);
-      } else if ((matchText.startsWith('*') && matchText.endsWith('*')) ||
-          (matchText.startsWith('_') && matchText.endsWith('_'))) {
-        content = matchText.substring(1, matchText.length - 1);
-        style = baseStyle.copyWith(fontStyle: FontStyle.italic);
-      } else if (matchText.startsWith('~~') && matchText.endsWith('~~')) {
-        content = matchText.substring(2, matchText.length - 2);
-        style = baseStyle.copyWith(decoration: TextDecoration.lineThrough);
-      }
-
-      spans.add(TextSpan(text: content, style: style));
-      currentIndex = match.end;
-    }
-
-    if (currentIndex < text.length) {
-      spans.add(TextSpan(
-        text: text.substring(currentIndex),
-        style: baseStyle,
-      ));
-    }
 
     return RichText(
       text: TextSpan(children: spans),
@@ -1080,55 +909,13 @@ class _TableExpandDialog extends StatelessWidget {
     double scale,
     Color color,
   ) {
-    final baseStyle = AppTextStyles.arimo(
-      fontSize: 13 * scale,
+    final spans = AppMarkdownUtils.buildMarkdownSpans(
+      text: text,
+      scale: scale,
       color: color,
-      fontWeight: FontWeight.w500,
-    ).copyWith(height: 1.4);
-
-    final pattern = RegExp(
-      r'(\*\*.+?\*\*|__.+?__|\*.+?\*|_.+?_+|~~.+?~~)',
-      dotAll: true,
+      isBaseBold: false,
+      baseFontSize: 13,
     );
-
-    final spans = <TextSpan>[];
-    var currentIndex = 0;
-
-    for (final match in pattern.allMatches(text)) {
-      if (match.start > currentIndex) {
-        spans.add(TextSpan(
-          text: text.substring(currentIndex, match.start),
-          style: baseStyle,
-        ));
-      }
-
-      final matchText = match.group(0)!;
-      TextStyle style = baseStyle;
-      String content = matchText;
-
-      if ((matchText.startsWith('**') && matchText.endsWith('**')) ||
-          (matchText.startsWith('__') && matchText.endsWith('__'))) {
-        content = matchText.substring(2, matchText.length - 2);
-        style = baseStyle.copyWith(fontWeight: FontWeight.w800);
-      } else if ((matchText.startsWith('*') && matchText.endsWith('*')) ||
-          (matchText.startsWith('_') && matchText.endsWith('_'))) {
-        content = matchText.substring(1, matchText.length - 1);
-        style = baseStyle.copyWith(fontStyle: FontStyle.italic);
-      } else if (matchText.startsWith('~~') && matchText.endsWith('~~')) {
-        content = matchText.substring(2, matchText.length - 2);
-        style = baseStyle.copyWith(decoration: TextDecoration.lineThrough);
-      }
-
-      spans.add(TextSpan(text: content, style: style));
-      currentIndex = match.end;
-    }
-
-    if (currentIndex < text.length) {
-      spans.add(TextSpan(
-        text: text.substring(currentIndex),
-        style: baseStyle,
-      ));
-    }
 
     return RichText(
       text: TextSpan(children: spans),
@@ -1136,62 +923,5 @@ class _TableExpandDialog extends StatelessWidget {
       softWrap: false,
       overflow: TextOverflow.clip,
     );
-  }
-
-  String _formatPriceFromString(String raw) {
-    final matches = RegExp(r'\d+').allMatches(raw);
-    final digits = matches.map((m) => m.group(0)!).join();
-    if (digits.isEmpty) return raw;
-
-    final value = int.tryParse(digits);
-    if (value == null) return raw;
-
-    final v = value;
-    if (v <= 0) return '$v đ';
-
-    if (v >= 1000000000) {
-      final billions = v ~/ 1000000000;
-      final rem = v % 1000000000;
-      if (rem == 0) return '$billions tỉ';
-      final millions = rem ~/ 1000000;
-      if (rem % 1000000 == 0 && millions > 0) {
-        return '$billions tỉ $millions triệu';
-      }
-      return '$billions tỉ';
-    }
-
-    if (v >= 1000000) {
-      final millions = v ~/ 1000000;
-      final rem = v % 1000000;
-      if (rem == 0) return '$millions triệu';
-
-      if (rem % 100000 == 0) {
-        final tenth = rem ~/ 100000;
-        return '$millions triệu $tenth';
-      }
-      return '$millions triệu';
-    }
-
-    if (v >= 1000 && v % 1000 == 0) {
-      final unit = v ~/ 1000;
-      return '$unit ngàn';
-    }
-
-    if (v >= 100 && v % 100 == 0) {
-      final unit = v ~/ 100;
-      return '$unit trăm';
-    }
-
-    return '$v đ';
-  }
-
-  String _formatDurationFromString(String raw) {
-    final match = RegExp(r'\d+').firstMatch(raw);
-    if (match == null) return raw;
-    final digits = match.group(0);
-    if (digits == null) return raw;
-    final v = int.tryParse(digits);
-    if (v == null) return raw;
-    return '$v ngày';
   }
 }

@@ -222,6 +222,9 @@ class AppStrings {
       'Một số câu trả lời có thể chưa hoàn hảo. Vui lòng kiểm tra lại thông tin quan trọng.';
   static const String chatInputHintShort = 'Aa';
   static const String chatMessengerLabel = 'Messenger';
+  static const String chatSearchNoResults = 'Không tìm thấy kết quả';
+  static const String chatSearchTryDifferent = 'Thử tìm kiếm với từ khóa khác';
+  static const String chatTableDetailTitle = 'Bảng chi tiết';
 
   // Bottom Navigation Bar
   static const String bottomNavHome = 'Trang chủ';
@@ -276,8 +279,17 @@ class AppStrings {
   // Package Screen
   static const String noPackages = 'Chưa có gói dịch vụ nào';
   static const String loadPackagesError = 'Không thể tải gói dịch vụ';
+  static const String packageTypeCenter = 'Trung tâm';
+  static const String packageTypeHome = 'Tại nhà';
+  static const String noCenterPackages = 'Chưa có gói dịch vụ tại trung tâm';
+  static const String noHomePackages = 'Chưa có gói dịch vụ tại nhà';
   static const String days = 'ngày';
   static const String currencyUnit = ' đ';
+  static const String priceBillion = 'tỉ';
+  static const String priceMillion = 'triệu';
+  static const String priceThousand = 'ngàn';
+  static const String priceHundred = 'trăm';
+  static const String durationDays = 'ngày';
 
   // Care Plan Screen
   static const String carePlanTitle = 'Lịch trình nghỉ dưỡng';

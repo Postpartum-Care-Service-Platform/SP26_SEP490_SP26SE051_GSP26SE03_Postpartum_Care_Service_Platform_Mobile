@@ -324,7 +324,13 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         isAiTyping: !shouldStopTyping,
         aiStructuredByMessageId: updatedStructured,
       ));
-    } catch (e) {
+    } catch (e, stackTrace) {
+      // Log chi tiết lỗi để debug khi gửi tin nhắn thất bại
+      // ignore: avoid_print
+      print('[ChatBloc] Send message error: $e');
+      // ignore: avoid_print
+      print('[ChatBloc] Send message stackTrace: $stackTrace');
+
       // Remove optimistic message on failure - restore original conversation
       final originalList = _upsertConversation(selected);
       emit(state.copyWith(

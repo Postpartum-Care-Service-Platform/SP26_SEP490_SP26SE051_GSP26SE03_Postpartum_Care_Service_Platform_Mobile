@@ -10,7 +10,7 @@ class CarePlanEntity extends Equatable {
   final int dayNo;
   final String startTime;
   final String endTime;
-  final String instruction;
+  final String? instruction;
   final int sortOrder;
 
   const CarePlanEntity({
@@ -22,7 +22,7 @@ class CarePlanEntity extends Equatable {
     required this.dayNo,
     required this.startTime,
     required this.endTime,
-    required this.instruction,
+    this.instruction,
     required this.sortOrder,
   });
 
