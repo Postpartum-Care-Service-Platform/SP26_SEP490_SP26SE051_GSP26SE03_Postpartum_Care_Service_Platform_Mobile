@@ -13,4 +13,10 @@ class FamilyScheduleRepositoryImpl implements FamilyScheduleRepository {
     final models = await remoteDataSource.getMySchedules();
     return models.map((model) => model.toEntity()).toList();
   }
+
+  @override
+  Future<List<FamilyScheduleEntity>> getMySchedulesByDate(String date) async {
+    final models = await remoteDataSource.getMySchedulesByDate(date);
+    return models.map((model) => model.toEntity()).toList();
+  }
 }

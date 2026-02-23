@@ -31,6 +31,7 @@ import '../../features/family/presentation/screens/family_portal_screen.dart';
 import '../../features/services/presentation/screens/my_menu_screen.dart';
 import '../../features/services/presentation/screens/family_schedule_screen.dart';
 import '../../features/services/presentation/screens/feedback_screen.dart';
+import '../../features/services/presentation/screens/amenity_screen.dart';
 import '../../features/services/presentation/bloc/menu_event.dart';
 import '../../features/services/presentation/bloc/family_schedule_event.dart';
 import '../../core/widgets/app_scaffold.dart';
@@ -310,6 +311,22 @@ class AppRouter {
           builder: (_) => BlocProvider(
             create: (_) => InjectionContainer.feedbackBloc,
             child: const FeedbackScreen(),
+          ),
+        );
+
+      // Amenity Routes
+      case AppRoutes.amenity:
+        return MaterialPageRoute(
+          builder: (_) => MultiBlocProvider(
+            providers: [
+              BlocProvider(
+                create: (_) => InjectionContainer.amenityBloc,
+              ),
+              BlocProvider(
+                create: (_) => InjectionContainer.familyScheduleBloc,
+              ),
+            ],
+            child: const AmenityScreen(),
           ),
         );
 

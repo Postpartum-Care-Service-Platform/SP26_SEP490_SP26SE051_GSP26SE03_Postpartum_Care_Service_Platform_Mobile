@@ -133,6 +133,16 @@ class ApiEndpoints {
   static const String amenityServices = '/AmenityService';
 
   // ==========================================
+  // Customer - Amenity Ticket endpoints
+  // ==========================================
+  
+  /// Get my amenity tickets
+  static const String myAmenityTickets = '/AmenityTicket/my-tickets';
+  
+  /// Create amenity ticket
+  static const String createAmenityTicket = '/AmenityTicket';
+
+  // ==========================================
   // Employee - Service Booking endpoints (TODO: Chờ BE API)
   // ==========================================
   
@@ -188,6 +198,9 @@ class ApiEndpoints {
   
   /// Get my family schedules
   static const String familyScheduleMySchedules = '/FamilySchedule/my-schedules';
+  
+  /// Get my family schedules by date
+  static String familyScheduleByDate(String date) => '/FamilySchedule/$date';
 
   // ==========================================
   // Feedback endpoints

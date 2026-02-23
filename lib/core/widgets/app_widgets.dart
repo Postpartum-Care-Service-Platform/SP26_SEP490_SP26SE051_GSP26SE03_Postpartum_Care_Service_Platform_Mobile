@@ -71,12 +71,31 @@ class AppWidgets {
     required BuildContext context,
     IconData? icon,
     Widget? iconWidget,
+    String? iconSvg,
     required VoidCallback onPressed,
     EdgeInsets? margin,
   }) {
-    assert(icon != null || iconWidget != null,
-        'Either icon or iconWidget must be provided');
+    assert(icon != null || iconWidget != null || iconSvg != null,
+        'Either icon, iconWidget, or iconSvg must be provided');
     final scale = AppResponsive.scaleFactor(context);
+    
+    Widget finalIconWidget;
+    if (iconWidget != null) {
+      finalIconWidget = iconWidget;
+    } else if (iconSvg != null) {
+      finalIconWidget = SvgPicture.asset(
+        iconSvg,
+        width: 24 * scale,
+        height: 24 * scale,
+        colorFilter: const ColorFilter.mode(
+          AppColors.white,
+          BlendMode.srcIn,
+        ),
+      );
+    } else {
+      finalIconWidget = Icon(icon, size: 24 * scale);
+    }
+    
     return Container(
       margin: margin ?? EdgeInsets.only(bottom: 12 * scale, right: 4 * scale),
       decoration: BoxDecoration(
@@ -100,7 +119,7 @@ class AppWidgets {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18 * scale),
           ),
-          child: iconWidget ?? Icon(icon, size: 24 * scale),
+          child: finalIconWidget,
         ),
       ),
     );
@@ -110,11 +129,38 @@ class AppWidgets {
   static Widget primaryFabExtended({
     required BuildContext context,
     required String text,
-    required IconData icon,
+    IconData? icon,
+    String? iconSvg,
     required VoidCallback onPressed,
     EdgeInsets? margin,
   }) {
     final scale = AppResponsive.scaleFactor(context);
+    Widget iconWidget;
+    
+    if (iconSvg != null) {
+      iconWidget = SvgPicture.asset(
+        iconSvg,
+        width: 20 * scale,
+        height: 20 * scale,
+        colorFilter: const ColorFilter.mode(
+          AppColors.white,
+          BlendMode.srcIn,
+        ),
+      );
+    } else if (icon != null) {
+      iconWidget = Icon(
+        icon,
+        color: AppColors.white,
+        size: 20 * scale,
+      );
+    } else {
+      iconWidget = Icon(
+        Icons.add,
+        color: AppColors.white,
+        size: 20 * scale,
+      );
+    }
+    
     return Container(
       margin: margin ?? EdgeInsets.only(bottom: 12 * scale),
       decoration: BoxDecoration(
@@ -133,11 +179,7 @@ class AppWidgets {
           onPressed: onPressed,
           backgroundColor: AppColors.primary,
           elevation: 0,
-          icon: Icon(
-            icon,
-            color: AppColors.white,
-            size: 20 * scale,
-          ),
+          icon: iconWidget,
           label: Text(
             text,
             style: AppTextStyles.arimo(

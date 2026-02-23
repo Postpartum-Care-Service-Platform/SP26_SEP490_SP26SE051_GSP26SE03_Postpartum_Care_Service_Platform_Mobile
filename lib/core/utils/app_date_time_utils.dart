@@ -36,4 +36,36 @@ class AppDateTimeUtils {
     final minute = dateTime.minute.toString().padLeft(2, '0');
     return '$day/$month/$year $hour:$minute';
   }
+
+  /// Convert local DateTime (assumed to be UTC+7) to UTC
+  /// This ensures that when we send time to server, it's correctly converted
+  /// 
+  /// Example: 
+  /// - Input: DateTime(2026, 2, 21, 17, 0) represents 17:00 UTC+7 (user selection)
+  /// - Output: DateTime.utc(2026, 2, 21, 10, 0) represents 10:00 UTC (sent to server)
+  /// 
+  /// Formula: UTC = UTC+7 - 7 hours
+  static DateTime convertVietnamTimeToUtc(DateTime vietnamTime) {
+    // Treat the input DateTime as UTC+7 time
+    // Create a UTC DateTime with the same date/time components
+    // Then subtract 7 hours to get the equivalent UTC time
+    final utcDateTime = DateTime.utc(
+      vietnamTime.year,
+      vietnamTime.month,
+      vietnamTime.day,
+      vietnamTime.hour,
+      vietnamTime.minute,
+      vietnamTime.second,
+      vietnamTime.millisecond,
+      vietnamTime.microsecond,
+    ).subtract(vietnamTimeOffset);
+    
+    return utcDateTime;
+  }
+
+  /// Format DateTime to ISO 8601 string with UTC timezone
+  /// This is used when sending to API
+  static String formatToUtcIso8601(DateTime vietnamTime) {
+    return convertVietnamTimeToUtc(vietnamTime).toIso8601String();
+  }
 }

@@ -552,6 +552,37 @@ class AppStrings {
   static const String scheduleManager = 'Quản lý';
   static const String scheduleCompletedAt = 'Hoàn thành lúc';
 
+  // Amenity Screen
+  static const String amenityTitle = 'Tiện ích';
+  static const String amenityNoTickets = 'Chưa có yêu cầu tiện ích nào';
+  static const String amenityCreateFirst = 'Tạo yêu cầu đầu tiên';
+  static const String amenityCreateTicket = 'Tạo yêu cầu tiện ích';
+  static const String amenitySelectService = 'Chọn dịch vụ tiện ích';
+  static const String amenitySelectStartTime = 'Chọn thời gian bắt đầu';
+  static const String amenityStartTime = 'Thời gian bắt đầu';
+  static const String amenityEndTime = 'Thời gian kết thúc';
+  static const String amenityDuration = 'Thời lượng';
+  static const String amenityMinutes = 'phút';
+  static const String amenityCreateSuccess = 'Tạo yêu cầu tiện ích thành công';
+  static const String amenityCreateError = 'Không thể tạo yêu cầu tiện ích';
+  static const String amenityLoadError = 'Không thể tải dữ liệu tiện ích';
+  static const String amenityPleaseSelectService = 'Vui lòng chọn dịch vụ tiện ích';
+  static const String amenityPleaseSelectTime = 'Vui lòng chọn thời gian bắt đầu';
+  static const String amenityStatusBooked = 'Đã đặt';
+  static const String amenityStatusAccepted = 'Đã chấp nhận';
+  static const String amenityStatusCompleted = 'Đã hoàn thành';
+  static const String amenityStatusCancelled = 'Đã hủy';
+  static const String amenityMyTickets = 'Yêu cầu của tôi';
+  static const String amenityAvailableServices = 'Dịch vụ có sẵn';
+  static const String amenityCurrentSchedule = 'Lịch trình hiện tại';
+  static const String amenityScheduleConflict = 'Thời gian này trùng với lịch trình khác';
+  static const String amenityScheduleConflictWarning = 'Cảnh báo: Thời gian này có thể trùng với lịch trình khác';
+  static const String amenityNoConflict = 'Thời gian này không trùng với lịch trình khác';
+  static const String amenityViewSchedule = 'Xem lịch trình';
+  static const String amenityServiceDescription = 'Mô tả';
+  static const String amenityServiceDurationLabel = 'Thời lượng dự kiến';
+  static const String selectTime = 'Chọn giờ';
+
   // Menu Screen
   static const String menuNoMenuToDelete = 'Không có menu nào để xóa';
   static const String menuSelectMealToDelete = 'Chọn bữa ăn muốn xóa';
