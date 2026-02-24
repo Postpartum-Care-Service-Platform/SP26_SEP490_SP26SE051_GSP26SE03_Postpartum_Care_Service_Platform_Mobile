@@ -20,15 +20,36 @@ class ServicesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => InjectionContainer.bookingBloc
-        ..add(const BookingLoadPackages()),
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        body: BlocConsumer<BookingBloc, BookingState>(
-          listener: _handleBookingSideEffects,
-          builder: (context, _) {
-            final authState = context.watch<AuthBloc>().state;
+    // Check if BookingBloc already exists to avoid creating duplicate
+    BookingBloc? existingBookingBloc;
+    try {
+      existingBookingBloc = context.read<BookingBloc>();
+    } catch (_) {
+      // BookingBloc not found, will create new one
+    }
+
+    return (existingBookingBloc != null
+            ? BlocProvider.value(
+                value: existingBookingBloc,
+                child: _buildContent(),
+              )
+            : BlocProvider(
+                create: (context) {
+                  // Create new bloc but DON'T load packages here
+                  // Let ServicesBookingFlow handle loading when needed
+                  return InjectionContainer.bookingBloc;
+                },
+                child: _buildContent(),
+              ));
+  }
+
+  Widget _buildContent() {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: BlocConsumer<BookingBloc, BookingState>(
+        listener: _handleBookingSideEffects,
+        builder: (context, _) {
+          final authState = context.watch<AuthBloc>().state;
 
             if (authState is AuthLoading) {
               return const Center(
@@ -51,8 +72,7 @@ class ServicesScreen extends StatelessWidget {
             return const ServicesBookingFlow();
           },
         ),
-      ),
-    );
+      );
   }
 
   void _handleBookingSideEffects(BuildContext context, BookingState state) {

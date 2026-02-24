@@ -35,11 +35,43 @@ class BookingStep1PackageSelection extends StatelessWidget {
           selectedPackageId = bookingState.packageId;
         }
         
-        return BlocProvider(
-          create: (context) => InjectionContainer.packageBloc
-            ..add(const PackageLoadRequested()),
-          child: BlocBuilder<PackageBloc, PackageState>(
-            builder: (context, packageState) {
+        // Use existing PackageBloc from parent or create one if not available
+        // Check if PackageBloc already exists in context to avoid duplicate API calls
+        PackageBloc? existingPackageBloc;
+        try {
+          existingPackageBloc = context.read<PackageBloc>();
+        } catch (_) {
+          // PackageBloc not found in context, will create new one
+        }
+
+        // Always use existing bloc if available, otherwise create new one
+        // The bloc itself will prevent duplicate API calls
+        return existingPackageBloc != null
+            ? BlocProvider.value(
+                value: existingPackageBloc,
+                child: _buildPackageContent(context, bookingState, selectedPackageId, scale),
+              )
+            : BlocProvider(
+                create: (context) {
+                  final bloc = InjectionContainer.packageBloc;
+                  // Always try to load - the bloc will prevent duplicate calls
+                  bloc.add(const PackageLoadRequested());
+                  return bloc;
+                },
+                child: _buildPackageContent(context, bookingState, selectedPackageId, scale),
+              );
+      },
+    );
+  }
+
+  Widget _buildPackageContent(
+    BuildContext context,
+    BookingState bookingState,
+    int? selectedPackageId,
+    double scale,
+  ) {
+    return BlocBuilder<PackageBloc, PackageState>(
+      builder: (context, packageState) {
               if (packageState is PackageLoading) {
                 return const Center(child: AppLoadingIndicator());
               }
@@ -150,9 +182,6 @@ class BookingStep1PackageSelection extends StatelessWidget {
 
               return const SizedBox();
             },
-          ),
-        );
-      },
-    );
+          );
   }
 }

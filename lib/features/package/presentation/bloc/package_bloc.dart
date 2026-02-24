@@ -20,6 +20,11 @@ class PackageBloc extends Bloc<PackageEvent, PackageState> {
     PackageLoadRequested event,
     Emitter<PackageState> emit,
   ) async {
+    // Prevent duplicate API calls if already loading or loaded
+    if (state is PackageLoading || state is PackageLoaded) {
+      return;
+    }
+    
     emit(const PackageLoading());
     try {
       final packages = await getPackagesUsecase();

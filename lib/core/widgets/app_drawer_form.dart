@@ -4,6 +4,7 @@ import '../utils/app_responsive.dart';
 import '../utils/app_text_styles.dart';
 
 /// Optimized reusable drawer form widget with smooth animations
+/// Automatically adjusts size based on content
 class AppDrawerForm extends StatelessWidget {
   final String title;
   final List<Widget> children;
@@ -33,10 +34,16 @@ class AppDrawerForm extends StatelessWidget {
     final borderRadius = 24 * scale;
     final shadowBlur = 24 * scale;
     final shadowOffset = -8 * scale;
+    
+    // Kích thước drawer: luôn mở tương đối cao để user không phải kéo thêm
+    // isCompact: dùng cho form nhỏ (1-2 input) → ~60% chiều cao
+    // normal: form lớn → ~90% chiều cao
+    final initialSize = isCompact ? 0.6 : 0.9;
+    final minSize = isCompact ? 0.5 : 0.5;
 
     return DraggableScrollableSheet(
-      initialChildSize: isCompact ? 0.5 : 0.9,
-      minChildSize: isCompact ? 0.3 : 0.5,
+      initialChildSize: initialSize,
+      minChildSize: minSize,
       maxChildSize: 0.95,
       expand: false,
       builder: (context, scrollController) {
@@ -55,39 +62,54 @@ class AppDrawerForm extends StatelessWidget {
               ),
             ],
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-          children: [
-              // Handle bar - optimized with const
-              _HandleBar(scale: scale, color: handleBarColor),
-              
-              // Header - separated for better repaint optimization
-              _Header(
-                title: title,
-                scale: scale,
-                onClose: () => Navigator.of(context).pop(),
-              ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return Column(
+                // Chiếm toàn bộ chiều cao drawer để footer luôn nằm sát đáy
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  // Handle bar - optimized with const
+                  _HandleBar(scale: scale, color: handleBarColor),
+                  
+                  // Header - separated for better repaint optimization
+                  _Header(
+                    title: title,
+                    scale: scale,
+                    onClose: () => Navigator.of(context).pop(),
+                  ),
 
-              // Form Content - optimized scroll view
-              Flexible(
-                child: _Content(
-                  scrollController: scrollController,
-                  children: children,
-                  scale: scale,
-                  isCompact: isCompact,
-                ),
-              ),
+                  // Form Content - optimized scroll view with flexible sizing
+                  Flexible(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: constraints.maxHeight - 
+                                   (12 + 5 + 8) * scale - // handle bar
+                                   (8 * 2 + 40) * scale - // header
+                                   (onSave != null 
+                                       ? (12 + 48 + 16 + MediaQuery.of(context).padding.bottom) * scale 
+                                       : 0.0), // footer
+                      ),
+                      child: _Content(
+                        scrollController: scrollController,
+                        children: children,
+                        scale: scale,
+                        isCompact: isCompact,
+                      ),
+                    ),
+                  ),
 
-              // Footer with Save Button - separated widget for optimization
-              if (onSave != null)
-                _Footer(
-                  onSave: onSave!,
-                  isLoading: isLoading,
-                  isDisabled: isDisabled,
-                  saveButtonText: saveButtonText,
-                  scale: scale,
-                ),
-            ],
+                  // Footer with Save Button - separated widget for optimization
+                  if (onSave != null)
+                    _Footer(
+                      onSave: onSave!,
+                      isLoading: isLoading,
+                      isDisabled: isDisabled,
+                      saveButtonText: saveButtonText,
+                      scale: scale,
+                    ),
+                ],
+              );
+            },
           ),
         );
       },
@@ -187,6 +209,7 @@ class _Header extends StatelessWidget {
 }
 
 /// Content widget - optimized scroll performance
+/// Always allows scrolling to prevent overflow
 class _Content extends StatelessWidget {
   final ScrollController scrollController;
   final List<Widget> children;
@@ -202,34 +225,23 @@ class _Content extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isCompact) {
-      return Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 16 * scale,
-                  vertical: 8 * scale,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  mainAxisSize: MainAxisSize.min,
-                  children: children,
-                ),
-      );
-    }
-
+    // Always use SingleChildScrollView to prevent overflow
+    // Use ClampingScrollPhysics to allow scroll when content exceeds available space
     return SingleChildScrollView(
       controller: scrollController,
       physics: const ClampingScrollPhysics(
         parent: BouncingScrollPhysics(),
       ),
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 16 * scale,
-                    vertical: 8 * scale,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    mainAxisSize: MainAxisSize.min,
-                    children: children,
-                  ),
+      padding: EdgeInsets.symmetric(
+        horizontal: 16 * scale,
+        vertical: 8 * scale,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        // Cho phép content chiếm tối đa chiều cao còn lại bên trong vùng scroll
+        mainAxisSize: MainAxisSize.max,
+        children: children,
+      ),
     );
   }
 }
