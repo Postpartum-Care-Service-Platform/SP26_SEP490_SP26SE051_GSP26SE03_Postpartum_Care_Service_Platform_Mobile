@@ -68,6 +68,8 @@ android/key.properties
 android/.gradle/
 android/local.properties
 android/**/build/
+android/keystore/
+android/key.properties
 
 # iOS/macOS CocoaPods & Xcode generated
 ios/Pods/
