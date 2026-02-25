@@ -6,6 +6,9 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
+import '../../../../core/widgets/app_bottom_navigation_bar.dart';
+import '../screens/employee_profile_screen.dart';
+import '../widgets/employee_quick_menu.dart';
 import '../../domain/entities/appointment_entity.dart';
 import '../../domain/entities/appointment_status.dart';
 import '../bloc/appointment/appointment_bloc.dart';
@@ -218,6 +221,31 @@ class _LoadedContent extends StatelessWidget {
             completed: completed,
             pending: pending,
           ),
+          EmployeeQuickMenuSection(
+            primaryItems: EmployeeQuickMenuPresets.primaryItems(),
+            allItems: EmployeeQuickMenuPresets.allItems(),
+            currentTab: AppBottomTab.appointment,
+            onBottomTabSelected: (tab) {
+              Navigator.of(context).popUntil((route) => route.isFirst);
+            },
+            onExtraActionSelected: (action) {
+              switch (action) {
+                case EmployeeQuickMenuExtraAction.staffProfile:
+                  final authBloc = InjectionContainer.authBloc;
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => BlocProvider.value(
+                        value: authBloc,
+                        child: const EmployeeProfileScreen(),
+                      ),
+                    ),
+                  );
+                  break;
+                default:
+                  break;
+              }
+            },
+          ),
           const SizedBox(height: 16),
           if (upcomingAppointments.isNotEmpty) ...[
             _SectionTitle(
@@ -277,7 +305,7 @@ class _HeaderCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Lịch làm việc của tôi 📅',
+            'Lịch làm việc của tôi',
             style: AppTextStyles.arimo(
               fontSize: 20,
               fontWeight: FontWeight.w700,

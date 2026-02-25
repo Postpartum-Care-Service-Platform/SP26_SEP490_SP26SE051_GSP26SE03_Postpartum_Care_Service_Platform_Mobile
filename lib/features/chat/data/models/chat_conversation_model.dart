@@ -16,7 +16,7 @@ class ChatConversationModel extends ChatConversation {
     // - messages: [ ... ]
     // - messages: { items: [ ... ], total: X }
     // - conversationMessages: [ ... ]
-    Iterable<dynamic> _extractMessages(dynamic data) {
+    Iterable<dynamic> extractMessages(dynamic data) {
       if (data is List) return data;
       if (data is Map<String, dynamic>) {
         if (data['items'] is List) return data['items'] as List;
@@ -25,7 +25,7 @@ class ChatConversationModel extends ChatConversation {
       return const [];
     }
 
-    final rawMessages = _extractMessages(
+    final rawMessages = extractMessages(
       json['messages'] ?? json['conversationMessages'],
     );
 
