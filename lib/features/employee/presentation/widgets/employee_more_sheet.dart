@@ -1,23 +1,28 @@
 // lib/features/employee/presentation/widgets/employee_more_sheet.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_strings.dart';
+import '../../../../core/di/injection_container.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../screens/employee_meal_plan_screen.dart';
+import '../screens/employee_profile_screen.dart';
 import '../screens/service_booking_screen.dart';
 
 class EmployeeMoreSheet {
   EmployeeMoreSheet._();
 
   static void show(BuildContext context) {
+    // EmployeePortalScreen không luôn nằm dưới Provider<AuthBloc>, nên lấy bloc từ DI.
+    final authBloc = InjectionContainer.authBloc;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) {
+      builder: (bottomSheetContext) {
         return Container(
-          decoration: const BoxDecoration(
-            color: Colors.transparent,
-          ),
+          decoration: const BoxDecoration(color: Colors.transparent),
           child: Container(
             decoration: const BoxDecoration(
               color: AppColors.white,
@@ -41,7 +46,7 @@ class EmployeeMoreSheet {
                   icon: Icons.restaurant_menu,
                   title: 'Coi bữa ăn theo hộ',
                   onTap: () {
-                    Navigator.of(context).pop();
+                    Navigator.of(bottomSheetContext).pop();
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (_) => const EmployeeMealPlanScreen(),
@@ -53,10 +58,25 @@ class EmployeeMoreSheet {
                   icon: Icons.auto_awesome,
                   title: 'Đặt dịch vụ',
                   onTap: () {
-                    Navigator.of(context).pop();
+                    Navigator.of(bottomSheetContext).pop();
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (_) => const ServiceBookingScreen(),
+                      ),
+                    );
+                  },
+                ),
+                _SheetItem(
+                  icon: Icons.person_rounded,
+                  title: AppStrings.employeeProfile,
+                  onTap: () {
+                    Navigator.of(bottomSheetContext).pop();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => BlocProvider.value(
+                          value: authBloc,
+                          child: const EmployeeProfileScreen(),
+                        ),
                       ),
                     );
                   },

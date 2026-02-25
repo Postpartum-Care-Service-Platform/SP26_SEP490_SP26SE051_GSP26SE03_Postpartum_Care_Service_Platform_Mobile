@@ -14,7 +14,7 @@ class SupportRequestModel extends SupportRequest {
   });
 
   factory SupportRequestModel.fromJson(Map<String, dynamic> json) {
-    DateTime? _parseDate(dynamic value) {
+    DateTime? parseDate(dynamic value) {
       if (value == null) return null;
       try {
         return DateTime.parse(value as String);
@@ -29,8 +29,8 @@ class SupportRequestModel extends SupportRequest {
       reason: (json['reason'] ?? '').toString(),
       status: (json['status'] ?? '').toString(),
       createdAt: DateTime.parse(json['createdAt'] as String),
-      assignedAt: _parseDate(json['assignedAt']),
-      resolvedAt: _parseDate(json['resolvedAt']),
+      assignedAt: parseDate(json['assignedAt']),
+      resolvedAt: parseDate(json['resolvedAt']),
       customer: json['customer']?.toString(),
       staff: json['staff']?.toString(),
     );

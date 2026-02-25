@@ -79,7 +79,7 @@ class _HeaderCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Lịch làm việc của tôi 📅',
+            'Lịch làm việc của tôi',
             style: AppTextStyles.arimo(
               fontSize: 20,
               fontWeight: FontWeight.w700,

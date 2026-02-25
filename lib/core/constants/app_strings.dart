@@ -116,6 +116,13 @@ class AppStrings {
   static const String cancel = 'Hủy';
   static const String logout = 'Đăng xuất';
 
+  // Employee / Staff Profile
+  static const String employeeProfileTitle = 'Hồ sơ nhân viên';
+  static const String employeeProfile = 'Hồ sơ nhân viên';
+  static const String noEmployeeProfile = 'Không thể tải thông tin nhân viên.';
+  static const String employeeProfileHint =
+      'Vui lòng kiểm tra kết nối mạng hoặc đăng nhập lại để tải hồ sơ.';
+
   // Profile Menu Items
   static const String myAccount = 'Tài khoản của tôi';
   static const String familyProfile = 'Hồ sơ gia đình';
@@ -446,7 +453,8 @@ class AppStrings {
   static const String contractNotSigned = 'Chưa ký';
   static const String contractStatusSent = 'Đã gửi';
   static const String contractStatusWaitingForSignature = 'Đợi ký';
-  static const String contractStatusScheduleCompleted = 'Đã hoàn thành lịch trình';
+  static const String contractStatusScheduleCompleted =
+      'Đã hoàn thành lịch trình';
 
   // Booking Status
   static const String bookingStatusDraft = 'Bản nháp';
@@ -473,7 +481,8 @@ class AppStrings {
   static const String servicesAwaitingActivationMessage =
       'Bạn đã thanh toán đủ. Dịch vụ sẽ kích hoạt khi đến ngày check-in.';
   static const String servicesPayRemaining = 'Thanh toán phần còn lại';
-  static const String servicesResortExperience = 'Trải nghiệm nghỉ dưỡng của bạn';
+  static const String servicesResortExperience =
+      'Trải nghiệm nghỉ dưỡng của bạn';
   static const String servicesResortExperienceDescription =
       'Theo dõi lịch trình và các tiện ích của bạn.';
   static const String servicesResortAmenities = 'Dịch vụ trong kỳ nghỉ';
@@ -489,14 +498,16 @@ class AppStrings {
   static const String servicesAmenityRequest = 'Tiện ích';
   static const String servicesAmenityRequestDescription =
       'Gọi nước, đồ dùng em bé, dọn phòng,...';
-  static const String servicesExploreAmenities = 'Khám phá các dịch vụ tiện ích';
+  static const String servicesExploreAmenities =
+      'Khám phá các dịch vụ tiện ích';
 
   // Feedback Screen
   static const String feedbackTitle = 'Đánh giá dịch vụ';
   static const String feedbackWrite = 'Viết feedback';
   static const String feedbackWriteFirst = 'Viết feedback đầu tiên';
   static const String feedbackNoFeedback = 'Chưa có feedback nào';
-  static const String feedbackShareExperience = 'Hãy chia sẻ trải nghiệm của bạn';
+  static const String feedbackShareExperience =
+      'Hãy chia sẻ trải nghiệm của bạn';
   static const String feedbackType = 'Loại feedback';
   static const String feedbackSelectType = 'Chọn loại feedback';
   static const String feedbackTitleLabel = 'Tiêu đề';
@@ -509,16 +520,19 @@ class AppStrings {
   static const String feedbackSubmitSuccess = 'Gửi feedback thành công';
   static const String feedbackPleaseSelectType = 'Vui lòng chọn loại feedback';
   static const String feedbackPleaseRate = 'Vui lòng đánh giá sao';
-  static const String feedbackMaxImages = 'Bạn chỉ có thể thêm tối đa {max} ảnh';
+  static const String feedbackMaxImages =
+      'Bạn chỉ có thể thêm tối đa {max} ảnh';
   static const String feedbackAddImage = 'Thêm ảnh';
 
   // Schedule Screen
-  static const String scheduleNoScheduleForDay = 'Không có lịch trình cho ngày này';
+  static const String scheduleNoScheduleForDay =
+      'Không có lịch trình cho ngày này';
   static const String scheduleDay = 'Ngày';
   static const String scheduleMissed = 'Đã bỏ lỡ';
   static const String scheduleCancelled = 'Đã hủy';
   static const String scheduleStaffAssigned = 'Điều dưỡng tiếp quản';
-  static const String scheduleNoStaffAssigned = 'Chưa có điều dưỡng được phân công';
+  static const String scheduleNoStaffAssigned =
+      'Chưa có điều dưỡng được phân công';
   static const String scheduleNote = 'Ghi chú';
   static const String scheduleNoNote = 'Chưa có ghi chú';
   static const String scheduleStaff = 'Điều dưỡng';
@@ -534,7 +548,8 @@ class AppStrings {
   static const String menuDelete = 'Xóa';
   static const String menuDeleteCount = 'Xóa ({count})';
   static const String menuDeletedCount = 'Đã xóa {count} menu';
-  static const String menuPleaseSelectAtLeastOne = 'Vui lòng chọn ít nhất một menu';
+  static const String menuPleaseSelectAtLeastOne =
+      'Vui lòng chọn ít nhất một menu';
   static const String menuSaveSuccess = 'Lưu menu thành công';
   static const String menuSaveCount = 'Lưu menu ({count})';
   static const String menuSelect = 'Chọn menu';
@@ -576,16 +591,16 @@ class AppStrings {
   static const String weekDaySunday = 'CN';
 
   // Support and Policy
-      static const String helpandPolicy = 'Hỗ trợ và pháp lý';
+  static const String helpandPolicy = 'Hỗ trợ và pháp lý';
   static const String supportAndPolicyTitle = 'Hỗ trợ và pháp lý';
-  
+
   // Help Screen
   static const String helpTitle = 'Trợ giúp';
   static const String helpFaq = 'Câu hỏi thường gặp';
   static const String helpHowToUse = 'Hướng dẫn sử dụng';
   static const String helpTroubleshooting = 'Khắc phục sự cố';
   static const String helpContactSupport = 'Liên hệ hỗ trợ';
-  
+
   // Contact Screen
   static const String contactTitle = 'Liên hệ';
   static const String contactPhone = 'Hotline';
@@ -594,50 +609,65 @@ class AppStrings {
   static const String contactWorkingHours = 'Giờ làm việc';
   static const String contactPhoneNumber = '1900 1234';
   static const String contactEmailAddress = 'support@thejoyfulnest.com';
-  static const String contactFullAddress = '1056A Đường Nguyễn Văn Linh, Tân Phong, Quận 7, Thành phố Hồ Chí Minh 700000, Việt Nam';
+  static const String contactFullAddress =
+      '1056A Đường Nguyễn Văn Linh, Tân Phong, Quận 7, Thành phố Hồ Chí Minh 700000, Việt Nam';
   static const String contactHours = 'Thứ 2 - Chủ nhật: 8:00 - 20:00';
   static const String contactCallNow = 'Gọi ngay';
   static const String contactSendEmail = 'Gửi email';
-  
+
   // About Screen
   static const String aboutTitle = 'Về chúng tôi';
-  static const String aboutDescription = 'The Joyful Nest là dịch vụ nghỉ dưỡng chuyên nghiệp dành cho mẹ và bé sau sinh. Chúng tôi cung cấp các gói dịch vụ chăm sóc toàn diện với đội ngũ nhân viên giàu kinh nghiệm và cơ sở vật chất hiện đại.';
+  static const String aboutDescription =
+      'The Joyful Nest là dịch vụ nghỉ dưỡng chuyên nghiệp dành cho mẹ và bé sau sinh. Chúng tôi cung cấp các gói dịch vụ chăm sóc toàn diện với đội ngũ nhân viên giàu kinh nghiệm và cơ sở vật chất hiện đại.';
   static const String aboutMission = 'Sứ mệnh';
-  static const String aboutMissionContent = 'Mang đến trải nghiệm nghỉ dưỡng tuyệt vời nhất cho mẹ và bé, giúp các gia đình có những khoảnh khắc hạnh phúc và đáng nhớ trong giai đoạn quan trọng này.';
+  static const String aboutMissionContent =
+      'Mang đến trải nghiệm nghỉ dưỡng tuyệt vời nhất cho mẹ và bé, giúp các gia đình có những khoảnh khắc hạnh phúc và đáng nhớ trong giai đoạn quan trọng này.';
   static const String aboutVision = 'Tầm nhìn';
-  static const String aboutVisionContent = 'Trở thành địa điểm nghỉ dưỡng hàng đầu tại Việt Nam, được tin tưởng và lựa chọn bởi các gia đình trong việc chăm sóc sức khỏe mẹ và bé sau sinh.';
+  static const String aboutVisionContent =
+      'Trở thành địa điểm nghỉ dưỡng hàng đầu tại Việt Nam, được tin tưởng và lựa chọn bởi các gia đình trong việc chăm sóc sức khỏe mẹ và bé sau sinh.';
   static const String aboutValues = 'Giá trị cốt lõi';
   static const String aboutValue1 = 'Chăm sóc tận tâm';
   static const String aboutValue2 = 'Chuyên nghiệp';
   static const String aboutValue3 = 'An toàn và tin cậy';
   static const String aboutValue4 = 'Đổi mới và phát triển';
-  
+
   // Terms Screen
   static const String termsTitle = 'Điều khoản sử dụng';
   static const String termsLastUpdated = 'Cập nhật lần cuối: {date}';
   static const String termsSection1 = '1. Chấp nhận điều khoản';
-  static const String termsSection1Content = 'Bằng việc sử dụng ứng dụng The Joyful Nest, bạn đồng ý tuân thủ và bị ràng buộc bởi các điều khoản và điều kiện này. Nếu bạn không đồng ý với bất kỳ phần nào của các điều khoản này, bạn không được sử dụng dịch vụ của chúng tôi.';
+  static const String termsSection1Content =
+      'Bằng việc sử dụng ứng dụng The Joyful Nest, bạn đồng ý tuân thủ và bị ràng buộc bởi các điều khoản và điều kiện này. Nếu bạn không đồng ý với bất kỳ phần nào của các điều khoản này, bạn không được sử dụng dịch vụ của chúng tôi.';
   static const String termsSection2 = '2. Sử dụng dịch vụ';
-  static const String termsSection2Content = 'Bạn đồng ý sử dụng ứng dụng một cách hợp pháp và phù hợp với các quy định hiện hành. Bạn không được sử dụng dịch vụ cho bất kỳ mục đích bất hợp pháp hoặc trái phép nào.';
+  static const String termsSection2Content =
+      'Bạn đồng ý sử dụng ứng dụng một cách hợp pháp và phù hợp với các quy định hiện hành. Bạn không được sử dụng dịch vụ cho bất kỳ mục đích bất hợp pháp hoặc trái phép nào.';
   static const String termsSection3 = '3. Tài khoản người dùng';
-  static const String termsSection3Content = 'Bạn chịu trách nhiệm duy trì tính bảo mật của tài khoản và mật khẩu của mình. Bạn đồng ý thông báo ngay lập tức cho chúng tôi về bất kỳ vi phạm bảo mật nào.';
+  static const String termsSection3Content =
+      'Bạn chịu trách nhiệm duy trì tính bảo mật của tài khoản và mật khẩu của mình. Bạn đồng ý thông báo ngay lập tức cho chúng tôi về bất kỳ vi phạm bảo mật nào.';
   static const String termsSection4 = '4. Thanh toán';
-  static const String termsSection4Content = 'Tất cả các khoản thanh toán phải được thực hiện đúng hạn theo quy định. Chúng tôi có quyền từ chối hoặc hủy bỏ bất kỳ giao dịch nào mà chúng tôi cho là đáng ngờ hoặc vi phạm các điều khoản này.';
+  static const String termsSection4Content =
+      'Tất cả các khoản thanh toán phải được thực hiện đúng hạn theo quy định. Chúng tôi có quyền từ chối hoặc hủy bỏ bất kỳ giao dịch nào mà chúng tôi cho là đáng ngờ hoặc vi phạm các điều khoản này.';
   static const String termsSection5 = '5. Hủy bỏ và hoàn tiền';
-  static const String termsSection5Content = 'Chính sách hủy bỏ và hoàn tiền được quy định chi tiết trong hợp đồng dịch vụ. Vui lòng tham khảo hợp đồng của bạn để biết thêm thông tin.';
-  
+  static const String termsSection5Content =
+      'Chính sách hủy bỏ và hoàn tiền được quy định chi tiết trong hợp đồng dịch vụ. Vui lòng tham khảo hợp đồng của bạn để biết thêm thông tin.';
+
   // Privacy Screen
   static const String privacyTitle = 'Chính sách bảo mật';
   static const String privacyLastUpdated = 'Cập nhật lần cuối: {date}';
-  static const String privacyIntroduction = 'Chúng tôi cam kết bảo vệ quyền riêng tư của bạn. Chính sách bảo mật này mô tả cách chúng tôi thu thập, sử dụng và bảo vệ thông tin cá nhân của bạn.';
+  static const String privacyIntroduction =
+      'Chúng tôi cam kết bảo vệ quyền riêng tư của bạn. Chính sách bảo mật này mô tả cách chúng tôi thu thập, sử dụng và bảo vệ thông tin cá nhân của bạn.';
   static const String privacySection1 = '1. Thông tin chúng tôi thu thập';
-  static const String privacySection1Content = 'Chúng tôi thu thập thông tin bạn cung cấp trực tiếp khi đăng ký tài khoản, đặt dịch vụ, hoặc liên hệ với chúng tôi. Thông tin này bao gồm tên, email, số điện thoại, địa chỉ và thông tin y tế liên quan.';
+  static const String privacySection1Content =
+      'Chúng tôi thu thập thông tin bạn cung cấp trực tiếp khi đăng ký tài khoản, đặt dịch vụ, hoặc liên hệ với chúng tôi. Thông tin này bao gồm tên, email, số điện thoại, địa chỉ và thông tin y tế liên quan.';
   static const String privacySection2 = '2. Cách chúng tôi sử dụng thông tin';
-  static const String privacySection2Content = 'Chúng tôi sử dụng thông tin của bạn để cung cấp và cải thiện dịch vụ, xử lý thanh toán, gửi thông báo quan trọng, và tuân thủ các nghĩa vụ pháp lý.';
+  static const String privacySection2Content =
+      'Chúng tôi sử dụng thông tin của bạn để cung cấp và cải thiện dịch vụ, xử lý thanh toán, gửi thông báo quan trọng, và tuân thủ các nghĩa vụ pháp lý.';
   static const String privacySection3 = '3. Bảo mật thông tin';
-  static const String privacySection3Content = 'Chúng tôi sử dụng các biện pháp bảo mật kỹ thuật và tổ chức phù hợp để bảo vệ thông tin cá nhân của bạn khỏi truy cập trái phép, mất mát hoặc phá hủy.';
+  static const String privacySection3Content =
+      'Chúng tôi sử dụng các biện pháp bảo mật kỹ thuật và tổ chức phù hợp để bảo vệ thông tin cá nhân của bạn khỏi truy cập trái phép, mất mát hoặc phá hủy.';
   static const String privacySection4 = '4. Chia sẻ thông tin';
-  static const String privacySection4Content = 'Chúng tôi không bán, cho thuê hoặc chia sẻ thông tin cá nhân của bạn với bên thứ ba, trừ khi được yêu cầu bởi pháp luật hoặc với sự đồng ý của bạn.';
+  static const String privacySection4Content =
+      'Chúng tôi không bán, cho thuê hoặc chia sẻ thông tin cá nhân của bạn với bên thứ ba, trừ khi được yêu cầu bởi pháp luật hoặc với sự đồng ý của bạn.';
   static const String privacySection5 = '5. Quyền của bạn';
-  static const String privacySection5Content = 'Bạn có quyền truy cập, chỉnh sửa, xóa hoặc yêu cầu ngừng xử lý thông tin cá nhân của mình. Để thực hiện các quyền này, vui lòng liên hệ với chúng tôi.';
+  static const String privacySection5Content =
+      'Bạn có quyền truy cập, chỉnh sửa, xóa hoặc yêu cầu ngừng xử lý thông tin cá nhân của mình. Để thực hiện các quyền này, vui lòng liên hệ với chúng tôi.';
 }

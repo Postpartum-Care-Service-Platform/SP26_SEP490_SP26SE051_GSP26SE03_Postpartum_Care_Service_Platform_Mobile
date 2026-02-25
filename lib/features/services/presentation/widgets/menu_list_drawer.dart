@@ -243,7 +243,7 @@ class _MenuListDrawerState extends State<MenuListDrawer> {
                             ],
                           ],
                         );
-                      }).toList(),
+                      }),
                     ],
                   ),
           ),

@@ -337,7 +337,7 @@ class _MenuSelectionDrawerState extends State<MenuSelectionDrawer> {
                       ],
                     ),
                   );
-                }).toList(),
+                }),
                 
                 // Save button
                 if (_tempSelections.isNotEmpty)

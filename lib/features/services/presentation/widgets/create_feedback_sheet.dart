@@ -249,7 +249,7 @@ class _CreateFeedbackSheetState extends State<CreateFeedbackSheet> {
                               ),
                             ),
                           );
-                        }).toList(),
+                        }),
                         SizedBox(height: 20 * scale),
                         // Title
                         Text(
