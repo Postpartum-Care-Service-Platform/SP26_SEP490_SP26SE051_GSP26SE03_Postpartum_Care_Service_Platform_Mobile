@@ -14,9 +14,17 @@ import '../../../../core/routing/app_routes.dart';
 import '../widgets/current_package_view.dart';
 import '../widgets/service_dashboard.dart';
 import '../widgets/services_booking_flow.dart';
+import '../widgets/service_location_selection.dart';
 
-class ServicesScreen extends StatelessWidget {
+class ServicesScreen extends StatefulWidget {
   const ServicesScreen({super.key});
+
+  @override
+  State<ServicesScreen> createState() => _ServicesScreenState();
+}
+
+class _ServicesScreenState extends State<ServicesScreen> {
+  ServiceLocationType? _selectedLocationType;
 
   @override
   Widget build(BuildContext context) {
@@ -51,28 +59,59 @@ class ServicesScreen extends StatelessWidget {
         builder: (context, _) {
           final authState = context.watch<AuthBloc>().state;
 
-            if (authState is AuthLoading) {
-              return const Center(
-                child: AppLoadingIndicator(color: AppColors.primary),
-              );
-            }
+          if (authState is AuthLoading) {
+            return const Center(
+              child: AppLoadingIndicator(color: AppColors.primary),
+            );
+          }
 
-            if (authState is AuthCurrentAccountLoaded) {
-              final nowPackage = authState.account.nowPackage;
+          if (authState is AuthCurrentAccountLoaded) {
+            final nowPackage = authState.account.nowPackage;
 
-              if (nowPackage != null) {
-                if (nowPackage.serviceIsActive) {
-                  return ServiceDashboard(nowPackage: nowPackage);
-                } else {
-                  return CurrentPackageView(nowPackage: nowPackage);
-                }
+            if (nowPackage != null) {
+              if (nowPackage.serviceIsActive) {
+                return ServiceDashboard(nowPackage: nowPackage);
+              } else {
+                return CurrentPackageView(nowPackage: nowPackage);
               }
             }
 
-            return const ServicesBookingFlow();
-          },
-        ),
-      );
+            // Chưa có gói hiện tại → cho chọn loại dịch vụ trước khi vào flow đặt gói
+            if (_selectedLocationType == null) {
+              return ServiceLocationSelection(
+                onLocationSelected: (locationType) {
+                  // Reset booking flow để tránh giữ state cũ
+                  context.read<BookingBloc>().add(const BookingReset());
+                  setState(() {
+                    _selectedLocationType = locationType;
+                  });
+                },
+              );
+            }
+
+            return ServicesBookingFlow(
+              locationType: _selectedLocationType!,
+            );
+          }
+
+          // Trường hợp chưa load account hoặc lỗi: fallback hiển thị màn chọn loại dịch vụ
+          if (_selectedLocationType == null) {
+            return ServiceLocationSelection(
+              onLocationSelected: (locationType) {
+                context.read<BookingBloc>().add(const BookingReset());
+                setState(() {
+                  _selectedLocationType = locationType;
+                });
+              },
+            );
+          }
+
+          return ServicesBookingFlow(
+            locationType: _selectedLocationType!,
+          );
+        },
+      ),
+    );
   }
 
   void _handleBookingSideEffects(BuildContext context, BookingState state) {

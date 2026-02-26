@@ -516,6 +516,17 @@ class AppStrings {
       'Gọi nước, đồ dùng em bé, dọn phòng,...';
   static const String servicesExploreAmenities = 'Khám phá các dịch vụ tiện ích';
 
+  // Services - Location Selection
+  static const String servicesLocationCenterChip = 'Tại trung tâm';
+  static const String servicesLocationCenterTitle = 'Nghỉ dưỡng tại trung tâm';
+  static const String servicesLocationCenterSubtitle =
+      'Trải nghiệm resort cao cấp\ndịch vụ trọn gói cho mẹ & bé';
+  static const String servicesLocationHomeChip = 'Tại nhà';
+  static const String servicesLocationHomeTitle = 'Chăm sóc tại nhà';
+  static const String servicesLocationHomeSubtitle =
+      'Điều dưỡng đến tận nhà\nthoải mái như ở nhà mình';
+  static const String servicesLocationStartNow = 'Bắt đầu ngay';
+
   // Feedback Screen
   static const String feedbackTitle = 'Đánh giá dịch vụ';
   static const String feedbackWrite = 'Viết feedback';

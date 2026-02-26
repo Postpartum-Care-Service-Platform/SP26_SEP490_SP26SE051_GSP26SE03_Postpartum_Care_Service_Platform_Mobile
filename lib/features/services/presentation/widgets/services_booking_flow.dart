@@ -13,9 +13,15 @@ import '../../../booking/presentation/widgets/booking_step2_room_selection.dart'
 import '../../../booking/presentation/widgets/booking_step3_date_selection.dart';
 import '../../../booking/presentation/widgets/booking_step4_summary.dart';
 import 'services_formatters.dart';
+import 'service_location_selection.dart';
 
 class ServicesBookingFlow extends StatefulWidget {
-  const ServicesBookingFlow({super.key});
+  final ServiceLocationType? locationType;
+
+  const ServicesBookingFlow({
+    super.key,
+    this.locationType,
+  });
 
   @override
   State<ServicesBookingFlow> createState() => _ServicesBookingFlowState();
