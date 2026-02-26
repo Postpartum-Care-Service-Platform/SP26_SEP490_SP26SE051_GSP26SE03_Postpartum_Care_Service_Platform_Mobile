@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:video_player/video_player.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -43,6 +44,7 @@ class ServiceLocationSelection extends StatelessWidget {
                       chipLabel: AppStrings.servicesLocationCenterChip,
                       accentColor: AppColors.packageVip,
                       assetSvg: AppAssets.family,
+                      showVideoBackground: true,
                       onTap: () => onLocationSelected(ServiceLocationType.center),
                     ),
                     _LocationHalfCard(
@@ -53,6 +55,7 @@ class ServiceLocationSelection extends StatelessWidget {
                       chipLabel: AppStrings.servicesLocationHomeChip,
                       accentColor: AppColors.packagePro,
                       assetSvg: AppAssets.helper,
+                      showVideoBackground: false,
                       onTap: () => onLocationSelected(ServiceLocationType.home),
                     ),
                   ],
@@ -81,6 +84,7 @@ class _LocationHalfCard extends StatelessWidget {
   final String chipLabel;
   final Color accentColor;
   final String assetSvg;
+  final bool showVideoBackground;
   final VoidCallback onTap;
 
   const _LocationHalfCard({
@@ -91,6 +95,7 @@ class _LocationHalfCard extends StatelessWidget {
     required this.chipLabel,
     required this.accentColor,
     required this.assetSvg,
+    required this.showVideoBackground,
     required this.onTap,
   });
 
@@ -118,7 +123,7 @@ class _LocationHalfCard extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                // Background gradient + pattern
+                // Background gradient
                 Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -133,15 +138,17 @@ class _LocationHalfCard extends StatelessWidget {
                   ),
                 ),
 
-                // Hình minh hoạ fill toàn bộ phần trên / dưới
+                // Background media: video cho ô trên, hình minh hoạ cho ô dưới
                 Positioned.fill(
-                  child: Opacity(
-                    opacity: 0.15,
-                    child: SvgPicture.asset(
-                      assetSvg,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
+                  child: showVideoBackground
+                      ? const _CenterVideoBackground()
+                      : Opacity(
+                          opacity: 0.15,
+                          child: SvgPicture.asset(
+                            assetSvg,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
                 ),
 
                 // Overlay mờ để text nổi bật
@@ -282,5 +289,66 @@ class _DiagonalDividerPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/// Video nền cho ô "Nghỉ dưỡng tại trung tâm"
+class _CenterVideoBackground extends StatefulWidget {
+  const _CenterVideoBackground();
+
+  @override
+  State<_CenterVideoBackground> createState() => _CenterVideoBackgroundState();
+}
+
+class _CenterVideoBackgroundState extends State<_CenterVideoBackground> {
+  late final VideoPlayerController _controller;
+  bool _initialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.networkUrl(
+      Uri.parse(AppAssets.servicesCenterResortVideo),
+    )
+      ..setLooping(true)
+      ..setVolume(0);
+
+    _controller.initialize().then((_) {
+      if (!mounted) return;
+      _controller.play();
+      setState(() {
+        _initialized = true;
+      });
+    }).catchError((_) {
+      // Nếu load video lỗi thì giữ nguyên background gradient
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_initialized || !_controller.value.isInitialized) {
+      // Fallback: không vẽ gì thêm, chỉ dùng gradient phía dưới
+      return const SizedBox.expand();
+    }
+
+    final size = _controller.value.size;
+    if (size.isEmpty) {
+      return const SizedBox.expand();
+    }
+
+    return FittedBox(
+      fit: BoxFit.cover,
+      child: SizedBox(
+        width: size.width,
+        height: size.height,
+        child: VideoPlayer(_controller),
+      ),
+    );
+  }
 }
 

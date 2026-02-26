@@ -78,6 +78,9 @@ dependencies:
   # QR Code
   qr_flutter: ^4.1.0
 
+  # Video background for service location selection
+  video_player: ^2.9.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
