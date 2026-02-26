@@ -64,11 +64,12 @@ class CarePlanActivityItem extends StatelessWidget {
               ),
                   ),
                   // Instruction
-            if (carePlan.instruction.isNotEmpty && 
+            if (carePlan.instruction != null &&
+                carePlan.instruction!.isNotEmpty && 
                 carePlan.instruction != 'string') ...[
               SizedBox(height: 6 * scale),
                       Text(
-                      carePlan.instruction,
+                      carePlan.instruction!,
                       style: AppTextStyles.arimo(
                   fontSize: 12 * scale,
                         color: AppColors.textSecondary,

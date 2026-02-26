@@ -159,4 +159,9 @@ class AuthLoadCurrentAccount extends AuthEvent {
   const AuthLoadCurrentAccount();
 }
 
+/// Event to restore current account from cache (without API call)
+class AuthRestoreCurrentAccountFromCache extends AuthEvent {
+  const AuthRestoreCurrentAccountFromCache();
+}
+
 

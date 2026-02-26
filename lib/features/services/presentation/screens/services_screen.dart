@@ -14,76 +14,123 @@ import '../../../../core/routing/app_routes.dart';
 import '../widgets/current_package_view.dart';
 import '../widgets/service_dashboard.dart';
 import '../widgets/services_booking_flow.dart';
+import '../widgets/service_location_selection.dart';
 
-class ServicesScreen extends StatelessWidget {
+class ServicesScreen extends StatefulWidget {
   const ServicesScreen({super.key});
 
   @override
+  State<ServicesScreen> createState() => _ServicesScreenState();
+}
+
+class _ServicesScreenState extends State<ServicesScreen> {
+  ServiceLocationType? _selectedLocationType;
+
+  @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => InjectionContainer.bookingBloc
-        ..add(const BookingLoadPackages()),
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        body: BlocConsumer<BookingBloc, BookingState>(
-          listener: _handleBookingSideEffects,
-          builder: (context, _) {
-            final authState = context.watch<AuthBloc>().state;
+    // Check if BookingBloc already exists to avoid creating duplicate
+    BookingBloc? existingBookingBloc;
+    try {
+      existingBookingBloc = context.read<BookingBloc>();
+    } catch (_) {
+      // BookingBloc not found, will create new one
+    }
 
-            if (authState is AuthLoading) {
-              return const Center(
-                child: AppLoadingIndicator(color: AppColors.primary),
-              );
-            }
+    return (existingBookingBloc != null
+            ? BlocProvider.value(
+                value: existingBookingBloc,
+                child: _buildContent(),
+              )
+            : BlocProvider(
+                create: (context) {
+                  // Create new bloc but DON'T load packages here
+                  // Let ServicesBookingFlow handle loading when needed
+                  return InjectionContainer.bookingBloc;
+                },
+                child: _buildContent(),
+              ));
+  }
 
-            if (authState is AuthCurrentAccountLoaded) {
-              final nowPackage = authState.account.nowPackage;
+  Widget _buildContent() {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: BlocConsumer<BookingBloc, BookingState>(
+        listener: _handleBookingSideEffects,
+        builder: (context, _) {
+          final authState = context.watch<AuthBloc>().state;
 
-              if (nowPackage != null) {
-                if (nowPackage.serviceIsActive) {
-                  return ServiceDashboard(nowPackage: nowPackage);
-                } else {
-                  return CurrentPackageView(nowPackage: nowPackage);
-                }
+          if (authState is AuthLoading) {
+            return const Center(
+              child: AppLoadingIndicator(color: AppColors.primary),
+            );
+          }
+
+          if (authState is AuthCurrentAccountLoaded) {
+            final nowPackage = authState.account.nowPackage;
+
+            if (nowPackage != null) {
+              if (nowPackage.serviceIsActive) {
+                return ServiceDashboard(nowPackage: nowPackage);
+              } else {
+                return CurrentPackageView(nowPackage: nowPackage);
               }
             }
 
-            return const ServicesBookingFlow();
-          },
-        ),
+            // Chưa có gói hiện tại → cho chọn loại dịch vụ trước khi vào flow đặt gói
+            if (_selectedLocationType == null) {
+              return ServiceLocationSelection(
+                onLocationSelected: (locationType) {
+                  // Reset booking flow để tránh giữ state cũ
+                  context.read<BookingBloc>().add(const BookingReset());
+                  setState(() {
+                    _selectedLocationType = locationType;
+                  });
+                },
+              );
+            }
+
+            return ServicesBookingFlow(
+              locationType: _selectedLocationType!,
+            );
+          }
+
+          // Trường hợp chưa load account hoặc lỗi: fallback hiển thị màn chọn loại dịch vụ
+          if (_selectedLocationType == null) {
+            return ServiceLocationSelection(
+              onLocationSelected: (locationType) {
+                context.read<BookingBloc>().add(const BookingReset());
+                setState(() {
+                  _selectedLocationType = locationType;
+                });
+              },
+            );
+          }
+
+          return ServicesBookingFlow(
+            locationType: _selectedLocationType!,
+          );
+        },
       ),
     );
   }
 
   void _handleBookingSideEffects(BuildContext context, BookingState state) {
-            if (state is BookingCreated) {
-              final bookingBloc = context.read<BookingBloc>();
-              AppRouter.push(
-                context,
-                AppRoutes.payment,
-                arguments: {
-                  'booking': state.booking,
-                  'bookingBloc': bookingBloc,
-                  'paymentType': 'Deposit',
-                },
-              );
-            } else if (state is BookingPaymentStatusChecked) {
-              if (state.paymentStatus.status == 'Paid') {
-                final bookingBloc = context.read<BookingBloc>();
-                AppRouter.pushReplacement(
-                  context,
-                  AppRoutes.invoice,
-                  arguments: {
-                    'bookingId': state.paymentStatus.bookingId,
-                    'bookingBloc': bookingBloc,
-                  },
-                );
-              }
-            } else if (state is BookingError) {
-              AppToast.showError(
-                context,
-                message: state.message,
-              );
-            }
+    if (state is BookingCreated) {
+      final bookingBloc = context.read<BookingBloc>();
+      AppRouter.push(
+        context,
+        AppRoutes.payment,
+        arguments: {
+          'booking': state.booking,
+          'bookingBloc': bookingBloc,
+          'paymentType': 'Deposit',
+        },
+      );
+    } else if (state is BookingError) {
+      AppToast.showError(
+        context,
+        message: state.message,
+      );
+    }
   }
 }

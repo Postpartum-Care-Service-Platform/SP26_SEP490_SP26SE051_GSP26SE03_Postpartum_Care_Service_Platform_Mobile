@@ -172,7 +172,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       }
 
                       if (state is PackageLoaded) {
-                        if (state.packages.isEmpty) {
+                        if (state.centerPackages.isEmpty) {
                           return Container(
                             padding: const EdgeInsets.all(16),
                             margin: const EdgeInsets.only(bottom: 16),
@@ -192,7 +192,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                         // Show packages in carousel slides
                         return PackageCarousel(
-                          packages: state.packages,
+                          packages: state.centerPackages,
                           onViewAll: () {
                             AppRouter.push(context, AppRoutes.package);
                           },

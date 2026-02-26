@@ -3,6 +3,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/constants/app_strings.dart';
+import '../../../../../core/constants/app_assets.dart';
 import '../../../../../core/utils/app_responsive.dart';
 import '../../../../../core/utils/app_text_styles.dart';
 import '../../../domain/entities/payment_link_entity.dart';
@@ -118,7 +119,7 @@ class QRCodeSection extends StatelessWidget {
                       borderRadius: BorderRadius.circular(16 * scale),
                     ),
                     child: SvgPicture.asset(
-                      'assets/images/app_icon_3.svg',
+                      AppAssets.appIconThird,
                       fit: BoxFit.contain,
                       colorFilter: const ColorFilter.mode(
                         AppColors.primary,

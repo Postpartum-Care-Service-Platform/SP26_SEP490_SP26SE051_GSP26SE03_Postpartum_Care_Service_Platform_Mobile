@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../auth/data/models/current_account_model.dart';
@@ -127,7 +128,7 @@ class _ResortKeyCardState extends State<ResortKeyCard>
             // SVG Keycard Background
             Positioned.fill(
               child: SvgPicture.asset(
-                'assets/images/keycard.svg',
+                AppAssets.keycard,
                 fit: BoxFit.fill,
                 width: double.infinity,
                 height: double.infinity,

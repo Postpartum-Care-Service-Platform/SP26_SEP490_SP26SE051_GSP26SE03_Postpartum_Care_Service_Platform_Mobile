@@ -60,9 +60,11 @@ class _BookingStep3DateSelectionState extends State<BookingStep3DateSelection> {
 
         // Calculate check-out date if we have both package and selected date
         final currentSelectedDate = _selectedDate;
-        if (selectedPackage != null && currentSelectedDate != null) {
+        if (selectedPackage != null && 
+            currentSelectedDate != null &&
+            selectedPackage.durationDays != null) {
           checkOutDate = currentSelectedDate.add(
-            Duration(days: selectedPackage.durationDays),
+            Duration(days: selectedPackage.durationDays!),
           );
         }
 

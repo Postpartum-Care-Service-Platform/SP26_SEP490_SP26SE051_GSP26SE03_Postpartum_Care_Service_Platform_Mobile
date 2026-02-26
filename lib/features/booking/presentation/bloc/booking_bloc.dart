@@ -55,6 +55,11 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     BookingLoadPackages event,
     Emitter<BookingState> emit,
   ) async {
+    // Prevent duplicate API calls if already loading or loaded
+    if (state is BookingLoading || state is BookingPackagesLoaded) {
+      return;
+    }
+    
     emit(const BookingLoading());
     try {
       final packages = await getPackagesUsecase();

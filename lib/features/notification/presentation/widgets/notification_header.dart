@@ -41,9 +41,13 @@ class NotificationHeader extends StatelessWidget {
             onFilterChanged: onFilterChanged,
             unreadCount: unreadCount,
           ),
+          SizedBox(height: 6 * scale),
           // Unread count badge (only show when filter is all)
           if (currentFilter == NotificationFilter.all && unreadCount > 0)
-            NotificationUnreadBadge(unreadCount: unreadCount),
+            NotificationUnreadBadge(
+              unreadCount: unreadCount,
+              onTap: () => onFilterChanged(NotificationFilter.unread),
+            ),
         ],
       ),
     );

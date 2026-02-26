@@ -146,7 +146,9 @@ class PackageCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(18 * scale),
                           ),
                           child: Text(
-                            '${package.durationDays} ${AppStrings.days}',
+                            package.durationDays != null
+                                ? '${package.durationDays} ${AppStrings.days}'
+                                : AppStrings.days,
                             style: AppTextStyles.arimo(
                               fontSize: 10 * scale,
                               fontWeight: FontWeight.bold,

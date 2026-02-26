@@ -38,12 +38,14 @@ import '../../features/family/presentation/screens/family_portal_screen.dart';
 import '../../features/services/presentation/screens/my_menu_screen.dart';
 import '../../features/services/presentation/screens/family_schedule_screen.dart';
 import '../../features/services/presentation/screens/feedback_screen.dart';
+import '../../features/services/presentation/screens/amenity_screen.dart';
 import '../../features/services/presentation/bloc/menu_event.dart';
 import '../../features/services/presentation/bloc/family_schedule_event.dart';
 import '../../core/widgets/app_scaffold.dart';
 import '../../core/di/injection_container.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/booking/domain/entities/booking_entity.dart';
+import '../../features/booking/presentation/bloc/booking_bloc.dart';
 import '../../features/booking/presentation/bloc/booking_event.dart';
 import '../../features/chat/presentation/bloc/chat_bloc.dart';
 import '../../features/chat/presentation/bloc/chat_event.dart';
@@ -174,8 +176,8 @@ class AppRouter {
       case AppRoutes.payment:
         if (args is Map<String, dynamic>) {
           return MaterialPageRoute(
-            builder: (_) => BlocProvider.value(
-              value: args['bookingBloc'] as dynamic,
+            builder: (_) => BlocProvider<BookingBloc>.value(
+              value: args['bookingBloc'] as BookingBloc,
               child: PaymentScreen(
                 booking: args['booking'] as BookingEntity,
                 paymentType: args['paymentType'] as String? ?? 'Deposit',
@@ -188,9 +190,11 @@ class AppRouter {
       case AppRoutes.invoice:
         if (args is Map<String, dynamic>) {
           return MaterialPageRoute(
-            builder: (_) => BlocProvider.value(
-              value: args['bookingBloc'] as dynamic,
-              child: InvoiceScreen(bookingId: args['bookingId'] as int),
+            builder: (_) => BlocProvider<BookingBloc>.value(
+              value: args['bookingBloc'] as BookingBloc,
+              child: InvoiceScreen(
+                bookingId: args['bookingId'] as int,
+              ),
             ),
           );
         }
@@ -341,6 +345,22 @@ class AppRouter {
           builder: (_) => BlocProvider(
             create: (_) => InjectionContainer.feedbackBloc,
             child: const FeedbackScreen(),
+          ),
+        );
+
+      // Amenity Routes
+      case AppRoutes.amenity:
+        return MaterialPageRoute(
+          builder: (_) => MultiBlocProvider(
+            providers: [
+              BlocProvider(
+                create: (_) => InjectionContainer.amenityBloc,
+              ),
+              BlocProvider(
+                create: (_) => InjectionContainer.familyScheduleBloc,
+              ),
+            ],
+            child: const AmenityScreen(),
           ),
         );
 

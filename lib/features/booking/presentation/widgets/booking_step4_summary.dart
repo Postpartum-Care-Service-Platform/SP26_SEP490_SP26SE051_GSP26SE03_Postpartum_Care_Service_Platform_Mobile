@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../booking/presentation/bloc/booking_bloc.dart';
@@ -64,7 +65,9 @@ class BookingStep4Summary extends StatelessWidget {
         final package = state.package;
         final room = state.room;
         final startDate = state.startDate;
-        final endDate = startDate.add(Duration(days: package.durationDays));
+        final endDate = package.durationDays != null
+            ? startDate.add(Duration(days: package.durationDays!))
+            : startDate;
         final totalPrice = package.basePrice;
         final depositAmount = totalPrice * 0.1; // 10% deposit
 
@@ -96,13 +99,14 @@ class BookingStep4Summary extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                     ),
                     SizedBox(height: 4 * scale),
-                    Text(
-                      '${package.durationDays} ${AppStrings.bookingDays}',
-                      style: AppTextStyles.arimo(
-                        fontSize: 14 * scale,
-                        color: AppColors.textSecondary,
+                    if (package.durationDays != null)
+                      Text(
+                        '${package.durationDays} ${AppStrings.bookingDays}',
+                        style: AppTextStyles.arimo(
+                          fontSize: 14 * scale,
+                          color: AppColors.textSecondary,
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),
@@ -192,7 +196,9 @@ class BookingStep4Summary extends StatelessWidget {
                           ),
                           SizedBox(width: 8 * scale),
                           Text(
-                            '${package.durationDays} ${AppStrings.bookingDays}',
+                            package.durationDays != null
+                                ? '${package.durationDays} ${AppStrings.bookingDays}'
+                                : AppStrings.bookingDays,
                             style: AppTextStyles.arimo(
                               fontSize: 14 * scale,
                               fontWeight: FontWeight.w600,
@@ -227,7 +233,7 @@ class BookingStep4Summary extends StatelessWidget {
                         height: 40 * scale,
                         padding: EdgeInsets.all(2 * scale),
                         child: SvgPicture.asset(
-                          'assets/images/payos_logo.svg',
+                          AppAssets.payosLogo,
                           fit: BoxFit.contain,
                           colorFilter: ColorFilter.mode(AppColors.verified, BlendMode.srcIn),
                         ),

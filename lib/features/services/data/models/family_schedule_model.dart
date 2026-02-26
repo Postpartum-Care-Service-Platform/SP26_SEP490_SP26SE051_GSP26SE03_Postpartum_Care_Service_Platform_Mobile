@@ -32,7 +32,7 @@ class FamilyScheduleModel extends FamilyScheduleEntity {
       customerId: json['customerId'] as String,
       customerName: json['customerName'] as String,
       packageId: json['packageId'] as int,
-      packageName: json['packageName'] as String,
+      packageName: json['packageName'] as String? ?? '',
       workDate: DateTime.parse(json['workDate'] as String),
       startTime: json['startTime'] as String,
       endTime: json['endTime'] as String,

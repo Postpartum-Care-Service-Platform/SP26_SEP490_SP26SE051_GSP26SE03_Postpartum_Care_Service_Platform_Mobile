@@ -17,3 +17,13 @@ class FamilyScheduleLoadRequested extends FamilyScheduleEvent {
 class FamilyScheduleRefreshRequested extends FamilyScheduleEvent {
   const FamilyScheduleRefreshRequested();
 }
+
+/// Load family schedules by date
+class FamilyScheduleLoadByDateRequested extends FamilyScheduleEvent {
+  final String date; // Format: YYYY-MM-DD
+
+  const FamilyScheduleLoadByDateRequested(this.date);
+
+  @override
+  List<Object?> get props => [date];
+}

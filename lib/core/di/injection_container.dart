@@ -29,9 +29,13 @@ import '../../features/notification/domain/usecases/mark_notification_read_useca
 import '../../features/notification/domain/usecases/get_unread_count_usecase.dart';
 import '../../features/notification/presentation/bloc/notification_bloc.dart';
 import '../../features/package/data/datatsources/package_remote_datasource.dart';
+import '../../features/package/data/datatsources/package_type_remote_datasource.dart';
 import '../../features/package/data/repositories/package_repository_impl.dart';
+import '../../features/package/data/repositories/package_type_repository_impl.dart';
 import '../../features/package/domain/repositories/package_repository.dart';
+import '../../features/package/domain/repositories/package_type_repository.dart';
 import '../../features/package/domain/usecases/get_packages_usecase.dart';
+import '../../features/package/domain/usecases/get_package_types_usecase.dart';
 import '../../features/package/presentation/bloc/package_bloc.dart';
 import '../../features/care_plan/data/datasources/care_plan_remote_datasource.dart';
 import '../../features/care_plan/data/repositories/care_plan_repository_impl.dart';
@@ -118,6 +122,7 @@ import '../../features/services/data/datasources/family_schedule_remote_datasour
 import '../../features/services/data/repositories/family_schedule_repository_impl.dart';
 import '../../features/services/domain/repositories/family_schedule_repository.dart';
 import '../../features/services/domain/usecases/get_my_schedules_usecase.dart';
+import '../../features/services/domain/usecases/get_my_schedules_by_date_usecase.dart';
 import '../../features/services/presentation/bloc/family_schedule_bloc.dart';
 import '../../features/services/data/datasources/feedback_remote_datasource.dart';
 import '../../features/services/data/repositories/feedback_repository_impl.dart';
@@ -126,6 +131,13 @@ import '../../features/services/domain/usecases/get_feedback_types_usecase.dart'
 import '../../features/services/domain/usecases/get_my_feedbacks_usecase.dart';
 import '../../features/services/domain/usecases/create_feedback_usecase.dart';
 import '../../features/services/presentation/bloc/feedback_bloc.dart';
+import '../../features/services/data/datasources/amenity_remote_datasource.dart';
+import '../../features/services/data/repositories/amenity_repository_impl.dart';
+import '../../features/services/domain/repositories/amenity_repository.dart';
+import '../../features/services/domain/usecases/get_amenity_services_usecase.dart';
+import '../../features/services/domain/usecases/get_my_amenity_tickets_usecase.dart';
+import '../../features/services/domain/usecases/create_amenity_ticket_usecase.dart';
+import '../../features/services/presentation/bloc/amenity_bloc.dart';
 import '../apis/api_client.dart';
 
 /// Centralized dependency injection container
@@ -146,6 +158,9 @@ class InjectionContainer {
   
   static PackageRemoteDataSource get _packageRemoteDataSource =>
       PackageRemoteDataSourceImpl();
+  
+  static PackageTypeRemoteDataSource get _packageTypeRemoteDataSource =>
+      PackageTypeRemoteDataSourceImpl();
   
   static CarePlanRemoteDataSource get _carePlanRemoteDataSource =>
       CarePlanRemoteDataSourceImpl();
@@ -202,6 +217,9 @@ class InjectionContainer {
   static PackageRepository get packageRepository =>
       PackageRepositoryImpl(_packageRemoteDataSource);
   
+  static PackageTypeRepository get packageTypeRepository =>
+      PackageTypeRepositoryImpl(_packageTypeRemoteDataSource);
+  
   static CarePlanRepository get carePlanRepository =>
       CarePlanRepositoryImpl(_carePlanRemoteDataSource);
 
@@ -237,6 +255,12 @@ class InjectionContainer {
 
   static FeedbackRepository get feedbackRepository =>
       FeedbackRepositoryImpl(_feedbackRemoteDataSource);
+
+  static AmenityRemoteDataSource get _amenityRemoteDataSource =>
+      AmenityRemoteDataSourceImpl(dio: ApiClient.dio);
+
+  static AmenityRepository get amenityRepository =>
+      AmenityRepositoryImpl(dataSource: _amenityRemoteDataSource);
 
   // ==================== Use Cases ====================
   
@@ -278,6 +302,9 @@ class InjectionContainer {
   
   static GetPackagesUsecase get _getPackagesUsecase =>
       GetPackagesUsecase(packageRepository);
+  
+  static GetPackageTypesUsecase get _getPackageTypesUsecase =>
+      GetPackageTypesUsecase(packageTypeRepository);
   
   static GetCarePlanDetailsUsecase get _getCarePlanDetailsUsecase =>
       GetCarePlanDetailsUsecase(carePlanRepository);
@@ -375,6 +402,8 @@ class InjectionContainer {
 
   static GetMySchedulesUsecase get _getMySchedulesUsecase =>
       GetMySchedulesUsecase(familyScheduleRepository);
+  static GetMySchedulesByDateUsecase get _getMySchedulesByDateUsecase =>
+      GetMySchedulesByDateUsecase(familyScheduleRepository);
 
   static GetFeedbackTypesUsecase get _getFeedbackTypesUsecase =>
       GetFeedbackTypesUsecase(feedbackRepository);
@@ -384,6 +413,13 @@ class InjectionContainer {
 
   static CreateFeedbackUsecase get _createFeedbackUsecase =>
       CreateFeedbackUsecase(feedbackRepository);
+
+  static GetAmenityServicesUsecase get _getAmenityServicesUsecase =>
+      GetAmenityServicesUsecase(amenityRepository);
+  static GetMyAmenityTicketsUsecase get _getMyAmenityTicketsUsecase =>
+      GetMyAmenityTicketsUsecase(amenityRepository);
+  static CreateAmenityTicketUsecase get _createAmenityTicketUsecase =>
+      CreateAmenityTicketUsecase(amenityRepository);
 
   // ==================== Blocs ====================
   
@@ -494,12 +530,19 @@ class InjectionContainer {
 
   static FamilyScheduleBloc get familyScheduleBloc => FamilyScheduleBloc(
         getMySchedulesUsecase: _getMySchedulesUsecase,
+        getMySchedulesByDateUsecase: _getMySchedulesByDateUsecase,
       );
 
   static FeedbackBloc get feedbackBloc => FeedbackBloc(
         getFeedbackTypesUsecase: _getFeedbackTypesUsecase,
         getMyFeedbacksUsecase: _getMyFeedbacksUsecase,
         createFeedbackUsecase: _createFeedbackUsecase,
+      );
+
+  static AmenityBloc get amenityBloc => AmenityBloc(
+        getAmenityServicesUsecase: _getAmenityServicesUsecase,
+        getMyAmenityTicketsUsecase: _getMyAmenityTicketsUsecase,
+        createAmenityTicketUsecase: _createAmenityTicketUsecase,
       );
 
   // ==================== Reset ====================

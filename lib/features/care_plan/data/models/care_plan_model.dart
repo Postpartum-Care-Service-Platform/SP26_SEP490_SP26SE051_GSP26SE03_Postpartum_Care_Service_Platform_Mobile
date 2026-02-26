@@ -11,7 +11,7 @@ class CarePlanModel extends Equatable {
   final int dayNo;
   final String startTime;
   final String endTime;
-  final String instruction;
+  final String? instruction;
   final int sortOrder;
 
   const CarePlanModel({
@@ -23,7 +23,7 @@ class CarePlanModel extends Equatable {
     required this.dayNo,
     required this.startTime,
     required this.endTime,
-    required this.instruction,
+    this.instruction,
     required this.sortOrder,
   });
 
@@ -37,7 +37,7 @@ class CarePlanModel extends Equatable {
       dayNo: json['dayNo'] as int,
       startTime: json['startTime'] as String,
       endTime: json['endTime'] as String,
-      instruction: json['instruction'] as String,
+      instruction: json['instruction'] as String?,
       sortOrder: json['sortOrder'] as int,
     );
   }

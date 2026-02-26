@@ -6,6 +6,7 @@ import '../models/family_schedule_model.dart';
 /// Family Schedule Remote Data Source Interface
 abstract class FamilyScheduleRemoteDataSource {
   Future<List<FamilyScheduleModel>> getMySchedules();
+  Future<List<FamilyScheduleModel>> getMySchedulesByDate(String date);
 }
 
 /// Family Schedule Remote Data Source Implementation
@@ -19,6 +20,24 @@ class FamilyScheduleRemoteDataSourceImpl
   Future<List<FamilyScheduleModel>> getMySchedules() async {
     try {
       final response = await dio.get(ApiEndpoints.familyScheduleMySchedules);
+      final List<dynamic> data = response.data as List<dynamic>;
+      return data
+          .map((json) =>
+              FamilyScheduleModel.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  @override
+  Future<List<FamilyScheduleModel>> getMySchedulesByDate(String date) async {
+    try {
+      // Format date as YYYY-MM-DD
+      final formattedDate = date;
+      final response = await dio.get(
+        ApiEndpoints.familyScheduleByDate(formattedDate),
+      );
       final List<dynamic> data = response.data as List<dynamic>;
       return data
           .map((json) =>

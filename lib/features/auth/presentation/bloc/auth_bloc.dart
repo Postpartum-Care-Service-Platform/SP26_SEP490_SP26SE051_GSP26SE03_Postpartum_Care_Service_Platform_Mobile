@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/services/current_account_cache_service.dart';
 import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/register_usecase.dart';
 import '../../domain/usecases/verify_email_usecase.dart';
@@ -54,6 +55,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthResetState>(_onResetState);
     on<AuthGetAccountById>(_onGetAccountById);
     on<AuthLoadCurrentAccount>(_onLoadCurrentAccount);
+    on<AuthRestoreCurrentAccountFromCache>(_onRestoreCurrentAccountFromCache);
     on<AuthChangePassword>(_onChangePassword);
   }
 
@@ -424,6 +426,25 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         message: e.toString().replaceAll('Exception: ', ''),
         isPasswordObscured: state.isPasswordObscured,
       ));
+    }
+  }
+
+  Future<void> _onRestoreCurrentAccountFromCache(
+    AuthRestoreCurrentAccountFromCache event,
+    Emitter<AuthState> emit,
+  ) async {
+    // Restore from cache without calling API
+    try {
+      final cachedAccount = await CurrentAccountCacheService.getCurrentAccount();
+      if (cachedAccount != null) {
+        emit(AuthCurrentAccountLoaded(
+          account: cachedAccount,
+          isPasswordObscured: state.isPasswordObscured,
+        ));
+      }
+      // If no cache, keep current state (don't emit error)
+    } catch (e) {
+      // If cache read fails, keep current state (don't emit error)
     }
   }
 

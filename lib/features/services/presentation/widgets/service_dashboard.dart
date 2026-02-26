@@ -5,7 +5,6 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
-import '../../../../core/widgets/app_toast.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../auth/data/models/current_account_model.dart';
@@ -160,7 +159,7 @@ class ServiceDashboard extends StatelessWidget {
                 ),
               ),
               title: AppStrings.servicesAmenityRequest,
-              onTap: () => _showComingSoon(context),
+              onTap: () => AppRouter.push(context, AppRoutes.amenity),
             ),
           ],
         ),
@@ -242,10 +241,4 @@ class ServiceDashboard extends StatelessWidget {
     );
   }
 
-  void _showComingSoon(BuildContext context) {
-    AppToast.showInfo(
-      context,
-      message: AppStrings.featureUnderDevelopment,
-    );
-  }
 }

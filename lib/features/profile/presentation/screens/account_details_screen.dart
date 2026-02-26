@@ -84,10 +84,10 @@ class _AccountDetailsScreenState extends State<AccountDetailsScreen> {
         child: PopScope(
           onPopInvokedWithResult: (didPop, result) {
             if (didPop) {
-              // Reload current account when leaving this screen
-              // This ensures ProfileScreen still has AuthCurrentAccountLoaded state
+              // Restore AuthCurrentAccountLoaded state from cache when back
+              // This ensures ProfileScreen still has data without calling API
               final authBloc = context.read<AuthBloc>();
-              authBloc.add(const AuthLoadCurrentAccount());
+              authBloc.add(const AuthRestoreCurrentAccountFromCache());
             }
           },
           child: Scaffold(
