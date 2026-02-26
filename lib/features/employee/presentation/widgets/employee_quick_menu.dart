@@ -18,7 +18,12 @@ enum EmployeeQuickMenuExtraAction {
   room,
   mealPlan,
   requests,
+  legacySchedule,
+  tasks,
+  checkInOut,
+  legacyServiceBooking,
   staffProfile,
+  familyProfile,
 }
 
 /// Model định nghĩa 1 item trong menu nhanh
@@ -506,6 +511,36 @@ class EmployeeQuickMenuPresets {
         label: 'Phòng ở',
         iconAsset: AppAssets.family,
         action: EmployeeQuickMenuExtraAction.room,
+      ),
+      EmployeeQuickMenuItem.extra(
+        id: 'family_profile',
+        label: 'Gia đình',
+        iconAsset: AppAssets.family,
+        action: EmployeeQuickMenuExtraAction.familyProfile,
+      ),
+      EmployeeQuickMenuItem.extra(
+        id: 'legacy_schedule',
+        label: 'Lịch cũ',
+        iconAsset: AppAssets.calendar,
+        action: EmployeeQuickMenuExtraAction.legacySchedule,
+      ),
+      EmployeeQuickMenuItem.extra(
+        id: 'tasks',
+        label: 'Công việc',
+        iconAsset: AppAssets.menuFirst,
+        action: EmployeeQuickMenuExtraAction.tasks,
+      ),
+      EmployeeQuickMenuItem.extra(
+        id: 'check_in_out',
+        label: 'Check-in/out',
+        iconAsset: AppAssets.calendarBold,
+        action: EmployeeQuickMenuExtraAction.checkInOut,
+      ),
+      EmployeeQuickMenuItem.extra(
+        id: 'legacy_service_booking',
+        label: 'Đặt DV cũ',
+        iconAsset: AppAssets.serviceAmenity,
+        action: EmployeeQuickMenuExtraAction.legacyServiceBooking,
       ),
       EmployeeQuickMenuItem.extra(
         id: 'meal_plan',
