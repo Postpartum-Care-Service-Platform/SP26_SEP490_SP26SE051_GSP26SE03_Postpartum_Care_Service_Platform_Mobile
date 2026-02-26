@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../../core/routing/app_router.dart';
+import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_bottom_navigation_bar.dart';
@@ -226,11 +228,59 @@ class _LoadedContent extends StatelessWidget {
             allItems: EmployeeQuickMenuPresets.allItems(),
             currentTab: AppBottomTab.appointment,
             onBottomTabSelected: (tab) {
+              // Đổi tab nhanh: hiện tại portal đang dùng bottom nav, nên pop về root để user thấy tab đổi.
               Navigator.of(context).popUntil((route) => route.isFirst);
             },
             onExtraActionSelected: (action) {
               switch (action) {
+                case EmployeeQuickMenuExtraAction.amenityService:
+                case EmployeeQuickMenuExtraAction.amenityTicket:
+                  // Điều hướng tới màn tiện ích cho nhân viên (đã khai báo route).
+                  AppRouter.push(context, AppRoutes.employeeAmenities);
+                  break;
+
+                case EmployeeQuickMenuExtraAction.room:
+                  // Điều hướng tới màn phòng ở cho nhân viên (đã khai báo route).
+                  AppRouter.push(context, AppRoutes.employeeRooms);
+                  break;
+
+                case EmployeeQuickMenuExtraAction.mealPlan:
+                  // STAFF: Điều hướng tới màn suất ăn dành cho nhân viên.
+                  AppRouter.push(context, AppRoutes.employeeMealPlan);
+                  break;
+
+                case EmployeeQuickMenuExtraAction.requests:
+                  // Điều hướng tới màn yêu cầu của nhân viên.
+                  AppRouter.push(context, AppRoutes.employeeRequests);
+                  break;
+
+                case EmployeeQuickMenuExtraAction.legacySchedule:
+                  // Điều hướng tới màn lịch làm việc cũ (mock/legacy).
+                  AppRouter.push(context, AppRoutes.employeeSchedule);
+                  break;
+
+                case EmployeeQuickMenuExtraAction.tasks:
+                  // Điều hướng tới màn công việc cũ (mock/legacy).
+                  AppRouter.push(context, AppRoutes.employeeTasks);
+                  break;
+
+                case EmployeeQuickMenuExtraAction.checkInOut:
+                  // Điều hướng tới màn check-in/check-out ca làm.
+                  AppRouter.push(context, AppRoutes.employeeCheckInOut);
+                  break;
+
+                case EmployeeQuickMenuExtraAction.legacyServiceBooking:
+                  // Điều hướng tới màn đặt dịch vụ cũ (mock/legacy).
+                  AppRouter.push(context, AppRoutes.employeeServiceBooking);
+                  break;
+
+                case EmployeeQuickMenuExtraAction.familyProfile:
+                  // Điều hướng tới hồ sơ gia đình.
+                  AppRouter.push(context, AppRoutes.familyProfile);
+                  break;
+
                 case EmployeeQuickMenuExtraAction.staffProfile:
+                  // Tài khoản nhân viên: giữ luồng cũ sang EmployeeProfileScreen.
                   final authBloc = InjectionContainer.authBloc;
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -240,8 +290,6 @@ class _LoadedContent extends StatelessWidget {
                       ),
                     ),
                   );
-                  break;
-                default:
                   break;
               }
             },

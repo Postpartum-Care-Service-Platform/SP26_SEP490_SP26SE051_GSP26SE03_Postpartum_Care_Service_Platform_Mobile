@@ -25,7 +25,9 @@ abstract class AuthRemoteDataSource {
   Future<LoginResponseModel> login(LoginRequestModel request);
   Future<RegisterResponseModel> register(RegisterRequestModel request);
   Future<VerifyEmailResponseModel> verifyEmail(VerifyEmailRequestModel request);
-  Future<ForgotPasswordResponseModel> resendOtp(ForgotPasswordRequestModel request);
+  Future<ForgotPasswordResponseModel> resendOtp(
+    ForgotPasswordRequestModel request,
+  );
   Future<ForgotPasswordResponseModel> forgotPassword(
     ForgotPasswordRequestModel request,
   );
@@ -86,30 +88,28 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     if (responseData is Map<String, dynamic>) {
       final responseMap = responseData;
 
-    // Handle validation errors (400) - format: {"errors": {"Field": ["Error message"]}}
+      // Handle validation errors (400) - format: {"errors": {"Field": ["Error message"]}}
       if (responseMap.containsKey('errors')) {
         final errors = responseMap['errors'] as Map<String, dynamic>?;
-      if (errors != null && errors.isNotEmpty) {
-        final errorMessages = <String>[];
-        errors.forEach((field, messages) {
-          if (messages is List) {
-            errorMessages.addAll(
-              messages.map((msg) => msg.toString()),
-            );
-          } else {
-            errorMessages.add(messages.toString());
-          }
-        });
-        return errorMessages.join('\n');
+        if (errors != null && errors.isNotEmpty) {
+          final errorMessages = <String>[];
+          errors.forEach((field, messages) {
+            if (messages is List) {
+              errorMessages.addAll(messages.map((msg) => msg.toString()));
+            } else {
+              errorMessages.add(messages.toString());
+            }
+          });
+          return errorMessages.join('\n');
+        }
       }
-    }
 
-    // Handle authentication errors (401) - format: {"error": "Error message"}
+      // Handle authentication errors (401) - format: {"error": "Error message"}
       if (responseMap.containsKey('error')) {
         return responseMap['error'] as String;
-    }
+      }
 
-    // Fallback to message or default
+      // Fallback to message or default
       return responseMap['message'] as String? ?? AppStrings.errorLoginFailed;
     }
 
@@ -125,7 +125,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         data: request.toJson(),
       );
 
-      return RegisterResponseModel.fromJson(response.data as Map<String, dynamic>);
+      return RegisterResponseModel.fromJson(
+        response.data as Map<String, dynamic>,
+      );
     } on DioException catch (e) {
       if (e.response != null) {
         final responseData = e.response?.data as Map<String, dynamic>?;
@@ -140,14 +142,18 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<VerifyEmailResponseModel> verifyEmail(VerifyEmailRequestModel request) async {
+  Future<VerifyEmailResponseModel> verifyEmail(
+    VerifyEmailRequestModel request,
+  ) async {
     try {
       final response = await dio.post(
         ApiEndpoints.verifyEmail,
         data: request.toJson(),
       );
 
-      return VerifyEmailResponseModel.fromJson(response.data as Map<String, dynamic>);
+      return VerifyEmailResponseModel.fromJson(
+        response.data as Map<String, dynamic>,
+      );
     } on DioException catch (e) {
       if (e.response != null) {
         final responseData = e.response?.data as Map<String, dynamic>?;
@@ -266,7 +272,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<LoginResponseModel> refreshToken(RefreshTokenRequestModel request) async {
+  Future<LoginResponseModel> refreshToken(
+    RefreshTokenRequestModel request,
+  ) async {
     try {
       // Create a new Dio instance without interceptors to avoid circular calls
       final baseUrl = dio.options.baseUrl;
@@ -302,7 +310,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<LoginResponseModel> googleSignIn(GoogleSignInRequestModel request) async {
+  Future<LoginResponseModel> googleSignIn(
+    GoogleSignInRequestModel request,
+  ) async {
     try {
       final response = await dio.post(
         ApiEndpoints.googleSignIn,
@@ -326,9 +336,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<CurrentAccountModel> getCurrentAccount() async {
     try {
-      final response = await dio.get(
-        ApiEndpoints.getCurrentAccount,
-      );
+      final response = await dio.get(ApiEndpoints.getCurrentAccount);
 
       return CurrentAccountModel.fromJson(
         response.data as Map<String, dynamic>,
@@ -349,9 +357,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<CurrentAccountModel> getAccountById(String id) async {
     try {
-      final response = await dio.get(
-        ApiEndpoints.getAccountById(id),
-      );
+      final response = await dio.get(ApiEndpoints.getAccountById(id));
 
       return CurrentAccountModel.fromJson(
         response.data as Map<String, dynamic>,
@@ -395,4 +401,3 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
   }
 }
-
