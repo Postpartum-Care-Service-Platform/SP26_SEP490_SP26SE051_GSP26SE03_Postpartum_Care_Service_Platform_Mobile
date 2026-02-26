@@ -13,9 +13,15 @@ import '../../../booking/presentation/widgets/booking_step2_room_selection.dart'
 import '../../../booking/presentation/widgets/booking_step3_date_selection.dart';
 import '../../../booking/presentation/widgets/booking_step4_summary.dart';
 import 'services_formatters.dart';
+import 'service_location_selection.dart';
 
 class ServicesBookingFlow extends StatefulWidget {
-  const ServicesBookingFlow({super.key});
+  final ServiceLocationType? locationType;
+
+  const ServicesBookingFlow({
+    super.key,
+    this.locationType,
+  });
 
   @override
   State<ServicesBookingFlow> createState() => _ServicesBookingFlowState();
@@ -67,6 +73,7 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
           },
         );
       case 1:
+        // Only load rooms if not already loaded
         if (state is! BookingRoomsLoaded && 
             state is! BookingSummaryReady && 
             !_roomsLoadRequested) {
@@ -77,34 +84,14 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
             }
           });
         }
-        if (state is! BookingPackagesLoaded &&
-            state is! BookingSummaryReady &&
-            _cachedEstimatedPrice == null &&
-            !_packagesLoadRequested) {
-          _packagesLoadRequested = true;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (context.mounted) {
-              context.read<BookingBloc>().add(const BookingLoadPackages());
-            }
-          });
-        }
+        // Don't reload packages here - they should already be loaded from step 0
         return BookingStep2RoomSelection(
           onRoomSelected: (roomId) {
             context.read<BookingBloc>().add(BookingSelectRoom(roomId));
           },
         );
       case 2:
-        if (state is! BookingPackagesLoaded &&
-            state is! BookingSummaryReady &&
-            _cachedEstimatedPrice == null &&
-            !_packagesLoadRequested) {
-          _packagesLoadRequested = true;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (context.mounted) {
-              context.read<BookingBloc>().add(const BookingLoadPackages());
-            }
-          });
-        }
+        // Don't reload packages here - they should already be loaded from step 0
         return BookingStep3DateSelection(
           onDateSelected: (date) {
             context.read<BookingBloc>().add(BookingSelectDate(date));

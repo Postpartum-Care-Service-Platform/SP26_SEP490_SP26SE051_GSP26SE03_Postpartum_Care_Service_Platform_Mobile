@@ -77,7 +77,8 @@ class ApiEndpoints {
   static const String getMemberTypes = '/member-types';
 
   // Package endpoints
-  static const String packages = '/Packages';
+  static const String packages = '/Packages/center';
+  static const String packageTypes = '/PackageType';
 
   // Care Plan endpoints
   static String getCarePlanDetailsByPackage(int packageId) => '/care-plan-details/by-package/$packageId';
@@ -130,6 +131,16 @@ class ApiEndpoints {
   
   /// Get all amenity services
   static const String amenityServices = '/AmenityService';
+
+  // ==========================================
+  // Customer - Amenity Ticket endpoints
+  // ==========================================
+  
+  /// Get my amenity tickets
+  static const String myAmenityTickets = '/AmenityTicket/my-tickets';
+  
+  /// Create amenity ticket
+  static const String createAmenityTicket = '/AmenityTicket';
 
   // ==========================================
   // Employee - Service Booking endpoints (TODO: Chờ BE API)
@@ -187,6 +198,9 @@ class ApiEndpoints {
   
   /// Get my family schedules
   static const String familyScheduleMySchedules = '/FamilySchedule/my-schedules';
+  
+  /// Get my family schedules by date
+  static String familyScheduleByDate(String date) => '/FamilySchedule/$date';
 
   // ==========================================
   // Feedback endpoints

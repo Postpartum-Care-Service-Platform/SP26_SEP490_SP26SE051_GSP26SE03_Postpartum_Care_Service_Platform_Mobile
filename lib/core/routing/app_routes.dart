@@ -79,4 +79,7 @@ class AppRoutes {
 
   // Feedback Routes
   static const String feedback = '/feedback';
+
+  // Amenity Routes
+  static const String amenity = '/amenity';
 }

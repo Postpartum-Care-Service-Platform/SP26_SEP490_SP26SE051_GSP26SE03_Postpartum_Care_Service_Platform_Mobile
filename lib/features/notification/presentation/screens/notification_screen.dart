@@ -13,6 +13,7 @@ import '../widgets/notification_list_empty_state.dart';
 import '../widgets/notification_header.dart';
 import '../widgets/notification_list.dart';
 import '../widgets/notification_mark_all_read_button.dart';
+import '../widgets/notification_detail_drawer.dart';
 import '../../../../core/widgets/app_app_bar.dart';
 
 /// Notification screen with modern design
@@ -73,6 +74,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   });
                 },
               );
+            }
+
+            if (state is NotificationDetailLoaded) {
+              return NotificationDetailDrawer(notification: state.notification);
             }
 
             return const SizedBox.shrink();

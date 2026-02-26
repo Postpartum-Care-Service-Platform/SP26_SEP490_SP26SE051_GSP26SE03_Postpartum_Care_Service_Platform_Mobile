@@ -43,15 +43,6 @@ class LoginFooterWidget extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              AppStrings.forgotPassword,
-              style: AppTextStyles.arimo(
-                fontSize: 14,
-                fontWeight: FontWeight.normal,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(width: 4),
             AppWidgets.linkText(
               text: AppStrings.resetIt,
               onTap: onForgotPassword ?? () {},

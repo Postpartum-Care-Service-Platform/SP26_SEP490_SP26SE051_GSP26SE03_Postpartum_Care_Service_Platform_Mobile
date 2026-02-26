@@ -63,6 +63,9 @@ class NotificationList extends StatelessWidget {
                   notification: notification,
                   onTap: () {
                     // Mark as read if unread
+                    final detailNotification = notification.isRead
+                        ? notification
+                        : notification.copyWith(isRead: true);
                     if (!notification.isRead) {
                       bloc.add(NotificationMarkAsRead(notification.id));
                     }
@@ -72,7 +75,7 @@ class NotificationList extends StatelessWidget {
                       isScrollControlled: true,
                       backgroundColor: Colors.transparent,
                       builder: (sheetContext) => NotificationDetailDrawer(
-                        notification: notification,
+                        notification: detailNotification,
                       ),
                     ).then((_) {
                       // Refresh notifications when drawer closes

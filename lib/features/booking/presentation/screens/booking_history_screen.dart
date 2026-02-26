@@ -21,25 +21,9 @@ class BookingHistoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-  final scale = AppResponsive.scaleFactor(context);
+    final scale = AppResponsive.scaleFactor(context);
 
-  return PopScope(
-    canPop: false,
-    onPopInvokedWithResult: (didPop, result) async {
-      if (!didPop) {
-        // Navigate back to AppScaffold with profile tab selected
-        if (context.mounted) {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(
-              builder: (_) =>
-                  const AppScaffold(initialTab: AppBottomTab.profile),
-            ),
-            (route) => false,
-          );
-        }
-      }
-    },
-    child: BlocProvider(
+    return BlocProvider(
       create: (context) =>
           InjectionContainer.bookingBloc..add(const BookingLoadAll()),
       child: Scaffold(
@@ -49,6 +33,17 @@ class BookingHistoryScreen extends StatelessWidget {
           centerTitle: true,
           titleFontSize: 20 * scale,
           titleFontWeight: FontWeight.w700,
+          onBackPressed: () {
+            if (context.mounted) {
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(
+                  builder: (_) =>
+                      const AppScaffold(initialTab: AppBottomTab.profile),
+                ),
+                (route) => false,
+              );
+            }
+          },
         ),
         body: BlocBuilder<BookingBloc, BookingState>(
           builder: (context, state) {
@@ -106,7 +101,7 @@ class BookingHistoryScreen extends StatelessWidget {
                       ),
                       SizedBox(height: 16 * scale),
                       Text(
-                        'Chưa có lịch sử đặt phòng',
+                        AppStrings.noBookingHistory,
                         style: AppTextStyles.arimo(
                           fontSize: 16 * scale,
                           color: AppColors.textSecondary,
@@ -144,12 +139,11 @@ class BookingHistoryScreen extends StatelessWidget {
                 },
               );
             }
-
-            return const SizedBox();
+            // Trạng thái mặc định hoặc chưa xác định: hiển thị loading thay vì màn trắng
+            return const Center(child: AppLoadingIndicator());
           },
         ),
       ),
-    ),
-  );
+    );
   }
 }

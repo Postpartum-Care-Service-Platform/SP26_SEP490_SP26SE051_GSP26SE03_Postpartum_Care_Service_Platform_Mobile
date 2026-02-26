@@ -28,5 +28,7 @@ class AppAssets {
   static const String calendarBold = 'assets/images/calendar_bold.svg';
   static const String starRating = 'assets/images/starRating.svg';
   static const String pencilFeedback = 'assets/images/pencil_feedback.svg';
+  static const String payosLogo = 'assets/images/payos_logo.svg';
+  static const String keycard = 'assets/images/keycard.svg';
 }
 

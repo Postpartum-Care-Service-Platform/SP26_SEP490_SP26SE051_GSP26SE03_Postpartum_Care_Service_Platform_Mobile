@@ -99,17 +99,17 @@ class NotificationDetailDrawer extends StatelessWidget {
                 SizedBox(width: 16 * scale),
                 Expanded(
                   child: Text(
-                        notification.title,
-                        style: AppTextStyles.arimo(
+                    notification.title,
+                    style: AppTextStyles.arimo(
                       fontSize: 18 * scale,
                       fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
-                        ),
-                      ),
-                    ],
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ),
+              ],
+            ),
+          ),
           SizedBox(height: 24 * scale),
 
           // Content section
@@ -123,14 +123,14 @@ class NotificationDetailDrawer extends StatelessWidget {
                   color: AppColors.textPrimary,
                 ),
                 SizedBox(width: 8 * scale),
-            Text(
-              AppStrings.notificationContent,
-              style: AppTextStyles.arimo(
+                Text(
+                  AppStrings.notificationContent,
+                  style: AppTextStyles.arimo(
                     fontSize: 15 * scale,
                     fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
-            ),
+                    color: AppColors.textPrimary,
+                  ),
+                ),
               ],
             ),
             SizedBox(height: 12 * scale),
@@ -169,7 +169,7 @@ class NotificationDetailDrawer extends StatelessWidget {
               ),
             ),
             child: Column(
-            children: [
+              children: [
                 // Status
                 _buildInfoRow(
                   scale,
@@ -187,15 +187,15 @@ class NotificationDetailDrawer extends StatelessWidget {
                   height: 1,
                   thickness: 1,
                   color: AppColors.borderLight,
-          ),
-          SizedBox(height: 16 * scale),
+                ),
+                SizedBox(height: 16 * scale),
                 // Created at
                 _buildInfoRow(
-            scale,
+                  scale,
                   Icons.access_time_rounded,
-            AppStrings.notificationCreatedAt,
-            _formatDateTime(notification.createdAt),
-            AppColors.textSecondary,
+                  AppStrings.notificationCreatedAt,
+                  _formatDateTime(notification.createdAt),
+                  AppColors.textSecondary,
                 ),
               ],
             ),
@@ -224,9 +224,9 @@ class NotificationDetailDrawer extends StatelessWidget {
             borderRadius: BorderRadius.circular(8 * scale),
           ),
           child: Icon(
-          icon,
-          size: 18 * scale,
-          color: iconColor,
+            icon,
+            size: 18 * scale,
+            color: iconColor,
           ),
         ),
         SizedBox(width: 12 * scale),
