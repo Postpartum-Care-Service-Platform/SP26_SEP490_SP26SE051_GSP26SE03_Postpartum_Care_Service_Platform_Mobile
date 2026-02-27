@@ -1,4 +1,4 @@
-// lib/features/employee/presentation/screens/employee_schedule_screen.dart
+// lib/features/employee/presentation/screens/employee_schedule_screen_new.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -228,8 +228,23 @@ class _LoadedContent extends StatelessWidget {
             allItems: EmployeeQuickMenuPresets.allItems(),
             currentTab: AppBottomTab.appointment,
             onBottomTabSelected: (tab) {
-              // Đổi tab nhanh: hiện tại portal đang dùng bottom nav, nên pop về root để user thấy tab đổi.
-              Navigator.of(context).popUntil((route) => route.isFirst);
+              // Đổi tab nhanh cho nhân viên:
+              // - Dịch vụ -> màn gói dịch vụ (PackageScreen)
+              // - Trao đổi -> màn chat shell dành cho staff
+              switch (tab) {
+                case AppBottomTab.services:
+                  AppRouter.push(context, AppRoutes.package);
+                  break;
+                case AppBottomTab.chat:
+                  // STAFF: Điều hướng tới màn chat dành riêng cho nhân viên.
+                  AppRouter.push(context, AppRoutes.employeeChat);
+                  break;
+                case AppBottomTab.appointment:
+                case AppBottomTab.home:
+                case AppBottomTab.profile:
+                  // Đã ở màn lịch làm việc / chưa hỗ trợ tab khác trong portal nhân viên.
+                  break;
+              }
             },
             onExtraActionSelected: (action) {
               switch (action) {
@@ -252,11 +267,6 @@ class _LoadedContent extends StatelessWidget {
                 case EmployeeQuickMenuExtraAction.requests:
                   // Điều hướng tới màn yêu cầu của nhân viên.
                   AppRouter.push(context, AppRoutes.employeeRequests);
-                  break;
-
-                case EmployeeQuickMenuExtraAction.legacySchedule:
-                  // Điều hướng tới màn lịch làm việc cũ (mock/legacy).
-                  AppRouter.push(context, AppRoutes.employeeSchedule);
                   break;
 
                 case EmployeeQuickMenuExtraAction.tasks:

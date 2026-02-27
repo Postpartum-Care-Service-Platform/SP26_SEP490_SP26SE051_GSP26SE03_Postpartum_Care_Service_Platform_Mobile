@@ -18,7 +18,6 @@ enum EmployeeQuickMenuExtraAction {
   room,
   mealPlan,
   requests,
-  legacySchedule,
   tasks,
   checkInOut,
   legacyServiceBooking,
@@ -517,12 +516,6 @@ class EmployeeQuickMenuPresets {
         label: 'Gia đình',
         iconAsset: AppAssets.family,
         action: EmployeeQuickMenuExtraAction.familyProfile,
-      ),
-      EmployeeQuickMenuItem.extra(
-        id: 'legacy_schedule',
-        label: 'Lịch cũ',
-        iconAsset: AppAssets.calendar,
-        action: EmployeeQuickMenuExtraAction.legacySchedule,
       ),
       EmployeeQuickMenuItem.extra(
         id: 'tasks',
