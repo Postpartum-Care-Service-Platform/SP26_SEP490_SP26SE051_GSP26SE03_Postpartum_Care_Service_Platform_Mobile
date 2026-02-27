@@ -32,10 +32,10 @@ Dựa trên tài liệu API functionalities for staff, có **2 nhóm API**:
 ## ❌ API chưa được sử dụng
 
 ### 1. AuthController
-- ❌ `POST /api/Auth/create-customer`  
+- ✅ `POST /api/Auth/create-customer`  
   **Mô tả:** Staff/Admin/Manager tạo tài khoản customer  
-  **Trạng thái:** Chưa có trong codebase  
-  **Ghi chú:** Có thể cần cho tính năng quản lý khách hàng
+  **Trạng thái:** ✅ BE đã có (`WebAPI/Controllers/AuthController.cs`) và **mobile staff đã tích hợp** (Quick menu → `Tạo KH`)  
+  **Ghi chú:** API trả về `temporaryPassword` + message; staff có thể copy mật khẩu tạm để gửi cho khách
 
 ### 2. AccountController
 - ❌ `PATCH /api/Account/SetRole/{accountId}/role/{roleId}`  
@@ -137,36 +137,36 @@ Dựa trên tài liệu API functionalities for staff, có **2 nhóm API**:
   **Ghi chú:** Cần cho staff ghi nhận thanh toán offline
 
 ### 6. NotificationController
-- ❌ `POST /api/Notification`  
+- ✅ `POST /api/Notification`  
   **Mô tả:** Tạo thông báo  
   **Trạng thái:** Chưa có trong codebase  
   **Ghi chú:** Cần cho staff/admin tạo thông báo cho khách hàng
 
-- ❌ `GET /api/Notification`  
+- ✅ `GET /api/Notification`  
   **Mô tả:** Lấy toàn bộ thông báo  
   **Trạng thái:** Chưa có trong codebase  
   **Ghi chú:** Cần cho staff xem toàn bộ thông báo hệ thống
 
-- ❌ `PUT /api/Notification/{id}`  
+- ✅ `PUT /api/Notification/{id}`  
   **Mô tả:** Cập nhật thông báo  
   **Trạng thái:** Chưa có trong codebase  
   **Ghi chú:** Cần cho staff chỉnh sửa thông báo
 
 ### 7. FamilyProfileController
-- ❌ `GET /api/FamilyProfile/GetAll`  
-  **Mô tả:** Lấy toàn bộ hồ sơ gia đình  
-  **Trạng thái:** Chưa có trong codebase  
-  **Ghi chú:** Cần cho staff xem toàn bộ hồ sơ gia đình
+- ✅ `GET /api/FamilyProfile/GetAll`  
+  **Mô tả:** Lấy toàn bộ hồ sơ gia đình (Admin/Staff)  
+  **Trạng thái:** Đã có ở BE (`WebAPI/Controllers/FamilyProfileController.cs`) nhưng **chưa dùng trên mobile**  
+  **Ghi chú:** Không ưu tiên cho staff vì nghiệp vụ staff **chỉ xem các gia đình thuộc lịch/ca được phân công**
 
-- ❌ `GET /api/FamilyProfile/GetById/{id}`  
-  **Mô tả:** Lấy hồ sơ gia đình theo ID  
-  **Trạng thái:** Chưa có trong codebase  
-  **Ghi chú:** Cần cho staff xem chi tiết hồ sơ gia đình
+- ✅ `GET /api/FamilyProfile/GetById/{id}`  
+  **Mô tả:** Lấy hồ sơ gia đình theo ID (Admin/Staff)  
+  **Trạng thái:** Đã có ở BE nhưng **chưa dùng trên mobile** (mobile staff đang đi theo `customerId`)  
+  **Ghi chú:** Có thể dùng sau nếu cần mở “xem chi tiết theo memberId”
 
-- ❌ `GET /api/FamilyProfile/GetByCustomerId/{customerId}`  
-  **Mô tả:** Lấy hồ sơ gia đình theo customer ID  
-  **Trạng thái:** Chưa có trong codebase  
-  **Ghi chú:** Cần cho staff xem hồ sơ gia đình của khách hàng cụ thể
+- ✅ `GET /api/FamilyProfile/GetByCustomerId/{customerId}`  
+  **Mô tả:** Lấy hồ sơ gia đình theo customer ID (Admin/Staff)  
+  **Trạng thái:** **Đã tích hợp trên mobile staff** (Quick menu `Gia đình` → danh sách khách hàng được phân công → xem hồ sơ theo `customerId`)  
+  **Ghi chú:** Staff **chỉ xem** hộ gia đình mà mình được phân công (nguồn phân công lấy từ `GET /api/Appointment/my-assigned`, gom theo `customerId`)
 
 ### 8. StaffScheduleController
 - ✅ `GET /api/StaffSchedule/me`  

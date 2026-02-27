@@ -31,6 +31,8 @@ import '../../features/employee/presentation/screens/employee_service_booking_sc
 import '../../features/employee/presentation/screens/employee_meal_plan_screen.dart';
 import '../../features/employee/presentation/screens/employee_chat_screen.dart';
 import '../../features/employee/presentation/screens/service_booking_screen.dart';
+import '../../features/employee/presentation/screens/employee_assigned_families_screen.dart';
+import '../../features/employee/presentation/screens/employee_create_customer_screen.dart';
 import '../../features/chat/presentation/screens/conversation_list_screen.dart';
 import '../../features/chat/presentation/screens/conversation_detail_screen.dart';
 import '../../features/chat/presentation/screens/chat_shell_screen.dart';
@@ -249,6 +251,16 @@ class AppRouter {
 
       case AppRoutes.employeeRooms:
         return MaterialPageRoute(builder: (_) => const EmployeePortalScreen());
+
+      case AppRoutes.employeeAssignedFamilies:
+        return MaterialPageRoute(
+          builder: (_) => const EmployeeAssignedFamiliesScreen(),
+        );
+
+      case AppRoutes.employeeCreateCustomer:
+        return MaterialPageRoute(
+          builder: (_) => const EmployeeCreateCustomerScreen(),
+        );
 
       case AppRoutes.employeeMealPlan:
         return MaterialPageRoute(

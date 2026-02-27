@@ -34,6 +34,7 @@ class ApiEndpoints {
   static const String resetPassword = '/Auth/reset-password';
   static const String resendOtp = '/Auth/resend-otp';
   static const String googleSignIn = '/Auth/google';
+  static const String createCustomer = '/Auth/create-customer';
 
 
   // Account endpoints
@@ -81,6 +82,8 @@ class ApiEndpoints {
   static const String getMyFamilyProfiles = '/FamilyProfile/GetMyFamilyProfiles';
   static const String createFamilyProfile = '/FamilyProfile/Create';
   static String updateFamilyProfile(int id) => '/FamilyProfile/Update/$id';
+  static String getFamilyProfilesByCustomerId(String customerId) =>
+      '/FamilyProfile/GetByCustomerId/$customerId';
   static const String getMemberTypes = '/member-types';
 
   // Package endpoints

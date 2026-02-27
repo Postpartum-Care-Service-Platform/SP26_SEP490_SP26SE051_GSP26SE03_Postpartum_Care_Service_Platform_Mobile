@@ -71,21 +71,21 @@ class ConversationList extends StatelessWidget {
     if (searchQuery.isEmpty) {
       return conversations;
     }
-    
+
     final query = searchQuery.toLowerCase().trim();
     return conversations.where((conversation) {
       // Search in conversation name
       if (conversation.name.toLowerCase().contains(query)) {
         return true;
       }
-      
+
       // Search in message content
       for (final message in conversation.messages) {
         if (message.content.toLowerCase().contains(query)) {
           return true;
         }
       }
-      
+
       return false;
     }).toList();
   }
@@ -111,7 +111,7 @@ class ConversationList extends StatelessWidget {
             child: AppLoadingIndicator(color: AppColors.primary),
           );
         }
-        
+
         // Show error state if failed
         if (state.conversationsStatus == ChatStatus.failure) {
           return Container(
@@ -156,8 +156,9 @@ class ConversationList extends StatelessWidget {
                   SizedBox(height: 24 * scale),
                   AppWidgets.primaryButton(
                     text: AppStrings.retry,
-                    onPressed: () =>
-                        context.read<ChatBloc>().add(const ChatRefreshRequested()),
+                    onPressed: () => context.read<ChatBloc>().add(
+                      const ChatRefreshRequested(),
+                    ),
                     height: 44 * scale,
                   ),
                 ],
@@ -165,7 +166,7 @@ class ConversationList extends StatelessWidget {
             ),
           );
         }
-        
+
         // Only show empty state if we have successfully loaded
         if (state.conversationsStatus == ChatStatus.success) {
           // Show empty state if no conversations at all
@@ -212,7 +213,7 @@ class ConversationList extends StatelessWidget {
               ),
             );
           }
-          
+
           // Show no results if search query doesn't match any conversations
           if (state.searchQuery.isNotEmpty && filteredConversations.isEmpty) {
             return Container(
@@ -276,7 +277,7 @@ class ConversationList extends StatelessWidget {
             );
           }
         }
-        
+
         // If not success state, show loading as fallback
         if (state.conversationsStatus != ChatStatus.success) {
           return const Center(
@@ -286,12 +287,7 @@ class ConversationList extends StatelessWidget {
 
         return Container(
           // Giảm padding đáy để tránh tràn 12px nhưng vẫn giữ layout gần như cũ
-          padding: EdgeInsets.fromLTRB(
-            12 * scale,
-            12 * scale,
-            12 * scale,
-            0,
-          ),
+          padding: EdgeInsets.fromLTRB(12 * scale, 12 * scale, 12 * scale, 0),
           decoration: BoxDecoration(
             color: AppColors.white,
             borderRadius: BorderRadius.circular(20 * scale),
@@ -372,38 +368,53 @@ class ConversationList extends StatelessWidget {
                                         children: [
                                           Expanded(
                                             child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
                                                 // Hiển thị customer name nếu có (cho staff)
-                                                if (conversation.customerInfo != null)
+                                                if (conversation.customerInfo !=
+                                                    null)
                                                   Text(
-                                                    _getCustomerName(conversation.customerInfo!),
+                                                    _getCustomerName(
+                                                      conversation
+                                                          .customerInfo!,
+                                                    ),
                                                     style: AppTextStyles.arimo(
                                                       fontSize: 15 * scale,
-                                                      fontWeight: FontWeight.w700,
-                                                      color: AppColors.textPrimary,
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                      color:
+                                                          AppColors.textPrimary,
                                                     ),
-                                                    overflow: TextOverflow.ellipsis,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
                                                   )
                                                 else
                                                   Text(
                                                     conversation.name,
                                                     style: AppTextStyles.arimo(
                                                       fontSize: 15 * scale,
-                                                      fontWeight: FontWeight.w700,
-                                                      color: AppColors.textPrimary,
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                      color:
+                                                          AppColors.textPrimary,
                                                     ),
-                                                    overflow: TextOverflow.ellipsis,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
                                                   ),
                                                 // Hiển thị thời gian hoạt động cuối cùng
-                                                if (conversation.customerInfo != null)
+                                                if (conversation.customerInfo !=
+                                                    null)
                                                   Text(
                                                     formatChatTime(
-                                                      _lastActivityTime(conversation),
+                                                      _lastActivityTime(
+                                                        conversation,
+                                                      ),
                                                     ),
                                                     style: AppTextStyles.arimo(
                                                       fontSize: 11 * scale,
-                                                      color: AppColors.textSecondary,
+                                                      color: AppColors
+                                                          .textSecondary,
                                                     ),
                                                   ),
                                               ],

@@ -23,6 +23,7 @@ enum EmployeeQuickMenuExtraAction {
   legacyServiceBooking,
   staffProfile,
   familyProfile,
+  createCustomer,
 }
 
 /// Model định nghĩa 1 item trong menu nhanh
@@ -490,6 +491,12 @@ class EmployeeQuickMenuPresets {
         label: 'Tài khoản',
         iconAsset: AppAssets.profile,
         action: EmployeeQuickMenuExtraAction.staffProfile,
+      ),
+      EmployeeQuickMenuItem.extra(
+        id: 'create_customer',
+        label: 'Tạo KH',
+        iconAsset: AppAssets.profile,
+        action: EmployeeQuickMenuExtraAction.createCustomer,
       ),
 
       // Một số action extra mẫu dành cho nhân viên

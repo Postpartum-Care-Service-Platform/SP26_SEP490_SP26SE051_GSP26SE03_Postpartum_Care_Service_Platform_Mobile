@@ -285,8 +285,13 @@ class _LoadedContent extends StatelessWidget {
                   break;
 
                 case EmployeeQuickMenuExtraAction.familyProfile:
-                  // Điều hướng tới hồ sơ gia đình.
-                  AppRouter.push(context, AppRoutes.familyProfile);
+                  // STAFF: Xem các hộ gia đình được phân công.
+                  AppRouter.push(context, AppRoutes.employeeAssignedFamilies);
+                  break;
+
+                case EmployeeQuickMenuExtraAction.createCustomer:
+                  // STAFF: Tạo tài khoản khách hàng.
+                  AppRouter.push(context, AppRoutes.employeeCreateCustomer);
                   break;
 
                 case EmployeeQuickMenuExtraAction.staffProfile:

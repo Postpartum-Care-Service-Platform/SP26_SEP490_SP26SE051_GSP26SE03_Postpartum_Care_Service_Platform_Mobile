@@ -48,6 +48,8 @@ class AppRoutes {
   static const String employeePortal = '/employee-portal';
   static const String employeeAmenities = '/employee-amenities';
   static const String employeeRooms = '/employee-rooms';
+  static const String employeeAssignedFamilies = '/employee-assigned-families';
+  static const String employeeCreateCustomer = '/employee-create-customer';
 
   // Family Routes
   static const String familyPortal = '/family-portal';
