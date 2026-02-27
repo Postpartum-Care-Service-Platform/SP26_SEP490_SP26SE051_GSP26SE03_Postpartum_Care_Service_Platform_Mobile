@@ -91,9 +91,9 @@ class AppDrawerForm extends StatelessWidget {
                       ),
                       child: _Content(
                         scrollController: scrollController,
-                        children: children,
                         scale: scale,
                         isCompact: isCompact,
+                        children: children,
                       ),
                     ),
                   ),

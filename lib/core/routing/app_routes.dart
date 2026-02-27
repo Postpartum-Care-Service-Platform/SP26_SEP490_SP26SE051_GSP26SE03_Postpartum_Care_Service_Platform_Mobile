@@ -65,12 +65,12 @@ class AppRoutes {
   static const String chatShell = '/chat-shell';
 
   // Employee Routes (additional)
-  static const String employeeSchedule = '/employee-schedule';
   static const String employeeTasks = '/employee-tasks';
   static const String employeeRequests = '/employee-requests';
   static const String employeeServiceBooking = '/employee-service-booking';
   static const String employeeMealPlan = '/employee-meal-plan';
   static const String employeeCheckInOut = '/employee-check-in-out';
+  static const String employeeChat = '/employee-chat';
   static const String serviceBooking = '/service-booking';
 
   // Menu Routes

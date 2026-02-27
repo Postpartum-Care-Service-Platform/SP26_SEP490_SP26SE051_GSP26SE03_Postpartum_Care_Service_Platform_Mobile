@@ -180,12 +180,16 @@ class AppWidgets {
           backgroundColor: AppColors.primary,
           elevation: 0,
           icon: iconWidget,
-          label: Text(
-            text,
-            style: AppTextStyles.arimo(
-              fontSize: 14 * scale,
-              fontWeight: FontWeight.w700,
-              color: AppColors.white,
+          label: Flexible(
+            child: Text(
+              text,
+              style: AppTextStyles.arimo(
+                fontSize: 14 * scale,
+                fontWeight: FontWeight.w700,
+                color: AppColors.white,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ),
@@ -233,12 +237,17 @@ class AppWidgets {
               icon,
               const SizedBox(width: 8),
             ],
-            Text(
-              text,
-              style: AppTextStyles.arimo(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+            Flexible(
+              child: Text(
+                text,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.arimo(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
               ),
             ),
           ],

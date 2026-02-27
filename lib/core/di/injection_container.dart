@@ -85,11 +85,16 @@ import '../../features/chat/data/datasources/chat_remote_datasource.dart';
 import '../../features/chat/data/repositories/chat_repository_impl.dart';
 import '../../features/chat/domain/repositories/chat_repository.dart';
 import '../../features/chat/domain/usecases/get_conversations_usecase.dart';
+import '../../features/chat/domain/usecases/get_all_conversations_usecase.dart';
 import '../../features/chat/domain/usecases/get_conversation_detail_usecase.dart';
 import '../../features/chat/domain/usecases/send_message_usecase.dart';
 import '../../features/chat/domain/usecases/create_conversation_usecase.dart';
 import '../../features/chat/domain/usecases/mark_messages_read_usecase.dart';
 import '../../features/chat/domain/usecases/request_support_usecase.dart';
+import '../../features/chat/domain/usecases/get_support_requests_usecase.dart';
+import '../../features/chat/domain/usecases/get_my_support_requests_usecase.dart';
+import '../../features/chat/domain/usecases/accept_support_request_usecase.dart';
+import '../../features/chat/domain/usecases/resolve_support_request_usecase.dart';
 import '../../features/chat/presentation/bloc/chat_bloc.dart';
 import '../../features/chat/presentation/services/chat_hub_service.dart';
 import '../../features/booking/data/datasources/booking_remote_datasource.dart';
@@ -358,6 +363,8 @@ class InjectionContainer {
 
   static GetConversationsUsecase get _getConversationsUsecase =>
       GetConversationsUsecase(chatRepository);
+  static GetAllConversationsUsecase get _getAllConversationsUsecase =>
+      GetAllConversationsUsecase(chatRepository);
   static GetConversationDetailUsecase get _getConversationDetailUsecase =>
       GetConversationDetailUsecase(chatRepository);
   static SendMessageUsecase get _sendMessageUsecase =>
@@ -368,6 +375,15 @@ class InjectionContainer {
       MarkMessagesReadUsecase(chatRepository);
   static RequestSupportUsecase get _requestSupportUsecase =>
       RequestSupportUsecase(chatRepository);
+  // Staff Chat UseCases
+  static GetSupportRequestsUsecase get _getSupportRequestsUsecase =>
+      GetSupportRequestsUsecase(chatRepository);
+  static GetMySupportRequestsUsecase get _getMySupportRequestsUsecase =>
+      GetMySupportRequestsUsecase(chatRepository);
+  static AcceptSupportRequestUsecase get _acceptSupportRequestUsecase =>
+      AcceptSupportRequestUsecase(chatRepository);
+  static ResolveSupportRequestUsecase get _resolveSupportRequestUsecase =>
+      ResolveSupportRequestUsecase(chatRepository);
 
   static CreateBookingUsecase get _createBookingUsecase =>
       CreateBookingUsecase(bookingRepository);
@@ -495,11 +511,16 @@ class InjectionContainer {
 
   static ChatBloc get chatBloc => ChatBloc(
         getConversationsUsecase: _getConversationsUsecase,
+        getAllConversationsUsecase: _getAllConversationsUsecase,
         getConversationDetailUsecase: _getConversationDetailUsecase,
         sendMessageUsecase: _sendMessageUsecase,
         createConversationUsecase: _createConversationUsecase,
         markMessagesReadUsecase: _markMessagesReadUsecase,
         requestSupportUsecase: _requestSupportUsecase,
+        getSupportRequestsUsecase: _getSupportRequestsUsecase,
+        getMySupportRequestsUsecase: _getMySupportRequestsUsecase,
+        acceptSupportRequestUsecase: _acceptSupportRequestUsecase,
+        resolveSupportRequestUsecase: _resolveSupportRequestUsecase,
         chatHubService: chatHubService,
       );
 
