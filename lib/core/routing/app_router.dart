@@ -33,6 +33,10 @@ import '../../features/employee/presentation/screens/employee_chat_screen.dart';
 import '../../features/employee/presentation/screens/service_booking_screen.dart';
 import '../../features/employee/presentation/screens/employee_assigned_families_screen.dart';
 import '../../features/employee/presentation/screens/employee_create_customer_screen.dart';
+import '../../features/employee/presentation/screens/employee_package_booking_screen.dart';
+import '../../features/employee/presentation/screens/staff_booking_list_screen.dart';
+import '../../features/transaction/presentation/screens/staff_transaction_list_screen.dart';
+import '../../features/employee/presentation/screens/employee_package_booking_screen.dart';
 import '../../features/chat/presentation/screens/conversation_list_screen.dart';
 import '../../features/chat/presentation/screens/conversation_detail_screen.dart';
 import '../../features/chat/presentation/screens/chat_shell_screen.dart';
@@ -66,16 +70,16 @@ class AppRouter {
       // Auth Routes
       case AppRoutes.splash:
         return MaterialPageRoute(builder: (_) => const SplashScreen());
-      
+
       case AppRoutes.login:
         return MaterialPageRoute(builder: (_) => const LoginScreen());
-      
+
       case AppRoutes.signUp:
         return MaterialPageRoute(builder: (_) => const SignUpScreen());
-      
+
       case AppRoutes.resetPassword:
         return MaterialPageRoute(builder: (_) => const ResetPasswordScreen());
-      
+
       case AppRoutes.otpVerification:
         if (args is Map<String, dynamic>) {
           return MaterialPageRoute(
@@ -84,7 +88,7 @@ class AppRouter {
           );
         }
         return null;
-      
+
       case AppRoutes.resetOtpVerification:
         if (args is Map<String, dynamic>) {
           return MaterialPageRoute(
@@ -93,7 +97,7 @@ class AppRouter {
           );
         }
         return null;
-      
+
       case AppRoutes.newPassword:
         if (args is Map<String, dynamic>) {
           return MaterialPageRoute(
@@ -104,7 +108,7 @@ class AppRouter {
           );
         }
         return null;
-      
+
       case AppRoutes.roleSelection:
         return MaterialPageRoute(builder: (_) => const RoleSelectionScreen());
 
@@ -134,7 +138,7 @@ class AppRouter {
           );
         }
         return null;
-      
+
       case AppRoutes.familyProfile:
         if (args is Map<String, dynamic>) {
           final authBloc = args['authBloc'] as AuthBloc?;
@@ -161,7 +165,7 @@ class AppRouter {
             child: const FamilyProfileScreen(),
           ),
         );
-      
+
       case AppRoutes.notifications:
         return MaterialPageRoute(builder: (_) => const NotificationScreen());
 
@@ -174,7 +178,7 @@ class AppRouter {
             child: const BookingHistoryScreen(),
           ),
         );
-      
+
       case AppRoutes.payment:
         if (args is Map<String, dynamic>) {
           return MaterialPageRoute(
@@ -188,15 +192,13 @@ class AppRouter {
           );
         }
         return null;
-      
+
       case AppRoutes.invoice:
         if (args is Map<String, dynamic>) {
           return MaterialPageRoute(
             builder: (_) => BlocProvider<BookingBloc>.value(
               value: args['bookingBloc'] as BookingBloc,
-              child: InvoiceScreen(
-                bookingId: args['bookingId'] as int,
-              ),
+              child: InvoiceScreen(bookingId: args['bookingId'] as int),
             ),
           );
         }
@@ -225,19 +227,19 @@ class AppRouter {
         return MaterialPageRoute(
           builder: (_) => const SupportAndPolicyScreen(),
         );
-      
+
       case AppRoutes.help:
         return MaterialPageRoute(builder: (_) => const HelpScreen());
-      
+
       case AppRoutes.contact:
         return MaterialPageRoute(builder: (_) => const ContactScreen());
-      
+
       case AppRoutes.about:
         return MaterialPageRoute(builder: (_) => const AboutScreen());
-      
+
       case AppRoutes.terms:
         return MaterialPageRoute(builder: (_) => const TermsScreen());
-      
+
       case AppRoutes.privacy:
         return MaterialPageRoute(builder: (_) => const PrivacyScreen());
 
@@ -262,6 +264,26 @@ class AppRouter {
           builder: (_) => const EmployeeCreateCustomerScreen(),
         );
 
+      case AppRoutes.employeePackageBooking:
+        return MaterialPageRoute(
+          builder: (_) => const EmployeePackageBookingScreen(),
+        );
+
+      case AppRoutes.staffBookingList:
+        return MaterialPageRoute(
+          builder: (_) => const StaffBookingListScreen(),
+        );
+
+      case AppRoutes.staffTransactionList:
+        return MaterialPageRoute(
+          builder: (_) => const StaffTransactionListScreen(),
+        );
+
+      case AppRoutes.employeePackageBooking:
+        return MaterialPageRoute(
+          builder: (_) => const EmployeePackageBookingScreen(),
+        );
+
       case AppRoutes.employeeMealPlan:
         return MaterialPageRoute(
           builder: (_) => const EmployeeMealPlanScreen(),
@@ -278,9 +300,7 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const CheckInOutScreen());
 
       case AppRoutes.employeeChat:
-        return MaterialPageRoute(
-          builder: (_) => const EmployeeChatScreen(),
-        );
+        return MaterialPageRoute(builder: (_) => const EmployeeChatScreen());
 
       case AppRoutes.employeeRequests:
         return MaterialPageRoute(builder: (_) => const RequestsScreen());
@@ -296,11 +316,11 @@ class AppRouter {
           builder: (_) => BlocProvider(
             create: (_) =>
                 InjectionContainer.chatBloc
-              ..add(const ChatStarted(autoSelectFirstConversation: false)),
+                  ..add(const ChatStarted(autoSelectFirstConversation: false)),
             child: const ConversationListScreen(),
           ),
         );
-      
+
       case AppRoutes.conversationDetail:
         if (args is Map<String, dynamic>) {
           final chatBloc = args['chatBloc'] as ChatBloc?;
@@ -314,7 +334,7 @@ class AppRouter {
           }
         }
         return null;
-      
+
       case AppRoutes.chatShell:
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
@@ -344,7 +364,7 @@ class AppRouter {
           builder: (_) => BlocProvider(
             create: (_) =>
                 InjectionContainer.familyScheduleBloc
-              ..add(const FamilyScheduleLoadRequested()),
+                  ..add(const FamilyScheduleLoadRequested()),
             child: const FamilyScheduleScreen(),
           ),
         );
@@ -363,9 +383,7 @@ class AppRouter {
         return MaterialPageRoute(
           builder: (_) => MultiBlocProvider(
             providers: [
-              BlocProvider(
-                create: (_) => InjectionContainer.amenityBloc,
-              ),
+              BlocProvider(create: (_) => InjectionContainer.amenityBloc),
               BlocProvider(
                 create: (_) => InjectionContainer.familyScheduleBloc,
               ),

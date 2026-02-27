@@ -229,11 +229,11 @@ class _LoadedContent extends StatelessWidget {
             currentTab: AppBottomTab.appointment,
             onBottomTabSelected: (tab) {
               // Đổi tab nhanh cho nhân viên:
-              // - Dịch vụ -> màn gói dịch vụ (PackageScreen)
+              // - Dịch vụ -> màn đặt gói/dịch vụ cho khách (EmployeePackageBookingScreen)
               // - Trao đổi -> màn chat shell dành cho staff
               switch (tab) {
                 case AppBottomTab.services:
-                  AppRouter.push(context, AppRoutes.package);
+                  AppRouter.push(context, AppRoutes.employeePackageBooking);
                   break;
                 case AppBottomTab.chat:
                   // STAFF: Điều hướng tới màn chat dành riêng cho nhân viên.
@@ -292,6 +292,11 @@ class _LoadedContent extends StatelessWidget {
                 case EmployeeQuickMenuExtraAction.createCustomer:
                   // STAFF: Tạo tài khoản khách hàng.
                   AppRouter.push(context, AppRoutes.employeeCreateCustomer);
+                  break;
+
+                case EmployeeQuickMenuExtraAction.transactions:
+                  // STAFF: Xem danh sách giao dịch thanh toán.
+                  AppRouter.push(context, AppRoutes.staffTransactionList);
                   break;
 
                 case EmployeeQuickMenuExtraAction.staffProfile:

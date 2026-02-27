@@ -61,7 +61,8 @@ import '../../features/employee/domain/usecases/confirm_appointment.dart';
 import '../../features/employee/domain/usecases/complete_appointment.dart';
 import '../../features/employee/domain/usecases/cancel_appointment.dart';
 import '../../features/employee/domain/usecases/create_appointment_for_customer.dart';
-import '../../features/employee/presentation/bloc/appointment/appointment_bloc.dart' as employee_appointment;
+import '../../features/employee/presentation/bloc/appointment/appointment_bloc.dart'
+    as employee_appointment;
 import '../../features/employee/data/datasources/room_remote_datasource.dart';
 import '../../features/employee/data/repositories/room_repository_impl.dart';
 import '../../features/employee/domain/repositories/room_repository.dart';
@@ -105,6 +106,8 @@ import '../../features/booking/domain/usecases/get_booking_by_id_usecase.dart';
 import '../../features/booking/domain/usecases/get_bookings_usecase.dart';
 import '../../features/booking/domain/usecases/create_payment_link_usecase.dart';
 import '../../features/booking/domain/usecases/check_payment_status_usecase.dart';
+import '../../features/booking/domain/usecases/create_booking_for_customer_usecase.dart';
+import '../../features/booking/domain/usecases/create_offline_payment_usecase.dart';
 import '../../features/booking/presentation/bloc/booking_bloc.dart';
 import '../../features/contract/data/datasources/contract_remote_datasource.dart';
 import '../../features/contract/data/repositories/contract_repository_impl.dart';
@@ -151,37 +154,38 @@ class InjectionContainer {
   InjectionContainer._();
 
   // ==================== Data Sources ====================
-  
+
   static AuthRemoteDataSource get _authRemoteDataSource =>
       AuthRemoteDataSourceImpl(dio: ApiClient.dio);
-  
+
   static FamilyProfileRemoteDataSource get _familyProfileRemoteDataSource =>
       FamilyProfileRemoteDataSourceImpl(dio: ApiClient.dio);
-  
+
   static NotificationRemoteDataSource get _notificationRemoteDataSource =>
       NotificationRemoteDataSourceImpl(dio: ApiClient.dio);
-  
+
   static PackageRemoteDataSource get _packageRemoteDataSource =>
       PackageRemoteDataSourceImpl();
-  
+
   static PackageTypeRemoteDataSource get _packageTypeRemoteDataSource =>
       PackageTypeRemoteDataSourceImpl();
-  
+
   static CarePlanRemoteDataSource get _carePlanRemoteDataSource =>
       CarePlanRemoteDataSourceImpl();
 
   static AppointmentRemoteDataSource get _appointmentRemoteDataSource =>
       AppointmentRemoteDataSourceImpl();
-  
-  static AppointmentEmployeeRemoteDataSource get _appointmentEmployeeRemoteDataSource =>
+
+  static AppointmentEmployeeRemoteDataSource
+  get _appointmentEmployeeRemoteDataSource =>
       AppointmentEmployeeRemoteDataSource(dio: ApiClient.dio);
-  
+
   static RoomRemoteDataSource get _roomRemoteDataSource =>
       RoomRemoteDataSource(dio: ApiClient.dio);
-  
+
   static AmenityServiceRemoteDataSource get _amenityServiceRemoteDataSource =>
       AmenityServiceRemoteDataSource(dio: ApiClient.dio);
-  
+
   static AmenityTicketRemoteDataSource get _amenityTicketRemoteDataSource =>
       AmenityTicketRemoteDataSource(dio: ApiClient.dio);
 
@@ -207,41 +211,50 @@ class InjectionContainer {
       FeedbackRemoteDataSourceImpl(dio: ApiClient.dio);
 
   // ==================== Repositories ====================
-  
+
   static AuthRepository get authRepository =>
       AuthRepositoryImpl(remoteDataSource: _authRemoteDataSource);
-  
+
   static AuthRepository get _authRepository => authRepository;
-  
+
   static FamilyProfileRepository get familyProfileRepository =>
-      FamilyProfileRepositoryImpl(remoteDataSource: _familyProfileRemoteDataSource);
-  
+      FamilyProfileRepositoryImpl(
+        remoteDataSource: _familyProfileRemoteDataSource,
+      );
+
   static NotificationRepository get notificationRepository =>
       NotificationRepositoryImpl(_notificationRemoteDataSource);
-  
+
   static PackageRepository get packageRepository =>
       PackageRepositoryImpl(_packageRemoteDataSource);
-  
+
   static PackageTypeRepository get packageTypeRepository =>
       PackageTypeRepositoryImpl(_packageTypeRemoteDataSource);
-  
+
   static CarePlanRepository get carePlanRepository =>
       CarePlanRepositoryImpl(_carePlanRemoteDataSource);
 
   static AppointmentRepository get appointmentRepository =>
-      AppointmentRepositoryImpl(dataSource: _appointmentRemoteDataSource) as AppointmentRepository;
-  
+      AppointmentRepositoryImpl(dataSource: _appointmentRemoteDataSource)
+          as AppointmentRepository;
+
   static AppointmentEmployeeRepository get appointmentEmployeeRepository =>
-      AppointmentEmployeeRepositoryImpl(remoteDataSource: _appointmentEmployeeRemoteDataSource);
-  
+      AppointmentEmployeeRepositoryImpl(
+        remoteDataSource: _appointmentEmployeeRemoteDataSource,
+      );
+
   static RoomRepository get roomRepository =>
       RoomRepositoryImpl(remoteDataSource: _roomRemoteDataSource);
-  
+
   static AmenityServiceRepository get amenityServiceRepository =>
-      AmenityServiceRepositoryImpl(remoteDataSource: _amenityServiceRemoteDataSource);
-  
+      AmenityServiceRepositoryImpl(
+        remoteDataSource: _amenityServiceRemoteDataSource,
+      );
+
   static AmenityTicketRepository get amenityTicketRepository =>
-      AmenityTicketRepositoryImpl(remoteDataSource: _amenityTicketRemoteDataSource);
+      AmenityTicketRepositoryImpl(
+        remoteDataSource: _amenityTicketRemoteDataSource,
+      );
 
   static ChatRepository get chatRepository =>
       ChatRepositoryImpl(remoteDataSource: _chatRemoteDataSource);
@@ -256,7 +269,9 @@ class InjectionContainer {
       MenuRepositoryImpl(_menuRemoteDataSource);
 
   static FamilyScheduleRepository get familyScheduleRepository =>
-      FamilyScheduleRepositoryImpl(remoteDataSource: _familyScheduleRemoteDataSource);
+      FamilyScheduleRepositoryImpl(
+        remoteDataSource: _familyScheduleRemoteDataSource,
+      );
 
   static FeedbackRepository get feedbackRepository =>
       FeedbackRepositoryImpl(_feedbackRemoteDataSource);
@@ -268,10 +283,12 @@ class InjectionContainer {
       AmenityRepositoryImpl(dataSource: _amenityRemoteDataSource);
 
   // ==================== Use Cases ====================
-  
+
   static LoginUsecase get _loginUsecase => LoginUsecase(_authRepository);
-  static RegisterUsecase get _registerUsecase => RegisterUsecase(_authRepository);
-  static VerifyEmailUsecase get _verifyEmailUsecase => VerifyEmailUsecase(_authRepository);
+  static RegisterUsecase get _registerUsecase =>
+      RegisterUsecase(_authRepository);
+  static VerifyEmailUsecase get _verifyEmailUsecase =>
+      VerifyEmailUsecase(_authRepository);
   static ForgotPasswordUsecase get _forgotPasswordUsecase =>
       ForgotPasswordUsecase(_authRepository);
   static VerifyResetOtpUsecase get _verifyResetOtpUsecase =>
@@ -295,7 +312,7 @@ class InjectionContainer {
       GetMemberTypesUsecase(familyProfileRepository);
   static CreateFamilyProfileUsecase get _createFamilyProfileUsecase =>
       CreateFamilyProfileUsecase(familyProfileRepository);
-  
+
   static GetNotificationsUsecase get _getNotificationsUsecase =>
       GetNotificationsUsecase(notificationRepository);
   static GetNotificationByIdUsecase get _getNotificationByIdUsecase =>
@@ -304,16 +321,16 @@ class InjectionContainer {
       MarkNotificationReadUsecase(notificationRepository);
   static GetUnreadCountUsecase get _getUnreadCountUsecase =>
       GetUnreadCountUsecase(notificationRepository);
-  
+
   static GetPackagesUsecase get _getPackagesUsecase =>
       GetPackagesUsecase(packageRepository);
-  
+
   static GetPackageTypesUsecase get _getPackageTypesUsecase =>
       GetPackageTypesUsecase(packageTypeRepository);
-  
+
   static GetCarePlanDetailsUsecase get _getCarePlanDetailsUsecase =>
       GetCarePlanDetailsUsecase(carePlanRepository);
-  
+
   // Employee - Appointment UseCases
   static GetMyAssignedAppointments get _getMyAssignedAppointments =>
       GetMyAssignedAppointments(appointmentEmployeeRepository);
@@ -329,15 +346,13 @@ class InjectionContainer {
       CancelAppointment(appointmentEmployeeRepository);
   static CreateAppointmentForCustomer get _createAppointmentForCustomer =>
       CreateAppointmentForCustomer(appointmentEmployeeRepository);
-  
+
   // Employee - Room UseCases
-  static GetAllRooms get _getAllRooms =>
-      GetAllRooms(roomRepository);
-  static GetRoomById get _getRoomById =>
-      GetRoomById(roomRepository);
+  static GetAllRooms get _getAllRooms => GetAllRooms(roomRepository);
+  static GetRoomById get _getRoomById => GetRoomById(roomRepository);
   static GetAvailableRooms get _getAvailableRooms =>
       GetAvailableRooms(roomRepository);
-  
+
   // Employee - AmenityService UseCases
   static GetAllAmenityServices get _getAllAmenityServices =>
       GetAllAmenityServices(amenityServiceRepository);
@@ -345,7 +360,7 @@ class InjectionContainer {
       GetAmenityServiceById(amenityServiceRepository);
   static GetActiveAmenityServices get _getActiveAmenityServices =>
       GetActiveAmenityServices(amenityServiceRepository);
-  
+
   // Employee - AmenityTicket UseCases
   static CreateServiceBooking get _createServiceBooking =>
       CreateServiceBooking(amenityTicketRepository);
@@ -395,6 +410,10 @@ class InjectionContainer {
       CreatePaymentLinkUsecase(bookingRepository);
   static CheckPaymentStatusUsecase get _checkPaymentStatusUsecase =>
       CheckPaymentStatusUsecase(bookingRepository);
+  static CreateBookingForCustomerUsecase get _createBookingForCustomerUsecase =>
+      CreateBookingForCustomerUsecase(bookingRepository);
+  static CreateOfflinePaymentUsecase get _createOfflinePaymentUsecase =>
+      CreateOfflinePaymentUsecase(bookingRepository);
 
   static GetContractByBookingIdUsecase get _getContractByBookingIdUsecase =>
       GetContractByBookingIdUsecase(contractRepository);
@@ -438,7 +457,7 @@ class InjectionContainer {
       CreateAmenityTicketUsecase(amenityRepository);
 
   // ==================== Blocs ====================
-  
+
   static AuthBloc get authBloc => AuthBloc(
     loginUsecase: _loginUsecase,
     registerUsecase: _registerUsecase,
@@ -454,28 +473,27 @@ class InjectionContainer {
   );
 
   static FamilyProfileBloc get familyProfileBloc => FamilyProfileBloc(
-        getFamilyProfilesUsecase: _getFamilyProfilesUsecase,
-        getMemberTypesUsecase: _getMemberTypesUsecase,
-        createFamilyProfileUsecase: _createFamilyProfileUsecase,
-      );
-  
+    getFamilyProfilesUsecase: _getFamilyProfilesUsecase,
+    getMemberTypesUsecase: _getMemberTypesUsecase,
+    createFamilyProfileUsecase: _createFamilyProfileUsecase,
+  );
+
   static NotificationBloc get notificationBloc => NotificationBloc(
-        getNotificationsUsecase: _getNotificationsUsecase,
-        getNotificationByIdUsecase: _getNotificationByIdUsecase,
-        markNotificationReadUsecase: _markNotificationReadUsecase,
-        getUnreadCountUsecase: _getUnreadCountUsecase,
-      );
-  
-  static PackageBloc get packageBloc => PackageBloc(
-        getPackagesUsecase: _getPackagesUsecase,
-      );
-  
-  static CarePlanBloc get carePlanBloc => CarePlanBloc(
-        getCarePlanDetailsUsecase: _getCarePlanDetailsUsecase,
-      );
-  
+    getNotificationsUsecase: _getNotificationsUsecase,
+    getNotificationByIdUsecase: _getNotificationByIdUsecase,
+    markNotificationReadUsecase: _markNotificationReadUsecase,
+    getUnreadCountUsecase: _getUnreadCountUsecase,
+  );
+
+  static PackageBloc get packageBloc =>
+      PackageBloc(getPackagesUsecase: _getPackagesUsecase);
+
+  static CarePlanBloc get carePlanBloc =>
+      CarePlanBloc(getCarePlanDetailsUsecase: _getCarePlanDetailsUsecase);
+
   // Employee Blocs
-  static employee_appointment.AppointmentBloc get employeeAppointmentBloc => employee_appointment.AppointmentBloc(
+  static employee_appointment.AppointmentBloc get employeeAppointmentBloc =>
+      employee_appointment.AppointmentBloc(
         getMyAssignedAppointments: _getMyAssignedAppointments,
         getAllAppointments: _getAllAppointments,
         getAppointmentById: _getAppointmentById,
@@ -484,93 +502,94 @@ class InjectionContainer {
         cancelAppointment: _cancelAppointment,
         createAppointmentForCustomer: _createAppointmentForCustomer,
       );
-  
+
   static RoomBloc get roomBloc => RoomBloc(
-        getAllRooms: _getAllRooms,
-        getRoomById: _getRoomById,
-        getAvailableRooms: _getAvailableRooms,
-      );
-  
+    getAllRooms: _getAllRooms,
+    getRoomById: _getRoomById,
+    getAvailableRooms: _getAvailableRooms,
+  );
+
   static AmenityServiceBloc get amenityServiceBloc => AmenityServiceBloc(
-        getAllAmenityServices: _getAllAmenityServices,
-        getAmenityServiceById: _getAmenityServiceById,
-        getActiveAmenityServices: _getActiveAmenityServices,
-      );
-  
+    getAllAmenityServices: _getAllAmenityServices,
+    getAmenityServiceById: _getAmenityServiceById,
+    getActiveAmenityServices: _getActiveAmenityServices,
+  );
+
   static AmenityTicketBloc get amenityTicketBloc => AmenityTicketBloc(
-        createServiceBooking: _createServiceBooking,
-        repository: amenityTicketRepository,
-      );
+    createServiceBooking: _createServiceBooking,
+    repository: amenityTicketRepository,
+  );
 
   static AppointmentBloc get appointmentBloc => AppointmentBloc(
-        getAppointmentsUsecase: _getAppointmentsUsecase,
-        createAppointmentUsecase: _createAppointmentUsecase,
-        updateAppointmentUsecase: _updateAppointmentUsecase,
-        cancelAppointmentUsecase: _cancelAppointmentUsecase,
-      );
+    getAppointmentsUsecase: _getAppointmentsUsecase,
+    createAppointmentUsecase: _createAppointmentUsecase,
+    updateAppointmentUsecase: _updateAppointmentUsecase,
+    cancelAppointmentUsecase: _cancelAppointmentUsecase,
+  );
 
   static ChatBloc get chatBloc => ChatBloc(
-        getConversationsUsecase: _getConversationsUsecase,
-        getAllConversationsUsecase: _getAllConversationsUsecase,
-        getConversationDetailUsecase: _getConversationDetailUsecase,
-        sendMessageUsecase: _sendMessageUsecase,
-        createConversationUsecase: _createConversationUsecase,
-        markMessagesReadUsecase: _markMessagesReadUsecase,
-        requestSupportUsecase: _requestSupportUsecase,
-        getSupportRequestsUsecase: _getSupportRequestsUsecase,
-        getMySupportRequestsUsecase: _getMySupportRequestsUsecase,
-        acceptSupportRequestUsecase: _acceptSupportRequestUsecase,
-        resolveSupportRequestUsecase: _resolveSupportRequestUsecase,
-        chatHubService: chatHubService,
-      );
+    getConversationsUsecase: _getConversationsUsecase,
+    getAllConversationsUsecase: _getAllConversationsUsecase,
+    getConversationDetailUsecase: _getConversationDetailUsecase,
+    sendMessageUsecase: _sendMessageUsecase,
+    createConversationUsecase: _createConversationUsecase,
+    markMessagesReadUsecase: _markMessagesReadUsecase,
+    requestSupportUsecase: _requestSupportUsecase,
+    getSupportRequestsUsecase: _getSupportRequestsUsecase,
+    getMySupportRequestsUsecase: _getMySupportRequestsUsecase,
+    acceptSupportRequestUsecase: _acceptSupportRequestUsecase,
+    resolveSupportRequestUsecase: _resolveSupportRequestUsecase,
+    chatHubService: chatHubService,
+  );
 
   static BookingBloc get bookingBloc => BookingBloc(
-        createBookingUsecase: _createBookingUsecase,
-        getBookingByIdUsecase: _getBookingByIdUsecase,
-        getBookingsUsecase: _getBookingsUsecase,
-        createPaymentLinkUsecase: _createPaymentLinkUsecase,
-        checkPaymentStatusUsecase: _checkPaymentStatusUsecase,
-        getPackagesUsecase: _getPackagesUsecase,
-        getAllRooms: _getAllRooms,
-      );
+    createBookingUsecase: _createBookingUsecase,
+    getBookingByIdUsecase: _getBookingByIdUsecase,
+    getBookingsUsecase: _getBookingsUsecase,
+    createPaymentLinkUsecase: _createPaymentLinkUsecase,
+    checkPaymentStatusUsecase: _checkPaymentStatusUsecase,
+    getPackagesUsecase: _getPackagesUsecase,
+    getAllRooms: _getAllRooms,
+    createBookingForCustomerUsecase: _createBookingForCustomerUsecase,
+    createOfflinePaymentUsecase: _createOfflinePaymentUsecase,
+  );
 
   static ContractBloc get contractBloc => ContractBloc(
-        getContractByBookingIdUsecase: _getContractByBookingIdUsecase,
-        exportContractPdfUsecase: _exportContractPdfUsecase,
-      );
+    getContractByBookingIdUsecase: _getContractByBookingIdUsecase,
+    exportContractPdfUsecase: _exportContractPdfUsecase,
+  );
 
   static MenuBloc get menuBloc => MenuBloc(
-        getMenusUsecase: _getMenusUsecase,
-        getMenuTypesUsecase: _getMenuTypesUsecase,
-        getMyMenuRecordsUsecase: _getMyMenuRecordsUsecase,
-        getMyMenuRecordsByDateUsecase: _getMyMenuRecordsByDateUsecase,
-        createMenuRecordsUsecase: _createMenuRecordsUsecase,
-        updateMenuRecordsUsecase: _updateMenuRecordsUsecase,
-        deleteMenuRecordUsecase: _deleteMenuRecordUsecase,
-      );
+    getMenusUsecase: _getMenusUsecase,
+    getMenuTypesUsecase: _getMenuTypesUsecase,
+    getMyMenuRecordsUsecase: _getMyMenuRecordsUsecase,
+    getMyMenuRecordsByDateUsecase: _getMyMenuRecordsByDateUsecase,
+    createMenuRecordsUsecase: _createMenuRecordsUsecase,
+    updateMenuRecordsUsecase: _updateMenuRecordsUsecase,
+    deleteMenuRecordUsecase: _deleteMenuRecordUsecase,
+  );
 
   static FamilyScheduleBloc get familyScheduleBloc => FamilyScheduleBloc(
-        getMySchedulesUsecase: _getMySchedulesUsecase,
-        getMySchedulesByDateUsecase: _getMySchedulesByDateUsecase,
-      );
+    getMySchedulesUsecase: _getMySchedulesUsecase,
+    getMySchedulesByDateUsecase: _getMySchedulesByDateUsecase,
+  );
 
   static FeedbackBloc get feedbackBloc => FeedbackBloc(
-        getFeedbackTypesUsecase: _getFeedbackTypesUsecase,
-        getMyFeedbacksUsecase: _getMyFeedbacksUsecase,
-        createFeedbackUsecase: _createFeedbackUsecase,
-      );
+    getFeedbackTypesUsecase: _getFeedbackTypesUsecase,
+    getMyFeedbacksUsecase: _getMyFeedbacksUsecase,
+    createFeedbackUsecase: _createFeedbackUsecase,
+  );
 
   static AmenityBloc get amenityBloc => AmenityBloc(
-        getAmenityServicesUsecase: _getAmenityServicesUsecase,
-        getMyAmenityTicketsUsecase: _getMyAmenityTicketsUsecase,
-        createAmenityTicketUsecase: _createAmenityTicketUsecase,
-      );
+    getAmenityServicesUsecase: _getAmenityServicesUsecase,
+    getMyAmenityTicketsUsecase: _getMyAmenityTicketsUsecase,
+    createAmenityTicketUsecase: _createAmenityTicketUsecase,
+  );
 
   // ==================== Reset ====================
-  
+
   /// Reset all dependencies (useful for testing or logout)
   static void reset() {
     ApiClient.reset();
   }
 }
-

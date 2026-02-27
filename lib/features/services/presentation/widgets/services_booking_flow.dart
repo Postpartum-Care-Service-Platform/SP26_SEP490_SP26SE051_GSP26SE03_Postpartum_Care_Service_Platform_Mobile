@@ -17,10 +17,12 @@ import 'service_location_selection.dart';
 
 class ServicesBookingFlow extends StatefulWidget {
   final ServiceLocationType? locationType;
+  final VoidCallback? onConfirmOverride;
 
   const ServicesBookingFlow({
     super.key,
     this.locationType,
+    this.onConfirmOverride,
   });
 
   @override
@@ -100,7 +102,11 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
       case 3:
         return BookingStep4Summary(
           onConfirm: () {
-            context.read<BookingBloc>().add(const BookingCreateBooking());
+            if (widget.onConfirmOverride != null) {
+              widget.onConfirmOverride!();
+            } else {
+              context.read<BookingBloc>().add(const BookingCreateBooking());
+            }
           },
         );
       default:

@@ -24,6 +24,7 @@ enum EmployeeQuickMenuExtraAction {
   staffProfile,
   familyProfile,
   createCustomer,
+  transactions,
 }
 
 /// Model định nghĩa 1 item trong menu nhanh
@@ -553,6 +554,12 @@ class EmployeeQuickMenuPresets {
         label: 'Yêu cầu',
         iconAsset: AppAssets.menuThird,
         action: EmployeeQuickMenuExtraAction.requests,
+      ),
+      EmployeeQuickMenuItem.extra(
+        id: 'transactions',
+        label: 'Giao dịch',
+        iconAsset: AppAssets.menuThird,
+        action: EmployeeQuickMenuExtraAction.transactions,
       ),
     ];
   }

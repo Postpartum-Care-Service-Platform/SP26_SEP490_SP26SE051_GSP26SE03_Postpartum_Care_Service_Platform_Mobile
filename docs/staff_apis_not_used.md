@@ -54,25 +54,25 @@ Dựa trên tài liệu API functionalities for staff, có **2 nhóm API**:
   **Ghi chú:** Cần cho quản lý trạng thái tài khoản
 
 ### 3. BookingController
-- ❌ `GET /api/Booking/all`  
+- ✅ `GET /api/Booking/all`  
   **Mô tả:** Lấy tất cả booking  
-  **Trạng thái:** Chưa có trong codebase  
+  **Trạng thái:** ✅ BE đã có (`WebAPI/Controllers/BookingController.cs`) và **mobile staff đã tích hợp** (dùng trong `StaffBookingListScreen`)  
   **Ghi chú:** Cần cho staff xem toàn bộ booking của khách hàng
 
-- ❌ `POST /api/Booking/create-for-customer`  
+- ✅ `POST /api/Booking/create-for-customer`  
   **Mô tả:** Staff tạo booking cho khách  
-  **Trạng thái:** Chưa có trong codebase  
-  **Ghi chú:** Cần cho staff đặt dịch vụ thay khách hàng
+  **Trạng thái:** ✅ BE đã có (`WebAPI/Controllers/BookingController.cs`) và **mobile staff đã tích hợp** (dùng trong `EmployeePackageBookingScreen`)  
+  **Ghi chú:** Cần cho staff đặt dịch vụ thay khách hàng (chọn customer → chọn gói/phòng/ngày → tạo booking)
 
-- ❌ `PUT /api/Booking/{id}/confirm`  
+- ✅ `PUT /api/Booking/{id}/confirm`  
   **Mô tả:** Xác nhận booking  
-  **Trạng thái:** Chưa có trong codebase  
-  **Ghi chú:** Cần cho staff xác nhận booking
+  **Trạng thái:** ✅ BE đã có (`WebAPI/Controllers/BookingController.cs`) và **mobile staff đã tích hợp** (dùng trong `StaffBookingListScreen`)  
+  **Ghi chú:** Cần cho staff xác nhận booking (trạng thái pending → confirmed)
 
-- ❌ `PUT /api/Booking/{id}/complete`  
+- ✅ `PUT /api/Booking/{id}/complete`  
   **Mô tả:** Hoàn thành booking  
-  **Trạng thái:** Chưa có trong codebase  
-  **Ghi chú:** Cần cho staff đánh dấu booking đã hoàn thành
+  **Trạng thái:** ✅ BE đã có (`WebAPI/Controllers/BookingController.cs`) và **mobile staff đã tích hợp** (dùng trong `StaffBookingListScreen`)  
+  **Ghi chú:** Cần cho staff đánh dấu booking đã hoàn thành (confirmed → completed)
 
 ### 4. ContractController
 - ❌ `GET /api/Contract/all`  
@@ -126,31 +126,31 @@ Dựa trên tài liệu API functionalities for staff, có **2 nhóm API**:
   **Ghi chú:** Cần cho staff xem hợp đồng chưa có lịch
 
 ### 5. TransactionController
-- ❌ `GET /api/Transaction/all`  
+- ✅ `GET /api/Transaction/all`  
   **Mô tả:** Lấy toàn bộ giao dịch  
-  **Trạng thái:** Chưa có trong codebase  
-  **Ghi chú:** Cần cho staff xem toàn bộ giao dịch thanh toán
+  **Trạng thái:** ✅ BE đã có (`WebAPI/Controllers/TransactionController.cs`) và **mobile staff đã tích hợp** (màn `StaffTransactionListScreen`)  
+  **Ghi chú:** Staff xem toàn bộ giao dịch thanh toán, có filter theo loại (Deposit/Remaining/Full) và trạng thái (Pending/Paid/Failed)
 
-- ❌ `POST /api/Transaction/payment`  
+- ✅ `POST /api/Transaction/payment`  
   **Mô tả:** Staff ghi nhận thanh toán thủ công cho khách  
-  **Trạng thái:** Chưa có trong codebase  
-  **Ghi chú:** Cần cho staff ghi nhận thanh toán offline
+  **Trạng thái:** ✅ BE đã có (`WebAPI/Controllers/TransactionController.cs`) và **mobile staff đã tích hợp** (dùng trong `EmployeeOfflinePaymentScreen` được mở từ `StaffBookingListScreen`)  
+  **Ghi chú:** Staff ghi nhận thanh toán offline (tiền mặt / chuyển khoản) dựa trên booking + customer, payload `bookingId`, `customerId`, `amount`, `paymentMethod`, `note?`
 
 ### 6. NotificationController
 - ✅ `POST /api/Notification`  
   **Mô tả:** Tạo thông báo  
-  **Trạng thái:** Chưa có trong codebase  
-  **Ghi chú:** Cần cho staff/admin tạo thông báo cho khách hàng
+  **Trạng thái:** ✅ BE đã có nhưng **mobile staff chưa tích hợp UI** (chưa có màn tạo thông báo riêng cho staff/admin)  
+  **Ghi chú:** Dự kiến dùng cho staff/admin tạo thông báo cho khách hàng
 
 - ✅ `GET /api/Notification`  
   **Mô tả:** Lấy toàn bộ thông báo  
-  **Trạng thái:** Chưa có trong codebase  
-  **Ghi chú:** Cần cho staff xem toàn bộ thông báo hệ thống
+  **Trạng thái:** ✅ BE đã có và **đã tích hợp trên mobile** (màn `NotificationScreen` dùng chung, header staff hiển thị badge số lượng chưa đọc)  
+  **Ghi chú:** Staff xem toàn bộ thông báo hệ thống, badge ở `EmployeeHeaderBar` gọi unread count
 
 - ✅ `PUT /api/Notification/{id}`  
-  **Mô tả:** Cập nhật thông báo  
-  **Trạng thái:** Chưa có trong codebase  
-  **Ghi chú:** Cần cho staff chỉnh sửa thông báo
+  **Mô tả:** Cập nhật thông báo / đánh dấu đã đọc  
+  **Trạng thái:** ✅ BE đã có và **đã tích hợp trên mobile** ở mức mark-read (tap vào thông báo)  
+  **Ghi chú:** Dùng cho flow đánh dấu thông báo đã đọc; chưa có màn chỉnh sửa nội dung thông báo
 
 ### 7. FamilyProfileController
 - ✅ `GET /api/FamilyProfile/GetAll`  
