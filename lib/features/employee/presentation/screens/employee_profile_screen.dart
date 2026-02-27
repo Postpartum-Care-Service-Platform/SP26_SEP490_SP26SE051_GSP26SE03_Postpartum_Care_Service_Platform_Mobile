@@ -8,9 +8,11 @@ import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_app_bar.dart';
 import '../../../../core/widgets/app_widgets.dart';
 import '../../../../core/widgets/app_loading.dart';
+import '../../../../core/widgets/avatar_widget.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../../profile/presentation/widgets/account_info_row.dart';
 
 class EmployeeProfileScreen extends StatefulWidget {
   const EmployeeProfileScreen({super.key});
@@ -53,20 +55,24 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
 
           final account = state.account;
 
-          return SingleChildScrollView(
-            padding: EdgeInsets.symmetric(vertical: 16 * scale),
-            child: Column(
-              children: [
-                _buildHeader(
-                  scale,
-                  account.displayName,
-                  account.email,
-                  account.avatarUrl,
-                  account.roleName,
-                ),
-                SizedBox(height: 16 * scale),
-                _buildInfoSection(scale, account),
-              ],
+          return SafeArea(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.only(
+                left: 16 * scale,
+                right: 16 * scale,
+                top: 16 * scale,
+                bottom: 24 * scale,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Account summary card (gradient style)
+                  _buildAccountSummaryCard(scale, account),
+                  SizedBox(height: 20 * scale),
+                  // Account details section
+                  _buildAccountDetailsSection(scale, account),
+                ],
+              ),
             ),
           );
         },
@@ -111,189 +117,140 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
     );
   }
 
-  Widget _buildHeader(
-    double scale,
-    String name,
-    String email,
-    String? avatarUrl,
-    String roleName,
-  ) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16 * scale),
-      child: Container(
-        padding: EdgeInsets.all(16 * scale),
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(16 * scale),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 8 * scale,
-              offset: Offset(0, 2 * scale),
-            ),
-          ],
+  Widget _buildAccountSummaryCard(double scale, dynamic account) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.8)],
         ),
-        child: Row(
-          children: [
-            // Avatar style gần giống FamilyMemberCard / ProfileHeader
-            Container(
-              width: 64 * scale,
-              height: 64 * scale,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.primary.withValues(alpha: 0.1),
-                border: Border.all(
-                  color: AppColors.primary.withValues(alpha: 0.3),
-                  width: 1.5,
-                ),
-              ),
-              child: Container(
-                margin: EdgeInsets.all(2 * scale),
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.white,
-                ),
-                child: avatarUrl != null
-                    ? ClipOval(
-                        child: Image.network(
-                          avatarUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Icon(
-                            Icons.person_rounded,
-                            size: 32 * scale,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      )
-                    : Icon(
-                        Icons.person_rounded,
-                        size: 32 * scale,
-                        color: AppColors.primary,
-                      ),
-              ),
-            ),
-            SizedBox(height: 16 * scale, width: 16 * scale),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: AppTextStyles.tinos(
-                      fontSize: 20 * scale,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  SizedBox(height: 4 * scale),
-                  Text(
-                    email,
-                    style: AppTextStyles.arimo(
-                      fontSize: 14 * scale,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  SizedBox(height: 4 * scale),
-                  AppWidgets.pillBadge(
-                    context,
-                    text: roleName,
-                    background:
-                        AppColors.primary.withValues(alpha: 0.12),
-                    borderColor:
-                        AppColors.primary.withValues(alpha: 0.3),
-                    textColor: AppColors.primary,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoSection(double scale, dynamic account) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16 * scale),
-      child: AppWidgets.sectionContainer(
-        context,
-        children: [
-          _buildInfoRow(
-            scale,
-            icon: Icons.badge_rounded,
-            label: 'ID tài khoản',
-            value: account.id,
+        borderRadius: BorderRadius.circular(24 * scale),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.3),
+            blurRadius: 20 * scale,
+            offset: Offset(0, 10 * scale),
           ),
-          _buildInfoRow(
-            scale,
-            icon: Icons.person_outline_rounded,
-            label: AppStrings.username,
-            value: account.username,
-          ),
-          _buildInfoRow(
-            scale,
-            icon: Icons.email_rounded,
-            label: AppStrings.email,
-            value: account.email,
-          ),
-          _buildInfoRow(
-            scale,
-            icon: Icons.phone_rounded,
-            label: AppStrings.phoneNumber,
-            value: account.phone,
-          ),
-          _buildInfoRow(
-            scale,
-            icon: Icons.verified_user_rounded,
-            label: AppStrings.accountStatus,
-            value: account.isActive
-                ? AppStrings.accountStatusActive
-                : AppStrings.accountStatusLocked,
-          ),
-          if (account.ownerProfile != null)
-            _buildInfoRow(
-              scale,
-              icon: Icons.home_rounded,
-              label: 'Khách hàng phụ trách',
-              value: account.ownerProfile!.fullName,
-            ),
         ],
       ),
-    );
-  }
-
-  Widget _buildInfoRow(
-    double scale, {
-    required IconData icon,
-    required String label,
-    required String value,
-  }) {
-    if (value.isEmpty) return const SizedBox.shrink();
-
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8 * scale),
-      child: Row(
+      child: Stack(
         children: [
-          Icon(icon, size: 20 * scale, color: AppColors.primary),
-          SizedBox(width: 12 * scale),
-          Expanded(
+          // Decorative circles
+          Positioned(
+            top: -30 * scale,
+            right: -30 * scale,
+            child: Container(
+              width: 120 * scale,
+              height: 120 * scale,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.1),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -20 * scale,
+            left: -20 * scale,
+            child: Container(
+              width: 80 * scale,
+              height: 80 * scale,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.1),
+              ),
+            ),
+          ),
+          // Content
+          Padding(
+            padding: EdgeInsets.all(24 * scale),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  label,
-                  style: AppTextStyles.arimo(
-                    fontSize: 13 * scale,
-                    color: AppColors.textSecondary,
-                  ),
+                // Avatar with border and verified badge
+                AvatarWidget(
+                  imageUrl: account.avatarUrl,
+                  displayName: account.displayName,
+                  size: 100,
+                  showVerifiedBadge: true,
+                  isVerified: account.isEmailVerified ?? false,
+                  backgroundColor: AppColors.white,
+                  borderWidth: 4,
+                  borderColor: AppColors.white,
                 ),
-                SizedBox(height: 2 * scale),
-                Text(
-                  value,
-                  style: AppTextStyles.arimo(
-                    fontSize: 15 * scale,
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w600,
+                SizedBox(height: 20 * scale),
+                // Display name with verified icon
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        account.displayName,
+                        style: AppTextStyles.tinos(
+                          fontSize: 24 * scale,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.white,
+                        ),
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (account.isEmailVerified == true) ...[
+                      SizedBox(width: 8 * scale),
+                      Icon(
+                        Icons.verified,
+                        size: 20 * scale,
+                        color: AppColors.white,
+                      ),
+                    ],
+                  ],
+                ),
+                SizedBox(height: 8 * scale),
+                // Email
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.email_outlined,
+                      size: 16 * scale,
+                      color: AppColors.white.withValues(alpha: 0.9),
+                    ),
+                    SizedBox(width: 6 * scale),
+                    Flexible(
+                      child: Text(
+                        account.email,
+                        style: AppTextStyles.arimo(
+                          fontSize: 14 * scale,
+                          fontWeight: FontWeight.normal,
+                          color: AppColors.white.withValues(alpha: 0.9),
+                        ),
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 16 * scale),
+                // Role badge
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16 * scale,
+                    vertical: 8 * scale,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.white.withValues(alpha: 0.25),
+                    borderRadius: BorderRadius.circular(20 * scale),
+                    border: Border.all(
+                      color: AppColors.white.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    account.roleName.toUpperCase(),
+                    style: AppTextStyles.arimo(
+                      fontSize: 12 * scale,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.white,
+                    ),
                   ),
                 ),
               ],
@@ -301,6 +258,65 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildAccountDetailsSection(double scale, dynamic account) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AppWidgets.sectionHeader(
+          context,
+          title: AppStrings.accountDetailsTitle,
+        ),
+        AppWidgets.sectionContainer(
+          context,
+          padding: EdgeInsets.symmetric(vertical: 4 * scale),
+          children: [
+            if (account.username != null && account.username.isNotEmpty)
+              AccountInfoRow(
+                label: AppStrings.username,
+                value: account.username,
+              ),
+            if (account.phone != null && account.phone.isNotEmpty)
+              AccountInfoRow(
+                label: AppStrings.accountPhoneNumber,
+                value: account.phone,
+              ),
+            AccountInfoRow(
+              label: AppStrings.accountStatus,
+              value: account.isActive
+                  ? AppStrings.accountStatusActive
+                  : AppStrings.accountStatusLocked,
+              valueColor: account.isActive ? AppColors.verified : AppColors.red,
+            ),
+            AccountInfoRow(
+              label: 'Email',
+              value: account.isEmailVerified == true
+                  ? 'Đã xác thực'
+                  : 'Chưa xác thực',
+              valueColor: account.isEmailVerified == true
+                  ? AppColors.verified
+                  : AppColors.red,
+            ),
+            if (account.createdAt != null)
+              AccountInfoRow(
+                label: AppStrings.accountCreatedAt,
+                value: '${account.createdAt.toLocal()}'.split('.').first,
+              ),
+            if (account.updatedAt != null)
+              AccountInfoRow(
+                label: AppStrings.accountUpdatedAt,
+                value: '${account.updatedAt.toLocal()}'.split('.').first,
+              ),
+            if (account.ownerProfile != null)
+              AccountInfoRow(
+                label: 'Khách hàng phụ trách',
+                value: account.ownerProfile!.fullName,
+              ),
+          ],
+        ),
+      ],
     );
   }
 }

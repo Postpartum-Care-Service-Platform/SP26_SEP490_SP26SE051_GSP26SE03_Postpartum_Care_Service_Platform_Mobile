@@ -5,6 +5,7 @@ class ApiEndpoints {
 
   // Chat endpoints
   static const String chatConversations = '/Chat/conversations';
+  static const String chatConversationsAll = '/Chat/conversations/all'; // Staff: Xem tất cả conversations
   static String chatConversationById(int id) => '/Chat/conversations/$id';
   static String chatConversationMessages(int id) =>
       '/Chat/conversations/$id/messages';
@@ -14,6 +15,12 @@ class ApiEndpoints {
       '/Chat/conversations/$id/messages/read';
   static String chatConversationRequestSupport(int id) =>
       '/Chat/conversations/$id/request-support';
+  
+  // Chat endpoints - Staff Support Requests
+  static const String chatSupportRequests = '/Chat/support-requests'; // Staff: Lấy yêu cầu hỗ trợ đang chờ
+  static const String chatSupportRequestsMy = '/Chat/support-requests/my'; // Staff: Lấy yêu cầu đang xử lý
+  static String chatSupportRequestAccept(int id) => '/Chat/support-requests/$id/accept'; // Staff: Nhận yêu cầu
+  static String chatSupportRequestResolve(int id) => '/Chat/support-requests/$id/resolve'; // Staff: Đánh dấu đã xử lý
 
   // Auth endpoints
   static const String login = '/Auth/login';
@@ -114,6 +121,18 @@ class ApiEndpoints {
   
   /// Create appointment for customer (staff creates)
   static const String createAppointmentForCustomer = '/Appointment/create-for-customer';
+
+  // ==========================================
+  // Employee - StaffSchedule endpoints
+  // ==========================================
+
+  static const String myStaffSchedules = '/StaffSchedule/me';
+  static const String checkStaffSchedule = '/StaffSchedule/check';
+  static const String swapStaffSchedule = '/StaffSchedule/swap-schedule';
+  static const String mySwapRequests = '/StaffSchedule/my-swap-requests';
+  static const String myIncomingSwapRequests = '/StaffSchedule/my-incoming-swap-requests';
+  static String respondSwapRequest(int requestId, bool respond) =>
+      '/StaffSchedule/respond-swap-request/$requestId/$respond';
 
   // ==========================================
   // Employee - Room endpoints

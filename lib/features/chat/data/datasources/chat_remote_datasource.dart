@@ -7,6 +7,7 @@ import '../models/support_request_model.dart';
 
 abstract class ChatRemoteDataSource {
   Future<List<ChatConversationModel>> getConversations();
+  Future<List<ChatConversationModel>> getAllConversations(); // Staff: Lấy tất cả conversations
   Future<ChatConversationModel> getConversationDetail(int id);
   Future<ChatSendResultModel> sendMessage({
     required int conversationId,
@@ -19,6 +20,11 @@ abstract class ChatRemoteDataSource {
     required int conversationId,
     required String reason,
   });
+  // Staff Support Requests APIs
+  Future<List<SupportRequestModel>> getSupportRequests(); // Lấy yêu cầu hỗ trợ đang chờ
+  Future<List<SupportRequestModel>> getMySupportRequests(); // Lấy yêu cầu đang xử lý
+  Future<SupportRequestModel> acceptSupportRequest(int id); // Nhận yêu cầu hỗ trợ
+  Future<SupportRequestModel> resolveSupportRequest(int id); // Đánh dấu đã xử lý
 }
 
 class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
@@ -110,7 +116,7 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
         case 504:
           return 'Không thể gửi tin nhắn: Máy chủ tạm thời không khả dụng. Vui lòng thử lại sau.';
         default:
-          return 'Không thể gửi tin nhắn: Lỗi ${statusCode}.';
+          return 'Không thể gửi tin nhắn: Lỗi $statusCode.';
       }
     } else if (error.type == DioExceptionType.connectionTimeout ||
         error.type == DioExceptionType.receiveTimeout) {
@@ -165,6 +171,82 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
       throw Exception('Phản hồi yêu cầu hỗ trợ không hợp lệ');
     } on DioException catch (e) {
       throw Exception('Không thể gửi yêu cầu hỗ trợ: ${e.message}');
+    }
+  }
+
+  @override
+  Future<List<ChatConversationModel>> getAllConversations() async {
+    try {
+      final response = await _dio.get(ApiEndpoints.chatConversationsAll);
+      final data = response.data;
+      if (data is List) {
+        return data
+            .map((e) => ChatConversationModel.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+      throw Exception('Phản hồi danh sách cuộc trò chuyện không hợp lệ');
+    } on DioException catch (e) {
+      throw Exception('Không thể tải cuộc trò chuyện: ${e.message}');
+    }
+  }
+
+  @override
+  Future<List<SupportRequestModel>> getSupportRequests() async {
+    try {
+      final response = await _dio.get(ApiEndpoints.chatSupportRequests);
+      final data = response.data;
+      if (data is List) {
+        return data
+            .map((e) => SupportRequestModel.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+      throw Exception('Phản hồi danh sách yêu cầu hỗ trợ không hợp lệ');
+    } on DioException catch (e) {
+      throw Exception('Không thể tải yêu cầu hỗ trợ: ${e.message}');
+    }
+  }
+
+  @override
+  Future<List<SupportRequestModel>> getMySupportRequests() async {
+    try {
+      final response = await _dio.get(ApiEndpoints.chatSupportRequestsMy);
+      final data = response.data;
+      if (data is List) {
+        return data
+            .map((e) => SupportRequestModel.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+      throw Exception('Phản hồi danh sách yêu cầu hỗ trợ của tôi không hợp lệ');
+    } on DioException catch (e) {
+      throw Exception('Không thể tải yêu cầu hỗ trợ của tôi: ${e.message}');
+    }
+  }
+
+  @override
+  Future<SupportRequestModel> acceptSupportRequest(int id) async {
+    try {
+      final response = await _dio.put(ApiEndpoints.chatSupportRequestAccept(id));
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        return SupportRequestModel.fromJson(data);
+      }
+      throw Exception('Phản hồi nhận yêu cầu hỗ trợ không hợp lệ');
+    } on DioException catch (e) {
+      throw Exception('Không thể nhận yêu cầu hỗ trợ: ${e.message}');
+    }
+  }
+
+  @override
+  Future<SupportRequestModel> resolveSupportRequest(int id) async {
+    try {
+      final response = await _dio.put(ApiEndpoints.chatSupportRequestResolve(id));
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        return SupportRequestModel.fromJson(data);
+      }
+      throw Exception('Phản hồi đánh dấu đã xử lý không hợp lệ');
+    } on DioException catch (e) {
+      throw Exception('Không thể đánh dấu đã xử lý: ${e.message}');
     }
   }
 }

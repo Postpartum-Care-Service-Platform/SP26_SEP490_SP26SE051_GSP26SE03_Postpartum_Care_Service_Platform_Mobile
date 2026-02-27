@@ -123,14 +123,32 @@ class MessageBubble extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Hiển thị tên người gửi cho staff (nếu không phải tin nhắn của mình)
+                      if (!isMine && isFirstInGroup && displayName.isNotEmpty)
+                        Padding(
+                          padding: EdgeInsets.only(bottom: 4 * scale),
+                          child: Text(
+                            displayName,
+                            style: AppTextStyles.arimo(
+                              fontSize: 12 * scale,
+                              fontWeight: FontWeight.w600,
+                              color: textColor.withValues(alpha: 0.9),
+                            ),
+                          ),
+                        ),
                       _buildContent(context, scale, textColor),
                       SizedBox(height: 6 * scale),
-                      Text(
-                        formatChatTime(message.createdAt),
-                        style: AppTextStyles.arimo(
-                          fontSize: 11 * scale,
-                          color: textColor.withValues(alpha: 0.8),
-                        ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            formatChatTime(message.createdAt),
+                            style: AppTextStyles.arimo(
+                              fontSize: 11 * scale,
+                              color: textColor.withValues(alpha: 0.8),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
