@@ -7,9 +7,14 @@ import '../../domain/entities/chat_realtime_events.dart';
 import '../../domain/usecases/create_conversation_usecase.dart';
 import '../../domain/usecases/get_conversation_detail_usecase.dart';
 import '../../domain/usecases/get_conversations_usecase.dart';
+import '../../domain/usecases/get_all_conversations_usecase.dart';
 import '../../domain/usecases/mark_messages_read_usecase.dart';
 import '../../domain/usecases/request_support_usecase.dart';
 import '../../domain/usecases/send_message_usecase.dart';
+import '../../domain/usecases/get_support_requests_usecase.dart';
+import '../../domain/usecases/get_my_support_requests_usecase.dart';
+import '../../domain/usecases/accept_support_request_usecase.dart';
+import '../../domain/usecases/resolve_support_request_usecase.dart';
 import '../../domain/entities/support_request.dart';
 import 'chat_event.dart';
 import 'chat_state.dart';
@@ -18,18 +23,28 @@ import '../services/chat_hub_service.dart';
 class ChatBloc extends Bloc<ChatEvent, ChatState> {
   ChatBloc({
     required GetConversationsUsecase getConversationsUsecase,
+    required GetAllConversationsUsecase getAllConversationsUsecase,
     required GetConversationDetailUsecase getConversationDetailUsecase,
     required SendMessageUsecase sendMessageUsecase,
     required CreateConversationUsecase createConversationUsecase,
     required MarkMessagesReadUsecase markMessagesReadUsecase,
     required RequestSupportUsecase requestSupportUsecase,
+    required GetSupportRequestsUsecase getSupportRequestsUsecase,
+    required GetMySupportRequestsUsecase getMySupportRequestsUsecase,
+    required AcceptSupportRequestUsecase acceptSupportRequestUsecase,
+    required ResolveSupportRequestUsecase resolveSupportRequestUsecase,
     required ChatHubService chatHubService,
   })  : _getConversationsUsecase = getConversationsUsecase,
+        _getAllConversationsUsecase = getAllConversationsUsecase,
         _getConversationDetailUsecase = getConversationDetailUsecase,
         _sendMessageUsecase = sendMessageUsecase,
         _createConversationUsecase = createConversationUsecase,
         _markMessagesReadUsecase = markMessagesReadUsecase,
         _requestSupportUsecase = requestSupportUsecase,
+        _getSupportRequestsUsecase = getSupportRequestsUsecase,
+        _getMySupportRequestsUsecase = getMySupportRequestsUsecase,
+        _acceptSupportRequestUsecase = acceptSupportRequestUsecase,
+        _resolveSupportRequestUsecase = resolveSupportRequestUsecase,
         _chatHubService = chatHubService,
         super(const ChatState()) {
     on<ChatStarted>(_onStarted);
@@ -45,15 +60,26 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     on<ChatRealtimeStaffJoinedReceived>(_onRealtimeStaffJoinedReceived);
     on<ChatRealtimeSupportResolvedReceived>(_onRealtimeSupportResolvedReceived);
     on<ChatRealtimeErrorReceived>(_onRealtimeErrorReceived);
+    // Staff Chat Events
+    on<ChatLoadAllConversationsRequested>(_onLoadAllConversations);
+    on<ChatLoadSupportRequestsRequested>(_onLoadSupportRequests);
+    on<ChatLoadMySupportRequestsRequested>(_onLoadMySupportRequests);
+    on<ChatAcceptSupportRequestSubmitted>(_onAcceptSupportRequest);
+    on<ChatResolveSupportRequestSubmitted>(_onResolveSupportRequest);
   }
 
   final GetConversationsUsecase _getConversationsUsecase;
+  final GetAllConversationsUsecase _getAllConversationsUsecase;
   final GetConversationDetailUsecase _getConversationDetailUsecase;
   final SendMessageUsecase _sendMessageUsecase;
   final CreateConversationUsecase _createConversationUsecase;
   final MarkMessagesReadUsecase _markMessagesReadUsecase;
   final RequestSupportUsecase _requestSupportUsecase;
-   final ChatHubService _chatHubService;
+  final GetSupportRequestsUsecase _getSupportRequestsUsecase;
+  final GetMySupportRequestsUsecase _getMySupportRequestsUsecase;
+  final AcceptSupportRequestUsecase _acceptSupportRequestUsecase;
+  final ResolveSupportRequestUsecase _resolveSupportRequestUsecase;
+  final ChatHubService _chatHubService;
 
   bool _hubStarted = false;
   String? _lastSupportReason;
@@ -278,10 +304,11 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     ));
 
     try {
+      // Staff luôn dùng staff-message endpoint
       final result = await _sendMessageUsecase(
         conversationId: selected.id,
         content: event.content,
-        toStaffChannel: selected.hasActiveSupport,
+        toStaffChannel: event.isStaff || selected.hasActiveSupport,
       );
       
       // Use current state to get the latest conversation (may have been updated by Hub)
@@ -635,6 +662,131 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     Emitter<ChatState> emit,
   ) async {
     emit(state.copyWith(errorMessage: event.message));
+  }
+
+  // Staff Chat Handlers
+  Future<void> _onLoadAllConversations(
+    ChatLoadAllConversationsRequested event,
+    Emitter<ChatState> emit,
+  ) async {
+    emit(state.copyWith(conversationsStatus: ChatStatus.loading, errorMessage: null));
+    try {
+      final conversations = _normalizeAndSortConversations(
+        await _getAllConversationsUsecase(),
+      );
+      emit(state.copyWith(
+        conversations: conversations,
+        conversationsStatus: ChatStatus.success,
+      ));
+    } catch (e) {
+      emit(state.copyWith(
+        conversationsStatus: ChatStatus.failure,
+        errorMessage: _formatError(e),
+      ));
+    }
+  }
+
+  Future<void> _onLoadSupportRequests(
+    ChatLoadSupportRequestsRequested event,
+    Emitter<ChatState> emit,
+  ) async {
+    emit(state.copyWith(supportRequestsStatus: ChatStatus.loading, errorMessage: null));
+    try {
+      final requests = await _getSupportRequestsUsecase();
+      emit(state.copyWith(
+        supportRequests: requests,
+        supportRequestsStatus: ChatStatus.success,
+      ));
+    } catch (e) {
+      emit(state.copyWith(
+        supportRequestsStatus: ChatStatus.failure,
+        errorMessage: _formatError(e),
+      ));
+    }
+  }
+
+  Future<void> _onLoadMySupportRequests(
+    ChatLoadMySupportRequestsRequested event,
+    Emitter<ChatState> emit,
+  ) async {
+    emit(state.copyWith(mySupportRequestsStatus: ChatStatus.loading, errorMessage: null));
+    try {
+      final requests = await _getMySupportRequestsUsecase();
+      emit(state.copyWith(
+        mySupportRequests: requests,
+        mySupportRequestsStatus: ChatStatus.success,
+      ));
+    } catch (e) {
+      emit(state.copyWith(
+        mySupportRequestsStatus: ChatStatus.failure,
+        errorMessage: _formatError(e),
+      ));
+    }
+  }
+
+  Future<void> _onAcceptSupportRequest(
+    ChatAcceptSupportRequestSubmitted event,
+    Emitter<ChatState> emit,
+  ) async {
+    emit(state.copyWith(
+      supportRequestActionStatus: ChatSupportRequestActionStatus.processing,
+      errorMessage: null,
+    ));
+
+    try {
+      final updatedRequest = await _acceptSupportRequestUsecase(event.supportRequestId);
+      
+      // Cập nhật trong danh sách support requests
+      final updatedSupportRequests = state.supportRequests.map((req) {
+        return req.id == event.supportRequestId ? updatedRequest : req;
+      }).toList();
+      
+      // Thêm vào mySupportRequests
+      final updatedMySupportRequests = [
+        ...state.mySupportRequests,
+        updatedRequest,
+      ];
+
+      emit(state.copyWith(
+        supportRequests: updatedSupportRequests,
+        mySupportRequests: updatedMySupportRequests,
+        supportRequestActionStatus: ChatSupportRequestActionStatus.success,
+      ));
+    } catch (e) {
+      emit(state.copyWith(
+        supportRequestActionStatus: ChatSupportRequestActionStatus.failure,
+        errorMessage: _formatError(e),
+      ));
+    }
+  }
+
+  Future<void> _onResolveSupportRequest(
+    ChatResolveSupportRequestSubmitted event,
+    Emitter<ChatState> emit,
+  ) async {
+    emit(state.copyWith(
+      supportRequestActionStatus: ChatSupportRequestActionStatus.processing,
+      errorMessage: null,
+    ));
+
+    try {
+      final updatedRequest = await _resolveSupportRequestUsecase(event.supportRequestId);
+      
+      // Cập nhật trong mySupportRequests
+      final updatedMySupportRequests = state.mySupportRequests.map((req) {
+        return req.id == event.supportRequestId ? updatedRequest : req;
+      }).toList();
+
+      emit(state.copyWith(
+        mySupportRequests: updatedMySupportRequests,
+        supportRequestActionStatus: ChatSupportRequestActionStatus.success,
+      ));
+    } catch (e) {
+      emit(state.copyWith(
+        supportRequestActionStatus: ChatSupportRequestActionStatus.failure,
+        errorMessage: _formatError(e),
+      ));
+    }
   }
 
   void _setConversationActiveSupport(

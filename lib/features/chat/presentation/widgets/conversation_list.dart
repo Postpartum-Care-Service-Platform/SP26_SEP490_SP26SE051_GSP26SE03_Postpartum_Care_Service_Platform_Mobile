@@ -17,7 +17,8 @@ import '../bloc/chat_state.dart';
 import 'chat_time_utils.dart';
 
 class ConversationList extends StatelessWidget {
-  final VoidCallback onCreate;
+  /// null nếu không cho phép tạo cuộc hội thoại mới (staff mode).
+  final VoidCallback? onCreate;
   final ValueChanged<int>? onConversationTap;
 
   const ConversationList({
@@ -52,6 +53,15 @@ class ConversationList extends StatelessWidget {
     final text = message.content.trim();
     if (text.isEmpty) return AppStrings.chatTypingHint;
     return AppMarkdownUtils.buildPreviewText(text);
+  }
+
+  String _getCustomerName(Map<String, dynamic> customerInfo) {
+    // Thử các key phổ biến cho customer name
+    return customerInfo['name']?.toString() ??
+        customerInfo['displayName']?.toString() ??
+        customerInfo['fullName']?.toString() ??
+        customerInfo['customerName']?.toString() ??
+        'Khách hàng';
   }
 
   List<ChatConversation> _filterConversations(
@@ -254,11 +264,12 @@ class ConversationList extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: 24 * scale),
-                    AppWidgets.primaryButton(
-                      text: AppStrings.chatNewConversation,
-                      onPressed: onCreate,
-                      height: 44 * scale,
-                    ),
+                    if (onCreate != null)
+                      AppWidgets.primaryButton(
+                        text: AppStrings.chatNewConversation,
+                        onPressed: onCreate!,
+                        height: 44 * scale,
+                      ),
                   ],
                 ),
               ),
@@ -274,7 +285,13 @@ class ConversationList extends StatelessWidget {
         }
 
         return Container(
-          padding: EdgeInsets.all(12 * scale),
+          // Giảm padding đáy để tránh tràn 12px nhưng vẫn giữ layout gần như cũ
+          padding: EdgeInsets.fromLTRB(
+            12 * scale,
+            12 * scale,
+            12 * scale,
+            0,
+          ),
           decoration: BoxDecoration(
             color: AppColors.white,
             borderRadius: BorderRadius.circular(20 * scale),
@@ -354,25 +371,54 @@ class ConversationList extends StatelessWidget {
                                       Row(
                                         children: [
                                           Expanded(
-                                            child: Text(
-                                              conversation.name,
-                                              style: AppTextStyles.arimo(
-                                                fontSize: 15 * scale,
-                                                fontWeight: FontWeight.w700,
-                                                color: AppColors.textPrimary,
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                // Hiển thị customer name nếu có (cho staff)
+                                                if (conversation.customerInfo != null)
+                                                  Text(
+                                                    _getCustomerName(conversation.customerInfo!),
+                                                    style: AppTextStyles.arimo(
+                                                      fontSize: 15 * scale,
+                                                      fontWeight: FontWeight.w700,
+                                                      color: AppColors.textPrimary,
+                                                    ),
+                                                    overflow: TextOverflow.ellipsis,
+                                                  )
+                                                else
+                                                  Text(
+                                                    conversation.name,
+                                                    style: AppTextStyles.arimo(
+                                                      fontSize: 15 * scale,
+                                                      fontWeight: FontWeight.w700,
+                                                      color: AppColors.textPrimary,
+                                                    ),
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                // Hiển thị thời gian hoạt động cuối cùng
+                                                if (conversation.customerInfo != null)
+                                                  Text(
+                                                    formatChatTime(
+                                                      _lastActivityTime(conversation),
+                                                    ),
+                                                    style: AppTextStyles.arimo(
+                                                      fontSize: 11 * scale,
+                                                      color: AppColors.textSecondary,
+                                                    ),
+                                                  ),
+                                              ],
+                                            ),
+                                          ),
+                                          if (conversation.customerInfo == null)
+                                            Text(
+                                              formatChatTime(
+                                                _lastActivityTime(conversation),
                                               ),
-                                              overflow: TextOverflow.ellipsis,
+                                              style: AppTextStyles.arimo(
+                                                fontSize: 11 * scale,
+                                                color: AppColors.textSecondary,
+                                              ),
                                             ),
-                                          ),
-                                          Text(
-                                            formatChatTime(
-                                              _lastActivityTime(conversation),
-                                            ),
-                                            style: AppTextStyles.arimo(
-                                              fontSize: 11 * scale,
-                                              color: AppColors.textSecondary,
-                                            ),
-                                          ),
                                         ],
                                       ),
                                       SizedBox(height: 4 * scale),

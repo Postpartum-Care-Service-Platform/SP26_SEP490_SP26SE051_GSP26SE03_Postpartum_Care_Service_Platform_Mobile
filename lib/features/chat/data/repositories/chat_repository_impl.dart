@@ -52,5 +52,30 @@ class ChatRepositoryImpl implements ChatRepository {
       toStaffChannel: toStaffChannel,
     );
   }
+
+  @override
+  Future<List<ChatConversation>> getAllConversations() {
+    return remoteDataSource.getAllConversations();
+  }
+
+  @override
+  Future<List<SupportRequest>> getSupportRequests() {
+    return remoteDataSource.getSupportRequests();
+  }
+
+  @override
+  Future<List<SupportRequest>> getMySupportRequests() {
+    return remoteDataSource.getMySupportRequests();
+  }
+
+  @override
+  Future<SupportRequest> acceptSupportRequest(int id) {
+    return remoteDataSource.acceptSupportRequest(id);
+  }
+
+  @override
+  Future<SupportRequest> resolveSupportRequest(int id) {
+    return remoteDataSource.resolveSupportRequest(id);
+  }
 }
 
