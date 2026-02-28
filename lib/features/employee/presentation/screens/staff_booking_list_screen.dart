@@ -26,6 +26,14 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
 
   String _statusFilter = 'all';
   bool _isActionInProgress = false;
+  
+  // Search and filter
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  DateTime? _dateFrom;
+  DateTime? _dateTo;
+  String? _packageFilter;
+  bool _showFilters = false;
 
   Future<List<BookingModel>> _loadBookings() async {
     final all = await _dataSource.getAllBookings();
@@ -107,10 +115,79 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
   }
 
   List<BookingModel> _applyFilter(List<BookingModel> bookings) {
-    if (_statusFilter == 'all') return bookings;
-    return bookings
-        .where((b) => b.status.toLowerCase() == _statusFilter)
-        .toList();
+    var filtered = bookings;
+
+    // Status filter
+    if (_statusFilter != 'all') {
+      filtered = filtered
+          .where((b) => b.status.toLowerCase() == _statusFilter)
+          .toList();
+    }
+
+    // Search filter
+    if (_searchQuery.isNotEmpty) {
+      final query = _searchQuery.toLowerCase();
+      filtered = filtered.where((b) {
+        final customerName = b.customer?.username.toLowerCase() ?? '';
+        final customerEmail = b.customer?.email.toLowerCase() ?? '';
+        final customerPhone = b.customer?.phone.toLowerCase() ?? '';
+        final packageName = b.package?.packageName.toLowerCase() ?? '';
+        final bookingId = '#${b.id}'.toLowerCase();
+        
+        return customerName.contains(query) ||
+            customerEmail.contains(query) ||
+            customerPhone.contains(query) ||
+            packageName.contains(query) ||
+            bookingId.contains(query);
+      }).toList();
+    }
+
+    // Date range filter
+    if (_dateFrom != null) {
+      filtered = filtered.where((b) {
+        final bookingDate = DateTime(b.startDate.year, b.startDate.month, b.startDate.day);
+        return bookingDate.isAfter(_dateFrom!.subtract(const Duration(days: 1))) ||
+            bookingDate.isAtSameMomentAs(DateTime(_dateFrom!.year, _dateFrom!.month, _dateFrom!.day));
+      }).toList();
+    }
+
+    if (_dateTo != null) {
+      filtered = filtered.where((b) {
+        final bookingDate = DateTime(b.startDate.year, b.startDate.month, b.startDate.day);
+        return bookingDate.isBefore(_dateTo!.add(const Duration(days: 1))) ||
+            bookingDate.isAtSameMomentAs(DateTime(_dateTo!.year, _dateTo!.month, _dateTo!.day));
+      }).toList();
+    }
+
+    // Package filter
+    if (_packageFilter != null && _packageFilter!.isNotEmpty) {
+      filtered = filtered.where((b) {
+        return b.package?.packageName.toLowerCase() == _packageFilter!.toLowerCase();
+      }).toList();
+    }
+
+    return filtered;
+  }
+
+  void _clearFilters() {
+    setState(() {
+      _searchQuery = '';
+      _searchController.clear();
+      _statusFilter = 'all';
+      _dateFrom = null;
+      _dateTo = null;
+      _packageFilter = null;
+    });
+  }
+
+  int _getActiveFilterCount() {
+    int count = 0;
+    if (_statusFilter != 'all') count++;
+    if (_searchQuery.isNotEmpty) count++;
+    if (_dateFrom != null) count++;
+    if (_dateTo != null) count++;
+    if (_packageFilter != null && _packageFilter!.isNotEmpty) count++;
+    return count;
   }
 
   @override
@@ -123,6 +200,43 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
         title: 'Danh sách Booking',
         centerTitle: true,
         actions: [
+          Stack(
+            children: [
+              IconButton(
+                onPressed: () {
+                  setState(() {
+                    _showFilters = !_showFilters;
+                  });
+                },
+                icon: const Icon(Icons.filter_list),
+              ),
+              if (_getActiveFilterCount() > 0)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 16,
+                      minHeight: 16,
+                    ),
+                    child: Text(
+                      '${_getActiveFilterCount()}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
+          ),
           IconButton(
             onPressed: _isActionInProgress ? null : _refresh,
             icon: const Icon(Icons.refresh_rounded),
@@ -132,6 +246,8 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            _buildSearchBar(scale),
+            if (_showFilters) _buildAdvancedFilters(scale),
             _buildFilterBar(scale),
             Expanded(
               child: FutureBuilder<List<BookingModel>>(
@@ -239,6 +355,223 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
     );
   }
 
+  Widget _buildSearchBar(double scale) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        16 * scale,
+        8 * scale,
+        16 * scale,
+        8 * scale,
+      ),
+      child: TextField(
+        controller: _searchController,
+        decoration: InputDecoration(
+          hintText: 'Tìm kiếm theo tên, email, SĐT, gói dịch vụ...',
+          prefixIcon: const Icon(Icons.search),
+          suffixIcon: _searchQuery.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(Icons.clear),
+                  onPressed: () {
+                    setState(() {
+                      _searchQuery = '';
+                      _searchController.clear();
+                    });
+                  },
+                )
+              : null,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12 * scale),
+            borderSide: BorderSide(color: AppColors.textSecondary.withValues(alpha: 0.3)),
+          ),
+          filled: true,
+          fillColor: AppColors.white,
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 16 * scale,
+            vertical: 12 * scale,
+          ),
+        ),
+        onChanged: (value) {
+          setState(() {
+            _searchQuery = value;
+          });
+        },
+      ),
+    );
+  }
+
+  Widget _buildAdvancedFilters(double scale) {
+    return Container(
+      margin: EdgeInsets.fromLTRB(16 * scale, 0, 16 * scale, 8 * scale),
+      padding: EdgeInsets.all(16 * scale),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(12 * scale),
+        border: Border.all(
+          color: AppColors.textSecondary.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Bộ lọc nâng cao',
+                style: AppTextStyles.arimo(
+                  fontSize: 14 * scale,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              TextButton(
+                onPressed: _clearFilters,
+                child: Text(
+                  'Xóa bộ lọc',
+                  style: AppTextStyles.arimo(
+                    fontSize: 12 * scale,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12 * scale),
+          // Date range
+          Row(
+            children: [
+              Expanded(
+                child: InkWell(
+                  onTap: () async {
+                    final date = await showDatePicker(
+                      context: context,
+                      initialDate: _dateFrom ?? DateTime.now(),
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2030),
+                    );
+                    if (date != null) {
+                      setState(() {
+                        _dateFrom = date;
+                      });
+                    }
+                  },
+                  child: Container(
+                    padding: EdgeInsets.all(12 * scale),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: AppColors.textSecondary.withValues(alpha: 0.3),
+                      ),
+                      borderRadius: BorderRadius.circular(8 * scale),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today,
+                          size: 16 * scale,
+                          color: AppColors.textSecondary,
+                        ),
+                        SizedBox(width: 8 * scale),
+                        Expanded(
+                          child: Text(
+                            _dateFrom == null
+                                ? 'Từ ngày'
+                                : '${_dateFrom!.day}/${_dateFrom!.month}/${_dateFrom!.year}',
+                            style: AppTextStyles.arimo(
+                              fontSize: 12 * scale,
+                              color: _dateFrom == null
+                                  ? AppColors.textSecondary
+                                  : AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                        if (_dateFrom != null)
+                          InkWell(
+                            onTap: () {
+                              setState(() {
+                                _dateFrom = null;
+                              });
+                            },
+                            child: Icon(
+                              Icons.close,
+                              size: 16 * scale,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(width: 8 * scale),
+              Expanded(
+                child: InkWell(
+                  onTap: () async {
+                    final date = await showDatePicker(
+                      context: context,
+                      initialDate: _dateTo ?? DateTime.now(),
+                      firstDate: _dateFrom ?? DateTime(2020),
+                      lastDate: DateTime(2030),
+                    );
+                    if (date != null) {
+                      setState(() {
+                        _dateTo = date;
+                      });
+                    }
+                  },
+                  child: Container(
+                    padding: EdgeInsets.all(12 * scale),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: AppColors.textSecondary.withValues(alpha: 0.3),
+                      ),
+                      borderRadius: BorderRadius.circular(8 * scale),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today,
+                          size: 16 * scale,
+                          color: AppColors.textSecondary,
+                        ),
+                        SizedBox(width: 8 * scale),
+                        Expanded(
+                          child: Text(
+                            _dateTo == null
+                                ? 'Đến ngày'
+                                : '${_dateTo!.day}/${_dateTo!.month}/${_dateTo!.year}',
+                            style: AppTextStyles.arimo(
+                              fontSize: 12 * scale,
+                              color: _dateTo == null
+                                  ? AppColors.textSecondary
+                                  : AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                        if (_dateTo != null)
+                          InkWell(
+                            onTap: () {
+                              setState(() {
+                                _dateTo = null;
+                              });
+                            },
+                            child: Icon(
+                              Icons.close,
+                              size: 16 * scale,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildFilterBar(double scale) {
     return Padding(
       padding: EdgeInsets.fromLTRB(
@@ -257,25 +590,55 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
             ),
           ),
           const SizedBox(width: 8),
-          DropdownButton<String>(
-            value: _statusFilter,
-            items: const [
-              DropdownMenuItem(value: 'all', child: Text('Tất cả')),
-              DropdownMenuItem(value: 'pending', child: Text('Pending')),
-              DropdownMenuItem(value: 'confirmed', child: Text('Confirmed')),
-              DropdownMenuItem(value: 'completed', child: Text('Completed')),
-              DropdownMenuItem(value: 'cancelled', child: Text('Cancelled')),
-            ],
-            onChanged: (value) {
-              if (value == null) return;
-              setState(() {
-                _statusFilter = value;
-              });
-            },
+          Expanded(
+            child: DropdownButton<String>(
+              value: _statusFilter,
+              isExpanded: true,
+              items: const [
+                DropdownMenuItem(value: 'all', child: Text('Tất cả')),
+                DropdownMenuItem(value: 'pending', child: Text('Chờ xử lý')),
+                DropdownMenuItem(value: 'confirmed', child: Text('Đã xác nhận')),
+                DropdownMenuItem(value: 'completed', child: Text('Đã hoàn thành')),
+                DropdownMenuItem(value: 'cancelled', child: Text('Đã hủy')),
+              ],
+              onChanged: (value) {
+                if (value == null) return;
+                setState(() {
+                  _statusFilter = value;
+                });
+              },
+            ),
           ),
+          if (_getActiveFilterCount() > 0) ...[
+            const SizedBox(width: 8),
+            Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: 8 * scale,
+                vertical: 4 * scale,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12 * scale),
+              ),
+              child: Text(
+                '${_getActiveFilterCount()} bộ lọc',
+                style: AppTextStyles.arimo(
+                  fontSize: 11 * scale,
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 }
 

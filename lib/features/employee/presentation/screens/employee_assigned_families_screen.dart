@@ -7,6 +7,7 @@ import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_app_bar.dart';
 import '../../domain/entities/appointment_entity.dart';
 import 'employee_customer_family_profiles_screen.dart';
+import '../widgets/employee_scaffold.dart';
 
 class EmployeeAssignedFamiliesScreen extends StatefulWidget {
   const EmployeeAssignedFamiliesScreen({super.key});
@@ -22,9 +23,8 @@ class _EmployeeAssignedFamiliesScreenState
       _loadAssignedCustomers();
 
   Future<List<_AssignedCustomer>> _loadAssignedCustomers() async {
-    final appointments =
-        await InjectionContainer.appointmentEmployeeRepository
-            .getMyAssignedAppointments();
+    final appointments = await InjectionContainer.appointmentEmployeeRepository
+        .getMyAssignedAppointments();
 
     final byCustomer = <String, List<AppointmentEntity>>{};
     for (final a in appointments) {
@@ -39,10 +39,9 @@ class _EmployeeAssignedFamiliesScreenState
       final items = entry.value;
       final info = items.first.customer;
       final email = info?.email ?? '';
-      final displayName =
-          (info?.username?.trim().isNotEmpty == true)
-              ? info!.username!.trim()
-              : (email.isNotEmpty ? email : customerId);
+      final displayName = (info?.username?.trim().isNotEmpty == true)
+          ? info!.username!.trim()
+          : (email.isNotEmpty ? email : customerId);
 
       result.add(
         _AssignedCustomer(
@@ -62,8 +61,7 @@ class _EmployeeAssignedFamiliesScreenState
   @override
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
-    return Scaffold(
-      backgroundColor: AppColors.background,
+    return EmployeeScaffold(
       appBar: const AppAppBar(
         title: 'Gia đình được phân công',
         centerTitle: true,
@@ -160,10 +158,7 @@ class _CustomerCard extends StatelessWidget {
   final _AssignedCustomer customer;
   final VoidCallback onTap;
 
-  const _CustomerCard({
-    required this.customer,
-    required this.onTap,
-  });
+  const _CustomerCard({required this.customer, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -243,4 +238,3 @@ class _CustomerCard extends StatelessWidget {
     );
   }
 }
-

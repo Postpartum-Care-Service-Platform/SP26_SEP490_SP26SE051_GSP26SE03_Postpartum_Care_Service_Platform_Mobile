@@ -5,8 +5,6 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/di/injection_container.dart';
-import '../../../../core/routing/app_router.dart';
-import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../data/models/account_model.dart';
@@ -17,16 +15,14 @@ import '../bloc/amenity_ticket/amenity_ticket_bloc.dart';
 import '../bloc/amenity_ticket/amenity_ticket_event.dart';
 import '../bloc/amenity_ticket/amenity_ticket_state.dart';
 import '../widgets/employee_header_bar.dart';
+import '../widgets/employee_scaffold.dart';
 
 /// Màn hình danh sách ticket tiện ích cho staff
 /// Cho phép staff xem, cập nhật, hủy ticket
 class StaffAmenityTicketListScreen extends StatefulWidget {
   final AccountModel? selectedCustomer;
 
-  const StaffAmenityTicketListScreen({
-    super.key,
-    this.selectedCustomer,
-  });
+  const StaffAmenityTicketListScreen({super.key, this.selectedCustomer});
 
   @override
   State<StaffAmenityTicketListScreen> createState() =>
@@ -74,8 +70,8 @@ class _StaffAmenityTicketListScreenState
   void _loadTickets() {
     if (_selectedCustomer != null) {
       context.read<AmenityTicketBloc>().add(
-            LoadTicketsByCustomer(_selectedCustomer!.id),
-          );
+        LoadTicketsByCustomer(_selectedCustomer!.id),
+      );
     }
   }
 
@@ -96,22 +92,22 @@ class _StaffAmenityTicketListScreenState
           child: _isLoadingCustomers
               ? const Center(child: CircularProgressIndicator())
               : _customers.isEmpty
-                  ? const Text('Không có khách hàng')
-                  : ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: _customers.length,
-                      itemBuilder: (context, index) {
-                        final customer = _customers[index];
-                        return ListTile(
-                          title: Text(customer.displayName),
-                          subtitle: Text(customer.email),
-                          onTap: () {
-                            _selectCustomer(customer);
-                            Navigator.pop(context);
-                          },
-                        );
+              ? const Text('Không có khách hàng')
+              : ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: _customers.length,
+                  itemBuilder: (context, index) {
+                    final customer = _customers[index];
+                    return ListTile(
+                      title: Text(customer.displayName),
+                      subtitle: Text(customer.email),
+                      onTap: () {
+                        _selectCustomer(customer);
+                        Navigator.pop(context);
                       },
-                    ),
+                    );
+                  },
+                ),
         ),
       ),
     );
@@ -123,8 +119,7 @@ class _StaffAmenityTicketListScreenState
 
     return BlocProvider(
       create: (context) => InjectionContainer.amenityTicketBloc,
-      child: Scaffold(
-        backgroundColor: AppColors.background,
+      child: EmployeeScaffold(
         body: SafeArea(
           child: Column(
             children: [
@@ -228,99 +223,90 @@ class _StaffAmenityTicketListScreenState
                             );
                           }
                         },
-                        child: BlocBuilder<AmenityTicketBloc, AmenityTicketState>(
-                          builder: (context, state) {
-                            if (state is AmenityTicketLoading) {
-                              return const Center(
-                                child: CircularProgressIndicator(),
-                              );
-                            }
+                        child:
+                            BlocBuilder<AmenityTicketBloc, AmenityTicketState>(
+                              builder: (context, state) {
+                                if (state is AmenityTicketLoading) {
+                                  return const Center(
+                                    child: CircularProgressIndicator(),
+                                  );
+                                }
 
-                            if (state is AmenityTicketError) {
-                              return Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.error_outline,
-                                      size: 48,
-                                      color: Colors.red,
+                                if (state is AmenityTicketError) {
+                                  return Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.error_outline,
+                                          size: 48,
+                                          color: Colors.red,
+                                        ),
+                                        const SizedBox(height: 16),
+                                        Text(
+                                          state.message,
+                                          style: AppTextStyles.arimo(
+                                            color: Colors.red,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                        const SizedBox(height: 16),
+                                        ElevatedButton(
+                                          onPressed: _loadTickets,
+                                          child: const Text('Thử lại'),
+                                        ),
+                                      ],
                                     ),
-                                    const SizedBox(height: 16),
-                                    Text(
-                                      state.message,
-                                      style: AppTextStyles.arimo(
-                                        color: Colors.red,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                    const SizedBox(height: 16),
-                                    ElevatedButton(
-                                      onPressed: _loadTickets,
-                                      child: const Text('Thử lại'),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            }
+                                  );
+                                }
 
-                            if (state is AmenityTicketEmpty) {
-                              return Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.receipt_long,
-                                      size: 64,
-                                      color: AppColors.textSecondary,
+                                if (state is AmenityTicketEmpty) {
+                                  return Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.receipt_long,
+                                          size: 64,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                        const SizedBox(height: 16),
+                                        Text(
+                                          'Không có phiếu dịch vụ',
+                                          style: AppTextStyles.arimo(
+                                            fontSize: 16,
+                                            color: AppColors.textSecondary,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    const SizedBox(height: 16),
-                                    Text(
-                                      'Không có phiếu dịch vụ',
-                                      style: AppTextStyles.arimo(
-                                        fontSize: 16,
-                                        color: AppColors.textSecondary,
-                                      ),
+                                  );
+                                }
+
+                                if (state is AmenityTicketLoaded) {
+                                  return RefreshIndicator(
+                                    onRefresh: () async => _loadTickets(),
+                                    child: ListView.builder(
+                                      padding: padding,
+                                      itemCount: state.tickets.length,
+                                      itemBuilder: (context, index) {
+                                        final ticket = state.tickets[index];
+                                        return _buildTicketCard(ticket);
+                                      },
                                     ),
-                                  ],
-                                ),
-                              );
-                            }
+                                  );
+                                }
 
-                            if (state is AmenityTicketLoaded) {
-                              return RefreshIndicator(
-                                onRefresh: () async => _loadTickets(),
-                                child: ListView.builder(
-                                  padding: padding,
-                                  itemCount: state.tickets.length,
-                                  itemBuilder: (context, index) {
-                                    final ticket = state.tickets[index];
-                                    return _buildTicketCard(ticket);
-                                  },
-                                ),
-                              );
-                            }
-
-                            return const SizedBox();
-                          },
-                        ),
+                                return const SizedBox();
+                              },
+                            ),
                       ),
               ),
             ],
           ),
         ),
-        floatingActionButton: _selectedCustomer != null
-            ? FloatingActionButton.extended(
-                onPressed: () {
-                  AppRouter.push(
-                    context,
-                    AppRoutes.serviceBooking,
-                  );
-                },
-                icon: const Icon(Icons.add),
-                label: const Text('Tạo phiếu mới'),
-              )
-            : null,
       ),
     );
   }
@@ -348,7 +334,8 @@ class _StaffAmenityTicketListScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      ticket.amenityService?.name ?? 'Dịch vụ #${ticket.amenityServiceId}',
+                      ticket.amenityService?.name ??
+                          'Dịch vụ #${ticket.amenityServiceId}',
                       style: AppTextStyles.arimo(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
@@ -389,11 +376,7 @@ class _StaffAmenityTicketListScreenState
           const SizedBox(height: 12),
           Row(
             children: [
-              Icon(
-                Icons.access_time,
-                size: 16,
-                color: AppColors.textSecondary,
-              ),
+              Icon(Icons.access_time, size: 16, color: AppColors.textSecondary),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -410,11 +393,7 @@ class _StaffAmenityTicketListScreenState
             const SizedBox(height: 8),
             Row(
               children: [
-                Icon(
-                  Icons.person,
-                  size: 16,
-                  color: AppColors.textSecondary,
-                ),
+                Icon(Icons.person, size: 16, color: AppColors.textSecondary),
                 const SizedBox(width: 8),
                 Text(
                   ticket.customerName!,
@@ -443,9 +422,7 @@ class _StaffAmenityTicketListScreenState
                   onPressed: () => _showCancelDialog(ticket),
                   icon: const Icon(Icons.cancel, size: 16),
                   label: const Text('Hủy'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.red,
-                  ),
+                  style: TextButton.styleFrom(foregroundColor: Colors.red),
                 ),
             ],
           ),
@@ -459,9 +436,7 @@ class _StaffAmenityTicketListScreenState
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Xác nhận hủy'),
-        content: Text(
-          'Bạn có chắc chắn muốn hủy phiếu dịch vụ #${ticket.id}?',
-        ),
+        content: Text('Bạn có chắc chắn muốn hủy phiếu dịch vụ #${ticket.id}?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -471,8 +446,8 @@ class _StaffAmenityTicketListScreenState
             onPressed: () {
               Navigator.pop(context);
               context.read<AmenityTicketBloc>().add(
-                    CancelTicketEvent(ticket.id),
-                  );
+                CancelTicketEvent(ticket.id),
+              );
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Hủy phiếu'),
@@ -486,17 +461,13 @@ class _StaffAmenityTicketListScreenState
     // TODO: Implement update dialog
     // Có thể navigate sang màn hình update hoặc show bottom sheet
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Tính năng cập nhật đang được phát triển'),
-      ),
+      const SnackBar(content: Text('Tính năng cập nhật đang được phát triển')),
     );
   }
 
   Color _getStatusColor(AmenityTicketStatus status) {
     switch (status) {
-      case AmenityTicketStatus.pending:
-        return Colors.orange;
-      case AmenityTicketStatus.accepted:
+      case AmenityTicketStatus.booked:
         return Colors.blue;
       case AmenityTicketStatus.completed:
         return Colors.green;
@@ -507,10 +478,8 @@ class _StaffAmenityTicketListScreenState
 
   String _getStatusText(AmenityTicketStatus status) {
     switch (status) {
-      case AmenityTicketStatus.pending:
-        return 'Chờ duyệt';
-      case AmenityTicketStatus.accepted:
-        return 'Đã duyệt';
+      case AmenityTicketStatus.booked:
+        return 'Đã đặt';
       case AmenityTicketStatus.completed:
         return 'Hoàn thành';
       case AmenityTicketStatus.cancelled:

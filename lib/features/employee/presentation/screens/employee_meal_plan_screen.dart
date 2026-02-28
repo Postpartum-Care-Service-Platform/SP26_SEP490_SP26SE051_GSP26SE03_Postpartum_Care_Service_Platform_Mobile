@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
+import '../widgets/employee_scaffold.dart';
 
 class EmployeeMealPlanScreen extends StatefulWidget {
   const EmployeeMealPlanScreen({super.key});
@@ -25,8 +26,7 @@ class _EmployeeMealPlanScreenState extends State<EmployeeMealPlanScreen> {
   Widget build(BuildContext context) {
     final padding = AppResponsive.pagePadding(context);
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
+    return EmployeeScaffold(
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,

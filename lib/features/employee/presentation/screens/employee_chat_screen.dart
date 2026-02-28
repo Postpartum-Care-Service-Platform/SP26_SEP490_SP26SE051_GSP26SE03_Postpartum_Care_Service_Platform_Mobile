@@ -8,6 +8,7 @@ import '../../../chat/presentation/bloc/chat_event.dart';
 import '../../../chat/presentation/bloc/chat_state.dart';
 import '../../../chat/presentation/widgets/conversation_detail.dart';
 import '../../../chat/presentation/widgets/conversation_list.dart';
+import '../widgets/employee_scaffold.dart';
 
 /// Màn hình chat dành riêng cho staff.
 /// Nghiệp vụ: Staff chỉ nhận và trả lời tin nhắn từ khách hàng,
@@ -80,8 +81,7 @@ class _EmployeeChatScreenState extends State<EmployeeChatScreen> {
 
             return DefaultTabController(
               length: 3,
-              child: Scaffold(
-                backgroundColor: AppColors.background,
+              child: EmployeeScaffold(
                 appBar: AppBar(
                   title: const Text('Trao đổi'),
                   backgroundColor: AppColors.primary,

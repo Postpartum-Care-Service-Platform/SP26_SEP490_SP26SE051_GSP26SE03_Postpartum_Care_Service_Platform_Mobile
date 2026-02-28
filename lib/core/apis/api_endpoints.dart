@@ -129,6 +129,8 @@ class ApiEndpoints {
       '/Contract/from-booking/$bookingId';
   static String sendContract(int id) => '/Contract/$id/send';
   static String uploadSignedContract(int id) => '/Contract/$id/upload-signed';
+  static String uploadSignedContractFile(int id) =>
+      '/Contract/$id/upload-signed-file';
   static String updateContractContent(int id) => '/Contract/$id/update-content';
   static const String getNoScheduleContracts = '/Contract/no-schedule';
 

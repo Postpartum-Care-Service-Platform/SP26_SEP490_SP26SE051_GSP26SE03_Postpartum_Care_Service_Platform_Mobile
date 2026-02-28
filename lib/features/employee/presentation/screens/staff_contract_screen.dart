@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -98,11 +99,30 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
   Color _statusColor(String status) {
     switch (status.toLowerCase()) {
       case 'draft':
-        return AppColors.textSecondary;
+        return const Color(0xFF6B7280); // Gray
+      case 'sent':
+        return const Color(0xFF2563EB); // Blue
       case 'signed':
-        return AppColors.verified;
+        return const Color(0xFF16A34A); // Green
+      case 'cancelled':
+        return const Color(0xFFDC2626); // Red
       default:
         return AppColors.textSecondary;
+    }
+  }
+
+  String _statusText(String status) {
+    switch (status.toLowerCase()) {
+      case 'draft':
+        return 'Nháp';
+      case 'sent':
+        return 'Đã gửi';
+      case 'signed':
+        return 'Đã ký';
+      case 'cancelled':
+        return 'Đã hủy';
+      default:
+        return status;
     }
   }
 
@@ -189,123 +209,355 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
     final contract = _contract;
     if (contract == null) return;
 
-    final fileController = TextEditingController(text: contract.fileUrl ?? '');
     DateTime signedDate = contract.signedDate ?? DateTime.now();
+    final picker = ImagePicker();
+    String? pickedImagePath;
+    bool isUploading = false;
 
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) {
         final scale = AppResponsive.scaleFactor(ctx);
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 16 * scale,
-            right: 16 * scale,
-            top: 16 * scale,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 16 * scale,
+        return Container(
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           ),
-          child: StatefulBuilder(
-            builder: (context, setModalState) {
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Upload hợp đồng đã ký',
-                    style: AppTextStyles.arimo(
-                      fontSize: 16 * scale,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  SizedBox(height: 12 * scale),
-                  TextField(
-                    controller: fileController,
-                    decoration: InputDecoration(
-                      labelText: 'Link file hợp đồng (PDF)',
-                      hintText: 'Nhập URL hoặc đường dẫn file PDF đã ký',
-                      helperText: 'Ví dụ: https://example.com/contract.pdf hoặc file:///path/to/contract.pdf',
-                      prefixIcon: const Icon(Icons.link),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12 * scale),
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: 20 * scale,
+              right: 20 * scale,
+              top: 20 * scale,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 20 * scale,
+            ),
+            child: StatefulBuilder(
+              builder: (context, setModalState) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Handle bar
+                    Center(
+                      child: Container(
+                        width: 40 * scale,
+                        height: 4 * scale,
+                        margin: EdgeInsets.only(bottom: 20 * scale),
+                        decoration: BoxDecoration(
+                          color: AppColors.borderLight,
+                          borderRadius: BorderRadius.circular(2 * scale),
+                        ),
                       ),
                     ),
-                    maxLines: 2,
-                  ),
-                  SizedBox(height: 12 * scale),
+                    Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(10 * scale),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0EA5E9).withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12 * scale),
+                          ),
+                          child: Icon(
+                            Icons.cloud_upload_rounded,
+                            color: const Color(0xFF0EA5E9),
+                            size: 24 * scale,
+                          ),
+                        ),
+                        SizedBox(width: 12 * scale),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Upload hợp đồng đã ký',
+                                style: AppTextStyles.arimo(
+                                  fontSize: 18 * scale,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              SizedBox(height: 4 * scale),
+                              Text(
+                                'Chọn ảnh hợp đồng đã ký từ camera hoặc thư viện',
+                                style: AppTextStyles.arimo(
+                                  fontSize: 13 * scale,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  SizedBox(height: 20 * scale),
                   Row(
                     children: [
-                      Text(
-                        'Ngày ký: ${_formatDate(signedDate)}',
-                        style: AppTextStyles.arimo(fontSize: 13 * scale),
+                      Expanded(
+                        child: _ImagePickerButton(
+                          icon: Icons.photo_camera_rounded,
+                          label: 'Chụp ảnh',
+                          color: const Color(0xFF0EA5E9),
+                          onPressed: isUploading
+                              ? null
+                              : () async {
+                                  final image = await picker.pickImage(
+                                    source: ImageSource.camera,
+                                    imageQuality: 85,
+                                    maxWidth: 1600,
+                                  );
+                                  if (image != null) {
+                                    setModalState(() {
+                                      pickedImagePath = image.path;
+                                    });
+                                  }
+                                },
+                          scale: scale,
+                        ),
                       ),
-                      const SizedBox(width: 8),
-                      TextButton(
-                        onPressed: () async {
-                          final picked = await showDatePicker(
-                            context: context,
-                            initialDate: signedDate,
-                            firstDate: DateTime(2020),
-                            lastDate: DateTime(2100),
-                          );
-                          if (picked != null) {
-                            setModalState(() => signedDate = picked);
-                          }
-                        },
-                        child: const Text('Chọn ngày'),
+                      SizedBox(width: 12 * scale),
+                      Expanded(
+                        child: _ImagePickerButton(
+                          icon: Icons.photo_library_rounded,
+                          label: 'Thư viện',
+                          color: const Color(0xFF7C3AED),
+                          onPressed: isUploading
+                              ? null
+                              : () async {
+                                  final image = await picker.pickImage(
+                                    source: ImageSource.gallery,
+                                    imageQuality: 85,
+                                    maxWidth: 1600,
+                                  );
+                                  if (image != null) {
+                                    setModalState(() {
+                                      pickedImagePath = image.path;
+                                    });
+                                  }
+                                },
+                          scale: scale,
+                        ),
                       ),
                     ],
                   ),
                   SizedBox(height: 16 * scale),
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(16 * scale),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12 * scale),
+                      border: Border.all(
+                        color: pickedImagePath != null
+                            ? const Color(0xFF0EA5E9).withValues(alpha: 0.3)
+                            : AppColors.borderLight,
+                        width: pickedImagePath != null ? 2 : 1,
+                      ),
+                      color: pickedImagePath != null
+                          ? const Color(0xFF0EA5E9).withValues(alpha: 0.05)
+                          : AppColors.background,
+                    ),
+                    child: pickedImagePath == null
+                        ? Row(
+                            children: [
+                              const Icon(Icons.image_outlined),
+                              SizedBox(width: 10 * scale),
+                              Expanded(
+                                child: Text(
+                                  'Chưa chọn ảnh',
+                                  style: AppTextStyles.arimo(
+                                    fontSize: 13 * scale,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(Icons.check_circle_outline,
+                                      color: AppColors.verified),
+                                  SizedBox(width: 10 * scale),
+                                  Expanded(
+                                    child: Text(
+                                      'Đã chọn ảnh',
+                                      style: AppTextStyles.arimo(
+                                        fontSize: 13 * scale,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    onPressed: isUploading
+                                        ? null
+                                        : () {
+                                            setModalState(() {
+                                              pickedImagePath = null;
+                                            });
+                                          },
+                                    icon: const Icon(Icons.close),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 8 * scale),
+                              ClipRRect(
+                                borderRadius:
+                                    BorderRadius.circular(10 * scale),
+                                child: Image.file(
+                                  File(pickedImagePath!),
+                                  height: 180 * scale,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Container(
+                                    height: 180 * scale,
+                                    color: AppColors.background,
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      'Không thể hiển thị ảnh',
+                                      style: AppTextStyles.arimo(
+                                        fontSize: 12 * scale,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                  SizedBox(height: 20 * scale),
+                  Container(
+                    padding: EdgeInsets.all(16 * scale),
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+                      borderRadius: BorderRadius.circular(12 * scale),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today_rounded,
+                          size: 20 * scale,
+                          color: AppColors.textSecondary,
+                        ),
+                        SizedBox(width: 12 * scale),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Ngày ký hợp đồng',
+                                style: AppTextStyles.arimo(
+                                  fontSize: 12 * scale,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                              SizedBox(height: 4 * scale),
+                              Text(
+                                _formatDate(signedDate),
+                                style: AppTextStyles.arimo(
+                                  fontSize: 15 * scale,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        TextButton.icon(
+                          onPressed: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: signedDate,
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime(2100),
+                            );
+                            if (picked != null) {
+                              setModalState(() => signedDate = picked);
+                            }
+                          },
+                          icon: Icon(Icons.edit_rounded, size: 16 * scale),
+                          label: const Text('Chọn'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 24 * scale),
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        final url = fileController.text.trim();
-                        if (url.isEmpty) {
-                          AppToast.showError(
-                            context,
-                            message: 'Vui lòng nhập link file hợp đồng',
-                          );
-                          return;
-                        }
-                        Navigator.of(ctx).pop();
-                        try {
-                          final message = await _remote.uploadSigned(
-                            id: contract.id,
-                            fileUrl: url,
-                            signedDate: signedDate,
-                          );
-                          if (mounted) {
-                            AppToast.showSuccess(context, message: message);
-                            final updated = await _remote.getContractById(
-                              contract.id,
-                            );
-                            setState(() {
-                              _contract = updated;
-                            });
-                          }
-                        } catch (e) {
-                          if (mounted) {
-                            AppToast.showError(
-                              context,
-                              message: 'Không thể upload hợp đồng đã ký: $e',
-                            );
-                          }
-                        }
-                      },
+                    child: ElevatedButton.icon(
+                      onPressed: isUploading
+                          ? null
+                          : () async {
+                              if (pickedImagePath == null) {
+                                AppToast.showError(
+                                  context,
+                                  message: 'Vui lòng chọn/chụp ảnh hợp đồng đã ký',
+                                );
+                                return;
+                              }
+
+                              setModalState(() => isUploading = true);
+                              try {
+                                final message = await _remote.uploadSignedFile(
+                                  id: contract.id,
+                                  filePath: pickedImagePath!,
+                                  signedDate: signedDate,
+                                );
+                                if (!mounted) return;
+                                Navigator.of(ctx).pop();
+                                AppToast.showSuccess(context, message: message);
+                                final updated =
+                                    await _remote.getContractById(contract.id);
+                                if (!mounted) return;
+                                setState(() {
+                                  _contract = updated;
+                                });
+                              } catch (e) {
+                                if (mounted) {
+                                  AppToast.showError(
+                                    context,
+                                    message:
+                                        'Không thể upload hợp đồng đã ký: $e',
+                                  );
+                                }
+                                setModalState(() => isUploading = false);
+                              }
+                            },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: AppColors.white,
+                        backgroundColor: const Color(0xFF0EA5E9),
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 16 * scale),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12 * scale),
+                        ),
+                        elevation: 2,
                       ),
-                      child: const Text('Lưu'),
+                      icon: Icon(
+                        isUploading ? Icons.hourglass_empty : Icons.check_rounded,
+                        size: 20 * scale,
+                      ),
+                      label: Text(
+                        isUploading ? 'Đang upload...' : 'Lưu và upload',
+                        style: AppTextStyles.arimo(
+                          fontSize: 15 * scale,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
                 ],
               );
             },
+          ),
           ),
         );
       },
@@ -558,16 +810,17 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header Card với mã hợp đồng và status
           Container(
-            padding: EdgeInsets.all(16 * scale),
+            padding: EdgeInsets.all(20 * scale),
             decoration: BoxDecoration(
               color: AppColors.white,
               borderRadius: BorderRadius.circular(16 * scale),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 8 * scale,
-                  offset: Offset(0, 2 * scale),
+                  color: Colors.black.withValues(alpha: 0.06),
+                  blurRadius: 12 * scale,
+                  offset: Offset(0, 4 * scale),
                 ),
               ],
             ),
@@ -576,6 +829,7 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       child: Column(
@@ -586,15 +840,16 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                             style: AppTextStyles.arimo(
                               fontSize: 12 * scale,
                               color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
-                          SizedBox(height: 4 * scale),
+                          SizedBox(height: 6 * scale),
                           Text(
                             contract.contractCode,
                             style: AppTextStyles.tinos(
-                              fontSize: 20 * scale,
+                              fontSize: 22 * scale,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
+                              color: AppColors.primary,
                             ),
                           ),
                         ],
@@ -602,43 +857,96 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                     ),
                     Container(
                       padding: EdgeInsets.symmetric(
-                        horizontal: 12 * scale,
-                        vertical: 6 * scale,
+                        horizontal: 14 * scale,
+                        vertical: 8 * scale,
                       ),
                       decoration: BoxDecoration(
-                        color: _statusColor(
-                          contract.status,
-                        ).withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8 * scale),
-                      ),
-                      child: Text(
-                        contract.status,
-                        style: AppTextStyles.arimo(
-                          fontSize: 12 * scale,
-                          fontWeight: FontWeight.w600,
-                          color: _statusColor(contract.status),
+                        color: _statusColor(contract.status).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(20 * scale),
+                        border: Border.all(
+                          color: _statusColor(contract.status).withValues(alpha: 0.3),
+                          width: 1,
                         ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 8 * scale,
+                            height: 8 * scale,
+                            decoration: BoxDecoration(
+                              color: _statusColor(contract.status),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          SizedBox(width: 6 * scale),
+                          Text(
+                            _statusText(contract.status),
+                            style: AppTextStyles.arimo(
+                              fontSize: 13 * scale,
+                              fontWeight: FontWeight.w700,
+                              color: _statusColor(contract.status),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-                SizedBox(height: 16 * scale),
-                Divider(height: 1, color: AppColors.borderLight),
-                SizedBox(height: 16 * scale),
+              ],
+            ),
+          ),
+          SizedBox(height: 16 * scale),
+          // Thông tin chi tiết hợp đồng
+          Container(
+            padding: EdgeInsets.all(20 * scale),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(16 * scale),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.06),
+                  blurRadius: 12 * scale,
+                  offset: Offset(0, 4 * scale),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline_rounded,
+                      size: 20 * scale,
+                      color: AppColors.primary,
+                    ),
+                    SizedBox(width: 8 * scale),
+                    Text(
+                      'Thông tin hợp đồng',
+                      style: AppTextStyles.arimo(
+                        fontSize: 16 * scale,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20 * scale),
                 _InfoRow(
                   icon: Icons.calendar_today_rounded,
                   label: 'Ngày hợp đồng',
                   value: _formatDate(contract.contractDate),
                   scale: scale,
                 ),
-                SizedBox(height: 12 * scale),
+                SizedBox(height: 16 * scale),
                 _InfoRow(
                   icon: Icons.event_available_rounded,
                   label: 'Hiệu lực từ',
                   value: _formatDate(contract.effectiveFrom),
                   scale: scale,
                 ),
-                SizedBox(height: 12 * scale),
+                SizedBox(height: 16 * scale),
                 _InfoRow(
                   icon: Icons.event_busy_rounded,
                   label: 'Hiệu lực đến',
@@ -646,17 +954,20 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                   scale: scale,
                 ),
                 if (contract.signedDate != null) ...[
-                  SizedBox(height: 12 * scale),
+                  SizedBox(height: 16 * scale),
                   _InfoRow(
                     icon: Icons.edit_document,
                     label: 'Ngày ký',
                     value: _formatDate(contract.signedDate!),
                     scale: scale,
+                    highlight: true,
                   ),
                 ],
-                SizedBox(height: 12 * scale),
+                SizedBox(height: 16 * scale),
+                Divider(height: 1, color: AppColors.borderLight),
+                SizedBox(height: 16 * scale),
                 _InfoRow(
-                  icon: Icons.person_outline,
+                  icon: Icons.person_outline_rounded,
                   label: 'Khách hàng',
                   value:
                       contract.customer?.username ??
@@ -668,74 +979,107 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
             ),
           ),
           SizedBox(height: 20 * scale),
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: _isLoading ? null : _downloadPdf,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.white,
-                  ),
-                  icon: const Icon(Icons.picture_as_pdf),
-                  label: Text(_isLoading ? 'Đang tải...' : 'Xuất PDF'),
+          // Actions Section
+          Container(
+            padding: EdgeInsets.all(20 * scale),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(16 * scale),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.06),
+                  blurRadius: 12 * scale,
+                  offset: Offset(0, 4 * scale),
                 ),
-              ),
-              SizedBox(width: 12 * scale),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: _isSending ? null : _sendContract,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.primary,
-                    side: const BorderSide(color: AppColors.primary),
-                  ),
-                  icon: const Icon(Icons.send_outlined),
-                  label: Text(_isSending ? 'Đang gửi...' : 'Gửi cho khách'),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.settings_outlined,
+                      size: 20 * scale,
+                      color: AppColors.primary,
+                    ),
+                    SizedBox(width: 8 * scale),
+                    Text(
+                      'Thao tác',
+                      style: AppTextStyles.arimo(
+                        fontSize: 16 * scale,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12 * scale),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: _openPreview,
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF0284C7),
-                side: const BorderSide(color: Color(0xFF0284C7)),
-              ),
-              icon: const Icon(Icons.visibility_outlined),
-              label: const Text('Preview hợp đồng (draft)'),
+                SizedBox(height: 20 * scale),
+                // Primary actions
+                Row(
+                  children: [
+                    Expanded(
+                      child: _ActionButton(
+                        icon: Icons.picture_as_pdf_rounded,
+                        label: _isLoading ? 'Đang tải...' : 'Xuất PDF',
+                        color: AppColors.primary,
+                        onPressed: _isLoading ? null : _downloadPdf,
+                        scale: scale,
+                      ),
+                    ),
+                    SizedBox(width: 12 * scale),
+                    Expanded(
+                      child: _ActionButton(
+                        icon: Icons.send_rounded,
+                        label: _isSending ? 'Đang gửi...' : 'Gửi khách',
+                        color: const Color(0xFF2563EB),
+                        onPressed: _isSending ? null : _sendContract,
+                        scale: scale,
+                        isOutlined: true,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 12 * scale),
+                _ActionButton(
+                  icon: Icons.visibility_rounded,
+                  label: 'Xem trước hợp đồng',
+                  color: const Color(0xFF0284C7),
+                  onPressed: _openPreview,
+                  scale: scale,
+                  isOutlined: true,
+                  isFullWidth: true,
+                ),
+                SizedBox(height: 12 * scale),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _ActionButton(
+                        icon: Icons.cloud_upload_rounded,
+                        label: 'Upload đã ký',
+                        color: const Color(0xFF0EA5E9),
+                        onPressed: _showUploadSignedSheet,
+                        scale: scale,
+                        isOutlined: true,
+                      ),
+                    ),
+                    SizedBox(width: 12 * scale),
+                    Expanded(
+                      child: _ActionButton(
+                        icon: Icons.edit_note_rounded,
+                        label: 'Chỉnh sửa',
+                        color: const Color(0xFF7C3AED),
+                        onPressed: _showEditContentSheet,
+                        scale: scale,
+                        isOutlined: true,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-          SizedBox(height: 12 * scale),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: _showUploadSignedSheet,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF0EA5E9),
-                    side: const BorderSide(color: Color(0xFF0EA5E9)),
-                  ),
-                  icon: const Icon(Icons.cloud_upload_outlined),
-                  label: const Text('Upload hợp đồng đã ký'),
-                ),
-              ),
-              SizedBox(width: 12 * scale),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: _showEditContentSheet,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF7C3AED),
-                    side: const BorderSide(color: Color(0xFF7C3AED)),
-                  ),
-                  icon: const Icon(Icons.edit_note_outlined),
-                  label: const Text('Chỉnh sửa nội dung'),
-                ),
-              ),
-            ],
-          ),
+          SizedBox(height: 20 * scale),
         ],
       ),
     );
@@ -747,45 +1091,191 @@ class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
   final double scale;
+  final bool highlight;
 
   const _InfoRow({
     required this.icon,
     required this.label,
     required this.value,
     required this.scale,
+    this.highlight = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 18 * scale, color: AppColors.textSecondary),
-        SizedBox(width: 8 * scale),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: AppTextStyles.arimo(
-                  fontSize: 12 * scale,
-                  color: AppColors.textSecondary,
-                ),
+    return Container(
+      padding: EdgeInsets.all(12 * scale),
+      decoration: highlight
+          ? BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(10 * scale),
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.2),
+                width: 1,
               ),
-              SizedBox(height: 2 * scale),
-              Text(
-                value,
-                style: AppTextStyles.arimo(
-                  fontSize: 14 * scale,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ],
+            )
+          : null,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: EdgeInsets.all(8 * scale),
+            decoration: BoxDecoration(
+              color: highlight
+                  ? AppColors.primary.withValues(alpha: 0.1)
+                  : AppColors.background,
+              borderRadius: BorderRadius.circular(8 * scale),
+            ),
+            child: Icon(
+              icon,
+              size: 18 * scale,
+              color: highlight ? AppColors.primary : AppColors.textSecondary,
+            ),
           ),
+          SizedBox(width: 12 * scale),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: AppTextStyles.arimo(
+                    fontSize: 12 * scale,
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                SizedBox(height: 4 * scale),
+                Text(
+                  value,
+                  style: AppTextStyles.arimo(
+                    fontSize: 15 * scale,
+                    fontWeight: FontWeight.w600,
+                    color: highlight ? AppColors.primary : AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback? onPressed;
+  final double scale;
+  final bool isOutlined;
+  final bool isFullWidth;
+
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    this.onPressed,
+    required this.scale,
+    this.isOutlined = false,
+    this.isFullWidth = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final button = isOutlined
+        ? OutlinedButton.icon(
+            onPressed: onPressed,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: color,
+              side: BorderSide(color: color, width: 1.5),
+              padding: EdgeInsets.symmetric(
+                horizontal: 16 * scale,
+                vertical: 14 * scale,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12 * scale),
+              ),
+            ),
+            icon: Icon(icon, size: 20 * scale),
+            label: Text(
+              label,
+              style: AppTextStyles.arimo(
+                fontSize: 14 * scale,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          )
+        : ElevatedButton.icon(
+            onPressed: onPressed,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: color,
+              foregroundColor: Colors.white,
+              padding: EdgeInsets.symmetric(
+                horizontal: 16 * scale,
+                vertical: 14 * scale,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12 * scale),
+              ),
+              elevation: 2,
+            ),
+            icon: Icon(icon, size: 20 * scale),
+            label: Text(
+              label,
+              style: AppTextStyles.arimo(
+                fontSize: 14 * scale,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          );
+
+    return isFullWidth ? SizedBox(width: double.infinity, child: button) : button;
+  }
+}
+
+class _ImagePickerButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback? onPressed;
+  final double scale;
+
+  const _ImagePickerButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    this.onPressed,
+    required this.scale,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton(
+      onPressed: onPressed,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: color,
+        side: BorderSide(color: color, width: 1.5),
+        padding: EdgeInsets.symmetric(vertical: 16 * scale),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12 * scale),
         ),
-      ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 28 * scale),
+          SizedBox(height: 8 * scale),
+          Text(
+            label,
+            style: AppTextStyles.arimo(
+              fontSize: 14 * scale,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

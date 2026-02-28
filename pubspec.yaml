@@ -78,6 +78,9 @@ dependencies:
   # QR Code
   qr_flutter: ^4.1.0
 
+  # HTML rendering for contract preview
+  flutter_widget_from_html: ^0.15.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -8,6 +8,7 @@ import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_app_bar.dart';
 import '../../../../core/widgets/app_toast.dart';
 import '../../../auth/domain/entities/create_customer_result_entity.dart';
+import '../widgets/employee_scaffold.dart';
 
 class EmployeeCreateCustomerScreen extends StatefulWidget {
   const EmployeeCreateCustomerScreen({super.key});
@@ -44,8 +45,9 @@ class _EmployeeCreateCustomerScreenState
       final result = await InjectionContainer.authRepository.createCustomer(
         email: _emailCtrl.text.trim(),
         phone: _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
-        username:
-            _usernameCtrl.text.trim().isEmpty ? null : _usernameCtrl.text.trim(),
+        username: _usernameCtrl.text.trim().isEmpty
+            ? null
+            : _usernameCtrl.text.trim(),
       );
 
       if (!mounted) return;
@@ -153,8 +155,7 @@ class _EmployeeCreateCustomerScreenState
   @override
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
-    return Scaffold(
-      backgroundColor: AppColors.background,
+    return EmployeeScaffold(
       appBar: const AppAppBar(
         title: 'Tạo tài khoản khách hàng',
         centerTitle: true,
@@ -288,4 +289,3 @@ class _Input extends StatelessWidget {
     );
   }
 }
-

@@ -17,6 +17,7 @@ import '../bloc/appointment/appointment_bloc.dart';
 import '../bloc/appointment/appointment_event.dart';
 import '../bloc/appointment/appointment_state.dart';
 import '../widgets/employee_header_bar.dart';
+import '../widgets/employee_scaffold.dart';
 
 /// Employee Schedule Screen with BLoC integration
 /// Shows appointments assigned to the staff
@@ -39,8 +40,7 @@ class _EmployeeScheduleContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
+    return EmployeeScaffold(
       body: SafeArea(
         child: Column(
           children: [
@@ -75,7 +75,7 @@ class _EmployeeScheduleContent extends StatelessWidget {
                   },
                   builder: (context, state) {
                     if (state is AppointmentLoading) {
-                      return const Center(child: CircularProgressIndicator());
+                      return const _AppointmentsLoadingSkeleton();
                     }
 
                     if (state is AppointmentEmpty) {
@@ -183,17 +183,113 @@ class _ErrorState extends StatelessWidget {
 }
 
 /// Loaded content with appointments
-class _LoadedContent extends StatelessWidget {
+class _LoadedContent extends StatefulWidget {
   final List<AppointmentEntity> appointments;
 
   const _LoadedContent({required this.appointments});
 
   @override
+  State<_LoadedContent> createState() => _LoadedContentState();
+}
+
+class _LoadedContentState extends State<_LoadedContent> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  String _statusFilter = 'all';
+  DateTime? _dateFilter;
+  bool _showFilters = false;
+
+  List<AppointmentEntity> _applyFilters(List<AppointmentEntity> appointments) {
+    var filtered = appointments;
+
+    // Search filter
+    if (_searchQuery.isNotEmpty) {
+      final query = _searchQuery.toLowerCase();
+      filtered = filtered.where((a) {
+        final customerName = (a.customer?.username ?? '').toLowerCase();
+        final customerEmail = (a.customer?.email ?? '').toLowerCase();
+        final customerPhone = (a.customer?.phone ?? '').toLowerCase();
+        final appointmentName = (a.name ?? '').toLowerCase();
+
+        return customerName.contains(query) ||
+            customerEmail.contains(query) ||
+            customerPhone.contains(query) ||
+            appointmentName.contains(query);
+      }).toList();
+    }
+
+    // Status filter
+    if (_statusFilter != 'all') {
+      filtered = filtered.where((a) {
+        switch (_statusFilter) {
+          case 'pending':
+            return a.status == AppointmentStatus.pending;
+          case 'scheduled':
+            return a.status == AppointmentStatus.scheduled;
+          case 'completed':
+            return a.status == AppointmentStatus.completed;
+          case 'cancelled':
+            return a.status == AppointmentStatus.cancelled;
+          default:
+            return true;
+        }
+      }).toList();
+    }
+
+    // Date filter
+    if (_dateFilter != null) {
+      filtered = filtered.where((a) {
+        final appointmentDate = DateTime(
+          a.appointmentDate.year,
+          a.appointmentDate.month,
+          a.appointmentDate.day,
+        );
+        final filterDate = DateTime(
+          _dateFilter!.year,
+          _dateFilter!.month,
+          _dateFilter!.day,
+        );
+        return appointmentDate.isAtSameMomentAs(filterDate);
+      }).toList();
+    }
+
+    return filtered;
+  }
+
+  int _getActiveFilterCount() {
+    int count = 0;
+    if (_statusFilter != 'all') count++;
+    if (_searchQuery.isNotEmpty) count++;
+    if (_dateFilter != null) count++;
+    return count;
+  }
+
+  void _clearFilters() {
+    setState(() {
+      _searchQuery = '';
+      _searchController.clear();
+      _statusFilter = 'all';
+      _dateFilter = null;
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final padding = AppResponsive.pagePadding(context);
+    final scale = AppResponsive.scaleFactor(context);
+
+    // Apply filters
+    final filteredAppointments = _applyFilters(widget.appointments);
+    final bool isUsingFilters = _getActiveFilterCount() > 0;
 
     // Separate upcoming and completed appointments
-    final upcomingAppointments = appointments
+    final upcomingAppointments = filteredAppointments
         .where(
           (a) =>
               a.status != AppointmentStatus.completed &&
@@ -201,152 +297,493 @@ class _LoadedContent extends StatelessWidget {
         )
         .toList();
 
-    final completedAppointments = appointments
+    final completedAppointments = filteredAppointments
         .where((a) => a.status == AppointmentStatus.completed)
         .toList();
 
-    // Calculate stats
-    final totalAssigned = appointments.length;
-    final completed = completedAppointments.length;
-    final pending = upcomingAppointments.length;
+    return CustomScrollView(
+      slivers: [
+        SliverPadding(
+          padding: padding,
+          sliver: SliverList(
+            delegate: SliverChildListDelegate([
+              const SizedBox(height: 12),
+              const _HeaderCard(),
+              const SizedBox(height: 12),
+              _StatsGrid(
+                totalAssigned: widget.appointments.length,
+                completed: widget.appointments
+                    .where((a) => a.status == AppointmentStatus.completed)
+                    .length,
+                pending: widget.appointments
+                    .where(
+                      (a) =>
+                          a.status != AppointmentStatus.completed &&
+                          a.status != AppointmentStatus.cancelled,
+                    )
+                    .length,
+              ),
+              const SizedBox(height: 12),
+              EmployeeQuickMenuSection(
+                primaryItems: EmployeeQuickMenuPresets.primaryItems(),
+                allItems: EmployeeQuickMenuPresets.allItems(),
+                currentTab: AppBottomTab.appointment,
+                onBottomTabSelected: (tab) {
+                  // Đổi tab nhanh cho nhân viên:
+                  // - Dịch vụ -> màn đặt gói/dịch vụ cho khách (EmployeePackageBookingScreen)
+                  // - Trao đổi -> màn chat shell dành cho staff
+                  switch (tab) {
+                    case AppBottomTab.services:
+                      AppRouter.push(context, AppRoutes.employeePackageBooking);
+                      break;
+                    case AppBottomTab.chat:
+                      // STAFF: Điều hướng tới màn chat dành riêng cho nhân viên.
+                      AppRouter.push(context, AppRoutes.employeeChat);
+                      break;
+                    case AppBottomTab.appointment:
+                    case AppBottomTab.home:
+                    case AppBottomTab.profile:
+                      // Đã ở màn lịch làm việc / chưa hỗ trợ tab khác trong portal nhân viên.
+                      break;
+                  }
+                },
+                onExtraActionSelected: (action) {
+                  switch (action) {
+                    case EmployeeQuickMenuExtraAction.amenityService:
+                      // Điều hướng tới màn tạo ticket tiện ích mới
+                      AppRouter.push(context, AppRoutes.serviceBooking);
+                      break;
+                    case EmployeeQuickMenuExtraAction.amenityTicket:
+                      // Điều hướng tới màn danh sách ticket tiện ích
+                      AppRouter.push(context, AppRoutes.staffAmenityTicketList);
+                      break;
 
-    return SingleChildScrollView(
-      padding: padding,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const SizedBox(height: 12),
-          const _HeaderCard(),
-          const SizedBox(height: 12),
-          _StatsGrid(
-            totalAssigned: totalAssigned,
-            completed: completed,
-            pending: pending,
+                    case EmployeeQuickMenuExtraAction.room:
+                      // Điều hướng tới màn phòng ở cho nhân viên (đã khai báo route).
+                      AppRouter.push(context, AppRoutes.employeeRooms);
+                      break;
+
+                    case EmployeeQuickMenuExtraAction.mealPlan:
+                      // STAFF: Điều hướng tới màn suất ăn dành cho nhân viên.
+                      AppRouter.push(context, AppRoutes.employeeMealPlan);
+                      break;
+
+                    case EmployeeQuickMenuExtraAction.requests:
+                      // Điều hướng tới màn yêu cầu của nhân viên.
+                      AppRouter.push(context, AppRoutes.employeeRequests);
+                      break;
+
+                    case EmployeeQuickMenuExtraAction.tasks:
+                      // Điều hướng tới màn công việc cũ (mock/legacy).
+                      AppRouter.push(context, AppRoutes.employeeTasks);
+                      break;
+
+                    case EmployeeQuickMenuExtraAction.checkInOut:
+                      // Điều hướng tới màn check-in/check-out ca làm.
+                      AppRouter.push(context, AppRoutes.employeeCheckInOut);
+                      break;
+
+                    case EmployeeQuickMenuExtraAction.familyProfile:
+                      // STAFF: Xem các hộ gia đình được phân công.
+                      AppRouter.push(
+                        context,
+                        AppRoutes.employeeAssignedFamilies,
+                      );
+                      break;
+
+                    case EmployeeQuickMenuExtraAction.createCustomer:
+                      // STAFF: Tạo tài khoản khách hàng.
+                      AppRouter.push(context, AppRoutes.employeeCreateCustomer);
+                      break;
+
+                    case EmployeeQuickMenuExtraAction.transactions:
+                      // STAFF: Xem danh sách giao dịch thanh toán.
+                      AppRouter.push(context, AppRoutes.staffTransactionList);
+                      break;
+
+                    case EmployeeQuickMenuExtraAction.contracts:
+                      // STAFF: Xem danh sách hợp đồng.
+                      AppRouter.push(context, AppRoutes.staffContractList);
+                      break;
+
+                    case EmployeeQuickMenuExtraAction.staffProfile:
+                      // Tài khoản nhân viên: giữ luồng cũ sang EmployeeProfileScreen.
+                      final authBloc = InjectionContainer.authBloc;
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => BlocProvider.value(
+                            value: authBloc,
+                            child: const EmployeeProfileScreen(),
+                          ),
+                        ),
+                      );
+                      break;
+                  }
+                },
+              ),
+              const SizedBox(height: 16),
+              _buildSearchBar(scale),
+              if (_showFilters) _buildAdvancedFilters(scale, padding),
+              const SizedBox(height: 12),
+              if (isUsingFilters)
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16 * scale),
+                  child: Text(
+                    'Đang hiển thị ${filteredAppointments.length} lịch hẹn',
+                    style: AppTextStyles.arimo(
+                      fontSize: 12 * scale,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+            ]),
           ),
-          EmployeeQuickMenuSection(
-            primaryItems: EmployeeQuickMenuPresets.primaryItems(),
-            allItems: EmployeeQuickMenuPresets.allItems(),
-            currentTab: AppBottomTab.appointment,
-            onBottomTabSelected: (tab) {
-              // Đổi tab nhanh cho nhân viên:
-              // - Dịch vụ -> màn đặt gói/dịch vụ cho khách (EmployeePackageBookingScreen)
-              // - Trao đổi -> màn chat shell dành cho staff
-              switch (tab) {
-                case AppBottomTab.services:
-                  AppRouter.push(context, AppRoutes.employeePackageBooking);
-                  break;
-                case AppBottomTab.chat:
-                  // STAFF: Điều hướng tới màn chat dành riêng cho nhân viên.
-                  AppRouter.push(context, AppRoutes.employeeChat);
-                  break;
-                case AppBottomTab.appointment:
-                case AppBottomTab.home:
-                case AppBottomTab.profile:
-                  // Đã ở màn lịch làm việc / chưa hỗ trợ tab khác trong portal nhân viên.
-                  break;
-              }
-            },
-            onExtraActionSelected: (action) {
-              switch (action) {
-                case EmployeeQuickMenuExtraAction.amenityService:
-                  // Điều hướng tới màn tạo ticket tiện ích mới
-                  AppRouter.push(context, AppRoutes.serviceBooking);
-                  break;
-                case EmployeeQuickMenuExtraAction.amenityTicket:
-                  // Điều hướng tới màn danh sách ticket tiện ích
-                  AppRouter.push(context, AppRoutes.staffAmenityTicketList);
-                  break;
-
-                case EmployeeQuickMenuExtraAction.room:
-                  // Điều hướng tới màn phòng ở cho nhân viên (đã khai báo route).
-                  AppRouter.push(context, AppRoutes.employeeRooms);
-                  break;
-
-                case EmployeeQuickMenuExtraAction.mealPlan:
-                  // STAFF: Điều hướng tới màn suất ăn dành cho nhân viên.
-                  AppRouter.push(context, AppRoutes.employeeMealPlan);
-                  break;
-
-                case EmployeeQuickMenuExtraAction.requests:
-                  // Điều hướng tới màn yêu cầu của nhân viên.
-                  AppRouter.push(context, AppRoutes.employeeRequests);
-                  break;
-
-                case EmployeeQuickMenuExtraAction.tasks:
-                  // Điều hướng tới màn công việc cũ (mock/legacy).
-                  AppRouter.push(context, AppRoutes.employeeTasks);
-                  break;
-
-                case EmployeeQuickMenuExtraAction.checkInOut:
-                  // Điều hướng tới màn check-in/check-out ca làm.
-                  AppRouter.push(context, AppRoutes.employeeCheckInOut);
-                  break;
-
-                case EmployeeQuickMenuExtraAction.familyProfile:
-                  // STAFF: Xem các hộ gia đình được phân công.
-                  AppRouter.push(context, AppRoutes.employeeAssignedFamilies);
-                  break;
-
-                case EmployeeQuickMenuExtraAction.createCustomer:
-                  // STAFF: Tạo tài khoản khách hàng.
-                  AppRouter.push(context, AppRoutes.employeeCreateCustomer);
-                  break;
-
-                case EmployeeQuickMenuExtraAction.transactions:
-                  // STAFF: Xem danh sách giao dịch thanh toán.
-                  AppRouter.push(context, AppRoutes.staffTransactionList);
-                  break;
-
-                case EmployeeQuickMenuExtraAction.contracts:
-                  // STAFF: Xem danh sách hợp đồng.
-                  AppRouter.push(context, AppRoutes.staffContractList);
-                  break;
-
-                case EmployeeQuickMenuExtraAction.staffProfile:
-                  // Tài khoản nhân viên: giữ luồng cũ sang EmployeeProfileScreen.
-                  final authBloc = InjectionContainer.authBloc;
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => BlocProvider.value(
-                        value: authBloc,
-                        child: const EmployeeProfileScreen(),
+        ),
+        if (filteredAppointments.isEmpty)
+          SliverPadding(
+            padding: padding.copyWith(top: 24),
+            sliver: SliverToBoxAdapter(
+              child: _buildNoFilteredAppointmentsState(scale),
+            ),
+          )
+        else ...[
+          if (upcomingAppointments.isNotEmpty)
+            SliverPadding(
+              padding: padding.copyWith(top: 16),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  _SectionTitle(
+                    icon: Icons.calendar_month,
+                    title: 'Lịch sắp tới (${upcomingAppointments.length})',
+                  ),
+                  const SizedBox(height: 8),
+                  ...upcomingAppointments.map(
+                    (appointment) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _AppointmentCard(appointment: appointment),
+                    ),
+                  ),
+                ]),
+              ),
+            ),
+          if (completedAppointments.isNotEmpty)
+            SliverPadding(
+              padding: padding.copyWith(top: 16, bottom: 24),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  _SectionTitle(
+                    icon: Icons.check_circle_outline,
+                    title: 'Đã hoàn thành (${completedAppointments.length})',
+                    iconColor: AppColors.textSecondary,
+                  ),
+                  const SizedBox(height: 8),
+                  ...completedAppointments.map(
+                    (appointment) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _CompletedAppointmentCard(
+                        appointment: appointment,
                       ),
                     ),
-                  );
-                  break;
+                  ),
+                ]),
+              ),
+            ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildSearchBar(double scale) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16 * scale),
+      child: TextField(
+        controller: _searchController,
+        decoration: InputDecoration(
+          hintText: 'Tìm kiếm theo tên, email, SĐT khách hàng...',
+          prefixIcon: const Icon(Icons.search),
+          suffixIcon: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_searchQuery.isNotEmpty)
+                IconButton(
+                  icon: const Icon(Icons.clear),
+                  onPressed: () {
+                    setState(() {
+                      _searchQuery = '';
+                      _searchController.clear();
+                    });
+                  },
+                ),
+              Stack(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.filter_list),
+                    onPressed: () {
+                      setState(() {
+                        _showFilters = !_showFilters;
+                      });
+                    },
+                  ),
+                  if (_getActiveFilterCount() > 0)
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          '${_getActiveFilterCount()}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12 * scale),
+            borderSide: BorderSide(
+              color: AppColors.textSecondary.withValues(alpha: 0.3),
+            ),
+          ),
+          filled: true,
+          fillColor: AppColors.white,
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 16 * scale,
+            vertical: 12 * scale,
+          ),
+        ),
+        onChanged: (value) {
+          setState(() {
+            _searchQuery = value;
+          });
+        },
+      ),
+    );
+  }
+
+  Widget _buildAdvancedFilters(double scale, EdgeInsets padding) {
+    return Container(
+      margin: EdgeInsets.fromLTRB(16 * scale, 8 * scale, 16 * scale, 0),
+      padding: EdgeInsets.all(16 * scale),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(12 * scale),
+        border: Border.all(
+          color: AppColors.textSecondary.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Bộ lọc nâng cao',
+                style: AppTextStyles.arimo(
+                  fontSize: 14 * scale,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              TextButton(
+                onPressed: _clearFilters,
+                child: Text(
+                  'Xóa bộ lọc',
+                  style: AppTextStyles.arimo(
+                    fontSize: 12 * scale,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12 * scale),
+          // Status filter
+          Text(
+            'Trạng thái:',
+            style: AppTextStyles.arimo(
+              fontSize: 12 * scale,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          SizedBox(height: 8 * scale),
+          Wrap(
+            spacing: 8 * scale,
+            runSpacing: 4 * scale,
+            children: [
+              _buildStatusChip(value: 'all', label: 'Tất cả'),
+              _buildStatusChip(value: 'pending', label: 'Chờ xử lý'),
+              _buildStatusChip(value: 'scheduled', label: 'Đã lên lịch'),
+              _buildStatusChip(value: 'completed', label: 'Đã hoàn thành'),
+              _buildStatusChip(value: 'cancelled', label: 'Đã hủy'),
+            ],
+          ),
+          SizedBox(height: 12 * scale),
+          // Date filter
+          Text(
+            'Ngày:',
+            style: AppTextStyles.arimo(
+              fontSize: 12 * scale,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          SizedBox(height: 8 * scale),
+          InkWell(
+            onTap: () async {
+              final date = await showDatePicker(
+                context: context,
+                initialDate: _dateFilter ?? DateTime.now(),
+                firstDate: DateTime(2020),
+                lastDate: DateTime(2030),
+              );
+              if (date != null) {
+                setState(() {
+                  _dateFilter = date;
+                });
               }
             },
+            child: Container(
+              padding: EdgeInsets.all(12 * scale),
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: AppColors.textSecondary.withValues(alpha: 0.3),
+                ),
+                borderRadius: BorderRadius.circular(8 * scale),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.calendar_today,
+                    size: 16 * scale,
+                    color: AppColors.textSecondary,
+                  ),
+                  SizedBox(width: 8 * scale),
+                  Expanded(
+                    child: Text(
+                      _dateFilter == null
+                          ? 'Chọn ngày'
+                          : '${_dateFilter!.day}/${_dateFilter!.month}/${_dateFilter!.year}',
+                      style: AppTextStyles.arimo(
+                        fontSize: 12 * scale,
+                        color: _dateFilter == null
+                            ? AppColors.textSecondary
+                            : AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  if (_dateFilter != null)
+                    InkWell(
+                      onTap: () {
+                        setState(() {
+                          _dateFilter = null;
+                        });
+                      },
+                      child: Icon(
+                        Icons.close,
+                        size: 16 * scale,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ),
-          const SizedBox(height: 16),
-          if (upcomingAppointments.isNotEmpty) ...[
-            _SectionTitle(
-              icon: Icons.calendar_month,
-              title: 'Lịch sắp tới (${upcomingAppointments.length})',
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusChip({required String value, required String label}) {
+    final isSelected = _statusFilter == value;
+
+    return ChoiceChip(
+      label: Text(
+        label,
+        style: AppTextStyles.arimo(
+          fontSize: 12,
+          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+          color: isSelected ? AppColors.white : AppColors.textSecondary,
+        ),
+      ),
+      selected: isSelected,
+      selectedColor: AppColors.primary,
+      backgroundColor: AppColors.background,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(999),
+        side: BorderSide(
+          color: isSelected
+              ? AppColors.primary
+              : AppColors.textSecondary.withValues(alpha: 0.2),
+        ),
+      ),
+      onSelected: (_) {
+        setState(() {
+          _statusFilter = value;
+        });
+      },
+    );
+  }
+
+  Widget _buildNoFilteredAppointmentsState(double scale) {
+    final hasFilters = _getActiveFilterCount() > 0;
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16 * scale),
+      child: Column(
+        children: [
+          Icon(
+            Icons.search_off,
+            size: 40 * scale,
+            color: AppColors.textSecondary.withValues(alpha: 0.4),
+          ),
+          SizedBox(height: 12 * scale),
+          Text(
+            'Không tìm thấy lịch hẹn phù hợp',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.arimo(
+              fontSize: 14 * scale,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
             ),
-            const SizedBox(height: 8),
-            ...upcomingAppointments.map(
-              (appointment) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _AppointmentCard(appointment: appointment),
+          ),
+          SizedBox(height: 4 * scale),
+          Text(
+            'Thử thay đổi từ khóa tìm kiếm hoặc điều chỉnh lại bộ lọc.',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.arimo(
+              fontSize: 12 * scale,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          if (hasFilters) ...[
+            SizedBox(height: 8 * scale),
+            TextButton(
+              onPressed: _clearFilters,
+              child: Text(
+                'Xóa tất cả bộ lọc',
+                style: AppTextStyles.arimo(
+                  fontSize: 12 * scale,
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],
-          const SizedBox(height: 16),
-          if (completedAppointments.isNotEmpty) ...[
-            _SectionTitle(
-              icon: Icons.check_circle_outline,
-              title: 'Đã hoàn thành (${completedAppointments.length})',
-              iconColor: AppColors.textSecondary,
-            ),
-            const SizedBox(height: 8),
-            ...completedAppointments.map(
-              (appointment) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _CompletedAppointmentCard(appointment: appointment),
-              ),
-            ),
-          ],
-          const SizedBox(height: 24),
         ],
       ),
     );
@@ -361,7 +798,11 @@ class _HeaderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.white,
+        gradient: LinearGradient(
+          colors: [AppColors.primary.withValues(alpha: 0.08), AppColors.white],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -372,25 +813,41 @@ class _HeaderCard extends StatelessWidget {
         ],
       ),
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            'Lịch làm việc của tôi',
-            style: AppTextStyles.arimo(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Lịch làm việc của tôi',
+                  style: AppTextStyles.arimo(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Quản lý và theo dõi lịch hẹn được giao',
+                  style: AppTextStyles.arimo(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 6),
-          Text(
-            'Quản lý và theo dõi lịch hẹn được giao',
-            style: AppTextStyles.arimo(
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-              color: AppColors.textSecondary,
+          const SizedBox(width: 12),
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppColors.white.withValues(alpha: 0.9),
+              borderRadius: BorderRadius.circular(12),
             ),
+            child: Icon(Icons.event_available, color: AppColors.primary),
           ),
         ],
       ),
@@ -461,13 +918,13 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: valueColor.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -543,11 +1000,17 @@ class _AppointmentCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 5),
           ),
         ],
+        border: Border(
+          left: BorderSide(
+            color: _statusAccentColor(appointment.status),
+            width: 3,
+          ),
+        ),
       ),
       padding: const EdgeInsets.all(14),
       child: Column(
@@ -555,16 +1018,26 @@ class _AppointmentCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              _StatusBadge(status: appointment.status),
-              const Spacer(),
-              Text(
-                _formatDate(appointment.appointmentDate),
-                style: AppTextStyles.arimo(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: const Color(0xFF6B7280),
-                ),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.access_time,
+                    size: 16,
+                    color: Color(0xFF6B7280),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    _formatDate(appointment.appointmentDate),
+                    style: AppTextStyles.arimo(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF111827),
+                    ),
+                  ),
+                ],
               ),
+              const Spacer(),
+              _StatusBadge(status: appointment.status),
             ],
           ),
           const SizedBox(height: 10),
@@ -669,6 +1142,100 @@ class _AppointmentCard extends StatelessWidget {
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
   }
+
+  Color _statusAccentColor(AppointmentStatus status) {
+    switch (status) {
+      case AppointmentStatus.completed:
+        return const Color(0xFF1B7F3A);
+      case AppointmentStatus.scheduled:
+        return const Color(0xFF2563EB);
+      case AppointmentStatus.pending:
+        return const Color(0xFF9A6B00);
+      case AppointmentStatus.cancelled:
+        return const Color(0xFFB91C1C);
+      default:
+        return const Color(0xFF6B7280);
+    }
+  }
+}
+
+/// Loading skeleton when appointments are being fetched
+class _AppointmentsLoadingSkeleton extends StatelessWidget {
+  const _AppointmentsLoadingSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final padding = AppResponsive.pagePadding(context);
+
+    return ListView.builder(
+      padding: padding,
+      physics: const AlwaysScrollableScrollPhysics(),
+      itemCount: 6,
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          return const SizedBox(height: 12);
+        }
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: _AppointmentSkeletonCard(),
+        );
+      },
+    );
+  }
+}
+
+class _AppointmentSkeletonCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSkeletonBar(width: 120, height: 10),
+          const SizedBox(height: 10),
+          _buildSkeletonBar(width: 180, height: 14),
+          const SizedBox(height: 8),
+          _buildSkeletonBar(width: double.infinity, height: 10),
+          const SizedBox(height: 4),
+          _buildSkeletonBar(width: 140, height: 10),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: _buildSkeletonBar(height: 32)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildSkeletonBar(height: 32)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSkeletonBar({
+    double width = double.infinity,
+    double height = 12,
+  }) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(999),
+      ),
+    );
+  }
 }
 
 /// Completed appointment card
@@ -683,13 +1250,13 @@ class _CompletedAppointmentCard extends StatelessWidget {
       opacity: 0.75,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: AppColors.background,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 14,
-              offset: const Offset(0, 6),
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
