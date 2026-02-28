@@ -6,6 +6,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../widgets/employee_header_bar.dart';
+import '../widgets/employee_scaffold.dart';
 
 class CheckInOutScreen extends StatefulWidget {
   const CheckInOutScreen({super.key});
@@ -39,10 +40,7 @@ class _CheckInOutScreenState extends State<CheckInOutScreen> {
 
       final response = await ApiClient.dio.get(
         ApiEndpoints.myStaffSchedules,
-        queryParameters: {
-          'from': _dateOnly(from),
-          'to': _dateOnly(to),
-        },
+        queryParameters: {'from': _dateOnly(from), 'to': _dateOnly(to)},
       );
 
       final data = response.data as List<dynamic>;
@@ -74,22 +72,19 @@ class _CheckInOutScreenState extends State<CheckInOutScreen> {
     try {
       await ApiClient.dio.patch(
         ApiEndpoints.checkStaffSchedule,
-        data: {
-          'staffScheduleId': item.id,
-          'note': note,
-        },
+        data: {'staffScheduleId': item.id, 'note': note},
       );
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Check thành công')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Check thành công')));
       await _loadSchedules();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Check thất bại: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Check thất bại: $e')));
       setState(() {
         _submitting = false;
       });
@@ -111,8 +106,7 @@ class _CheckInOutScreenState extends State<CheckInOutScreen> {
         : (_schedules.isNotEmpty ? _schedules.first : null);
     final history = _schedules.where((e) => e.isChecked).toList();
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
+    return EmployeeScaffold(
       body: SafeArea(
         child: Column(
           children: [
@@ -137,7 +131,9 @@ class _CheckInOutScreenState extends State<CheckInOutScreen> {
                       else if (_error != null)
                         _ErrorCard(error: _error!, onRetry: _loadSchedules)
                       else if (current == null)
-                        const _EmptyCard(message: 'Không có lịch làm việc để check')
+                        const _EmptyCard(
+                          message: 'Không có lịch làm việc để check',
+                        )
                       else
                         _CurrentShiftCard(
                           item: current,
@@ -145,7 +141,10 @@ class _CheckInOutScreenState extends State<CheckInOutScreen> {
                           onCheck: (note) => _check(current, note: note),
                         ),
                       const SizedBox(height: 16),
-                      const _SectionTitle(icon: Icons.history, title: 'Lịch sử check'),
+                      const _SectionTitle(
+                        icon: Icons.history,
+                        title: 'Lịch sử check',
+                      ),
                       const SizedBox(height: 8),
                       if (history.isEmpty)
                         const _EmptyCard(message: 'Chưa có lịch sử check')
@@ -188,7 +187,8 @@ class _StaffScheduleItem {
   });
 
   factory _StaffScheduleItem.fromJson(Map<String, dynamic> json) {
-    final familySchedule = json['familyScheduleResponse'] as Map<String, dynamic>?;
+    final familySchedule =
+        json['familyScheduleResponse'] as Map<String, dynamic>?;
     return _StaffScheduleItem(
       id: (json['id'] as num?)?.toInt() ?? 0,
       isChecked: json['isChecked'] as bool? ?? false,
@@ -310,9 +310,11 @@ class _CurrentShiftCardState extends State<_CurrentShiftCard> {
             child: ElevatedButton(
               onPressed: widget.submitting
                   ? null
-                  : () => widget.onCheck(_noteController.text.trim().isEmpty
-                        ? null
-                        : _noteController.text.trim()),
+                  : () => widget.onCheck(
+                      _noteController.text.trim().isEmpty
+                          ? null
+                          : _noteController.text.trim(),
+                    ),
               child: Text(widget.submitting ? 'Đang gửi...' : 'Check ngay'),
             ),
           ),

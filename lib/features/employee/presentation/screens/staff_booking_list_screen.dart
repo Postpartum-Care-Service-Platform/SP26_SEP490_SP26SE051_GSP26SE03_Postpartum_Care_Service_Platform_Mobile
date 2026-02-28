@@ -596,10 +596,10 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
               isExpanded: true,
               items: const [
                 DropdownMenuItem(value: 'all', child: Text('Tất cả')),
-                DropdownMenuItem(value: 'pending', child: Text('Pending')),
-                DropdownMenuItem(value: 'confirmed', child: Text('Confirmed')),
-                DropdownMenuItem(value: 'completed', child: Text('Completed')),
-                DropdownMenuItem(value: 'cancelled', child: Text('Cancelled')),
+                DropdownMenuItem(value: 'pending', child: Text('Chờ xử lý')),
+                DropdownMenuItem(value: 'confirmed', child: Text('Đã xác nhận')),
+                DropdownMenuItem(value: 'completed', child: Text('Đã hoàn thành')),
+                DropdownMenuItem(value: 'cancelled', child: Text('Đã hủy')),
               ],
               onChanged: (value) {
                 if (value == null) return;

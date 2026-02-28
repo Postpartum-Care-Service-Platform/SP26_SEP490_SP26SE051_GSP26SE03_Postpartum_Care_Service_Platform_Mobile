@@ -4,6 +4,7 @@ import '../../../../core/apis/api_client.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
+import '../../../employee/presentation/widgets/employee_scaffold.dart';
 import '../../data/datasources/transaction_remote_datasource.dart';
 import '../../data/models/transaction_with_customer_model.dart';
 
@@ -157,8 +158,7 @@ class _StaffTransactionListScreenState
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
+    return EmployeeScaffold(
       appBar: AppBar(
         title: const Text('Danh sách giao dịch'),
         actions: [
@@ -645,9 +645,9 @@ class _StaffTransactionListScreenState
                     isExpanded: true,
                     items: const [
                       DropdownMenuItem(value: 'all', child: Text('Tất cả')),
-                      DropdownMenuItem(value: 'pending', child: Text('Pending')),
-                      DropdownMenuItem(value: 'paid', child: Text('Paid')),
-                      DropdownMenuItem(value: 'failed', child: Text('Failed')),
+                      DropdownMenuItem(value: 'pending', child: Text('Chờ xử lý')),
+                      DropdownMenuItem(value: 'paid', child: Text('Đã thanh toán')),
+                      DropdownMenuItem(value: 'failed', child: Text('Thất bại')),
                     ],
                     onChanged: (value) {
                       if (value == null) return;

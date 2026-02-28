@@ -172,11 +172,106 @@ class _StaffContractPreviewScreenState
                       ),
                       SizedBox(height: 12 * scale),
                       Divider(height: 1, color: AppColors.borderLight),
-                      SizedBox(height: 12 * scale),
-                      // Render HTML nội dung hợp đồng để khách hàng đọc dễ hơn
-                      HtmlWidget(
-                        preview.htmlContent,
-                        textStyle: AppTextStyles.arimo(fontSize: 13 * scale),
+                      SizedBox(height: 16 * scale),
+                      // Container cho HTML content với background nhẹ
+                      Container(
+                        padding: EdgeInsets.all(16 * scale),
+                        decoration: BoxDecoration(
+                          color: AppColors.background,
+                          borderRadius: BorderRadius.circular(8 * scale),
+                          border: Border.all(
+                            color: AppColors.borderLight.withValues(alpha: 0.5),
+                            width: 1,
+                          ),
+                        ),
+                        child: HtmlWidget(
+                          preview.htmlContent,
+                          textStyle: AppTextStyles.arimo(
+                            fontSize: 15 * scale,
+                            color: AppColors.textPrimary,
+                          ),
+                          customStylesBuilder: (element) {
+                            // Cải thiện styling cho các thẻ HTML
+                            final tag = element.localName?.toLowerCase();
+                            switch (tag) {
+                              case 'h1':
+                                return {
+                                  'font-weight': 'bold',
+                                  'font-size': '20px',
+                                  'margin-top': '20px',
+                                  'margin-bottom': '12px',
+                                  'color': '#1a1a1a',
+                                  'text-align': 'center',
+                                };
+                              case 'h2':
+                              case 'h3':
+                                return {
+                                  'font-weight': 'bold',
+                                  'font-size': '18px',
+                                  'margin-top': '16px',
+                                  'margin-bottom': '10px',
+                                  'color': '#1a1a1a',
+                                };
+                              case 'p':
+                                return {
+                                  'margin-top': '10px',
+                                  'margin-bottom': '10px',
+                                  'line-height': '1.8',
+                                  'text-align': 'justify',
+                                };
+                              case 'table':
+                                return {
+                                  'width': '100%',
+                                  'border-collapse': 'collapse',
+                                  'margin-top': '16px',
+                                  'margin-bottom': '16px',
+                                  'background-color': '#ffffff',
+                                };
+                              case 'th':
+                                return {
+                                  'padding': '10px',
+                                  'border': '1px solid #d0d0d0',
+                                  'background-color': '#f5f5f5',
+                                  'font-weight': 'bold',
+                                  'text-align': 'left',
+                                };
+                              case 'td':
+                                return {
+                                  'padding': '10px',
+                                  'border': '1px solid #e0e0e0',
+                                };
+                              case 'div':
+                                // Kiểm tra class để style đặc biệt
+                                final className = element.className;
+                                if (className.contains('header')) {
+                                  return {
+                                    'text-align': 'center',
+                                    'margin-bottom': '20px',
+                                  };
+                                }
+                                if (className.contains('section')) {
+                                  return {
+                                    'margin-top': '16px',
+                                    'margin-bottom': '16px',
+                                  };
+                                }
+                                if (className.contains('title')) {
+                                  return {
+                                    'font-weight': 'bold',
+                                    'font-size': '18px',
+                                    'margin-bottom': '12px',
+                                  };
+                                }
+                                return null;
+                              default:
+                                return null;
+                            }
+                          },
+                          customWidgetBuilder: (element) {
+                            // Custom widget cho các thẻ đặc biệt nếu cần
+                            return null;
+                          },
+                        ),
                       ),
                     ],
                   ),

@@ -6,6 +6,7 @@ import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/widgets/app_app_bar.dart';
+import '../widgets/employee_scaffold.dart';
 import '../../../booking/presentation/bloc/booking_bloc.dart';
 import '../../../booking/presentation/bloc/booking_event.dart';
 import '../../../booking/presentation/bloc/booking_state.dart';
@@ -198,8 +199,7 @@ class _EmployeePackageBookingScreenState
             );
           }
         },
-        child: Scaffold(
-          backgroundColor: AppColors.background,
+        child: EmployeeScaffold(
           appBar: const AppAppBar(
             title: 'Đặt gói cho khách hàng',
             centerTitle: true,

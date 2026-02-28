@@ -20,7 +20,10 @@ class EmployeeMoreSheet {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      isScrollControlled: false,
       builder: (bottomSheetContext) {
+        final bottomInset = MediaQuery.of(bottomSheetContext).padding.bottom;
+
         return Container(
           decoration: const BoxDecoration(color: Colors.transparent),
           child: Container(
@@ -28,61 +31,125 @@ class EmployeeMoreSheet {
               color: AppColors.white,
               borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             ),
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 8),
-                Container(
-                  width: 48,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(999),
+            padding: EdgeInsets.only(
+              top: 8,
+              left: 0,
+              right: 0,
+              bottom: bottomInset > 0 ? bottomInset : 8,
+            ),
+            child: SafeArea(
+              top: false,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 4),
+                  Center(
+                    child: Container(
+                      width: 48,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                _SheetItem(
-                  icon: Icons.restaurant_menu,
-                  title: 'Coi bữa ăn theo hộ',
-                  onTap: () {
-                    Navigator.of(bottomSheetContext).pop();
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const EmployeeMealPlanScreen(),
-                      ),
-                    );
-                  },
-                ),
-                _SheetItem(
-                  icon: Icons.auto_awesome,
-                  title: 'Đặt dịch vụ',
-                  onTap: () {
-                    Navigator.of(bottomSheetContext).pop();
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const ServiceBookingScreen(),
-                      ),
-                    );
-                  },
-                ),
-                _SheetItem(
-                  icon: Icons.person_rounded,
-                  title: AppStrings.employeeProfile,
-                  onTap: () {
-                    Navigator.of(bottomSheetContext).pop();
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => BlocProvider.value(
-                          value: authBloc,
-                          child: const EmployeeProfileScreen(),
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.grid_view_rounded,
+                            color: AppColors.primary,
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 8),
-              ],
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Tiện ích cho nhân viên',
+                                style: AppTextStyles.arimo(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Truy cập nhanh các chức năng thường dùng trong ca làm.',
+                                style: AppTextStyles.arimo(
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: Color(0xFFF1F5F9),
+                  ),
+                  const SizedBox(height: 4),
+                  _SheetItem(
+                    icon: Icons.restaurant_menu,
+                    title: 'Coi bữa ăn theo hộ',
+                    subtitle: 'Xem suất ăn theo từng hộ gia đình được phụ trách.',
+                    onTap: () {
+                      Navigator.of(bottomSheetContext).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const EmployeeMealPlanScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _SheetItem(
+                    icon: Icons.auto_awesome,
+                    title: 'Đặt dịch vụ',
+                    subtitle: 'Đặt gói chăm sóc, dịch vụ tiện ích cho khách hàng.',
+                    onTap: () {
+                      Navigator.of(bottomSheetContext).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const ServiceBookingScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _SheetItem(
+                    icon: Icons.person_rounded,
+                    title: AppStrings.employeeProfile,
+                    subtitle: 'Xem và cập nhật thông tin tài khoản nhân viên.',
+                    onTap: () {
+                      Navigator.of(bottomSheetContext).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => BlocProvider.value(
+                            value: authBloc,
+                            child: const EmployeeProfileScreen(),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ),
             ),
           ),
         );
@@ -94,36 +161,69 @@ class EmployeeMoreSheet {
 class _SheetItem extends StatelessWidget {
   final IconData icon;
   final String title;
+  final String? subtitle;
   final VoidCallback onTap;
 
   const _SheetItem({
     required this.icon,
     required this.title,
+    this.subtitle,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            Icon(icon, color: AppColors.primary),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                title,
-                style: AppTextStyles.arimo(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  color: AppColors.primary,
+                  size: 20,
                 ),
               ),
-            ),
-            Icon(Icons.chevron_right, color: AppColors.textSecondary),
-          ],
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: AppTextStyles.arimo(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle!,
+                        style: AppTextStyles.arimo(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: AppColors.textSecondary),
+            ],
+          ),
         ),
       ),
     );

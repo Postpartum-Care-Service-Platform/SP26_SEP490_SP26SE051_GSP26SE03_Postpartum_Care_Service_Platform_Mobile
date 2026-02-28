@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../widgets/employee_header_bar.dart';
+import '../widgets/employee_scaffold.dart';
 
 class TasksScreen extends StatelessWidget {
   const TasksScreen({super.key});
@@ -13,8 +14,7 @@ class TasksScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final padding = AppResponsive.pagePadding(context);
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
+    return EmployeeScaffold(
       body: SafeArea(
         child: Column(
           children: [

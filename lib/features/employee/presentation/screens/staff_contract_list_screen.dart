@@ -8,6 +8,7 @@ import '../../../../core/widgets/app_app_bar.dart';
 import '../../../contract/data/datasources/contract_remote_datasource.dart';
 import '../../../contract/data/models/contract_model.dart';
 import 'staff_contract_screen.dart';
+import '../widgets/employee_scaffold.dart';
 
 /// Danh sách hợp đồng cho staff (tất cả + chưa lên lịch)
 class StaffContractListScreen extends StatefulWidget {
@@ -159,8 +160,7 @@ class _StaffContractListScreenState extends State<StaffContractListScreen> {
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
+    return EmployeeScaffold(
       appBar: AppAppBar(
         title: 'Danh sách hợp đồng',
         centerTitle: true,
