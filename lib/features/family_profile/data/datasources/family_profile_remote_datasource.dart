@@ -14,6 +14,7 @@ abstract class FamilyProfileRemoteDataSource {
     String customerId,
   );
   Future<List<MemberTypeModel>> getMemberTypes();
+  Future<MemberTypeModel> getMemberTypeById(int id);
   Future<FamilyProfileModel> createFamilyProfile(
     CreateFamilyProfileRequestModel request,
   );
@@ -107,6 +108,25 @@ class FamilyProfileRemoteDataSourceImpl
     } on DioException catch (e) {
       if (e.response != null) {
         throw Exception('Failed to load member types: ${e.response?.statusCode}');
+      } else {
+        throw Exception('Network error: ${e.message}');
+      }
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  @override
+  Future<MemberTypeModel> getMemberTypeById(int id) async {
+    try {
+      final response = await dio.get(
+        ApiEndpoints.getMemberTypeById(id),
+      );
+
+      return MemberTypeModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception('Failed to load member type: ${e.response?.statusCode}');
       } else {
         throw Exception('Network error: ${e.message}');
       }

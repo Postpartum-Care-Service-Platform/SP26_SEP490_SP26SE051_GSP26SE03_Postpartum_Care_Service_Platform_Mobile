@@ -44,6 +44,15 @@ class FamilyProfileRepositoryImpl implements FamilyProfileRepository {
   }
 
   @override
+  Future<MemberTypeModel> getMemberTypeById(int id) async {
+    try {
+      return await remoteDataSource.getMemberTypeById(id);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
   Future<FamilyProfileEntity> createFamilyProfile(
     CreateFamilyProfileRequestModel request,
   ) async {
