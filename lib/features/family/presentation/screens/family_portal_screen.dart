@@ -3,16 +3,15 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/routing/app_router.dart';
+import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../widgets/family_bottom_nav_bar.dart';
 import '../widgets/family_fab.dart';
 import 'family_meal_selection_screen.dart';
-import 'family_services_booking_screen.dart';
 import 'family_chat_screen.dart';
-import 'family_feedback_screen.dart';
 import 'tabs/baby_care_tab.dart';
-import 'tabs/care_schedule_tab.dart';
 import 'tabs/family_overview_tab.dart';
 import 'tabs/staff_info_tab.dart';
 
@@ -94,7 +93,7 @@ class _FamilyPortalScreenState extends State<FamilyPortalScreen> {
                     index: _currentIndex,
                     children: const [
                       FamilyOverviewTab(),
-                      CareScheduleTab(),
+                      _SchedulePlaceholderTab(),
                       BabyCareTab(),
                       StaffInfoTab(),
                     ],
@@ -140,11 +139,7 @@ class _FamilyPortalScreenState extends State<FamilyPortalScreen> {
                   }
 
                   if (action == FamilyFabAction.services) {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const FamilyServicesBookingScreen(),
-                      ),
-                    );
+                    AppRouter.push(context, AppRoutes.amenity);
                     return;
                   }
 
@@ -158,11 +153,7 @@ class _FamilyPortalScreenState extends State<FamilyPortalScreen> {
                   }
 
                   if (action == FamilyFabAction.feedback) {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const FamilyFeedbackScreen(),
-                      ),
-                    );
+                    AppRouter.push(context, AppRoutes.feedback);
                     return;
                   }
 
@@ -244,6 +235,64 @@ class _FamilyHeaderBar extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Placeholder tab thay thế CareScheduleTab (đã xóa vì dùng mock data).
+/// Cho phép chuyển sang FamilyScheduleScreen (dùng API thật).
+class _SchedulePlaceholderTab extends StatelessWidget {
+  const _SchedulePlaceholderTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.calendar_month_outlined,
+              size: 64,
+              color: AppColors.textSecondary.withValues(alpha: 0.5),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Lịch chăm sóc hàng ngày',
+              style: AppTextStyles.arimo(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Xem lịch chi tiết theo ngày',
+              style: AppTextStyles.arimo(
+                fontSize: 14,
+                color: AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () => AppRouter.push(context, AppRoutes.familySchedule),
+              icon: const Icon(Icons.calendar_today, size: 18),
+              label: const Text('Xem lịch'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.familyPrimary,
+                foregroundColor: AppColors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

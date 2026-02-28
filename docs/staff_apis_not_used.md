@@ -82,8 +82,8 @@ Dựa trên tài liệu API functionalities for staff, có **2 nhóm API**:
 
 - ❌ `GET /api/Contract/{id}`  
   **Mô tả:** Lấy chi tiết hợp đồng  
-  **Trạng thái:** Chưa có trong codebase  
-  **Ghi chú:** Cần cho staff xem chi tiết hợp đồng
+  **Trạng thái:** ✅ BE đã có (`WebAPI/Controllers/ContractController.cs`) và **mobile staff đã tích hợp một phần** (dùng trong `StaffContractScreen` để load lại hợp đồng sau khi tạo/gửi)  
+  **Ghi chú:** Dùng nội bộ trong màn `StaffContractScreen` để refresh thông tin hợp đồng theo `id`
 
 - ❌ `GET /api/Contract/preview/{bookingId}`  
   **Mô tả:** Preview hợp đồng  
@@ -92,8 +92,8 @@ Dựa trên tài liệu API functionalities for staff, có **2 nhóm API**:
 
 - ❌ `GET /api/Contract/{id}/export-pdf`  
   **Mô tả:** Xuất PDF hợp đồng  
-  **Trạng thái:** Chưa có trong codebase (có endpoint `/Contract/{contractId}/export-pdf` nhưng chưa dùng cho staff)  
-  **Ghi chú:** Cần cho staff xuất PDF hợp đồng
+  **Trạng thái:** ✅ BE đã có và **mobile đã tích hợp** cho cả customer (`ContractScreen`) và staff (`StaffContractScreen`, nút "Xuất PDF")  
+  **Ghi chú:** Staff/customer có thể tải file PDF và mở bằng app ngoài
 
 - ❌ `POST /api/Contract`  
   **Mô tả:** Tạo hợp đồng  
@@ -102,13 +102,13 @@ Dựa trên tài liệu API functionalities for staff, có **2 nhóm API**:
 
 - ❌ `POST /api/Contract/from-booking/{bookingId}`  
   **Mô tả:** Tạo hợp đồng từ booking  
-  **Trạng thái:** Chưa có trong codebase  
-  **Ghi chú:** Cần cho staff tạo hợp đồng từ booking
+  **Trạng thái:** ✅ BE đã có và **mobile staff đã tích hợp** (khi mở `StaffContractScreen` nếu booking chưa có hợp đồng sẽ tự động gọi API này)  
+  **Ghi chú:** Dùng để auto-generate hợp đồng cho booking đã được staff confirm
 
 - ❌ `PUT /api/Contract/{id}/send`  
   **Mô tả:** Gửi hợp đồng  
-  **Trạng thái:** Chưa có trong codebase  
-  **Ghi chú:** Cần cho staff gửi hợp đồng cho khách hàng
+  **Trạng thái:** ✅ BE đã có và **mobile staff đã tích hợp** (nút "Gửi cho khách" trong `StaffContractScreen`)  
+  **Ghi chú:** Staff gửi hợp đồng để khách xem/ký; sau khi gửi sẽ reload lại thông tin hợp đồng
 
 - ❌ `PUT /api/Contract/{id}/upload-signed`  
   **Mô tả:** Upload hợp đồng đã ký  

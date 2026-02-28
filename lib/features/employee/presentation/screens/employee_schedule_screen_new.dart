@@ -279,11 +279,6 @@ class _LoadedContent extends StatelessWidget {
                   AppRouter.push(context, AppRoutes.employeeCheckInOut);
                   break;
 
-                case EmployeeQuickMenuExtraAction.legacyServiceBooking:
-                  // Điều hướng tới màn đặt dịch vụ cũ (mock/legacy).
-                  AppRouter.push(context, AppRoutes.employeeServiceBooking);
-                  break;
-
                 case EmployeeQuickMenuExtraAction.familyProfile:
                   // STAFF: Xem các hộ gia đình được phân công.
                   AppRouter.push(context, AppRoutes.employeeAssignedFamilies);
@@ -297,6 +292,11 @@ class _LoadedContent extends StatelessWidget {
                 case EmployeeQuickMenuExtraAction.transactions:
                   // STAFF: Xem danh sách giao dịch thanh toán.
                   AppRouter.push(context, AppRoutes.staffTransactionList);
+                  break;
+
+                case EmployeeQuickMenuExtraAction.contracts:
+                  // STAFF: Xem danh sách hợp đồng.
+                  AppRouter.push(context, AppRoutes.staffContractList);
                   break;
 
                 case EmployeeQuickMenuExtraAction.staffProfile:

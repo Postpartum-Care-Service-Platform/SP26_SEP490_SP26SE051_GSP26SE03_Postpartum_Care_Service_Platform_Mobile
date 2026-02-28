@@ -119,6 +119,17 @@ class ApiEndpoints {
       '/Contract/my/$bookingId';
   static String exportContractPdf(int contractId) =>
       '/Contract/$contractId/export-pdf';
+  static const String getAllContracts = '/Contract/all';
+  static String getContractById(int id) => '/Contract/$id';
+  static String previewContractByBooking(int bookingId) =>
+      '/Contract/preview/$bookingId';
+  static const String createContract = '/Contract';
+  static String createContractFromBooking(int bookingId) =>
+      '/Contract/from-booking/$bookingId';
+  static String sendContract(int id) => '/Contract/$id/send';
+  static String uploadSignedContract(int id) => '/Contract/$id/upload-signed';
+  static String updateContractContent(int id) => '/Contract/$id/update-content';
+  static const String getNoScheduleContracts = '/Contract/no-schedule';
 
   // ==========================================
   // Employee - Appointment endpoints

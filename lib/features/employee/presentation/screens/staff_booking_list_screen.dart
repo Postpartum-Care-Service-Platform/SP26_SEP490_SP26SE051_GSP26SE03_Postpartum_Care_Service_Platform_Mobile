@@ -8,6 +8,7 @@ import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_app_bar.dart';
 import '../../../booking/data/datasources/booking_remote_datasource.dart';
 import '../../../booking/data/models/booking_model.dart';
+import 'staff_contract_screen.dart';
 import '../../../../core/di/injection_container.dart';
 import 'employee_offline_payment_screen.dart';
 
@@ -213,6 +214,18 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
                               await _refresh();
                             }
                           },
+                          onViewContract:
+                              booking.status.toLowerCase() == 'confirmed' ||
+                                  booking.status.toLowerCase() == 'completed'
+                              ? () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          StaffContractScreen(booking: booking),
+                                    ),
+                                  );
+                                }
+                              : null,
                         );
                       },
                     ),
@@ -271,12 +284,14 @@ class _BookingItem extends StatelessWidget {
   final VoidCallback? onConfirm;
   final VoidCallback? onComplete;
   final VoidCallback? onRecordOfflinePayment;
+  final VoidCallback? onViewContract;
 
   const _BookingItem({
     required this.booking,
     this.onConfirm,
     this.onComplete,
     this.onRecordOfflinePayment,
+    this.onViewContract,
   });
 
   @override
@@ -409,7 +424,8 @@ class _BookingItem extends StatelessWidget {
           ),
           if (onConfirm != null ||
               onComplete != null ||
-              onRecordOfflinePayment != null) ...[
+              onRecordOfflinePayment != null ||
+              onViewContract != null) ...[
             SizedBox(height: 10 * scale),
             Row(
               children: [
@@ -451,6 +467,19 @@ class _BookingItem extends StatelessWidget {
                       ),
                       icon: const Icon(Icons.payments, size: 18),
                       label: const Text('Thanh toán offline'),
+                    ),
+                  ),
+                if (onViewContract != null) SizedBox(width: 8 * scale),
+                if (onViewContract != null)
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: onViewContract,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF0F766E),
+                        side: const BorderSide(color: Color(0xFF0F766E)),
+                      ),
+                      icon: const Icon(Icons.description_outlined, size: 18),
+                      label: const Text('Hợp đồng'),
                     ),
                   ),
               ],
