@@ -494,9 +494,7 @@ class _StaffAmenityTicketListScreenState
 
   Color _getStatusColor(AmenityTicketStatus status) {
     switch (status) {
-      case AmenityTicketStatus.pending:
-        return Colors.orange;
-      case AmenityTicketStatus.accepted:
+      case AmenityTicketStatus.booked:
         return Colors.blue;
       case AmenityTicketStatus.completed:
         return Colors.green;
@@ -507,10 +505,8 @@ class _StaffAmenityTicketListScreenState
 
   String _getStatusText(AmenityTicketStatus status) {
     switch (status) {
-      case AmenityTicketStatus.pending:
-        return 'Chờ duyệt';
-      case AmenityTicketStatus.accepted:
-        return 'Đã duyệt';
+      case AmenityTicketStatus.booked:
+        return 'Đã đặt';
       case AmenityTicketStatus.completed:
         return 'Hoàn thành';
       case AmenityTicketStatus.cancelled:

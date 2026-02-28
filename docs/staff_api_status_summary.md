@@ -19,6 +19,7 @@ Tài liệu này tổng hợp và đồng bộ thông tin từ:
 - **Đã tích hợp trong mobile**: ~43 endpoints (86%)
 - **Chưa tích hợp**: ~7 endpoints (14%)
 - **API không tồn tại/sai**: 0 endpoints
+- **API thiếu cho nghiệp vụ**: 3 endpoints (MenuRecordController - staff xem/chỉnh sửa menu khách hàng)
 
 ---
 
@@ -327,6 +328,33 @@ Tài liệu này tổng hợp và đồng bộ thông tin từ:
   **Trạng thái Mobile**: ❌ Chưa tích hợp (có endpoint `/member-types` nhưng chưa có theo ID)  
   **Ghi chú**: Cần cho staff xem chi tiết loại thành viên
 
+### ❌ `MenuRecordController` (Thiếu API cho Staff)
+- ❌ `GET /api/MenuRecord/customer/{customerId}`  
+  **Mô tả**: Staff xem menu của khách hàng theo customerId  
+  **Authorization**: `[Authorize(Roles = "admin,manager,staff")]` - **KHÔNG TỒN TẠI**  
+  **Trạng thái Mobile**: ❌ Chưa có API  
+  **Ghi chú**: **BE CHƯA CÓ API NÀY** - Cần implement để staff xem menu của gia đình được phân
+
+- ❌ `GET /api/MenuRecord/customer/{customerId}/date`  
+  **Mô tả**: Staff xem menu của khách hàng theo customerId và ngày  
+  **Authorization**: `[Authorize(Roles = "admin,manager,staff")]` - **KHÔNG TỒN TẠI**  
+  **Trạng thái Mobile**: ❌ Chưa có API  
+  **Ghi chú**: **BE CHƯA CÓ API NÀY** - Cần implement để staff xem menu theo ngày
+
+- ❌ `PUT /api/MenuRecord/customer/{customerId}`  
+  **Mô tả**: Staff chỉnh sửa menu cho khách hàng  
+  **Authorization**: `[Authorize(Roles = "admin,manager,staff")]` - **KHÔNG TỒN TẠI**  
+  **Trạng thái Mobile**: ❌ Chưa có API  
+  **Ghi chú**: **BE CHƯA CÓ API NÀY** - Cần implement để staff chỉnh sửa menu hộ khách hàng
+
+**Lưu ý**: Hiện tại `MenuRecordController` chỉ có:
+- `GET /api/MenuRecord` - Chỉ dành cho Admin
+- `GET /api/MenuRecord/{id}` - `[Authorize]` (staff có thể dùng nhưng chỉ lấy theo ID)
+- `GET /api/MenuRecord/my` - Chỉ dành cho Customer (xem menu của chính mình)
+- `PUT /api/MenuRecord` - Chỉ dành cho Customer (chỉnh sửa menu của chính mình)
+
+**Không có API nào cho phép staff xem/chỉnh sửa menu của customer khác.**
+
 ---
 
 ## 2) API `[Authorize]` mà Staff cũng gọi được
@@ -351,32 +379,27 @@ Các API này đã được tích hợp chung cho cả customer và staff, khôn
 | **AccountController** | 3 | 1 | 2 | 33% ⚠️ |
 | **AmenityTicketController** | 3 | 3 | 0 | 100% ✅ |
 | **MemberTypesController** | 1 | 1 | 0 | 100% ✅ |
+| **MenuRecordController** | 0 | 0 | 3 | 0% ❌ |
 
 ---
 
 ## 🎯 Ưu tiên tích hợp (đề xuất)
 
 ### 🔴 Cao (Quan trọng cho nghiệp vụ)
-1. **ContractController** - Đã hoàn thành (9/10 APIs, 1 API không cần thiết)
+1. **MenuRecordController** (3 APIs thiếu)
+   - `GET /api/MenuRecord/customer/{customerId}` - Staff xem menu của khách hàng
+   - `GET /api/MenuRecord/customer/{customerId}/date` - Staff xem menu theo ngày
+   - `PUT /api/MenuRecord/customer/{customerId}` - Staff chỉnh sửa menu cho khách hàng
+   - **Lưu ý**: BE chưa có các API này, cần implement ở backend trước
 
-### 🟡 Trung bình (Hữu ích nhưng không cấp thiết)
-3. **NotificationController** (2 APIs)
-   - Tạo thông báo mới
-   - Chỉnh sửa thông báo
-
-
-### 🟢 Thấp (Thường dùng ở admin panel)
-5. **AccountController** (2 APIs)
-   - SetRole, SetAccountStatus - Thường dùng ở web admin panel hơn mobile
-
----
+2. **ContractController** - Đã hoàn thành (9/10 APIs, 1 API không cần thiết)
 
 ## 📝 Ghi chú quan trọng
 
-### API không tồn tại/sai
-- ❌ `PATCH /api/Account/SetAccountActive/{accountId}` - **KHÔNG TỒN TẠI**
-- ❌ `PATCH /api/Account/SetAccountInactive/{accountId}` - **KHÔNG TỒN TẠI**
-- ✅ `PATCH /api/Account/SetAccountStatus/{accountId}` - **TỒN TẠI** (toggle status, không phải 2 endpoint riêng)
+### API thiếu cho nghiệp vụ Staff
+- ❌ `GET /api/MenuRecord/customer/{customerId}` - **KHÔNG TỒN TẠI** - Cần để staff xem menu của gia đình được phân
+- ❌ `GET /api/MenuRecord/customer/{customerId}/date` - **KHÔNG TỒN TẠI** - Cần để staff xem menu theo ngày
+- ❌ `PUT /api/MenuRecord/customer/{customerId}` - **KHÔNG TỒN TẠI** - Cần để staff chỉnh sửa menu hộ khách hàng
 
 ### API đã có sẵn nhưng chưa dùng UI
 - AmenityTicketController update API - Đã có API và BLoC, cần implement dialog/màn hình cập nhật ticket
@@ -390,3 +413,4 @@ Các API này đã được tích hợp chung cho cả customer và staff, khôn
 - API Endpoints: `lib/core/apis/api_endpoints.dart`
 - Ngày tạo: 26/02/2026
 - Ngày cập nhật: 26/02/2026 (Đã tích hợp AmenityTicketController - 3/3 APIs, ChatController - 6/6 APIs, ContractController - 9/10 APIs, MemberTypesController - 1/1 API với UI đầy đủ)
+- Ngày cập nhật: 26/02/2026 (Phát hiện thiếu API MenuRecordController cho staff - 3 APIs cần implement ở BE)

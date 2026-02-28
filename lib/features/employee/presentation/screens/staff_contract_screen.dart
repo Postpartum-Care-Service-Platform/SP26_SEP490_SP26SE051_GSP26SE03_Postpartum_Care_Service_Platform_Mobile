@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -189,8 +190,10 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
     final contract = _contract;
     if (contract == null) return;
 
-    final fileController = TextEditingController(text: contract.fileUrl ?? '');
     DateTime signedDate = contract.signedDate ?? DateTime.now();
+    final picker = ImagePicker();
+    String? pickedImagePath;
+    bool isUploading = false;
 
     await showModalBottomSheet<void>(
       context: context,
@@ -221,18 +224,141 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                     ),
                   ),
                   SizedBox(height: 12 * scale),
-                  TextField(
-                    controller: fileController,
-                    decoration: InputDecoration(
-                      labelText: 'Link file hợp đồng (PDF)',
-                      hintText: 'Nhập URL hoặc đường dẫn file PDF đã ký',
-                      helperText: 'Ví dụ: https://example.com/contract.pdf hoặc file:///path/to/contract.pdf',
-                      prefixIcon: const Icon(Icons.link),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12 * scale),
-                      ),
+                  Text(
+                    'Chọn ảnh hợp đồng đã ký (chụp hoặc từ bộ sưu tập). Ảnh sẽ được upload và hệ thống tự lưu link.',
+                    style: AppTextStyles.arimo(
+                      fontSize: 13 * scale,
+                      color: AppColors.textSecondary,
                     ),
-                    maxLines: 2,
+                  ),
+                  SizedBox(height: 12 * scale),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: isUploading
+                              ? null
+                              : () async {
+                                  final image = await picker.pickImage(
+                                    source: ImageSource.camera,
+                                    imageQuality: 85,
+                                    maxWidth: 1600,
+                                  );
+                                  if (image != null) {
+                                    setModalState(() {
+                                      pickedImagePath = image.path;
+                                    });
+                                  }
+                                },
+                          icon: const Icon(Icons.photo_camera_outlined),
+                          label: const Text('Chụp ảnh'),
+                        ),
+                      ),
+                      SizedBox(width: 10 * scale),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: isUploading
+                              ? null
+                              : () async {
+                                  final image = await picker.pickImage(
+                                    source: ImageSource.gallery,
+                                    imageQuality: 85,
+                                    maxWidth: 1600,
+                                  );
+                                  if (image != null) {
+                                    setModalState(() {
+                                      pickedImagePath = image.path;
+                                    });
+                                  }
+                                },
+                          icon: const Icon(Icons.photo_library_outlined),
+                          label: const Text('Bộ sưu tập'),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 12 * scale),
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(12 * scale),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12 * scale),
+                      border: Border.all(
+                        color: AppColors.borderLight,
+                      ),
+                      color: AppColors.white,
+                    ),
+                    child: pickedImagePath == null
+                        ? Row(
+                            children: [
+                              const Icon(Icons.image_outlined),
+                              SizedBox(width: 10 * scale),
+                              Expanded(
+                                child: Text(
+                                  'Chưa chọn ảnh',
+                                  style: AppTextStyles.arimo(
+                                    fontSize: 13 * scale,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(Icons.check_circle_outline,
+                                      color: AppColors.verified),
+                                  SizedBox(width: 10 * scale),
+                                  Expanded(
+                                    child: Text(
+                                      'Đã chọn ảnh',
+                                      style: AppTextStyles.arimo(
+                                        fontSize: 13 * scale,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    onPressed: isUploading
+                                        ? null
+                                        : () {
+                                            setModalState(() {
+                                              pickedImagePath = null;
+                                            });
+                                          },
+                                    icon: const Icon(Icons.close),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 8 * scale),
+                              ClipRRect(
+                                borderRadius:
+                                    BorderRadius.circular(10 * scale),
+                                child: Image.file(
+                                  File(pickedImagePath!),
+                                  height: 180 * scale,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Container(
+                                    height: 180 * scale,
+                                    color: AppColors.background,
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      'Không thể hiển thị ảnh',
+                                      style: AppTextStyles.arimo(
+                                        fontSize: 12 * scale,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                   ),
                   SizedBox(height: 12 * scale),
                   Row(
@@ -262,45 +388,49 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () async {
-                        final url = fileController.text.trim();
-                        if (url.isEmpty) {
-                          AppToast.showError(
-                            context,
-                            message: 'Vui lòng nhập link file hợp đồng',
-                          );
-                          return;
-                        }
-                        Navigator.of(ctx).pop();
-                        try {
-                          final message = await _remote.uploadSigned(
-                            id: contract.id,
-                            fileUrl: url,
-                            signedDate: signedDate,
-                          );
-                          if (mounted) {
-                            AppToast.showSuccess(context, message: message);
-                            final updated = await _remote.getContractById(
-                              contract.id,
-                            );
-                            setState(() {
-                              _contract = updated;
-                            });
-                          }
-                        } catch (e) {
-                          if (mounted) {
-                            AppToast.showError(
-                              context,
-                              message: 'Không thể upload hợp đồng đã ký: $e',
-                            );
-                          }
-                        }
-                      },
+                      onPressed: isUploading
+                          ? null
+                          : () async {
+                              if (pickedImagePath == null) {
+                                AppToast.showError(
+                                  context,
+                                  message: 'Vui lòng chọn/chụp ảnh hợp đồng đã ký',
+                                );
+                                return;
+                              }
+
+                              setModalState(() => isUploading = true);
+                              try {
+                                final message = await _remote.uploadSignedFile(
+                                  id: contract.id,
+                                  filePath: pickedImagePath!,
+                                  signedDate: signedDate,
+                                );
+                                if (!mounted) return;
+                                Navigator.of(ctx).pop();
+                                AppToast.showSuccess(context, message: message);
+                                final updated =
+                                    await _remote.getContractById(contract.id);
+                                if (!mounted) return;
+                                setState(() {
+                                  _contract = updated;
+                                });
+                              } catch (e) {
+                                if (mounted) {
+                                  AppToast.showError(
+                                    context,
+                                    message:
+                                        'Không thể upload hợp đồng đã ký: $e',
+                                  );
+                                }
+                                setModalState(() => isUploading = false);
+                              }
+                            },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: AppColors.white,
                       ),
-                      child: const Text('Lưu'),
+                      child: Text(isUploading ? 'Đang upload...' : 'Lưu'),
                     ),
                   ),
                 ],

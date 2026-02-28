@@ -37,6 +37,13 @@ abstract class ContractRemoteDataSource {
     required DateTime signedDate,
   });
 
+  /// Staff/Admin: Upload signed contract by file (multipart/form-data)
+  Future<String> uploadSignedFile({
+    required int id,
+    required String filePath,
+    required DateTime signedDate,
+  });
+
   /// Staff/Admin: Update contract content (dates / prices / customer info)
   Future<ContractModel> updateContent(
     int id, {
@@ -242,6 +249,41 @@ class ContractRemoteDataSourceImpl implements ContractRemoteDataSource {
       if (e.response != null) {
         throw Exception(
           'Failed to upload signed contract: ${e.response?.statusCode}',
+        );
+      } else {
+        throw Exception('Network error: ${e.message}');
+      }
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  @override
+  Future<String> uploadSignedFile({
+    required int id,
+    required String filePath,
+    required DateTime signedDate,
+  }) async {
+    try {
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(filePath),
+        'signedDate': signedDate.toIso8601String().split('T')[0], // yyyy-MM-dd
+      });
+
+      final response = await dio.put(
+        ApiEndpoints.uploadSignedContractFile(id),
+        data: formData,
+      );
+
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        return data['message'] as String? ?? 'Upload hợp đồng đã ký thành công';
+      }
+      return 'Upload hợp đồng đã ký thành công';
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(
+          'Failed to upload signed contract file: ${e.response?.statusCode}',
         );
       } else {
         throw Exception('Network error: ${e.message}');

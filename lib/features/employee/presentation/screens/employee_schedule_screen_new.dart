@@ -183,17 +183,112 @@ class _ErrorState extends StatelessWidget {
 }
 
 /// Loaded content with appointments
-class _LoadedContent extends StatelessWidget {
+class _LoadedContent extends StatefulWidget {
   final List<AppointmentEntity> appointments;
 
   const _LoadedContent({required this.appointments});
 
   @override
+  State<_LoadedContent> createState() => _LoadedContentState();
+}
+
+class _LoadedContentState extends State<_LoadedContent> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  String _statusFilter = 'all';
+  DateTime? _dateFilter;
+  bool _showFilters = false;
+
+  List<AppointmentEntity> _applyFilters(List<AppointmentEntity> appointments) {
+    var filtered = appointments;
+
+    // Search filter
+    if (_searchQuery.isNotEmpty) {
+      final query = _searchQuery.toLowerCase();
+      filtered = filtered.where((a) {
+        final customerName = (a.customer?.username ?? '').toLowerCase();
+        final customerEmail = (a.customer?.email ?? '').toLowerCase();
+        final customerPhone = (a.customer?.phone ?? '').toLowerCase();
+        final appointmentName = (a.name ?? '').toLowerCase();
+        
+        return customerName.contains(query) ||
+            customerEmail.contains(query) ||
+            customerPhone.contains(query) ||
+            appointmentName.contains(query);
+      }).toList();
+    }
+
+    // Status filter
+    if (_statusFilter != 'all') {
+      filtered = filtered.where((a) {
+        switch (_statusFilter) {
+          case 'pending':
+            return a.status == AppointmentStatus.pending;
+          case 'scheduled':
+            return a.status == AppointmentStatus.scheduled;
+          case 'completed':
+            return a.status == AppointmentStatus.completed;
+          case 'cancelled':
+            return a.status == AppointmentStatus.cancelled;
+          default:
+            return true;
+        }
+      }).toList();
+    }
+
+    // Date filter
+    if (_dateFilter != null) {
+      filtered = filtered.where((a) {
+        final appointmentDate = DateTime(
+          a.appointmentDate.year,
+          a.appointmentDate.month,
+          a.appointmentDate.day,
+        );
+        final filterDate = DateTime(
+          _dateFilter!.year,
+          _dateFilter!.month,
+          _dateFilter!.day,
+        );
+        return appointmentDate.isAtSameMomentAs(filterDate);
+      }).toList();
+    }
+
+    return filtered;
+  }
+
+  int _getActiveFilterCount() {
+    int count = 0;
+    if (_statusFilter != 'all') count++;
+    if (_searchQuery.isNotEmpty) count++;
+    if (_dateFilter != null) count++;
+    return count;
+  }
+
+  void _clearFilters() {
+    setState(() {
+      _searchQuery = '';
+      _searchController.clear();
+      _statusFilter = 'all';
+      _dateFilter = null;
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final padding = AppResponsive.pagePadding(context);
+    final scale = AppResponsive.scaleFactor(context);
+
+    // Apply filters
+    final filteredAppointments = _applyFilters(widget.appointments);
 
     // Separate upcoming and completed appointments
-    final upcomingAppointments = appointments
+    final upcomingAppointments = filteredAppointments
         .where(
           (a) =>
               a.status != AppointmentStatus.completed &&
@@ -201,14 +296,11 @@ class _LoadedContent extends StatelessWidget {
         )
         .toList();
 
-    final completedAppointments = appointments
+    final completedAppointments = filteredAppointments
         .where((a) => a.status == AppointmentStatus.completed)
         .toList();
 
-    // Calculate stats
-    final totalAssigned = appointments.length;
-    final completed = completedAppointments.length;
-    final pending = upcomingAppointments.length;
+    // Calculate stats (using original appointments, not filtered)
 
     return SingleChildScrollView(
       padding: padding,
@@ -219,10 +311,14 @@ class _LoadedContent extends StatelessWidget {
           const _HeaderCard(),
           const SizedBox(height: 12),
           _StatsGrid(
-            totalAssigned: totalAssigned,
-            completed: completed,
-            pending: pending,
+            totalAssigned: widget.appointments.length,
+            completed: widget.appointments.where((a) => a.status == AppointmentStatus.completed).length,
+            pending: widget.appointments.where((a) => a.status != AppointmentStatus.completed && a.status != AppointmentStatus.cancelled).length,
           ),
+          const SizedBox(height: 12),
+          _buildSearchBar(scale),
+          if (_showFilters) _buildAdvancedFilters(scale, padding),
+          const SizedBox(height: 8),
           EmployeeQuickMenuSection(
             primaryItems: EmployeeQuickMenuPresets.primaryItems(),
             allItems: EmployeeQuickMenuPresets.allItems(),
@@ -347,6 +443,225 @@ class _LoadedContent extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar(double scale) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16 * scale),
+      child: TextField(
+        controller: _searchController,
+        decoration: InputDecoration(
+          hintText: 'Tìm kiếm theo tên, email, SĐT khách hàng...',
+          prefixIcon: const Icon(Icons.search),
+          suffixIcon: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_searchQuery.isNotEmpty)
+                IconButton(
+                  icon: const Icon(Icons.clear),
+                  onPressed: () {
+                    setState(() {
+                      _searchQuery = '';
+                      _searchController.clear();
+                    });
+                  },
+                ),
+              Stack(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.filter_list),
+                    onPressed: () {
+                      setState(() {
+                        _showFilters = !_showFilters;
+                      });
+                    },
+                  ),
+                  if (_getActiveFilterCount() > 0)
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          '${_getActiveFilterCount()}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12 * scale),
+            borderSide: BorderSide(color: AppColors.textSecondary.withValues(alpha: 0.3)),
+          ),
+          filled: true,
+          fillColor: AppColors.white,
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 16 * scale,
+            vertical: 12 * scale,
+          ),
+        ),
+        onChanged: (value) {
+          setState(() {
+            _searchQuery = value;
+          });
+        },
+      ),
+    );
+  }
+
+  Widget _buildAdvancedFilters(double scale, EdgeInsets padding) {
+    return Container(
+      margin: EdgeInsets.fromLTRB(16 * scale, 8 * scale, 16 * scale, 0),
+      padding: EdgeInsets.all(16 * scale),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(12 * scale),
+        border: Border.all(
+          color: AppColors.textSecondary.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Bộ lọc nâng cao',
+                style: AppTextStyles.arimo(
+                  fontSize: 14 * scale,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              TextButton(
+                onPressed: _clearFilters,
+                child: Text(
+                  'Xóa bộ lọc',
+                  style: AppTextStyles.arimo(
+                    fontSize: 12 * scale,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12 * scale),
+          // Status filter
+          Text(
+            'Trạng thái:',
+            style: AppTextStyles.arimo(
+              fontSize: 12 * scale,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          SizedBox(height: 8 * scale),
+          DropdownButton<String>(
+            value: _statusFilter,
+            isExpanded: true,
+            items: const [
+              DropdownMenuItem(value: 'all', child: Text('Tất cả')),
+              DropdownMenuItem(value: 'pending', child: Text('Pending')),
+              DropdownMenuItem(value: 'scheduled', child: Text('Scheduled')),
+              DropdownMenuItem(value: 'completed', child: Text('Completed')),
+              DropdownMenuItem(value: 'cancelled', child: Text('Cancelled')),
+            ],
+            onChanged: (value) {
+              if (value == null) return;
+              setState(() {
+                _statusFilter = value;
+              });
+            },
+          ),
+          SizedBox(height: 12 * scale),
+          // Date filter
+          Text(
+            'Ngày:',
+            style: AppTextStyles.arimo(
+              fontSize: 12 * scale,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          SizedBox(height: 8 * scale),
+          InkWell(
+            onTap: () async {
+              final date = await showDatePicker(
+                context: context,
+                initialDate: _dateFilter ?? DateTime.now(),
+                firstDate: DateTime(2020),
+                lastDate: DateTime(2030),
+              );
+              if (date != null) {
+                setState(() {
+                  _dateFilter = date;
+                });
+              }
+            },
+            child: Container(
+              padding: EdgeInsets.all(12 * scale),
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: AppColors.textSecondary.withValues(alpha: 0.3),
+                ),
+                borderRadius: BorderRadius.circular(8 * scale),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.calendar_today,
+                    size: 16 * scale,
+                    color: AppColors.textSecondary,
+                  ),
+                  SizedBox(width: 8 * scale),
+                  Expanded(
+                    child: Text(
+                      _dateFilter == null
+                          ? 'Chọn ngày'
+                          : '${_dateFilter!.day}/${_dateFilter!.month}/${_dateFilter!.year}',
+                      style: AppTextStyles.arimo(
+                        fontSize: 12 * scale,
+                        color: _dateFilter == null
+                            ? AppColors.textSecondary
+                            : AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  if (_dateFilter != null)
+                    InkWell(
+                      onTap: () {
+                        setState(() {
+                          _dateFilter = null;
+                        });
+                      },
+                      child: Icon(
+                        Icons.close,
+                        size: 16 * scale,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );

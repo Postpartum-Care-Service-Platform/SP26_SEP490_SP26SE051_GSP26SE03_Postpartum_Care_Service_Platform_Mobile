@@ -128,7 +128,6 @@ class FamilyMemberCard extends StatelessWidget {
                               textColor: AppColors.textPrimary,
                             ),
                           ],
-                          ],
                         ],
                       ),
                       SizedBox(height: 4 * scale),

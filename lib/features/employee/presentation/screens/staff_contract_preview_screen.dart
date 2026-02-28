@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 
 import '../../../../core/apis/api_client.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -12,10 +13,7 @@ import '../../../contract/data/models/contract_preview_model.dart';
 class StaffContractPreviewScreen extends StatefulWidget {
   final int bookingId;
 
-  const StaffContractPreviewScreen({
-    super.key,
-    required this.bookingId,
-  });
+  const StaffContractPreviewScreen({super.key, required this.bookingId});
 
   @override
   State<StaffContractPreviewScreen> createState() =>
@@ -26,8 +24,9 @@ class _StaffContractPreviewScreenState
     extends State<StaffContractPreviewScreen> {
   final _remote = ContractRemoteDataSourceImpl(dio: ApiClient.dio);
 
-  late Future<ContractPreviewModel> _future =
-      _remote.previewContractByBooking(widget.bookingId);
+  late Future<ContractPreviewModel> _future = _remote.previewContractByBooking(
+    widget.bookingId,
+  );
 
   Future<void> _refresh() async {
     setState(() {
@@ -174,11 +173,10 @@ class _StaffContractPreviewScreenState
                       SizedBox(height: 12 * scale),
                       Divider(height: 1, color: AppColors.borderLight),
                       SizedBox(height: 12 * scale),
-                      // Hiển thị HTML content (có thể dùng html package nếu cần render HTML)
-                      // Hiện tại hiển thị dạng text, có thể cải thiện sau bằng html widget
-                      SelectableText(
+                      // Render HTML nội dung hợp đồng để khách hàng đọc dễ hơn
+                      HtmlWidget(
                         preview.htmlContent,
-                        style: AppTextStyles.arimo(fontSize: 13 * scale),
+                        textStyle: AppTextStyles.arimo(fontSize: 13 * scale),
                       ),
                     ],
                   ),
@@ -191,4 +189,3 @@ class _StaffContractPreviewScreenState
     );
   }
 }
-
