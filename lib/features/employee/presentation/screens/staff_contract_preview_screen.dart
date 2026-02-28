@@ -96,17 +96,49 @@ class _StaffContractPreviewScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  preview.contractCode,
-                  style: AppTextStyles.tinos(
-                    fontSize: 18 * scale,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+                Container(
+                  padding: EdgeInsets.all(16 * scale),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12 * scale),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.description,
+                        color: AppColors.primary,
+                        size: 24 * scale,
+                      ),
+                      SizedBox(width: 12 * scale),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Mã hợp đồng',
+                              style: AppTextStyles.arimo(
+                                fontSize: 12 * scale,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            SizedBox(height: 4 * scale),
+                            Text(
+                              preview.contractCode,
+                              style: AppTextStyles.tinos(
+                                fontSize: 18 * scale,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                SizedBox(height: 12 * scale),
+                SizedBox(height: 16 * scale),
                 Container(
-                  padding: EdgeInsets.all(12 * scale),
+                  padding: EdgeInsets.all(16 * scale),
                   decoration: BoxDecoration(
                     color: AppColors.white,
                     borderRadius: BorderRadius.circular(12 * scale),
@@ -118,9 +150,37 @@ class _StaffContractPreviewScreenState
                       ),
                     ],
                   ),
-                  child: Text(
-                    preview.htmlContent,
-                    style: AppTextStyles.arimo(fontSize: 13 * scale),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.preview,
+                            size: 18 * scale,
+                            color: AppColors.textSecondary,
+                          ),
+                          SizedBox(width: 8 * scale),
+                          Text(
+                            'Nội dung hợp đồng (Preview)',
+                            style: AppTextStyles.arimo(
+                              fontSize: 14 * scale,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 12 * scale),
+                      Divider(height: 1, color: AppColors.borderLight),
+                      SizedBox(height: 12 * scale),
+                      // Hiển thị HTML content (có thể dùng html package nếu cần render HTML)
+                      // Hiện tại hiển thị dạng text, có thể cải thiện sau bằng html widget
+                      SelectableText(
+                        preview.htmlContent,
+                        style: AppTextStyles.arimo(fontSize: 13 * scale),
+                      ),
+                    ],
                   ),
                 ),
               ],

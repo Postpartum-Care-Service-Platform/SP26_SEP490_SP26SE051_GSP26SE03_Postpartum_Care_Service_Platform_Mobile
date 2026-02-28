@@ -1,160 +1,96 @@
 import 'package:dio/dio.dart';
 import '../../../../core/apis/api_client.dart';
+import '../../../../core/apis/api_endpoints.dart';
 import '../models/amenity_ticket_model.dart';
-import '../models/create_service_booking_request_model.dart';
+import '../models/staff_create_amenity_ticket_request_model.dart';
 
 /// AmenityTicket Remote Data Source
 /// Handles API calls for amenity ticket/booking operations
-/// 
-/// NOTE: API endpoints chưa có ở Backend, structure này chuẩn bị sẵn
-/// Khi BE có API, chỉ cần update endpoints và uncomment code
 class AmenityTicketRemoteDataSource {
   final Dio _dio;
 
   AmenityTicketRemoteDataSource({Dio? dio}) : _dio = dio ?? ApiClient.dio;
 
-  /// Create service booking
-  /// TODO: Update endpoint khi BE có API
-  Future<List<AmenityTicketModel>> createBooking(
-    CreateServiceBookingRequestModel request,
+  /// Staff tạo ticket tiện ích cho khách hàng
+  /// Lưu ý: BE chỉ nhận 1 service mỗi lần, nếu cần tạo nhiều ticket thì gọi nhiều lần
+  Future<AmenityTicketModel> staffCreateAmenityTicket(
+    StaffCreateAmenityTicketRequestModel request,
   ) async {
     try {
-      // TODO: Uncomment khi BE có API
-      // Uncomment code below khi BE đã implement API:
-      /*
       final response = await _dio.post(
-        ApiEndpoints.createServiceBooking,
+        ApiEndpoints.staffCreateAmenityTicket,
         data: request.toJson(),
       );
       
-      final List<dynamic> data = response.data as List<dynamic>;
-      return data
-          .map((json) => AmenityTicketModel.fromJson(json as Map<String, dynamic>))
-          .toList();
-      */
-      
-      // Temporary: Throw error để indicate API chưa có
-      throw Exception('Service Booking API chưa có ở Backend. Vui lòng liên hệ BE team để implement endpoint: POST /ServiceBooking');
+      final data = response.data as Map<String, dynamic>;
+      return AmenityTicketModel.fromJson(data);
     } on DioException catch (e) {
       throw _handleError(e);
     }
   }
 
-  /// Get tickets by customer
-  Future<List<AmenityTicketModel>> getTicketsByCustomer(String customerId) async {
+  /// Staff/Customer cập nhật ticket tiện ích
+  Future<AmenityTicketModel> updateAmenityTicket(
+    int ticketId,
+    UpdateAmenityTicketRequestModel request,
+  ) async {
     try {
-      // TODO: Uncomment khi BE có API
-      /*
+      final response = await _dio.put(
+        ApiEndpoints.updateAmenityTicket(ticketId),
+        data: request.toJson(),
+      );
+      
+      final data = response.data as Map<String, dynamic>;
+      return AmenityTicketModel.fromJson(data);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// Staff/Customer hủy ticket tiện ích
+  Future<AmenityTicketModel> cancelAmenityTicket(int ticketId) async {
+    try {
+      final response = await _dio.patch(
+        ApiEndpoints.cancelAmenityTicket(ticketId),
+      );
+      
+      final data = response.data as Map<String, dynamic>;
+      return AmenityTicketModel.fromJson(data);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// Lấy ticket tiện ích theo ID
+  Future<AmenityTicketModel> getAmenityTicketById(int id) async {
+    try {
       final response = await _dio.get(
-        ApiEndpoints.getTicketsByCustomer(customerId),
+        ApiEndpoints.getAmenityTicketById(id),
+      );
+      
+      final data = response.data as Map<String, dynamic>;
+      return AmenityTicketModel.fromJson(data);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// Lấy tất cả ticket tiện ích của user theo UserId (Admin/Manager)
+  Future<List<AmenityTicketModel>> getAmenityTicketsByUserId(String userId) async {
+    try {
+      final response = await _dio.get(
+        ApiEndpoints.getAmenityTicketsByUserId(userId),
       );
       
       final List<dynamic> data = response.data as List<dynamic>;
       return data
           .map((json) => AmenityTicketModel.fromJson(json as Map<String, dynamic>))
           .toList();
-      */
-      
-      throw Exception('Service Booking API chưa có ở Backend. Vui lòng liên hệ BE team.');
     } on DioException catch (e) {
       throw _handleError(e);
     }
   }
 
-  /// Get my assigned tickets
-  Future<List<AmenityTicketModel>> getMyAssignedTickets() async {
-    try {
-      // TODO: Uncomment khi BE có API
-      /*
-      final response = await _dio.get(ApiEndpoints.myAssignedTickets);
-      
-      final List<dynamic> data = response.data as List<dynamic>;
-      return data
-          .map((json) => AmenityTicketModel.fromJson(json as Map<String, dynamic>))
-          .toList();
-      */
-      
-      throw Exception('Service Booking API chưa có ở Backend. Vui lòng liên hệ BE team.');
-    } on DioException catch (e) {
-      throw _handleError(e);
-    }
-  }
-
-  /// Get all tickets
-  Future<List<AmenityTicketModel>> getAllTickets() async {
-    try {
-      // TODO: Uncomment khi BE có API
-      /*
-      final response = await _dio.get(ApiEndpoints.allTickets);
-      
-      final List<dynamic> data = response.data as List<dynamic>;
-      return data
-          .map((json) => AmenityTicketModel.fromJson(json as Map<String, dynamic>))
-          .toList();
-      */
-      
-      throw Exception('Service Booking API chưa có ở Backend. Vui lòng liên hệ BE team.');
-    } on DioException catch (e) {
-      throw _handleError(e);
-    }
-  }
-
-  /// Cancel ticket
-  Future<String> cancelTicket(int ticketId) async {
-    try {
-      // TODO: Uncomment khi BE có API
-      /*
-      final response = await _dio.put(
-        ApiEndpoints.cancelTicket(ticketId),
-      );
-      
-      final data = response.data as Map<String, dynamic>;
-      return data['message'] as String? ?? 'Hủy đặt dịch vụ thành công';
-      */
-      
-      throw Exception('Service Booking API chưa có ở Backend. Vui lòng liên hệ BE team.');
-    } on DioException catch (e) {
-      throw _handleError(e);
-    }
-  }
-
-  /// Confirm ticket
-  Future<String> confirmTicket(int ticketId) async {
-    try {
-      // TODO: Uncomment khi BE có API
-      /*
-      final response = await _dio.put(
-        ApiEndpoints.confirmTicket(ticketId),
-      );
-      
-      final data = response.data as Map<String, dynamic>;
-      return data['message'] as String? ?? 'Xác nhận đặt dịch vụ thành công';
-      */
-      
-      throw Exception('Service Booking API chưa có ở Backend. Vui lòng liên hệ BE team.');
-    } on DioException catch (e) {
-      throw _handleError(e);
-    }
-  }
-
-  /// Complete ticket
-  Future<String> completeTicket(int ticketId) async {
-    try {
-      // TODO: Uncomment khi BE có API
-      /*
-      final response = await _dio.put(
-        ApiEndpoints.completeTicket(ticketId),
-      );
-      
-      final data = response.data as Map<String, dynamic>;
-      return data['message'] as String? ?? 'Hoàn thành dịch vụ thành công';
-      */
-      
-      throw Exception('Service Booking API chưa có ở Backend. Vui lòng liên hệ BE team.');
-    } on DioException catch (e) {
-      throw _handleError(e);
-    }
-  }
 
   /// Handle Dio errors
   String _handleError(DioException error) {

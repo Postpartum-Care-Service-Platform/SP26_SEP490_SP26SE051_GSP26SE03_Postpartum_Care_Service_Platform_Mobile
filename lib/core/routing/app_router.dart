@@ -37,7 +37,10 @@ import '../../features/employee/presentation/screens/staff_booking_list_screen.d
 import '../../features/transaction/presentation/screens/staff_transaction_list_screen.dart';
 import '../../features/employee/presentation/screens/staff_contract_list_screen.dart';
 import '../../features/employee/presentation/screens/staff_contract_preview_screen.dart';
+import '../../features/employee/presentation/screens/staff_member_type_detail_screen.dart';
 import '../../features/employee/presentation/screens/employee_package_booking_screen.dart';
+import '../../features/employee/presentation/screens/staff_amenity_ticket_list_screen.dart';
+import '../../features/employee/data/models/account_model.dart';
 import '../../features/chat/presentation/screens/conversation_list_screen.dart';
 import '../../features/chat/presentation/screens/conversation_detail_screen.dart';
 import '../../features/chat/presentation/screens/chat_shell_screen.dart';
@@ -295,6 +298,15 @@ class AppRouter {
         }
         return null;
 
+      case AppRoutes.staffMemberTypeDetail:
+        if (settings.arguments is int) {
+          final memberTypeId = settings.arguments as int;
+          return MaterialPageRoute(
+            builder: (_) => StaffMemberTypeDetailScreen(memberTypeId: memberTypeId),
+          );
+        }
+        return null;
+
       case AppRoutes.employeeMealPlan:
         return MaterialPageRoute(
           builder: (_) => const EmployeeMealPlanScreen(),
@@ -302,6 +314,18 @@ class AppRouter {
 
       case AppRoutes.serviceBooking:
         return MaterialPageRoute(builder: (_) => const ServiceBookingScreen());
+
+      case AppRoutes.staffAmenityTicketList:
+        if (settings.arguments is Map<String, dynamic>) {
+          final args = settings.arguments as Map<String, dynamic>;
+          final customer = args['customer'] as AccountModel?;
+          return MaterialPageRoute(
+            builder: (_) => StaffAmenityTicketListScreen(selectedCustomer: customer),
+          );
+        }
+        return MaterialPageRoute(
+          builder: (_) => const StaffAmenityTicketListScreen(),
+        );
 
       // Employee Routes - Legacy/Mock screens
       case AppRoutes.employeeTasks:

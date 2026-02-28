@@ -226,43 +226,24 @@ class _EmployeeChatScreenState extends State<EmployeeChatScreen> {
       itemCount: state.supportRequests.length,
       itemBuilder: (context, index) {
         final request = state.supportRequests[index];
+        // Tìm conversation tương ứng để lấy thông tin khách hàng
+        final conversation = state.conversations.firstWhere(
+          (conv) => conv.id == request.conversationId,
+          orElse: () => state.conversations.first,
+        );
+        final customerInfo = conversation.customerInfo;
+        final customerName = customerInfo?['displayName'] ?? 
+                            customerInfo?['name'] ?? 
+                            customerInfo?['fullName'] ??
+                            request.customer ?? 
+                            'Khách hàng';
+        final customerEmail = customerInfo?['email']?.toString();
+        final customerPhone = customerInfo?['phone']?.toString();
+
         return Card(
           margin: EdgeInsets.only(bottom: 12 * scale),
-          child: ListTile(
-            title: Text(
-              request.customer ?? 'Khách hàng',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16 * scale,
-              ),
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height: 4 * scale),
-                Text(
-                  request.reason,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: 8 * scale),
-                Text(
-                  'Thời gian: ${_formatDateTime(request.createdAt)}',
-                  style: TextStyle(
-                    fontSize: 12 * scale,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-            trailing: ElevatedButton(
-              onPressed: () {
-                context.read<ChatBloc>().add(
-                  ChatAcceptSupportRequestSubmitted(request.id),
-                );
-              },
-              child: const Text('Nhận'),
-            ),
+          elevation: 2,
+          child: InkWell(
             onTap: () {
               // Chuyển đến conversation tương ứng
               context.read<ChatBloc>().add(
@@ -271,6 +252,161 @@ class _EmployeeChatScreenState extends State<EmployeeChatScreen> {
               // Chuyển về tab đầu tiên
               DefaultTabController.of(context).animateTo(0);
             },
+            child: Padding(
+              padding: EdgeInsets.all(16 * scale),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      // Avatar khách hàng
+                      CircleAvatar(
+                        radius: 24 * scale,
+                        backgroundColor: AppColors.primary,
+                        child: Text(
+                          customerName.isNotEmpty 
+                              ? customerName[0].toUpperCase() 
+                              : 'K',
+                          style: TextStyle(
+                            color: AppColors.white,
+                            fontSize: 18 * scale,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 12 * scale),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              customerName,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16 * scale,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            if (customerEmail != null) ...[
+                              SizedBox(height: 4 * scale),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.email_outlined,
+                                    size: 14 * scale,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                  SizedBox(width: 4 * scale),
+                                  Expanded(
+                                    child: Text(
+                                      customerEmail,
+                                      style: TextStyle(
+                                        fontSize: 12 * scale,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                            if (customerPhone != null) ...[
+                              SizedBox(height: 4 * scale),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.phone_outlined,
+                                    size: 14 * scale,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                  SizedBox(width: 4 * scale),
+                                  Text(
+                                    customerPhone,
+                                    style: TextStyle(
+                                      fontSize: 12 * scale,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          context.read<ChatBloc>().add(
+                            ChatAcceptSupportRequestSubmitted(request.id),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: AppColors.white,
+                        ),
+                        child: const Text('Nhận'),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 12 * scale),
+                  Container(
+                    padding: EdgeInsets.all(12 * scale),
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+                      borderRadius: BorderRadius.circular(8 * scale),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.info_outline,
+                              size: 16 * scale,
+                              color: AppColors.primary,
+                            ),
+                            SizedBox(width: 8 * scale),
+                            Text(
+                              'Lý do yêu cầu hỗ trợ:',
+                              style: TextStyle(
+                                fontSize: 12 * scale,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 8 * scale),
+                        Text(
+                          request.reason,
+                          style: TextStyle(
+                            fontSize: 14 * scale,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 8 * scale),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.access_time,
+                        size: 14 * scale,
+                        color: AppColors.textSecondary,
+                      ),
+                      SizedBox(width: 4 * scale),
+                      Text(
+                        'Tạo lúc: ${_formatDateTime(request.createdAt)}',
+                        style: TextStyle(
+                          fontSize: 12 * scale,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ),
         );
       },
@@ -314,59 +450,26 @@ class _EmployeeChatScreenState extends State<EmployeeChatScreen> {
       itemBuilder: (context, index) {
         final request = state.mySupportRequests[index];
         final isResolved = request.status.toLowerCase() == 'resolved';
+        
+        // Tìm conversation tương ứng để lấy thông tin khách hàng
+        final conversation = state.conversations.firstWhere(
+          (conv) => conv.id == request.conversationId,
+          orElse: () => state.conversations.first,
+        );
+        final customerInfo = conversation.customerInfo;
+        final customerName = customerInfo?['displayName'] ?? 
+                            customerInfo?['name'] ?? 
+                            customerInfo?['fullName'] ??
+                            request.customer ?? 
+                            'Khách hàng';
+        final customerEmail = customerInfo?['email']?.toString();
+        final customerPhone = customerInfo?['phone']?.toString();
+
         return Card(
           margin: EdgeInsets.only(bottom: 12 * scale),
+          elevation: 2,
           color: isResolved ? AppColors.primary.withOpacity(0.05) : null,
-          child: ListTile(
-            title: Text(
-              request.customer ?? 'Khách hàng',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16 * scale,
-              ),
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(height: 4 * scale),
-                Text(
-                  request.reason,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: 8 * scale),
-                Text(
-                  'Nhận lúc: ${_formatDateTime(request.assignedAt ?? request.createdAt)}',
-                  style: TextStyle(
-                    fontSize: 12 * scale,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                if (isResolved && request.resolvedAt != null)
-                  Text(
-                    'Đã xử lý: ${_formatDateTime(request.resolvedAt!)}',
-                    style: TextStyle(
-                      fontSize: 12 * scale,
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-              ],
-            ),
-            trailing: isResolved
-                ? Icon(
-                    Icons.check_circle,
-                    color: AppColors.primary,
-                    size: 24 * scale,
-                  )
-                : ElevatedButton(
-                    onPressed: () {
-                      context.read<ChatBloc>().add(
-                        ChatResolveSupportRequestSubmitted(request.id),
-                      );
-                    },
-                    child: const Text('Đã xử lý'),
-                  ),
+          child: InkWell(
             onTap: () {
               // Chuyển đến conversation tương ứng
               context.read<ChatBloc>().add(
@@ -375,6 +478,216 @@ class _EmployeeChatScreenState extends State<EmployeeChatScreen> {
               // Chuyển về tab đầu tiên
               DefaultTabController.of(context).animateTo(0);
             },
+            child: Padding(
+              padding: EdgeInsets.all(16 * scale),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      // Avatar khách hàng
+                      CircleAvatar(
+                        radius: 24 * scale,
+                        backgroundColor: isResolved 
+                            ? AppColors.primary.withOpacity(0.3)
+                            : AppColors.primary,
+                        child: isResolved
+                            ? Icon(
+                                Icons.check_circle,
+                                color: AppColors.primary,
+                                size: 24 * scale,
+                              )
+                            : Text(
+                                customerName.isNotEmpty 
+                                    ? customerName[0].toUpperCase() 
+                                    : 'K',
+                                style: TextStyle(
+                                  color: AppColors.white,
+                                  fontSize: 18 * scale,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                      ),
+                      SizedBox(width: 12 * scale),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    customerName,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16 * scale,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                ),
+                                if (isResolved)
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 8 * scale,
+                                      vertical: 4 * scale,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary,
+                                      borderRadius: BorderRadius.circular(12 * scale),
+                                    ),
+                                    child: Text(
+                                      'Đã xử lý',
+                                      style: TextStyle(
+                                        fontSize: 10 * scale,
+                                        color: AppColors.white,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            if (customerEmail != null) ...[
+                              SizedBox(height: 4 * scale),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.email_outlined,
+                                    size: 14 * scale,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                  SizedBox(width: 4 * scale),
+                                  Expanded(
+                                    child: Text(
+                                      customerEmail,
+                                      style: TextStyle(
+                                        fontSize: 12 * scale,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                            if (customerPhone != null) ...[
+                              SizedBox(height: 4 * scale),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.phone_outlined,
+                                    size: 14 * scale,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                  SizedBox(width: 4 * scale),
+                                  Text(
+                                    customerPhone,
+                                    style: TextStyle(
+                                      fontSize: 12 * scale,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      if (!isResolved)
+                        ElevatedButton(
+                          onPressed: () {
+                            context.read<ChatBloc>().add(
+                              ChatResolveSupportRequestSubmitted(request.id),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: AppColors.white,
+                          ),
+                          child: const Text('Đã xử lý'),
+                        ),
+                    ],
+                  ),
+                  SizedBox(height: 12 * scale),
+                  Container(
+                    padding: EdgeInsets.all(12 * scale),
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+                      borderRadius: BorderRadius.circular(8 * scale),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.info_outline,
+                              size: 16 * scale,
+                              color: AppColors.primary,
+                            ),
+                            SizedBox(width: 8 * scale),
+                            Text(
+                              'Lý do yêu cầu hỗ trợ:',
+                              style: TextStyle(
+                                fontSize: 12 * scale,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 8 * scale),
+                        Text(
+                          request.reason,
+                          style: TextStyle(
+                            fontSize: 14 * scale,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 8 * scale),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.access_time,
+                        size: 14 * scale,
+                        color: AppColors.textSecondary,
+                      ),
+                      SizedBox(width: 4 * scale),
+                      Text(
+                        'Nhận lúc: ${_formatDateTime(request.assignedAt ?? request.createdAt)}',
+                        style: TextStyle(
+                          fontSize: 12 * scale,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (isResolved && request.resolvedAt != null) ...[
+                    SizedBox(height: 4 * scale),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.check_circle,
+                          size: 14 * scale,
+                          color: AppColors.primary,
+                        ),
+                        SizedBox(width: 4 * scale),
+                        Text(
+                          'Đã xử lý: ${_formatDateTime(request.resolvedAt!)}',
+                          style: TextStyle(
+                            fontSize: 12 * scale,
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
           ),
         );
       },

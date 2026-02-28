@@ -45,4 +45,22 @@ abstract class AmenityTicketRepository {
   /// [ticketId] - Ticket ID to complete
   /// Returns success message
   Future<String> completeTicket(int ticketId);
+
+  /// Update amenity ticket
+  /// [ticketId] - Ticket ID to update
+  /// [amenityServiceId] - New service ID
+  /// [startTime] - New start time
+  /// [endTime] - New end time
+  /// Returns updated ticket entity
+  Future<AmenityTicketEntity> updateTicket({
+    required int ticketId,
+    required int amenityServiceId,
+    required DateTime startTime,
+    required DateTime endTime,
+  });
+
+  /// Get ticket by ID
+  /// [id] - Ticket ID
+  /// Returns ticket entity
+  Future<AmenityTicketEntity> getTicketById(int id);
 }

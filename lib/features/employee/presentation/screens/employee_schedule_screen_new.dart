@@ -249,9 +249,12 @@ class _LoadedContent extends StatelessWidget {
             onExtraActionSelected: (action) {
               switch (action) {
                 case EmployeeQuickMenuExtraAction.amenityService:
+                  // Điều hướng tới màn tạo ticket tiện ích mới
+                  AppRouter.push(context, AppRoutes.serviceBooking);
+                  break;
                 case EmployeeQuickMenuExtraAction.amenityTicket:
-                  // Điều hướng tới màn tiện ích cho nhân viên (đã khai báo route).
-                  AppRouter.push(context, AppRoutes.employeeAmenities);
+                  // Điều hướng tới màn danh sách ticket tiện ích
+                  AppRouter.push(context, AppRoutes.staffAmenityTicketList);
                   break;
 
                 case EmployeeQuickMenuExtraAction.room:
