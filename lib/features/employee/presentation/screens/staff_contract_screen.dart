@@ -223,9 +223,16 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                   SizedBox(height: 12 * scale),
                   TextField(
                     controller: fileController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Link file hợp đồng (PDF)',
+                      hintText: 'Nhập URL hoặc đường dẫn file PDF đã ký',
+                      helperText: 'Ví dụ: https://example.com/contract.pdf hoặc file:///path/to/contract.pdf',
+                      prefixIcon: const Icon(Icons.link),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12 * scale),
+                      ),
                     ),
+                    maxLines: 2,
                   ),
                   SizedBox(height: 12 * scale),
                   Row(

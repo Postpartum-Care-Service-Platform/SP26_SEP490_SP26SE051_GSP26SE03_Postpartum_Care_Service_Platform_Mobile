@@ -182,11 +182,30 @@ class _ContractItem extends StatelessWidget {
   Color _statusColor(String status) {
     switch (status.toLowerCase()) {
       case 'draft':
-        return AppColors.textSecondary;
+        return Colors.orange;
+      case 'sent':
+        return Colors.blue;
       case 'signed':
         return AppColors.verified;
+      case 'cancelled':
+        return Colors.red;
       default:
         return AppColors.textSecondary;
+    }
+  }
+
+  String _statusText(String status) {
+    switch (status.toLowerCase()) {
+      case 'draft':
+        return 'Nháp';
+      case 'sent':
+        return 'Đã gửi';
+      case 'signed':
+        return 'Đã ký';
+      case 'cancelled':
+        return 'Đã hủy';
+      default:
+        return status;
     }
   }
 
@@ -195,7 +214,12 @@ class _ContractItem extends StatelessWidget {
     final scale = AppResponsive.scaleFactor(context);
     final statusColor = _statusColor(contract.status);
     final customerName =
-        contract.customer?.username ?? contract.customer?.email ?? 'Khách hàng';
+        contract.customer?.username ?? 
+        contract.customer?.email ?? 
+        contract.customer?.displayName ??
+        'Khách hàng';
+    final customerEmail = contract.customer?.email;
+    final customerPhone = contract.customer?.phone;
 
     return InkWell(
       onTap: onTap,
@@ -212,7 +236,7 @@ class _ContractItem extends StatelessWidget {
             ),
           ],
         ),
-        padding: EdgeInsets.all(14 * scale),
+        padding: EdgeInsets.all(16 * scale),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -221,7 +245,7 @@ class _ContractItem extends StatelessWidget {
               children: [
                 Container(
                   padding: EdgeInsets.symmetric(
-                    horizontal: 10 * scale,
+                    horizontal: 12 * scale,
                     vertical: 6 * scale,
                   ),
                   decoration: BoxDecoration(
@@ -229,7 +253,7 @@ class _ContractItem extends StatelessWidget {
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
-                    contract.status,
+                    _statusText(contract.status),
                     style: AppTextStyles.arimo(
                       fontSize: 11 * scale,
                       fontWeight: FontWeight.w700,
@@ -241,31 +265,109 @@ class _ContractItem extends StatelessWidget {
                   contract.contractCode,
                   style: AppTextStyles.arimo(
                     fontSize: 12 * scale,
+                    fontWeight: FontWeight.w600,
                     color: AppColors.textSecondary,
                   ),
                 ),
               ],
             ),
-            SizedBox(height: 10 * scale),
-            Text(
-              customerName,
-              style: AppTextStyles.arimo(
-                fontSize: 15 * scale,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            SizedBox(height: 4 * scale),
-            Text(
-              'Booking #${contract.bookingId}',
-              style: AppTextStyles.arimo(
-                fontSize: 13 * scale,
-                color: AppColors.textSecondary,
-              ),
-            ),
-            SizedBox(height: 8 * scale),
+            SizedBox(height: 12 * scale),
             Row(
               children: [
+                CircleAvatar(
+                  radius: 20 * scale,
+                  backgroundColor: AppColors.primary,
+                  child: Text(
+                    customerName.isNotEmpty 
+                        ? customerName[0].toUpperCase() 
+                        : 'K',
+                    style: TextStyle(
+                      color: AppColors.white,
+                      fontSize: 16 * scale,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                SizedBox(width: 12 * scale),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        customerName,
+                        style: AppTextStyles.arimo(
+                          fontSize: 15 * scale,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      if (customerEmail != null) ...[
+                        SizedBox(height: 4 * scale),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.email_outlined,
+                              size: 12 * scale,
+                              color: AppColors.textSecondary,
+                            ),
+                            SizedBox(width: 4 * scale),
+                            Expanded(
+                              child: Text(
+                                customerEmail,
+                                style: AppTextStyles.arimo(
+                                  fontSize: 12 * scale,
+                                  color: AppColors.textSecondary,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                      if (customerPhone != null) ...[
+                        SizedBox(height: 4 * scale),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.phone_outlined,
+                              size: 12 * scale,
+                              color: AppColors.textSecondary,
+                            ),
+                            SizedBox(width: 4 * scale),
+                            Text(
+                              customerPhone,
+                              style: AppTextStyles.arimo(
+                                fontSize: 12 * scale,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 12 * scale),
+            Divider(height: 1, color: AppColors.borderLight),
+            SizedBox(height: 12 * scale),
+            Row(
+              children: [
+                Icon(
+                  Icons.book_online,
+                  size: 14 * scale,
+                  color: AppColors.textSecondary,
+                ),
+                SizedBox(width: 6 * scale),
+                Text(
+                  'Booking #${contract.bookingId}',
+                  style: AppTextStyles.arimo(
+                    fontSize: 13 * scale,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const Spacer(),
                 Icon(
                   Icons.calendar_today,
                   size: 14 * scale,
@@ -281,6 +383,27 @@ class _ContractItem extends StatelessWidget {
                 ),
               ],
             ),
+            if (contract.signedDate != null) ...[
+              SizedBox(height: 8 * scale),
+              Row(
+                children: [
+                  Icon(
+                    Icons.edit_document,
+                    size: 14 * scale,
+                    color: AppColors.verified,
+                  ),
+                  SizedBox(width: 6 * scale),
+                  Text(
+                    'Đã ký: ${contract.signedDate!.day}/${contract.signedDate!.month}/${contract.signedDate!.year}',
+                    style: AppTextStyles.arimo(
+                      fontSize: 12 * scale,
+                      color: AppColors.verified,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),
