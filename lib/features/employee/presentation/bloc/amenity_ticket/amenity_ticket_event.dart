@@ -78,6 +78,34 @@ class CompleteTicketEvent extends AmenityTicketEvent {
   List<Object?> get props => [ticketId];
 }
 
+/// Event to update ticket
+class UpdateTicketEvent extends AmenityTicketEvent {
+  final int ticketId;
+  final int amenityServiceId;
+  final DateTime startTime;
+  final DateTime endTime;
+
+  const UpdateTicketEvent({
+    required this.ticketId,
+    required this.amenityServiceId,
+    required this.startTime,
+    required this.endTime,
+  });
+
+  @override
+  List<Object?> get props => [ticketId, amenityServiceId, startTime, endTime];
+}
+
+/// Event to load ticket by ID
+class LoadTicketById extends AmenityTicketEvent {
+  final int ticketId;
+
+  const LoadTicketById(this.ticketId);
+
+  @override
+  List<Object?> get props => [ticketId];
+}
+
 /// Event to refresh tickets
 class RefreshTickets extends AmenityTicketEvent {
   const RefreshTickets();

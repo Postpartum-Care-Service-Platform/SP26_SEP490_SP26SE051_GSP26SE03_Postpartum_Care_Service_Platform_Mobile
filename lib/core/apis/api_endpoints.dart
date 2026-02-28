@@ -91,6 +91,7 @@ class ApiEndpoints {
   static String getFamilyProfilesByCustomerId(String customerId) =>
       '/FamilyProfile/GetByCustomerId/$customerId';
   static const String getMemberTypes = '/member-types';
+  static String getMemberTypeById(int id) => '/member-types/$id';
 
   // Package endpoints
   static const String packages = '/Packages/center';
@@ -192,33 +193,24 @@ class ApiEndpoints {
   static const String createAmenityTicket = '/AmenityTicket';
 
   // ==========================================
-  // Employee - Service Booking endpoints (TODO: Chờ BE API)
+  // Employee - Amenity Ticket endpoints
   // ==========================================
 
-  /// Create service booking
-  static const String createServiceBooking = '/ServiceBooking';
+  /// Staff tạo ticket tiện ích cho khách hàng
+  static const String staffCreateAmenityTicket = '/AmenityTicket/staff-create';
 
-  /// Get tickets by customer
-  static String getTicketsByCustomer(String customerId) =>
-      '/ServiceBooking/customer/$customerId';
+  /// Staff/Customer cập nhật ticket tiện ích
+  static String updateAmenityTicket(int id) => '/AmenityTicket/$id';
 
-  /// Get my assigned tickets
-  static const String myAssignedTickets = '/ServiceBooking/my-assigned';
+  /// Staff/Customer hủy ticket tiện ích
+  static String cancelAmenityTicket(int id) => '/AmenityTicket/cancel/$id';
 
-  /// Get all tickets
-  static const String allTickets = '/ServiceBooking/all';
+  /// Lấy ticket tiện ích theo ID
+  static String getAmenityTicketById(int id) => '/AmenityTicket/$id';
 
-  /// Cancel ticket
-  static String cancelTicket(int ticketId) =>
-      '/ServiceBooking/$ticketId/cancel';
-
-  /// Confirm ticket
-  static String confirmTicket(int ticketId) =>
-      '/ServiceBooking/$ticketId/confirm';
-
-  /// Complete ticket
-  static String completeTicket(int ticketId) =>
-      '/ServiceBooking/$ticketId/complete';
+  /// Lấy tất cả ticket tiện ích của user theo UserId (Admin/Manager)
+  static String getAmenityTicketsByUserId(String userId) =>
+      '/AmenityTicket/user/$userId';
 
   // ==========================================
   // Menu endpoints

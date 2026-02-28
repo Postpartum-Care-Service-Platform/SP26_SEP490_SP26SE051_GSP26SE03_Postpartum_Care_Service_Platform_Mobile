@@ -1,7 +1,7 @@
 import '../../domain/entities/amenity_ticket_entity.dart';
 import '../../domain/repositories/amenity_ticket_repository.dart';
 import '../datasources/amenity_ticket_remote_datasource.dart';
-import '../models/create_service_booking_request_model.dart';
+import '../models/staff_create_amenity_ticket_request_model.dart';
 
 /// Implementation of AmenityTicketRepository
 class AmenityTicketRepositoryImpl implements AmenityTicketRepository {
@@ -18,16 +18,22 @@ class AmenityTicketRepositoryImpl implements AmenityTicketRepository {
     String? notes,
   }) async {
     try {
-      final request = CreateServiceBookingRequestModel(
-        customerId: customerId,
-        serviceIds: serviceIds,
-        startTime: startTime,
-        endTime: endTime,
-        notes: notes,
-      );
+      // BE chỉ nhận 1 service mỗi lần, nên tạo từng ticket riêng
+      final List<AmenityTicketEntity> tickets = [];
       
-      final models = await remoteDataSource.createBooking(request);
-      return models.map((model) => model.toEntity()).toList();
+      for (final serviceId in serviceIds) {
+        final request = StaffCreateAmenityTicketRequestModel(
+          amenityServiceId: serviceId,
+          customerId: customerId,
+          startTime: startTime,
+          endTime: endTime,
+        );
+        
+        final model = await remoteDataSource.staffCreateAmenityTicket(request);
+        tickets.add(model.toEntity());
+      }
+      
+      return tickets;
     } catch (e) {
       rethrow;
     }
@@ -36,7 +42,8 @@ class AmenityTicketRepositoryImpl implements AmenityTicketRepository {
   @override
   Future<List<AmenityTicketEntity>> getTicketsByCustomer(String customerId) async {
     try {
-      final models = await remoteDataSource.getTicketsByCustomer(customerId);
+      // Dùng API getAmenityTicketsByUserId thay vì getTicketsByCustomer
+      final models = await remoteDataSource.getAmenityTicketsByUserId(customerId);
       return models.map((model) => model.toEntity()).toList();
     } catch (e) {
       rethrow;
@@ -46,8 +53,9 @@ class AmenityTicketRepositoryImpl implements AmenityTicketRepository {
   @override
   Future<List<AmenityTicketEntity>> getMyAssignedTickets() async {
     try {
-      final models = await remoteDataSource.getMyAssignedTickets();
-      return models.map((model) => model.toEntity()).toList();
+      // TODO: BE chưa có API này, có thể dùng getAmenityTicketsByUserId với staffId
+      // Hoặc dùng filter từ getAllTickets
+      throw UnimplementedError('getMyAssignedTickets chưa có API ở BE');
     } catch (e) {
       rethrow;
     }
@@ -56,8 +64,9 @@ class AmenityTicketRepositoryImpl implements AmenityTicketRepository {
   @override
   Future<List<AmenityTicketEntity>> getAllTickets() async {
     try {
-      final models = await remoteDataSource.getAllTickets();
-      return models.map((model) => model.toEntity()).toList();
+      // TODO: BE chỉ có API cho Admin/Manager, không có cho Staff
+      // Có thể cần filter từ getAmenityTicketsByUserId
+      throw UnimplementedError('getAllTickets chỉ dành cho Admin/Manager');
     } catch (e) {
       rethrow;
     }
@@ -66,7 +75,8 @@ class AmenityTicketRepositoryImpl implements AmenityTicketRepository {
   @override
   Future<String> cancelTicket(int ticketId) async {
     try {
-      return await remoteDataSource.cancelTicket(ticketId);
+      await remoteDataSource.cancelAmenityTicket(ticketId);
+      return 'Hủy ticket thành công';
     } catch (e) {
       rethrow;
     }
@@ -75,7 +85,8 @@ class AmenityTicketRepositoryImpl implements AmenityTicketRepository {
   @override
   Future<String> confirmTicket(int ticketId) async {
     try {
-      return await remoteDataSource.confirmTicket(ticketId);
+      // TODO: BE không có API confirm cho Staff, chỉ có accept/complete cho Manager
+      throw UnimplementedError('confirmTicket không có API cho Staff');
     } catch (e) {
       rethrow;
     }
@@ -84,7 +95,39 @@ class AmenityTicketRepositoryImpl implements AmenityTicketRepository {
   @override
   Future<String> completeTicket(int ticketId) async {
     try {
-      return await remoteDataSource.completeTicket(ticketId);
+      // TODO: BE chỉ có API complete cho Manager
+      throw UnimplementedError('completeTicket chỉ dành cho Manager');
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Update amenity ticket (thêm method mới)
+  Future<AmenityTicketEntity> updateTicket({
+    required int ticketId,
+    required int amenityServiceId,
+    required DateTime startTime,
+    required DateTime endTime,
+  }) async {
+    try {
+      final request = UpdateAmenityTicketRequestModel(
+        amenityServiceId: amenityServiceId,
+        startTime: startTime,
+        endTime: endTime,
+      );
+      
+      final model = await remoteDataSource.updateAmenityTicket(ticketId, request);
+      return model.toEntity();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Get ticket by ID (thêm method mới)
+  Future<AmenityTicketEntity> getTicketById(int id) async {
+    try {
+      final model = await remoteDataSource.getAmenityTicketById(id);
+      return model.toEntity();
     } catch (e) {
       rethrow;
     }
