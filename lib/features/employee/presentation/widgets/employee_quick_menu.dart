@@ -20,9 +20,11 @@ enum EmployeeQuickMenuExtraAction {
   requests,
   tasks,
   checkInOut,
-  legacyServiceBooking,
   staffProfile,
   familyProfile,
+  createCustomer,
+  transactions,
+  contracts,
 }
 
 /// Model định nghĩa 1 item trong menu nhanh
@@ -491,6 +493,12 @@ class EmployeeQuickMenuPresets {
         iconAsset: AppAssets.profile,
         action: EmployeeQuickMenuExtraAction.staffProfile,
       ),
+      EmployeeQuickMenuItem.extra(
+        id: 'create_customer',
+        label: 'Tạo KH',
+        iconAsset: AppAssets.profile,
+        action: EmployeeQuickMenuExtraAction.createCustomer,
+      ),
 
       // Một số action extra mẫu dành cho nhân viên
       EmployeeQuickMenuItem.extra(
@@ -530,12 +538,6 @@ class EmployeeQuickMenuPresets {
         action: EmployeeQuickMenuExtraAction.checkInOut,
       ),
       EmployeeQuickMenuItem.extra(
-        id: 'legacy_service_booking',
-        label: 'Đặt DV cũ',
-        iconAsset: AppAssets.serviceAmenity,
-        action: EmployeeQuickMenuExtraAction.legacyServiceBooking,
-      ),
-      EmployeeQuickMenuItem.extra(
         id: 'meal_plan',
         label: 'Suất ăn',
         iconAsset: AppAssets.menuSecond,
@@ -546,6 +548,18 @@ class EmployeeQuickMenuPresets {
         label: 'Yêu cầu',
         iconAsset: AppAssets.menuThird,
         action: EmployeeQuickMenuExtraAction.requests,
+      ),
+      EmployeeQuickMenuItem.extra(
+        id: 'transactions',
+        label: 'Giao dịch',
+        iconAsset: AppAssets.menuThird,
+        action: EmployeeQuickMenuExtraAction.transactions,
+      ),
+      EmployeeQuickMenuItem.extra(
+        id: 'contracts',
+        label: 'Hợp đồng',
+        iconAsset: AppAssets.menuThird,
+        action: EmployeeQuickMenuExtraAction.contracts,
       ),
     ];
   }

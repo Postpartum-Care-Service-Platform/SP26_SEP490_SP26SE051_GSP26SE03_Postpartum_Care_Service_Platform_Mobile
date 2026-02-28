@@ -229,11 +229,11 @@ class _LoadedContent extends StatelessWidget {
             currentTab: AppBottomTab.appointment,
             onBottomTabSelected: (tab) {
               // Đổi tab nhanh cho nhân viên:
-              // - Dịch vụ -> màn gói dịch vụ (PackageScreen)
+              // - Dịch vụ -> màn đặt gói/dịch vụ cho khách (EmployeePackageBookingScreen)
               // - Trao đổi -> màn chat shell dành cho staff
               switch (tab) {
                 case AppBottomTab.services:
-                  AppRouter.push(context, AppRoutes.package);
+                  AppRouter.push(context, AppRoutes.employeePackageBooking);
                   break;
                 case AppBottomTab.chat:
                   // STAFF: Điều hướng tới màn chat dành riêng cho nhân viên.
@@ -279,14 +279,24 @@ class _LoadedContent extends StatelessWidget {
                   AppRouter.push(context, AppRoutes.employeeCheckInOut);
                   break;
 
-                case EmployeeQuickMenuExtraAction.legacyServiceBooking:
-                  // Điều hướng tới màn đặt dịch vụ cũ (mock/legacy).
-                  AppRouter.push(context, AppRoutes.employeeServiceBooking);
+                case EmployeeQuickMenuExtraAction.familyProfile:
+                  // STAFF: Xem các hộ gia đình được phân công.
+                  AppRouter.push(context, AppRoutes.employeeAssignedFamilies);
                   break;
 
-                case EmployeeQuickMenuExtraAction.familyProfile:
-                  // Điều hướng tới hồ sơ gia đình.
-                  AppRouter.push(context, AppRoutes.familyProfile);
+                case EmployeeQuickMenuExtraAction.createCustomer:
+                  // STAFF: Tạo tài khoản khách hàng.
+                  AppRouter.push(context, AppRoutes.employeeCreateCustomer);
+                  break;
+
+                case EmployeeQuickMenuExtraAction.transactions:
+                  // STAFF: Xem danh sách giao dịch thanh toán.
+                  AppRouter.push(context, AppRoutes.staffTransactionList);
+                  break;
+
+                case EmployeeQuickMenuExtraAction.contracts:
+                  // STAFF: Xem danh sách hợp đồng.
+                  AppRouter.push(context, AppRoutes.staffContractList);
                   break;
 
                 case EmployeeQuickMenuExtraAction.staffProfile:

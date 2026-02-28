@@ -19,11 +19,16 @@ import '../models/current_account_model.dart';
 import '../models/google_sign_in_request_model.dart';
 import '../models/change_password_request_model.dart';
 import '../models/change_password_response_model.dart';
+import '../models/create_customer_request_model.dart';
+import '../models/create_customer_response_model.dart';
 
 /// Remote data source for authentication
 abstract class AuthRemoteDataSource {
   Future<LoginResponseModel> login(LoginRequestModel request);
   Future<RegisterResponseModel> register(RegisterRequestModel request);
+  Future<CreateCustomerResponseModel> createCustomer(
+    CreateCustomerRequestModel request,
+  );
   Future<VerifyEmailResponseModel> verifyEmail(VerifyEmailRequestModel request);
   Future<ForgotPasswordResponseModel> resendOtp(
     ForgotPasswordRequestModel request,
@@ -126,6 +131,32 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       );
 
       return RegisterResponseModel.fromJson(
+        response.data as Map<String, dynamic>,
+      );
+    } on DioException catch (e) {
+      if (e.response != null) {
+        final responseData = e.response?.data as Map<String, dynamic>?;
+        final errorMessage = _parseErrorMessage(responseData);
+        throw Exception(errorMessage);
+      } else {
+        throw Exception('Network error: ${e.message}');
+      }
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  @override
+  Future<CreateCustomerResponseModel> createCustomer(
+    CreateCustomerRequestModel request,
+  ) async {
+    try {
+      final response = await dio.post(
+        ApiEndpoints.createCustomer,
+        data: request.toJson(),
+      );
+
+      return CreateCustomerResponseModel.fromJson(
         response.data as Map<String, dynamic>,
       );
     } on DioException catch (e) {

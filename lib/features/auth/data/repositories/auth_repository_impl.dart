@@ -1,5 +1,6 @@
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
+import '../../domain/entities/create_customer_result_entity.dart';
 import '../datasources/auth_remote_datasource.dart';
 import '../models/login_request_model.dart';
 import '../models/register_request_model.dart';
@@ -11,6 +12,7 @@ import '../models/refresh_token_request_model.dart';
 import '../models/google_sign_in_request_model.dart';
 import '../models/change_password_request_model.dart';
 import '../models/current_account_model.dart';
+import '../models/create_customer_request_model.dart';
 import '../../../../core/storage/secure_storage_service.dart';
 import '../../../../core/services/current_account_cache_service.dart';
 
@@ -257,6 +259,26 @@ class AuthRepositoryImpl implements AuthRepository {
       );
       final response = await remoteDataSource.changePassword(request);
       return response.message;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<CreateCustomerResultEntity> createCustomer({
+    required String email,
+    String? phone,
+    String? username,
+  }) async {
+    try {
+      final request = CreateCustomerRequestModel(
+        email: email,
+        phone: phone,
+        username: username,
+      );
+
+      final response = await remoteDataSource.createCustomer(request);
+      return response.toEntity();
     } catch (e) {
       rethrow;
     }

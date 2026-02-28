@@ -6,6 +6,9 @@ import '../../data/models/update_family_profile_request_model.dart';
 /// Family profile repository interface
 abstract class FamilyProfileRepository {
   Future<List<FamilyProfileEntity>> getMyFamilyProfiles();
+  Future<List<FamilyProfileEntity>> getFamilyProfilesByCustomerId(
+    String customerId,
+  );
   Future<List<MemberTypeModel>> getMemberTypes();
   Future<FamilyProfileEntity> createFamilyProfile(
     CreateFamilyProfileRequestModel request,

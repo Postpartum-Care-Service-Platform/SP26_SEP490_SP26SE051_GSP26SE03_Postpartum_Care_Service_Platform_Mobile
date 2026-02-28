@@ -4,14 +4,16 @@ import 'package:flutter/material.dart';
 import '../../../../core/apis/api_client.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../../../core/routing/app_router.dart';
+import '../../../../core/routing/app_routes.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_toast.dart';
 import '../../../../core/widgets/app_widgets.dart';
 import '../../../../features/auth/presentation/screens/login_screen.dart';
-import 'employee_notifications_sheet.dart';
 
-class EmployeeHeaderBar extends StatelessWidget {
+class EmployeeHeaderBar extends StatefulWidget {
   final String title;
   final String subtitle;
 
@@ -20,6 +22,44 @@ class EmployeeHeaderBar extends StatelessWidget {
     required this.title,
     required this.subtitle,
   });
+
+  @override
+  State<EmployeeHeaderBar> createState() => _EmployeeHeaderBarState();
+}
+
+class _EmployeeHeaderBarState extends State<EmployeeHeaderBar> {
+  int _unreadCount = 0;
+  bool _isLoadingUnread = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUnreadCount();
+  }
+
+  Future<void> _loadUnreadCount() async {
+    if (_isLoadingUnread) return;
+    setState(() => _isLoadingUnread = true);
+    try {
+      final count =
+          await InjectionContainer.notificationRepository.getUnreadCount();
+      if (!mounted) return;
+      setState(() => _unreadCount = count);
+    } catch (_) {
+      // Nếu API lỗi (chưa có endpoint / role không có quyền),
+      // tránh crash header: ẩn badge bằng cách set về 0.
+      if (!mounted) return;
+      setState(() => _unreadCount = 0);
+    } finally {
+      if (!mounted) return;
+      setState(() => _isLoadingUnread = false);
+    }
+  }
+
+  Future<void> _openNotifications() async {
+    await AppRouter.push(context, AppRoutes.notifications);
+    await _loadUnreadCount();
+  }
 
   Future<void> _handleLogout(BuildContext context) async {
     // Show confirmation dialog
@@ -57,9 +97,6 @@ class EmployeeHeaderBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // NOTE: Mock list giống TSX -> unreadCount.
-    const unreadCount = 2;
-
     return Container(
       decoration: BoxDecoration(
         color: AppColors.white.withValues(alpha: 0.85),
@@ -75,7 +112,7 @@ class EmployeeHeaderBar extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
+                  widget.title,
                   style: AppTextStyles.arimo(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
@@ -84,7 +121,7 @@ class EmployeeHeaderBar extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  subtitle,
+                  widget.subtitle,
                   style: AppTextStyles.arimo(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
@@ -96,7 +133,7 @@ class EmployeeHeaderBar extends StatelessWidget {
           ),
           InkWell(
             borderRadius: BorderRadius.circular(24),
-            onTap: () => EmployeeNotificationsSheet.show(context),
+            onTap: _openNotifications,
             child: SizedBox(
               width: 44,
               height: 44,
@@ -104,7 +141,7 @@ class EmployeeHeaderBar extends StatelessWidget {
                 alignment: Alignment.center,
                 children: [
                   Icon(Icons.notifications_none, color: AppColors.textPrimary),
-                  if (unreadCount > 0)
+                  if (_unreadCount > 0)
                     Positioned(
                       right: 6,
                       top: 6,
@@ -117,7 +154,7 @@ class EmployeeHeaderBar extends StatelessWidget {
                         ),
                         alignment: Alignment.center,
                         child: Text(
-                          '$unreadCount',
+                          '$_unreadCount',
                           style: AppTextStyles.arimo(
                             fontSize: 10,
                             fontWeight: FontWeight.w800,
