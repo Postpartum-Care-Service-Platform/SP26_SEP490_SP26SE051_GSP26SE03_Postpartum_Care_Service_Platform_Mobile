@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:video_player/video_player.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -25,8 +23,6 @@ class ServiceLocationSelection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scale = AppResponsive.scaleFactor(context);
-
     return Container(
       color: AppColors.background,
       child: SafeArea(
@@ -43,8 +39,7 @@ class ServiceLocationSelection extends StatelessWidget {
                       subtitle: AppStrings.servicesLocationCenterSubtitle,
                       chipLabel: AppStrings.servicesLocationCenterChip,
                       accentColor: AppColors.packageVip,
-                      assetSvg: AppAssets.family,
-                      showVideoBackground: true,
+                      backgroundImageAsset: AppAssets.walkInService,
                       onTap: () => onLocationSelected(ServiceLocationType.center),
                     ),
                     _LocationHalfCard(
@@ -54,19 +49,10 @@ class ServiceLocationSelection extends StatelessWidget {
                       subtitle: AppStrings.servicesLocationHomeSubtitle,
                       chipLabel: AppStrings.servicesLocationHomeChip,
                       accentColor: AppColors.packagePro,
-                      assetSvg: AppAssets.helper,
-                      showVideoBackground: false,
+                      backgroundImageAsset: AppAssets.homeCareService,
                       onTap: () => onLocationSelected(ServiceLocationType.home),
                     ),
                   ],
-                ),
-
-                // Đường kẻ chéo chia đôi content
-                IgnorePointer(
-                  child: CustomPaint(
-                    size: Size(constraints.maxWidth, constraints.maxHeight),
-                    painter: _DiagonalDividerPainter(scale: scale),
-                  ),
                 ),
               ],
             );
@@ -83,8 +69,7 @@ class _LocationHalfCard extends StatelessWidget {
   final String subtitle;
   final String chipLabel;
   final Color accentColor;
-  final String assetSvg;
-  final bool showVideoBackground;
+  final String backgroundImageAsset;
   final VoidCallback onTap;
 
   const _LocationHalfCard({
@@ -94,32 +79,38 @@ class _LocationHalfCard extends StatelessWidget {
     required this.subtitle,
     required this.chipLabel,
     required this.accentColor,
-    required this.assetSvg,
-    required this.showVideoBackground,
+    required this.backgroundImageAsset,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
+    final radius = 16.0 * scale; // theo guideline: 12-16px (scaled)
+    final contentPadding = EdgeInsets.all(20 * scale);
+    final contentAlign = isTop ? Alignment.centerLeft : Alignment.centerRight;
+    final textAlign = isTop ? TextAlign.left : TextAlign.right;
+    final contentCrossAxisAlignment =
+        isTop ? CrossAxisAlignment.start : CrossAxisAlignment.end;
 
     return Expanded(
-      child: GestureDetector(
+      child: InkWell(
         onTap: onTap,
+        borderRadius: BorderRadius.circular(radius),
         child: Container(
           margin: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 8 * scale),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24 * scale),
+            borderRadius: BorderRadius.circular(radius),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.06),
-                blurRadius: 20 * scale,
+                color: AppColors.shadowMedium,
+                blurRadius: 16 * scale,
                 offset: Offset(0, 8 * scale),
               ),
             ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(24 * scale),
+            borderRadius: BorderRadius.circular(radius),
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -138,29 +129,39 @@ class _LocationHalfCard extends StatelessWidget {
                   ),
                 ),
 
-                // Background media: video cho ô trên, hình minh hoạ cho ô dưới
+                // Background media: hình ảnh
                 Positioned.fill(
-                  child: showVideoBackground
-                      ? const _CenterVideoBackground()
-                      : Opacity(
-                          opacity: 0.15,
-                          child: SvgPicture.asset(
-                            assetSvg,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
+                  child: Image.asset(
+                    backgroundImageAsset,
+                    fit: BoxFit.fill,
+                    alignment: isTop ? Alignment.topCenter : Alignment.bottomCenter,
+                    color: Colors.black.withValues(alpha: 0.16),
+                    colorBlendMode: BlendMode.darken,
+                  ),
                 ),
 
-                // Overlay mờ để text nổi bật
+                // Hoạ tiết trang trí (nhẹ) để tăng thẩm mỹ
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: CustomPaint(
+                      painter: _OrnamentPainter(
+                        accentColor: accentColor,
+                        isTop: isTop,
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Overlay mờ để text nổi bật (scrim theo hướng text)
                 Positioned.fill(
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        begin: isTop ? Alignment.topCenter : Alignment.bottomCenter,
-                        end: isTop ? Alignment.bottomCenter : Alignment.topCenter,
+                        begin: isTop ? Alignment.centerLeft : Alignment.centerRight,
+                        end: isTop ? Alignment.centerRight : Alignment.centerLeft,
                         colors: [
-                          Colors.black.withValues(alpha: 0.15),
-                          Colors.black.withValues(alpha: 0.05),
+                          Colors.black.withValues(alpha: 0.24),
+                          Colors.black.withValues(alpha: 0.06),
                         ],
                       ),
                     ),
@@ -169,91 +170,28 @@ class _LocationHalfCard extends StatelessWidget {
 
                 // Nội dung text + CTA
                 Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    20 * scale,
-                    isTop ? 72 * scale : 24 * scale,
-                    20 * scale,
-                    isTop ? 24 * scale : 72 * scale,
-                  ),
+                  padding: contentPadding,
                   child: Column(
-                    crossAxisAlignment:
-                        isTop ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+                    crossAxisAlignment: contentCrossAxisAlignment,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment:
-                            isTop ? CrossAxisAlignment.start : CrossAxisAlignment.end,
-                        children: [
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 10 * scale,
-                              vertical: 4 * scale,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(100 * scale),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.6),
-                                width: 1,
-                              ),
-                            ),
-                            child: Text(
-                              chipLabel,
-                              style: AppTextStyles.arimo(
-                                fontSize: 11 * scale,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 10 * scale),
-                          Text(
-                            title,
-                            textAlign: isTop ? TextAlign.left : TextAlign.right,
-                            style: AppTextStyles.tinos(
-                              fontSize: 22 * scale,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          SizedBox(height: 6 * scale),
-                          Text(
-                            subtitle,
-                            textAlign: isTop ? TextAlign.left : TextAlign.right,
-                            style: AppTextStyles.arimo(
-                              fontSize: 13 * scale,
-                              color: Colors.white.withValues(alpha: 0.9),
-                            ),
-                          ),
-                        ],
+                      Align(
+                        alignment: contentAlign,
+                        child: _LocationCardHeader(
+                          scale: scale,
+                          chipLabel: chipLabel,
+                          title: title,
+                          subtitle: subtitle,
+                          textAlign: textAlign,
+                          crossAxisAlignment: contentCrossAxisAlignment,
+                        ),
                       ),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 14 * scale,
-                          vertical: 8 * scale,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(100 * scale),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              AppStrings.servicesLocationStartNow,
-                              style: AppTextStyles.arimo(
-                                fontSize: 13 * scale,
-                                fontWeight: FontWeight.w600,
-                                color: accentColor,
-                              ),
-                            ),
-                            SizedBox(width: 6 * scale),
-                            Icon(
-                              Icons.arrow_forward_rounded,
-                              size: 18 * scale,
-                              color: accentColor,
-                            ),
-                          ],
+                      Align(
+                        alignment: contentAlign,
+                        child: _LocationCtaPill(
+                          scale: scale,
+                          label: AppStrings.servicesLocationStartNow,
+                          accentColor: accentColor,
                         ),
                       ),
                     ],
@@ -268,87 +206,176 @@ class _LocationHalfCard extends StatelessWidget {
   }
 }
 
-class _DiagonalDividerPainter extends CustomPainter {
+class _LocationCardHeader extends StatelessWidget {
   final double scale;
+  final String chipLabel;
+  final String title;
+  final String subtitle;
+  final TextAlign textAlign;
+  final CrossAxisAlignment crossAxisAlignment;
 
-  _DiagonalDividerPainter({required this.scale});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.9)
-      ..strokeWidth = 2 * scale
-      ..style = PaintingStyle.stroke;
-
-    // Đường kẻ chéo từ góc phải trên xuống góc trái dưới
-    final start = Offset(size.width * 0.9, 0);
-    final end = Offset(0, size.height * 0.9);
-
-    canvas.drawLine(start, end, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-/// Video nền cho ô "Nghỉ dưỡng tại trung tâm"
-class _CenterVideoBackground extends StatefulWidget {
-  const _CenterVideoBackground();
-
-  @override
-  State<_CenterVideoBackground> createState() => _CenterVideoBackgroundState();
-}
-
-class _CenterVideoBackgroundState extends State<_CenterVideoBackground> {
-  late final VideoPlayerController _controller;
-  bool _initialized = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = VideoPlayerController.networkUrl(
-      Uri.parse(AppAssets.servicesCenterResortVideo),
-    )
-      ..setLooping(true)
-      ..setVolume(0);
-
-    _controller.initialize().then((_) {
-      if (!mounted) return;
-      _controller.play();
-      setState(() {
-        _initialized = true;
-      });
-    }).catchError((_) {
-      // Nếu load video lỗi thì giữ nguyên background gradient
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+  const _LocationCardHeader({
+    required this.scale,
+    required this.chipLabel,
+    required this.title,
+    required this.subtitle,
+    required this.textAlign,
+    required this.crossAxisAlignment,
+  });
 
   @override
   Widget build(BuildContext context) {
-    if (!_initialized || !_controller.value.isInitialized) {
-      // Fallback: không vẽ gì thêm, chỉ dùng gradient phía dưới
-      return const SizedBox.expand();
-    }
+    return Column(
+      crossAxisAlignment: crossAxisAlignment,
+      children: [
+        Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: 10 * scale,
+            vertical: 4 * scale,
+          ),
+          decoration: BoxDecoration(
+            color: AppColors.white.withValues(alpha: 0.18),
+            borderRadius: BorderRadius.circular(100 * scale),
+            border: Border.all(
+              color: AppColors.white.withValues(alpha: 0.55),
+              width: 1,
+            ),
+          ),
+          child: Text(
+            chipLabel,
+            style: AppTextStyles.arimo(
+              fontSize: 11 * scale,
+              fontWeight: FontWeight.w600,
+              color: AppColors.white,
+            ),
+          ),
+        ),
+        SizedBox(height: 10 * scale),
+        Text(
+          title,
+          textAlign: textAlign,
+          style: AppTextStyles.tinos(
+            fontSize: 22 * scale,
+            fontWeight: FontWeight.bold,
+            color: AppColors.white,
+          ),
+        ),
+        SizedBox(height: 6 * scale),
+        Text(
+          subtitle,
+          textAlign: textAlign,
+          style: AppTextStyles.arimo(
+            fontSize: 13 * scale,
+            color: AppColors.white.withValues(alpha: 0.9),
+          ),
+        ),
+      ],
+    );
+  }
+}
 
-    final size = _controller.value.size;
-    if (size.isEmpty) {
-      return const SizedBox.expand();
-    }
+class _LocationCtaPill extends StatelessWidget {
+  final double scale;
+  final String label;
+  final Color accentColor;
 
-    return FittedBox(
-      fit: BoxFit.cover,
-      child: SizedBox(
-        width: size.width,
-        height: size.height,
-        child: VideoPlayer(_controller),
+  const _LocationCtaPill({
+    required this.scale,
+    required this.label,
+    required this.accentColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: 14 * scale,
+        vertical: 8 * scale,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(100 * scale),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadowLight,
+            blurRadius: 10 * scale,
+            offset: Offset(0, 6 * scale),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: AppTextStyles.arimo(
+              fontSize: 13 * scale,
+              fontWeight: FontWeight.w600,
+              color: accentColor,
+            ),
+          ),
+          SizedBox(width: 6 * scale),
+          Icon(
+            Icons.arrow_forward_rounded,
+            size: 18 * scale,
+            color: accentColor,
+          ),
+        ],
       ),
     );
   }
 }
 
+class _OrnamentPainter extends CustomPainter {
+  final Color accentColor;
+  final bool isTop;
+
+  const _OrnamentPainter({
+    required this.accentColor,
+    required this.isTop,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Vòng tròn blur lớn
+    final blurPaint = Paint()
+      ..color = accentColor.withValues(alpha: 0.18)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 28);
+
+    final bigCenter = isTop
+        ? Offset(size.width * 0.18, size.height * 0.22)
+        : Offset(size.width * 0.82, size.height * 0.78);
+    canvas.drawCircle(bigCenter, size.shortestSide * 0.28, blurPaint);
+
+    final midPaint = Paint()
+      ..color = accentColor.withValues(alpha: 0.12)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18);
+    final midCenter = isTop
+        ? Offset(size.width * 0.88, size.height * 0.32)
+        : Offset(size.width * 0.12, size.height * 0.62);
+    canvas.drawCircle(midCenter, size.shortestSide * 0.18, midPaint);
+
+    // Chấm bi nhỏ (pattern) ở phía đối diện text để cân bố cục
+    final dotPaint = Paint()..color = AppColors.white.withValues(alpha: 0.22);
+    final startX = isTop ? size.width * 0.62 : size.width * 0.08;
+    final startY = isTop ? size.height * 0.58 : size.height * 0.10;
+    final dx = size.width * 0.055;
+    final dy = size.height * 0.06;
+    final r = size.shortestSide * 0.008;
+
+    for (var row = 0; row < 3; row++) {
+      for (var col = 0; col < 4; col++) {
+        canvas.drawCircle(
+          Offset(startX + col * dx, startY + row * dy),
+          r,
+          dotPaint,
+        );
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _OrnamentPainter oldDelegate) {
+    return oldDelegate.accentColor != accentColor || oldDelegate.isTop != isTop;
+  }
+}

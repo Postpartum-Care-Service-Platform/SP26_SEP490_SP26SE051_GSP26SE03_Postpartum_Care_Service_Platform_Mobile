@@ -49,6 +49,15 @@ class BookingRepositoryImpl implements BookingRepository {
   }
 
   @override
+  Future<String> cancelBooking(int id) async {
+    try {
+      return await remoteDataSource.cancelBooking(id);
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
+
+  @override
   Future<PaymentLinkEntity> createPaymentLink({
     required int bookingId,
     required String type,

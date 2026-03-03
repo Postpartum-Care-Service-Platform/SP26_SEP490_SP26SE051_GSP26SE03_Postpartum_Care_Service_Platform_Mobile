@@ -17,10 +17,12 @@ import 'service_location_selection.dart';
 
 class ServicesBookingFlow extends StatefulWidget {
   final ServiceLocationType? locationType;
+  final VoidCallback onBackToLocationSelection;
 
   const ServicesBookingFlow({
     super.key,
     this.locationType,
+    required this.onBackToLocationSelection,
   });
 
   @override
@@ -278,34 +280,38 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
           children: [
             SizedBox(
               width: 52 * scale,
-              child: _currentStep > 0
-                  ? GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _currentStep--;
-                          // Reset flags when going back
-                          if (_currentStep == 0) {
-                            _packagesLoadRequested = false;
-                          } else if (_currentStep == 1) {
-                            _roomsLoadRequested = false;
-                          }
-                        });
-                      },
-                      child: Container(
-                        width: 30 * scale,
-                        height: 30 * scale,
-                        decoration: BoxDecoration(
-                          color: AppColors.background,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.arrow_back_ios_new_rounded,
-                          size: 20 * scale,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                    )
-                  : const SizedBox.shrink(),
+              child: GestureDetector(
+                onTap: () {
+                  if (_currentStep > 0) {
+                    setState(() {
+                      _currentStep--;
+                      // Reset flags when going back
+                      if (_currentStep == 0) {
+                        _packagesLoadRequested = false;
+                      } else if (_currentStep == 1) {
+                        _roomsLoadRequested = false;
+                      }
+                    });
+                    return;
+                  }
+
+                  // Step 1 → quay về màn chọn loại dịch vụ
+                  widget.onBackToLocationSelection();
+                },
+                child: Container(
+                  width: 30 * scale,
+                  height: 30 * scale,
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    size: 20 * scale,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
             ),
             Expanded(
               child: Text(

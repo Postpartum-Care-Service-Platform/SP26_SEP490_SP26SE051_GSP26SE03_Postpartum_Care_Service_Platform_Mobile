@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/usecases/create_booking_usecase.dart';
+import '../../domain/usecases/cancel_booking_usecase.dart';
 import '../../domain/usecases/get_booking_by_id_usecase.dart';
 import '../../domain/usecases/get_bookings_usecase.dart';
 import '../../domain/usecases/create_payment_link_usecase.dart';
@@ -15,6 +16,7 @@ import 'booking_state.dart';
 /// Booking BloC
 class BookingBloc extends Bloc<BookingEvent, BookingState> {
   final CreateBookingUsecase createBookingUsecase;
+  final CancelBookingUsecase cancelBookingUsecase;
   final GetBookingByIdUsecase getBookingByIdUsecase;
   final GetBookingsUsecase getBookingsUsecase;
   final CreatePaymentLinkUsecase createPaymentLinkUsecase;
@@ -31,6 +33,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
   BookingBloc({
     required this.createBookingUsecase,
+    required this.cancelBookingUsecase,
     required this.getBookingByIdUsecase,
     required this.getBookingsUsecase,
     required this.createPaymentLinkUsecase,
@@ -48,6 +51,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     on<BookingCheckPaymentStatus>(_onCheckPaymentStatus);
     on<BookingLoadById>(_onLoadById);
     on<BookingLoadAll>(_onLoadAll);
+    on<BookingCancelRequested>(_onCancelBooking);
     on<BookingReset>(_onReset);
   }
 
@@ -273,6 +277,19 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     try {
       final bookings = await getBookingsUsecase();
       emit(BookingsLoaded(bookings));
+    } catch (e) {
+      emit(BookingError(e.toString()));
+    }
+  }
+
+  Future<void> _onCancelBooking(
+    BookingCancelRequested event,
+    Emitter<BookingState> emit,
+  ) async {
+    emit(const BookingLoading());
+    try {
+      final message = await cancelBookingUsecase(event.id);
+      emit(BookingCancelled(bookingId: event.id, message: message));
     } catch (e) {
       emit(BookingError(e.toString()));
     }

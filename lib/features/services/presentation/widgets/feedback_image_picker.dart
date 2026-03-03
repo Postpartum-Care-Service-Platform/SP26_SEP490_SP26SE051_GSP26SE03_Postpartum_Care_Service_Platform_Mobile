@@ -27,9 +27,11 @@ class FeedbackImagePicker extends StatefulWidget {
 
 class _FeedbackImagePickerState extends State<FeedbackImagePicker> {
   final ImagePicker _picker = ImagePicker();
+  bool _isPicking = false;
 
   Future<void> _pickImage(ImageSource source) async {
     try {
+      if (_isPicking) return;
       if (widget.imagePaths.length >= widget.maxImages) {
         AppToast.showWarning(
           context,
@@ -38,6 +40,9 @@ class _FeedbackImagePickerState extends State<FeedbackImagePicker> {
         return;
       }
 
+      setState(() {
+        _isPicking = true;
+      });
       final image = await _picker.pickImage(source: source);
       if (image != null && mounted) {
         final newPaths = [...widget.imagePaths, image.path];
@@ -49,6 +54,12 @@ class _FeedbackImagePickerState extends State<FeedbackImagePicker> {
           context,
           message: 'Không thể chọn ảnh: ${e.toString()}',
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPicking = false;
+        });
       }
     }
   }

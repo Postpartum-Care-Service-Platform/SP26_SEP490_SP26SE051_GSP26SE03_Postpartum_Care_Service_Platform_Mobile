@@ -88,6 +88,16 @@ class BookingLoadAll extends BookingEvent {
   const BookingLoadAll();
 }
 
+/// Cancel booking (e.g., user cancels payment)
+class BookingCancelRequested extends BookingEvent {
+  final int id;
+
+  const BookingCancelRequested(this.id);
+
+  @override
+  List<Object?> get props => [id];
+}
+
 /// Reset booking state
 class BookingReset extends BookingEvent {
   const BookingReset();

@@ -137,6 +137,20 @@ class BookingsLoaded extends BookingState {
   List<Object?> get props => [bookings];
 }
 
+/// Booking cancelled successfully
+class BookingCancelled extends BookingState {
+  final int bookingId;
+  final String message;
+
+  const BookingCancelled({
+    required this.bookingId,
+    required this.message,
+  });
+
+  @override
+  List<Object?> get props => [bookingId, message];
+}
+
 /// Error state
 class BookingError extends BookingState {
   final String message;

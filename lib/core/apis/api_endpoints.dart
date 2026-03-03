@@ -87,6 +87,7 @@ class ApiEndpoints {
   static const String createBooking = '/Booking';
   static String getBookingById(int id) => '/Booking/$id';
   static const String getBookings = '/Booking';
+  static String cancelBooking(int id) => '/Booking/$id/cancel';
   static const String createPaymentLink = '/Transaction/create-payment-link';
   static String checkPaymentStatus(String orderCode) => '/Transaction/check-status/$orderCode';
 

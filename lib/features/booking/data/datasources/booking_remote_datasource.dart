@@ -17,6 +17,8 @@ abstract class BookingRemoteDataSource {
 
   Future<List<BookingModel>> getBookings();
 
+  Future<String> cancelBooking(int id);
+
   Future<PaymentLinkModel> createPaymentLink({
     required int bookingId,
     required String type,
@@ -73,6 +75,20 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
       return data
           .map((json) => BookingModel.fromJson(json as Map<String, dynamic>))
           .toList();
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  @override
+  Future<String> cancelBooking(int id) async {
+    try {
+      final response = await dio.put(ApiEndpoints.cancelBooking(id));
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        return data['message'] as String? ?? 'Hủy booking thành công.';
+      }
+      return 'Hủy booking thành công.';
     } on DioException catch (e) {
       throw _handleError(e);
     }

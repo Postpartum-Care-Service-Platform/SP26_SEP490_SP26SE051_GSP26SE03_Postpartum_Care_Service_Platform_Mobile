@@ -35,7 +35,6 @@ import '../../features/package/data/repositories/package_type_repository_impl.da
 import '../../features/package/domain/repositories/package_repository.dart';
 import '../../features/package/domain/repositories/package_type_repository.dart';
 import '../../features/package/domain/usecases/get_packages_usecase.dart';
-import '../../features/package/domain/usecases/get_package_types_usecase.dart';
 import '../../features/package/presentation/bloc/package_bloc.dart';
 import '../../features/care_plan/data/datasources/care_plan_remote_datasource.dart';
 import '../../features/care_plan/data/repositories/care_plan_repository_impl.dart';
@@ -96,6 +95,7 @@ import '../../features/booking/data/datasources/booking_remote_datasource.dart';
 import '../../features/booking/data/repositories/booking_repository_impl.dart';
 import '../../features/booking/domain/repositories/booking_repository.dart';
 import '../../features/booking/domain/usecases/create_booking_usecase.dart';
+import '../../features/booking/domain/usecases/cancel_booking_usecase.dart';
 import '../../features/booking/domain/usecases/get_booking_by_id_usecase.dart';
 import '../../features/booking/domain/usecases/get_bookings_usecase.dart';
 import '../../features/booking/domain/usecases/create_payment_link_usecase.dart';
@@ -303,9 +303,6 @@ class InjectionContainer {
   static GetPackagesUsecase get _getPackagesUsecase =>
       GetPackagesUsecase(packageRepository);
   
-  static GetPackageTypesUsecase get _getPackageTypesUsecase =>
-      GetPackageTypesUsecase(packageTypeRepository);
-  
   static GetCarePlanDetailsUsecase get _getCarePlanDetailsUsecase =>
       GetCarePlanDetailsUsecase(carePlanRepository);
   
@@ -371,6 +368,8 @@ class InjectionContainer {
 
   static CreateBookingUsecase get _createBookingUsecase =>
       CreateBookingUsecase(bookingRepository);
+  static CancelBookingUsecase get _cancelBookingUsecase =>
+      CancelBookingUsecase(bookingRepository);
   static GetBookingByIdUsecase get _getBookingByIdUsecase =>
       GetBookingByIdUsecase(bookingRepository);
   static GetBookingsUsecase get _getBookingsUsecase =>
@@ -505,6 +504,7 @@ class InjectionContainer {
 
   static BookingBloc get bookingBloc => BookingBloc(
         createBookingUsecase: _createBookingUsecase,
+        cancelBookingUsecase: _cancelBookingUsecase,
         getBookingByIdUsecase: _getBookingByIdUsecase,
         getBookingsUsecase: _getBookingsUsecase,
         createPaymentLinkUsecase: _createPaymentLinkUsecase,

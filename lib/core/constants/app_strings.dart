@@ -418,6 +418,16 @@ class AppStrings {
   static const String paymentPending = 'Đang chờ thanh toán';
   static const String paymentCheckStatus = 'Kiểm tra trạng thái';
   static const String paymentCreateError = 'Không thể tạo link thanh toán';
+  static const String paymentCancelConfirmTitle = 'Hủy thanh toán?';
+  static const String paymentCancelConfirmMessage =
+      'Bạn có muốn hủy thanh toán và hủy booking này không?';
+  static const String paymentCancelConfirmYes = 'Có, hủy booking';
+  static const String paymentCancelConfirmNo = 'Tiếp tục thanh toán';
+  static const String bookingCancelledTitle = 'Bạn đã hủy booking';
+  static const String bookingCancelledSubtitle =
+      'Booking của bạn đã được hủy thành công.';
+  static const String bookingCancelledBackToServices = 'Về trang dịch vụ';
+  static const String bookingCancelling = 'Đang hủy booking...';
     // Booking History Screen
   static const String noBookingHistory = 'Chưa có lịch sử đặt phòng';
   static const String noCustomerInformation = 'Chưa có thông tin khách hàng';

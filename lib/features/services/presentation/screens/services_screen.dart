@@ -91,6 +91,12 @@ class _ServicesScreenState extends State<ServicesScreen> {
 
             return ServicesBookingFlow(
               locationType: _selectedLocationType!,
+              onBackToLocationSelection: () {
+                context.read<BookingBloc>().add(const BookingReset());
+                setState(() {
+                  _selectedLocationType = null;
+                });
+              },
             );
           }
 
@@ -108,6 +114,12 @@ class _ServicesScreenState extends State<ServicesScreen> {
 
           return ServicesBookingFlow(
             locationType: _selectedLocationType!,
+            onBackToLocationSelection: () {
+              context.read<BookingBloc>().add(const BookingReset());
+              setState(() {
+                _selectedLocationType = null;
+              });
+            },
           );
         },
       ),

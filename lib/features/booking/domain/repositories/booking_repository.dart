@@ -17,6 +17,9 @@ abstract class BookingRepository {
   /// Get all bookings for current user
   Future<List<BookingEntity>> getBookings();
 
+  /// Cancel booking by ID
+  Future<String> cancelBooking(int id);
+
   /// Create payment link for deposit
   Future<PaymentLinkEntity> createPaymentLink({
     required int bookingId,

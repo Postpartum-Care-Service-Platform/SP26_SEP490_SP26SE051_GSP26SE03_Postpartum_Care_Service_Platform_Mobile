@@ -44,6 +44,7 @@ class _FamilyProfileFormDrawerState extends State<FamilyProfileFormDrawer> {
   final _fullNameController = TextEditingController();
   final _addressController = TextEditingController();
   final _phoneNumberController = TextEditingController();
+  bool _isPickingAvatar = false;
 
   int? _selectedMemberTypeId;
   DateTime? _selectedDateOfBirth;
@@ -141,11 +142,15 @@ class _FamilyProfileFormDrawerState extends State<FamilyProfileFormDrawer> {
 
   Future<void> _pickImage(ImageSource source) async {
     try {
+      if (_isPickingAvatar) return;
       final granted = source == ImageSource.camera
           ? await _ensureCameraPermission()
           : await _ensureGalleryPermission();
       if (!granted || !mounted) return;
 
+      setState(() {
+        _isPickingAvatar = true;
+      });
       final picker = ImagePicker();
       final image = await picker.pickImage(source: source);
       if (image != null && mounted) {
@@ -167,6 +172,12 @@ class _FamilyProfileFormDrawerState extends State<FamilyProfileFormDrawer> {
           context,
           message: AppStrings.errorSelectingPhoto.replaceAll('{error}', e.toString()),
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPickingAvatar = false;
+        });
       }
     }
   }
