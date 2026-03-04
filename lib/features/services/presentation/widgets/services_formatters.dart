@@ -10,6 +10,8 @@ String formatContractStatus(String status) {
       return AppStrings.contractStatusWaitingForSignature;
     case 'Signed':
       return AppStrings.contractStatusSigned;
+    case 'Draft':
+      return AppStrings.contractStatusDraft;
     default:
       return status;
   }

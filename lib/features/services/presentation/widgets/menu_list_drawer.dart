@@ -35,7 +35,6 @@ class MenuListDrawer extends StatefulWidget {
 }
 
 class _MenuListDrawerState extends State<MenuListDrawer> {
-  MenuEntity? _selectedMenuForDetail; // Menu selected to show foods
   final List<MenuEntity> _menusForType = [];
 
   @override
@@ -74,15 +73,17 @@ class _MenuListDrawerState extends State<MenuListDrawer> {
     return Icon(Icons.restaurant, size: size, color: color);
   }
 
-  void _handleMenuTap(MenuEntity menu) {
-    setState(() {
-      // If clicking the same menu, deselect it
-      if (_selectedMenuForDetail?.id == menu.id) {
-        _selectedMenuForDetail = null;
-      } else {
-        _selectedMenuForDetail = menu;
-      }
-    });
+  void _openMenuDetail(MenuEntity menu) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _MenuDetailSheet(
+        menu: menu,
+        selectedDate: widget.selectedDate,
+        onSelect: () => _handleSelectMenu(menu),
+      ),
+    );
   }
 
   void _handleSelectMenu(MenuEntity menu) {
@@ -198,7 +199,8 @@ class _MenuListDrawerState extends State<MenuListDrawer> {
                           ),
                           SizedBox(height: 16 * scale),
                           Text(
-                            AppStrings.menuNoMenuForType.replaceAll('{type}', widget.menuType.name),
+                            AppStrings.menuNoMenuForType
+                                .replaceAll('{type}', widget.menuType.name),
                             style: AppTextStyles.arimo(
                               fontSize: 16 * scale,
                               color: AppColors.textSecondary,
@@ -212,38 +214,35 @@ class _MenuListDrawerState extends State<MenuListDrawer> {
                     shrinkWrap: true,
                     padding: EdgeInsets.all(20 * scale),
                     children: [
-                      // Menu list
-                      ..._menusForType.map((menu) {
-                        final isSelected = _selectedMenuForDetail?.id == menu.id;
-                        final isCurrentSelection = widget.currentSelection?.id == menu.id;
-
-                        return Column(
-                          children: [
-                            MenuListItem(
-                              menu: menu,
-                              isSelected: isCurrentSelection,
-                              onTap: () => _handleMenuTap(menu),
-                            ),
-                            SizedBox(height: 12 * scale),
-                            // Show foods if this menu is selected for detail
-                            if (isSelected) ...[
-                              _FoodsList(menu: menu),
-                              SizedBox(height: 12 * scale),
-                              AppWidgets.primaryButton(
-                                text: AppStrings.menuSelectThis,
-                                icon: Icon(
-                                  Icons.check,
-                                  size: 20 * scale,
-                                  color: AppColors.white,
+                      // Menu list in 2-column layout
+                      for (int i = 0; i < _menusForType.length; i += 2)
+                        Padding(
+                          padding: EdgeInsets.only(bottom: 12 * scale),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: MenuListItem(
+                                  menu: _menusForType[i],
+                                  isSelected:
+                                      widget.currentSelection?.id == _menusForType[i].id,
+                                  onTap: () => _openMenuDetail(_menusForType[i]),
                                 ),
-                                onPressed: () => _handleSelectMenu(menu),
-                                width: double.infinity,
                               ),
-                              SizedBox(height: 12 * scale),
+                              SizedBox(width: 12 * scale),
+                              if (i + 1 < _menusForType.length)
+                                Expanded(
+                                  child: MenuListItem(
+                                    menu: _menusForType[i + 1],
+                                    isSelected: widget.currentSelection?.id ==
+                                        _menusForType[i + 1].id,
+                                    onTap: () => _openMenuDetail(_menusForType[i + 1]),
+                                  ),
+                                )
+                              else
+                                const Expanded(child: SizedBox.shrink()),
                             ],
-                          ],
-                        );
-                      }),
+                          ),
+                        ),
                     ],
                   ),
           ),
@@ -427,6 +426,129 @@ class _FoodItem extends StatelessWidget {
                   ),
                 ],
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Full-screen style bottom sheet to show menu details & foods
+class _MenuDetailSheet extends StatelessWidget {
+  final MenuEntity menu;
+  final DateTime selectedDate;
+  final VoidCallback onSelect;
+
+  const _MenuDetailSheet({
+    required this.menu,
+    required this.selectedDate,
+    required this.onSelect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+
+    return Container(
+      margin: EdgeInsets.only(top: 40 * scale),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20 * scale),
+          topRight: Radius.circular(20 * scale),
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Drag handle
+          Container(
+            margin: EdgeInsets.only(top: 12 * scale, bottom: 8 * scale),
+            width: 40 * scale,
+            height: 4 * scale,
+            decoration: BoxDecoration(
+              color: AppColors.borderLight,
+              borderRadius: BorderRadius.circular(2 * scale),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20 * scale, vertical: 4 * scale),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        menu.menuName,
+                        style: AppTextStyles.tinos(
+                          fontSize: 20 * scale,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      SizedBox(height: 4 * scale),
+                      Text(
+                        '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+                        style: AppTextStyles.arimo(
+                          fontSize: 13 * scale,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(
+                    Icons.close,
+                    color: AppColors.textPrimary,
+                    size: 24 * scale,
+                  ),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(20 * scale, 0, 20 * scale, 12 * scale),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (menu.description != null && menu.description!.isNotEmpty) ...[
+                    Text(
+                      menu.description!,
+                      style: AppTextStyles.arimo(
+                        fontSize: 13 * scale,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    SizedBox(height: 12 * scale),
+                  ],
+                  _FoodsList(menu: menu),
+                ],
+              ),
+            ),
+          ),
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(20 * scale, 8 * scale, 20 * scale, 16 * scale),
+              child: AppWidgets.primaryButton(
+                text: AppStrings.menuSelectThis,
+                icon: Icon(
+                  Icons.check,
+                  size: 20 * scale,
+                  color: AppColors.white,
+                ),
+                onPressed: () {
+                  // Close detail sheet
+                  Navigator.of(context).pop();
+                  // Then notify parent (MenuListDrawer) to save & close list
+                  onSelect();
+                },
+              ),
             ),
           ),
         ],

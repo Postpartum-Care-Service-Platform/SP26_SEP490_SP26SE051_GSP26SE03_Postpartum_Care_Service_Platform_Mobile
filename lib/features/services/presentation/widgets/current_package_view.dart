@@ -26,6 +26,15 @@ class CurrentPackageView extends StatelessWidget {
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
     final isFullyPaid = nowPackage.remainingAmount <= 0;
+    final today = DateTime.now();
+    final todayDate = DateTime(today.year, today.month, today.day);
+    final checkin = DateTime(
+      nowPackage.checkinDate.year,
+      nowPackage.checkinDate.month,
+      nowPackage.checkinDate.day,
+    );
+    final isOnOrAfterCheckin = !todayDate.isBefore(checkin);
+    final showOverdueWarning = !isFullyPaid && isOnOrAfterCheckin;
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -52,6 +61,55 @@ class CurrentPackageView extends StatelessWidget {
                 ),
               ),
             SizedBox(height: 20 * scale),
+            if (showOverdueWarning) ...[
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(12 * scale),
+                decoration: BoxDecoration(
+                  color: AppColors.red.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(12 * scale),
+                  border: Border.all(
+                    color: AppColors.red.withValues(alpha: 0.25),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.warning_amber_rounded,
+                      size: 20 * scale,
+                      color: AppColors.red,
+                    ),
+                    SizedBox(width: 8 * scale),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            AppStrings.servicesRemainingPaymentOverdueTitle,
+                            style: AppTextStyles.arimo(
+                              fontSize: 13 * scale,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.red,
+                            ),
+                          ),
+                          SizedBox(height: 4 * scale),
+                          Text(
+                            AppStrings.servicesRemainingPaymentOverdueMessage,
+                            style: AppTextStyles.arimo(
+                              fontSize: 12 * scale,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 16 * scale),
+            ],
             ResortKeyCard(nowPackage: nowPackage),
             SizedBox(height: 16 * scale),
             AppWidgets.sectionContainer(

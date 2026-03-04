@@ -513,6 +513,10 @@ class AppStrings {
   static const String servicesDepositPaid = 'Đã thanh toán đặt cọc';
   static const String servicesRemainingPaymentMessage =
       'Phần thanh toán còn lại sẽ được mở sau khi hợp đồng được ký.';
+  static const String servicesRemainingPaymentOverdueTitle =
+      'Đã đến ngày sử dụng dịch vụ';
+  static const String servicesRemainingPaymentOverdueMessage =
+      'Bạn vẫn còn khoản thanh toán cho gói nghỉ dưỡng này. Vui lòng thanh toán phần còn lại để dịch vụ được kích hoạt đầy đủ và minh bạch.';
   static const String servicesAwaitingActivationMessage =
       'Bạn đã thanh toán đủ. Dịch vụ sẽ kích hoạt khi đến ngày check-in.';
   static const String servicesPayRemaining = 'Thanh toán phần còn lại';

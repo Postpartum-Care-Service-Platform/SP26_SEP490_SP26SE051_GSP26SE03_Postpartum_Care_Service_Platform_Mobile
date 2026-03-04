@@ -69,7 +69,9 @@ class _ServicesScreenState extends State<ServicesScreen> {
             final nowPackage = authState.account.nowPackage;
 
             if (nowPackage != null) {
-              if (nowPackage.serviceIsActive) {
+              final isFullyPaid = nowPackage.remainingAmount <= 0;
+
+              if (nowPackage.serviceIsActive && isFullyPaid) {
                 return ServiceDashboard(nowPackage: nowPackage);
               } else {
                 return CurrentPackageView(nowPackage: nowPackage);
