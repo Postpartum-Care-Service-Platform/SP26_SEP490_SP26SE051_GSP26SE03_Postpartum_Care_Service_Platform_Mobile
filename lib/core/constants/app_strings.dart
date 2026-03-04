@@ -64,6 +64,47 @@ class AppStrings {
   static const String promotions = 'Ưu đãi & Gói dịch vụ';
   static const String viewAll = 'Xem tất cả';
 
+  // Home Screen - Experience sections
+  static const String homeWelcomeTitle = 'Chào mừng bạn đến với The Joyful Nest';
+  static const String homeWelcomeSubtitle =
+      'Một trải nghiệm nghỉ dưỡng đẳng cấp cho mẹ sau sinh và bé.';
+  static const String homeWelcomeDescription =
+      'Những tuần đầu tiên trong vai trò làm mẹ là cột mốc thiêng liêng, nơi niềm '
+      'hạnh phúc và những trăn trở đan xen. The Joyful Nest được thiết kế như một tổ ấm '
+      'dịu êm, nơi bạn được nâng niu, lắng nghe và chăm sóc trọn vẹn cả về thể chất lẫn tinh thần.';
+  static const String homeWelcomeIconSpa = 'Spa & Chăm sóc';
+  static const String homeWelcomeIconCuisine = 'Ẩm thực dinh dưỡng';
+  static const String homeWelcomeIconCare = 'Chăm sóc mẹ & bé toàn diện';
+
+  static const String homeServiceGalleryTitle = 'Không gian & dịch vụ nghỉ dưỡng';
+  static const String homeServiceGallerySubtitle =
+      'Từ phòng nghỉ ấm áp, thực đơn dưỡng sinh đến những khoảnh khắc bên con – '
+      'mọi chi tiết đều được chăm chút tinh tế để hành trình sau sinh của bạn thêm trọn vẹn.';
+  static const String homeServiceGalleryNote =
+      'Hình ảnh minh họa – bạn sẽ được chọn phòng & gói phù hợp sau.';
+
+  static const String homeExperienceTitle = 'The Joyful Experience';
+  static const String homeExperienceSubtitle =
+      '28 ngày đầu: khởi nguồn yêu thương, định hình hành trình làm mẹ.';
+  static const String homeExperienceCta = 'Khám phá hành trình của bạn';
+
+  static const String homeTestimonialTitle = 'Những câu chuyện đã được gửi gắm';
+  static const String homeTestimonialSample1 =
+      'Cảm ơn The Joyful Nest đã mang đến cho gia đình mình một hành trình sau sinh thật '
+      'nhẹ nhàng, ấm áp và tràn ngập yêu thương. Đội ngũ điều dưỡng luôn tận tâm, tinh tế '
+      'trong từng chi tiết nhỏ.';
+  static const String homeTestimonialSample2 =
+      'Ở đây, mình được hướng dẫn tỉ mỉ cách chăm con, được nghỉ ngơi trọn vẹn và thưởng thức '
+      'những bữa ăn vừa ngon miệng vừa đầy đủ dinh dưỡng. Khi rời The Joyful Nest, mình cảm '
+      'thấy cơ thể phục hồi, tinh thần tươi mới và tự tin hơn với hành trình làm mẹ phía trước.';
+  static const String homeTestimonialSample3 =
+      'Không gian yên tĩnh, sạch sẽ, ấm áp như ở nhà; bé được chăm sóc chu đáo, còn ba mẹ thì '
+      'có thời gian nghỉ ngơi và lưu giữ những khoảnh khắc đầu đời thật đẹp.';
+
+  static const String homeLoveWallTitle = 'Yêu thương gửi đến The Joyful Nest';
+  static const String homeLoveWallSubtitle =
+      'Mỗi khung hình là một lời cảm ơn, một kỷ niệm nhỏ mà gia đình gửi tặng sau hành trình nghỉ dưỡng.';
+
   // Quick Actions
   static const String spaAndCare = 'Spa & Chăm sóc';
   static const String babyActivities = 'Hoạt động cho bé';
@@ -751,4 +792,8 @@ class AppStrings {
   static const String privacySection5 = '5. Quyền của bạn';
   static const String privacySection5Content =
       'Bạn có quyền truy cập, chỉnh sửa, xóa hoặc yêu cầu ngừng xử lý thông tin cá nhân của mình. Để thực hiện các quyền này, vui lòng liên hệ với chúng tôi.';
+
+  static const String cannotSetAppointmentInPast = 'Không thể đặt lịch hẹn vào thời gian quá khứ';
+  static const String canOnlySetAppointmentDuringBusinessHours = 'Chỉ có thể đặt lịch trong giờ hành chính (8:00 - 17:00)';
+
 }

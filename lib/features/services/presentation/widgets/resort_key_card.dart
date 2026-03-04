@@ -144,20 +144,23 @@ class _ResortKeyCardState extends State<ResortKeyCard>
                   horizontal: 14 * scale,
                   vertical: 10 * scale,
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      AppStrings.servicesCurrentPackage,
-                      style: AppTextStyles.arimo(
-                        fontSize: 13.5 * scale,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white.withValues(alpha: 0.9),
-                        letterSpacing: 0.2,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        AppStrings.servicesCurrentPackage,
+                        style: AppTextStyles.arimo(
+                          fontSize: 13.5 * scale,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white.withValues(alpha: 0.9),
+                          letterSpacing: 0.2,
+                        ),
                       ),
-                    ),
-                    Flexible(
-                      child: Text(
+                      SizedBox(width: 4 * scale),
+                      Text(
                         widget.nowPackage.packageName,
                         style: AppTextStyles.tinos(
                           fontSize: 16 * scale,
@@ -168,8 +171,8 @@ class _ResortKeyCardState extends State<ResortKeyCard>
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -220,51 +223,53 @@ class _ResortKeyCardState extends State<ResortKeyCard>
                   horizontal: 14 * scale,
                   vertical: 12 * scale,
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Check-in date with login icon
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.login,
-                          size: 16 * scale,
-                          color: Colors.white,
-                        ),
-                        SizedBox(width: 4 * scale),
-                        Text(
-                          formatDateLocal(widget.nowPackage.checkinDate),
-                          style: AppTextStyles.arimo(
-                            fontSize: 13.5 * scale,
-                            fontWeight: FontWeight.w700,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.center,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Check-in date with login icon
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.login,
+                            size: 16 * scale,
                             color: Colors.white,
-                            letterSpacing: 0.2,
                           ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(width: 10 * scale),
-                    // Arrow separator
-                    Icon(
-                      Icons.double_arrow,
-                      size: 16 * scale,
-                      color: Colors.white.withValues(alpha: 0.8),
-                    ),
-                    SizedBox(width: 10 * scale),
-                    // Check-out date with logout icon
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.logout,
-                          size: 16 * scale,
-                          color: Colors.white,
-                        ),
-                        SizedBox(width: 4 * scale),
-                        Flexible(
-                          child: Text(
+                          SizedBox(width: 4 * scale),
+                          Text(
+                            formatDateLocal(widget.nowPackage.checkinDate),
+                            style: AppTextStyles.arimo(
+                              fontSize: 13.5 * scale,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(width: 10 * scale),
+                      // Arrow separator
+                      Icon(
+                        Icons.double_arrow,
+                        size: 16 * scale,
+                        color: Colors.white.withValues(alpha: 0.8),
+                      ),
+                      SizedBox(width: 10 * scale),
+                      // Check-out date with logout icon
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.logout,
+                            size: 16 * scale,
+                            color: Colors.white,
+                          ),
+                          SizedBox(width: 4 * scale),
+                          Text(
                             formatDateLocal(widget.nowPackage.checkoutDate),
                             style: AppTextStyles.arimo(
                               fontSize: 13.5 * scale,
@@ -275,10 +280,10 @@ class _ResortKeyCardState extends State<ResortKeyCard>
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
