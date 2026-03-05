@@ -169,6 +169,7 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
   /// Staff ghi nhận thanh toán offline cho booking.
   ///
   /// Sử dụng POST /api/Transaction/payment.
+  @override
   Future<PaymentStatusModel> createOfflinePayment({
     required int bookingId,
     required String customerId,

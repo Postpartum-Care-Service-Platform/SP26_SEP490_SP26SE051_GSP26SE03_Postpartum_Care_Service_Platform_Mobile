@@ -318,11 +318,11 @@ class ContractRemoteDataSourceImpl implements ContractRemoteDataSource {
       if (customerAddress != null && customerAddress.trim().isNotEmpty) {
         body['customerAddress'] = customerAddress.trim();
       }
-      String _d(DateTime d) => d.toIso8601String().split('T')[0];
-      if (effectiveFrom != null) body['effectiveFrom'] = _d(effectiveFrom);
-      if (effectiveTo != null) body['effectiveTo'] = _d(effectiveTo);
-      if (checkinDate != null) body['checkinDate'] = _d(checkinDate);
-      if (checkoutDate != null) body['checkoutDate'] = _d(checkoutDate);
+      String d(DateTime d) => d.toIso8601String().split('T')[0];
+      if (effectiveFrom != null) body['effectiveFrom'] = d(effectiveFrom);
+      if (effectiveTo != null) body['effectiveTo'] = d(effectiveTo);
+      if (checkinDate != null) body['checkinDate'] = d(checkinDate);
+      if (checkoutDate != null) body['checkoutDate'] = d(checkoutDate);
       if (totalPrice != null) body['totalPrice'] = totalPrice;
       if (discountAmount != null) body['discountAmount'] = discountAmount;
       if (finalAmount != null) body['finalAmount'] = finalAmount;

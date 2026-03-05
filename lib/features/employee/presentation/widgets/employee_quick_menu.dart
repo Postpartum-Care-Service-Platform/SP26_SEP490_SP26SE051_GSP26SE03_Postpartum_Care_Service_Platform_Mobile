@@ -13,6 +13,7 @@ enum EmployeeQuickMenuItemType { bottomTab, extra }
 /// Các action mở rộng (ngoài bottom tab)
 /// Tuỳ nghiệp vụ bạn có thể bổ sung thêm
 enum EmployeeQuickMenuExtraAction {
+  appointments,
   amenityService,
   amenityTicket,
   room,
@@ -560,6 +561,12 @@ class EmployeeQuickMenuPresets {
         label: 'Hợp đồng',
         iconAsset: AppAssets.menuThird,
         action: EmployeeQuickMenuExtraAction.contracts,
+      ),
+      EmployeeQuickMenuItem.extra(
+        id: 'appointments',
+        label: 'Lịch hẹn',
+        iconAsset: AppAssets.calendar,
+        action: EmployeeQuickMenuExtraAction.appointments,
       ),
     ];
   }

@@ -1,7 +1,5 @@
-// lib/features/employee/presentation/screens/employee_portal_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/widgets/app_bottom_navigation_bar.dart';
 import '../../../../core/di/injection_container.dart';
@@ -11,7 +9,7 @@ import 'employee_chat_screen.dart';
 import '../widgets/employee_bottom_nav_bar.dart';
 import '../widgets/employee_fab.dart';
 import '../widgets/employee_more_sheet.dart';
-import 'employee_schedule_screen_new.dart'; // BLoC version
+import 'employee_schedule_work.dart'; // BLoC version
 
 class EmployeePortalScreen extends StatefulWidget {
   const EmployeePortalScreen({super.key});

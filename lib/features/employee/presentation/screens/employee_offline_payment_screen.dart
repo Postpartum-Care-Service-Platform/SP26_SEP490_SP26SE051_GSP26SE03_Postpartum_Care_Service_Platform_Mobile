@@ -188,7 +188,7 @@ class _EmployeeOfflinePaymentScreenState
                         ),
                         const SizedBox(height: 8),
                         DropdownButtonFormField<String>(
-                          value: _paymentMethod,
+                          initialValue: _paymentMethod,
                           items: const [
                             DropdownMenuItem(
                               value: 'Cash',

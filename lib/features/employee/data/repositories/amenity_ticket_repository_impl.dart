@@ -103,6 +103,7 @@ class AmenityTicketRepositoryImpl implements AmenityTicketRepository {
   }
 
   /// Update amenity ticket (thêm method mới)
+  @override
   Future<AmenityTicketEntity> updateTicket({
     required int ticketId,
     required int amenityServiceId,
@@ -124,6 +125,7 @@ class AmenityTicketRepositoryImpl implements AmenityTicketRepository {
   }
 
   /// Get ticket by ID (thêm method mới)
+  @override
   Future<AmenityTicketEntity> getTicketById(int id) async {
     try {
       final model = await remoteDataSource.getAmenityTicketById(id);
