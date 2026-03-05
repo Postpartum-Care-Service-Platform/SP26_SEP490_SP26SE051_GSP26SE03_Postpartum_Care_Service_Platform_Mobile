@@ -23,7 +23,7 @@ import '../../features/supportAndPolicy/presentation/screens/contact_screen.dart
 import '../../features/supportAndPolicy/presentation/screens/about_screen.dart';
 import '../../features/supportAndPolicy/presentation/screens/terms_screen.dart';
 import '../../features/supportAndPolicy/presentation/screens/privacy_screen.dart';
-import '../../features/employee/presentation/screens/employee_portal_screen.dart';
+import '../../features/employee/presentation/screens/employee_portal_menu.dart';
 import '../../features/employee/presentation/screens/tasks_screen.dart';
 import '../../features/employee/presentation/screens/check_in_out_screen.dart';
 import '../../features/employee/presentation/screens/requests_screen.dart';
@@ -38,8 +38,8 @@ import '../../features/transaction/presentation/screens/staff_transaction_list_s
 import '../../features/employee/presentation/screens/staff_contract_list_screen.dart';
 import '../../features/employee/presentation/screens/staff_contract_preview_screen.dart';
 import '../../features/employee/presentation/screens/staff_member_type_detail_screen.dart';
-import '../../features/employee/presentation/screens/employee_package_booking_screen.dart';
 import '../../features/employee/presentation/screens/staff_amenity_ticket_list_screen.dart';
+import '../../features/employee/presentation/screens/employee_appointment_list_screen.dart';
 import '../../features/employee/data/models/account_model.dart';
 import '../../features/chat/presentation/screens/conversation_list_screen.dart';
 import '../../features/chat/presentation/screens/conversation_detail_screen.dart';
@@ -325,6 +325,11 @@ class AppRouter {
         }
         return MaterialPageRoute(
           builder: (_) => const StaffAmenityTicketListScreen(),
+        );
+
+      case AppRoutes.employeeAppointmentList:
+        return MaterialPageRoute(
+          builder: (_) => const EmployeeAppointmentListScreen(),
         );
 
       // Employee Routes - Legacy/Mock screens

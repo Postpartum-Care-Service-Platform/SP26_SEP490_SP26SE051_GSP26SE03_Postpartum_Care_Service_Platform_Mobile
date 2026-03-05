@@ -1,6 +1,6 @@
 # Tổng hợp trạng thái API dành cho Staff
 
-_Cập nhật lần cuối: 26/02/2026_
+_Cập nhật lần cuối: 03/03/2026_
 
 ---
 
@@ -16,10 +16,10 @@ Tài liệu này tổng hợp và đồng bộ thông tin từ:
 ## 📊 Thống kê tổng quan
 
 - **Tổng số API explicit cho Staff**: 50+ endpoints
-- **Đã tích hợp trong mobile**: ~43 endpoints (86%)
-- **Chưa tích hợp**: ~7 endpoints (14%)
+- **Đã tích hợp trong mobile**: ~43 endpoints (≈86%)
+- **Chưa tích hợp (chủ yếu MenuRecord cho staff)**: ~10 endpoints (≈14%)
 - **API không tồn tại/sai**: 0 endpoints
-- **API thiếu cho nghiệp vụ**: 3 endpoints (MenuRecordController - staff xem/chỉnh sửa menu khách hàng)
+- **API thiếu cho nghiệp vụ**: 0 endpoints (các nghiệp vụ chính của staff đều đã có API ở Backend; một số API vẫn chưa được mobile tích hợp)
 
 ---
 

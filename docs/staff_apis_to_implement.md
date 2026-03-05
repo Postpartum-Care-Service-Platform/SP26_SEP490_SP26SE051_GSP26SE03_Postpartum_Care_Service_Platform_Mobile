@@ -1,14 +1,15 @@
 # Danh sách API cần bổ sung/cải thiện cho Staff
 
-_Cập nhật lần cuối: 26/02/2026_
+_Cập nhật lần cuối: 03/03/2026_
 
 ---
 
 ## 📋 Tổng quan
 
-Tài liệu này liệt kê các API cần được implement ở **Backend** để hỗ trợ đầy đủ nghiệp vụ của Staff trong hệ thống Postpartum Care Service Platform.
+Tài liệu này liệt kê các API **liên quan đến nghiệp vụ Staff** trong hệ thống Postpartum Care Service Platform, bao gồm:
 
-**Lưu ý**: Các API này hiện tại **CHƯA TỒN TẠI** ở Backend và cần được phát triển trước khi tích hợp vào Mobile App.
+- **API đã có** (✅) mà Staff có thể sử dụng.
+- **API chưa có** (❌) cần được bổ sung/cải thiện ở Backend.
 
 ---
 
@@ -20,56 +21,69 @@ Tài liệu này liệt kê các API cần được implement ở **Backend** đ
 
 Staff cần xem và chỉnh sửa menu của các gia đình được phân công để phục vụ.
 
-##### ❌ `GET /api/MenuRecord/customer/{customerId}`
-- **Mô tả**: Staff xem toàn bộ menu của khách hàng theo customerId
-- **Authorization**: `[Authorize(Roles = "admin,manager,staff")]`
-- **Query Parameters**: 
-  - `from` (DateOnly, optional): Ngày bắt đầu
-  - `to` (DateOnly, optional): Ngày kết thúc
+##### ✅ `GET /api/MenuRecord/customer/{customerId}`
+- **Mô tả**: Staff xem toàn bộ menu của khách hàng theo `customerId`.
+- **Authorization**: `[Authorize(Roles = "staff")]` (thông qua `AppConstants.Role.StaffRoleName`).
+- **Query Parameters (hiện tại)**: Không bắt buộc `from/to`, service hỗ trợ lọc theo khách hàng.
 - **Response**: `List<MenuRecordResponse>`
-- **Nghiệp vụ**: Staff cần xem menu của gia đình được phân để biết khách ăn gì trong ngày/tuần
-- **Ưu tiên**: 🔴 **CAO** - Cần thiết cho nghiệp vụ hàng ngày
+- **Nghiệp vụ**: Staff xem menu của gia đình được phân để biết khách ăn gì trong ngày/tuần.
+- **Ưu tiên**: 🔴 **CAO**
 
-##### ❌ `GET /api/MenuRecord/customer/{customerId}/date`
-- **Mô tả**: Staff xem menu của khách hàng theo customerId và ngày cụ thể
-- **Authorization**: `[Authorize(Roles = "admin,manager,staff")]`
-- **Query Parameters**: 
-  - `date` (DateOnly, required): Ngày cần xem menu
+##### ✅ `GET /api/MenuRecord/customer/{customerId}/date`
+- **Mô tả**: Staff xem menu của khách hàng theo `customerId` và ngày cụ thể.
+- **Authorization**: `[Authorize(Roles = "staff")]`
+- **Query Parameters**:
+  - `date` (DateOnly, required): Ngày cần xem menu.
 - **Response**: `List<MenuRecordResponse>`
-- **Nghiệp vụ**: Xem menu trong ngày cụ thể để chuẩn bị bữa ăn
-- **Ưu tiên**: 🔴 **CAO** - Cần thiết cho nghiệp vụ hàng ngày
+- **Nghiệp vụ**: Xem menu trong ngày cụ thể để chuẩn bị bữa ăn.
+- **Ưu tiên**: 🔴 **CAO**
 
-##### ❌ `GET /api/MenuRecord/customer/{customerId}/date-range`
-- **Mô tả**: Staff xem menu của khách hàng trong khoảng thời gian
-- **Authorization**: `[Authorize(Roles = "admin,manager,staff")]`
-- **Query Parameters**: 
-  - `from` (DateOnly, required): Ngày bắt đầu
-  - `to` (DateOnly, required): Ngày kết thúc
+##### ✅ `GET /api/MenuRecord/customer/{customerId}/date-range`
+- **Mô tả**: Staff xem menu của khách hàng trong khoảng thời gian.
+- **Authorization**: `[Authorize(Roles = "staff")]`
+- **Query Parameters**:
+  - `from` (DateOnly, required): Ngày bắt đầu.
+  - `to` (DateOnly, required): Ngày kết thúc.
 - **Response**: `List<MenuRecordResponse>`
-- **Nghiệp vụ**: Xem menu trong tuần/tháng để lên kế hoạch
-- **Ưu tiên**: 🔴 **CAO** - Cần thiết cho nghiệp vụ hàng ngày
+- **Nghiệp vụ**: Xem menu trong tuần/tháng để lên kế hoạch.
+- **Ưu tiên**: 🔴 **CAO**
 
-##### ❌ `POST /api/MenuRecord/customer/{customerId}`
-- **Mô tả**: Staff tạo menu cho khách hàng
-- **Authorization**: `[Authorize(Roles = "admin,manager,staff")]`
+##### ✅ `POST /api/MenuRecord/by-staff?customerId={customerId}`
+- **Mô tả**: Staff tạo menu cho khách hàng được chỉ định.
+- **Authorization**: `[Authorize(Roles = "staff")]`
+- **Query Parameters**:
+  - `customerId` (Guid, required): Khách hàng cần tạo menu.
 - **Request Body**: `List<CreateMenuRecordRequest>`
 - **Response**: `List<MenuRecordResponse>`
-- **Nghiệp vụ**: Staff có thể tạo menu hộ khách hàng khi khách không tự tạo được
-- **Ưu tiên**: 🔴 **CAO** - Cần thiết cho nghiệp vụ
+- **Nghiệp vụ**: Staff tạo menu hộ khách hàng khi khách không tự tạo được.
+- **Ưu tiên**: 🔴 **CAO**
 
-##### ❌ `PUT /api/MenuRecord/customer/{customerId}`
-- **Mô tả**: Staff chỉnh sửa menu cho khách hàng
-- **Authorization**: `[Authorize(Roles = "admin,manager,staff")]`
+##### ✅ `PUT /api/MenuRecord/by-staff?customerId={customerId}`
+- **Mô tả**: Staff chỉnh sửa menu cho khách hàng được chỉ định.
+- **Authorization**: `[Authorize(Roles = "staff")]`
+- **Query Parameters**:
+  - `customerId` (Guid, required)
 - **Request Body**: `List<UpdateMenuRecordRequest>`
 - **Response**: `List<MenuRecordResponse>`
-- **Nghiệp vụ**: Staff chỉnh sửa menu hộ khách hàng (ví dụ: thay đổi món ăn do không có nguyên liệu, khách yêu cầu thay đổi)
-- **Ưu tiên**: 🔴 **CAO** - Cần thiết cho nghiệp vụ hàng ngày
+- **Nghiệp vụ**: Staff chỉnh sửa menu hộ khách hàng (ví dụ: thay đổi món ăn, thiếu nguyên liệu, khách yêu cầu thay đổi).
+- **Ưu tiên**: 🔴 **CAO**
 
-##### ❌ `DELETE /api/MenuRecord/customer/{customerId}/{id}`
-- **Mô tả**: Staff xóa menu của khách hàng
-- **Authorization**: `[Authorize(Roles = "admin,manager,staff")]`
+##### ✅ `DELETE /api/MenuRecord/by-staff/{id}?customerId={customerId}`
+- **Mô tả**: Staff xóa (soft delete) 1 menu record của khách hàng.
+- **Authorization**: `[Authorize(Roles = "staff")]`
+- **Query Parameters**:
+  - `customerId` (Guid, required)
 - **Response**: `MenuRecordResponse`
-- **Nghiệp vụ**: Xóa menu khi cần thiết (soft delete)
+- **Nghiệp vụ**: Xóa menu khi cần thiết.
+- **Ưu tiên**: 🟡 **TRUNG BÌNH**
+
+##### ✅ `PATCH /api/MenuRecord/by-staff/restore/{id}?customerId={customerId}`
+- **Mô tả**: Staff khôi phục 1 menu record đã xóa của khách hàng.
+- **Authorization**: `[Authorize(Roles = "staff")]`
+- **Query Parameters**:
+  - `customerId` (Guid, required)
+- **Response**: `MenuRecordResponse`
+- **Nghiệp vụ**: Khôi phục menu khi xóa nhầm.
 - **Ưu tiên**: 🟡 **TRUNG BÌNH**
 
 ---

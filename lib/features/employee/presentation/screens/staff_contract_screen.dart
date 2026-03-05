@@ -594,7 +594,7 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
           ),
           child: StatefulBuilder(
             builder: (context, setModalState) {
-              Widget _dateRow(
+              Widget dateRow(
                 String label,
                 DateTime? value,
                 ValueChanged<DateTime?> onChanged,
@@ -637,16 +637,16 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                       ),
                     ),
                     SizedBox(height: 12 * scale),
-                    _dateRow('Hiệu lực từ', effectiveFrom, (v) {
+                    dateRow('Hiệu lực từ', effectiveFrom, (v) {
                       effectiveFrom = v;
                     }),
-                    _dateRow('Hiệu lực đến', effectiveTo, (v) {
+                    dateRow('Hiệu lực đến', effectiveTo, (v) {
                       effectiveTo = v;
                     }),
-                    _dateRow('Check-in', checkinDate, (v) {
+                    dateRow('Check-in', checkinDate, (v) {
                       checkinDate = v;
                     }),
-                    _dateRow('Check-out', checkoutDate, (v) {
+                    dateRow('Check-out', checkoutDate, (v) {
                       checkoutDate = v;
                     }),
                     SizedBox(height: 12 * scale),
@@ -684,7 +684,7 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () async {
-                          double? _parse(String text) {
+                          double? parse(String text) {
                             if (text.trim().isEmpty) return null;
                             return double.tryParse(
                               text.trim().replaceAll(',', ''),
@@ -699,9 +699,9 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                               effectiveTo: effectiveTo,
                               checkinDate: checkinDate,
                               checkoutDate: checkoutDate,
-                              totalPrice: _parse(totalController.text),
-                              discountAmount: _parse(discountController.text),
-                              finalAmount: _parse(finalController.text),
+                              totalPrice: parse(totalController.text),
+                              discountAmount: parse(discountController.text),
+                              finalAmount: parse(finalController.text),
                             );
                             if (mounted) {
                               AppToast.showSuccess(

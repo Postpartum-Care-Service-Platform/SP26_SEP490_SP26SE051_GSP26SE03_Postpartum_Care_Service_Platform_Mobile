@@ -93,4 +93,7 @@ class AppRoutes {
   // Amenity Routes
   static const String amenity = '/amenity';
   static const String staffAmenityTicketList = '/staff-amenity-ticket-list';
+
+  // Employee Appointment Routes
+  static const String employeeAppointmentList = '/employee-appointment-list';
 }
