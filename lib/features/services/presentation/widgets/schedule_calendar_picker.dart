@@ -7,12 +7,16 @@ class ScheduleCalendarPicker extends StatelessWidget {
   final DateTime selectedDate;
   final ValueChanged<DateTime> onDateSelected;
   final List<DateTime> datesWithSchedules;
+  final DateTime? minDate;
+  final DateTime? maxDate;
 
   const ScheduleCalendarPicker({
     super.key,
     required this.selectedDate,
     required this.onDateSelected,
     this.datesWithSchedules = const [],
+    this.minDate,
+    this.maxDate,
   });
 
   bool _isSameDay(DateTime date1, DateTime date2) {
@@ -32,6 +36,8 @@ class ScheduleCalendarPicker extends StatelessWidget {
       selectedDate: selectedDate,
       onDateSelected: onDateSelected,
       hasData: _hasSchedule,
+      minDate: minDate,
+      maxDate: maxDate,
     );
   }
 }

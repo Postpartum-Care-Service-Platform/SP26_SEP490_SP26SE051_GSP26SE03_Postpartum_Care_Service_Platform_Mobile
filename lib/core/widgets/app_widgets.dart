@@ -713,11 +713,15 @@ class AppWidgets {
     required DateTime selectedDate,
     required ValueChanged<DateTime> onDateSelected,
     required bool Function(DateTime date) hasData,
+    DateTime? minDate,
+    DateTime? maxDate,
   }) {
     return _AppWeekCalendarPicker(
       selectedDate: selectedDate,
       onDateSelected: onDateSelected,
       hasData: hasData,
+      minDate: minDate,
+      maxDate: maxDate,
     );
   }
 }
@@ -727,11 +731,15 @@ class _AppWeekCalendarPicker extends StatefulWidget {
   final DateTime selectedDate;
   final ValueChanged<DateTime> onDateSelected;
   final bool Function(DateTime date) hasData;
+  final DateTime? minDate;
+  final DateTime? maxDate;
 
   const _AppWeekCalendarPicker({
     required this.selectedDate,
     required this.onDateSelected,
     required this.hasData,
+    this.minDate,
+    this.maxDate,
   });
 
   @override
@@ -765,19 +773,56 @@ class _AppWeekCalendarPickerState extends State<_AppWeekCalendarPicker> {
     return date.subtract(Duration(days: daysFromMonday));
   }
 
+  DateTime _normalizeDate(DateTime date) => DateTime(date.year, date.month, date.day);
+
+  bool _isDateInRange(DateTime date) {
+    final normalizedDate = _normalizeDate(date);
+
+    if (widget.minDate != null) {
+      final min = _normalizeDate(widget.minDate!);
+      if (normalizedDate.isBefore(min)) return false;
+    }
+
+    if (widget.maxDate != null) {
+      final max = _normalizeDate(widget.maxDate!);
+      if (normalizedDate.isAfter(max)) return false;
+    }
+
+    return true;
+  }
+
+  bool _canGoPreviousWeek() {
+    if (widget.minDate == null) return true;
+    final previousWeekStart = _currentWeekStart.subtract(const Duration(days: 7));
+    final previousWeekEnd = previousWeekStart.add(const Duration(days: 6));
+    final min = _normalizeDate(widget.minDate!);
+    return !previousWeekEnd.isBefore(min);
+  }
+
+  bool _canGoNextWeek() {
+    if (widget.maxDate == null) return true;
+    final nextWeekStart = _currentWeekStart.add(const Duration(days: 7));
+    final nextWeekStartNormalized = _normalizeDate(nextWeekStart);
+    final max = _normalizeDate(widget.maxDate!);
+    return !nextWeekStartNormalized.isAfter(max);
+  }
+
   void _previousWeek() {
+    if (!_canGoPreviousWeek()) return;
     setState(() {
       _currentWeekStart = _currentWeekStart.subtract(const Duration(days: 7));
     });
   }
 
   void _nextWeek() {
+    if (!_canGoNextWeek()) return;
     setState(() {
       _currentWeekStart = _currentWeekStart.add(const Duration(days: 7));
     });
   }
 
   void _selectDate(DateTime date) {
+    if (!_isDateInRange(date)) return;
     setState(() {
       _selectedDate = date;
       _currentWeekStart = _getMondayOfWeek(date);
@@ -823,6 +868,8 @@ class _AppWeekCalendarPickerState extends State<_AppWeekCalendarPicker> {
     final scale = AppResponsive.scaleFactor(context);
     final days = _getDaysInWeek();
     final weekDays = AppFormatters.getWeekDayAbbreviations();
+    final canGoPreviousWeek = _canGoPreviousWeek();
+    final canGoNextWeek = _canGoNextWeek();
 
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 20 * scale),
@@ -861,9 +908,11 @@ class _AppWeekCalendarPickerState extends State<_AppWeekCalendarPicker> {
                     icon: Icon(
                       Icons.arrow_back_ios,
                       size: 20 * scale,
-                      color: AppColors.textPrimary,
+                      color: canGoPreviousWeek
+                          ? AppColors.textPrimary
+                          : AppColors.textSecondary.withValues(alpha: 0.4),
                     ),
-                    onPressed: _previousWeek,
+                    onPressed: canGoPreviousWeek ? _previousWeek : null,
                     padding: EdgeInsets.zero,
                     constraints: BoxConstraints(
                       minWidth: 24 * scale,
@@ -875,9 +924,11 @@ class _AppWeekCalendarPickerState extends State<_AppWeekCalendarPicker> {
                     icon: Icon(
                       Icons.arrow_forward_ios,
                       size: 20 * scale,
-                      color: AppColors.textPrimary,
+                      color: canGoNextWeek
+                          ? AppColors.textPrimary
+                          : AppColors.textSecondary.withValues(alpha: 0.4),
                     ),
-                    onPressed: _nextWeek,
+                    onPressed: canGoNextWeek ? _nextWeek : null,
                     padding: EdgeInsets.zero,
                     constraints: BoxConstraints(
                       minWidth: 24 * scale,
@@ -900,73 +951,77 @@ class _AppWeekCalendarPickerState extends State<_AppWeekCalendarPicker> {
               final isSelected = _isSameDay(date, _selectedDate);
               final hasData = widget.hasData(date);
               final isToday = _isToday(date);
+              final isInRange = _isDateInRange(date);
 
               return GestureDetector(
-                onTap: () => _selectDate(date),
-                child: Container(
-                  width: 44 * scale,
-                  padding: EdgeInsets.only(
-                    top: 8 * scale,
-                    bottom: 8 * scale,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? AppColors.primary
-                        : isToday
-                            ? Colors.grey.shade200
-                            : Colors.transparent,
-                    borderRadius: BorderRadius.circular(12 * scale),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // Day label (T2, T3, etc.)
-                      Text(
-                        dayLabel,
-                        style: AppTextStyles.arimo(
-                          fontSize: 15 * scale,
-                          fontWeight: FontWeight.normal,
-                          color: isSelected
-                              ? AppColors.white
-                              : AppColors.textSecondary,
-                        ),
-                      ),
-                      SizedBox(height: 4 * scale),
-                      // Date number - fixed height container
-                      SizedBox(
-                        height: 20 * scale,
-                        child: Center(
-                          child: Text(
-                            '${date.day}',
-                            style: AppTextStyles.tinos(
-                              fontSize: 16 * scale,
-                              fontWeight: FontWeight.bold,
-                              color: isSelected
-                                  ? AppColors.white
-                                  : AppColors.textPrimary,
-                            ),
-                            textAlign: TextAlign.center,
+                onTap: isInRange ? () => _selectDate(date) : null,
+                child: Opacity(
+                  opacity: isInRange ? 1 : 0.38,
+                  child: Container(
+                    width: 44 * scale,
+                    padding: EdgeInsets.only(
+                      top: 8 * scale,
+                      bottom: 8 * scale,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? AppColors.primary
+                          : isToday
+                              ? Colors.grey.shade200
+                              : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12 * scale),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // Day label (T2, T3, etc.)
+                        Text(
+                          dayLabel,
+                          style: AppTextStyles.arimo(
+                            fontSize: 15 * scale,
+                            fontWeight: FontWeight.normal,
+                            color: isSelected
+                                ? AppColors.white
+                                : AppColors.textSecondary,
                           ),
                         ),
-                      ),
-                      // Fixed space below date number
-                      SizedBox(height: 6 * scale),
-                      // Dot indicator - always reserve same space
-                      SizedBox(
-                        height: 4 * scale,
-                        child: hasData && !isSelected
-                            ? Container(
-                                width: 4 * scale,
-                                height: 4 * scale,
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary,
-                                  shape: BoxShape.circle,
-                                ),
-                              )
-                            : const SizedBox.shrink(),
-                      ),
-                    ],
+                        SizedBox(height: 4 * scale),
+                        // Date number - fixed height container
+                        SizedBox(
+                          height: 20 * scale,
+                          child: Center(
+                            child: Text(
+                              '${date.day}',
+                              style: AppTextStyles.tinos(
+                                fontSize: 16 * scale,
+                                fontWeight: FontWeight.bold,
+                                color: isSelected
+                                    ? AppColors.white
+                                    : AppColors.textPrimary,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                        // Fixed space below date number
+                        SizedBox(height: 6 * scale),
+                        // Dot indicator - always reserve same space
+                        SizedBox(
+                          height: 4 * scale,
+                          child: hasData && !isSelected
+                              ? Container(
+                                  width: 4 * scale,
+                                  height: 4 * scale,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                )
+                              : const SizedBox.shrink(),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );

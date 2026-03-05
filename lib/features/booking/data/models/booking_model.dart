@@ -44,15 +44,31 @@ class BookingModel {
   });
 
   factory BookingModel.fromJson(Map<String, dynamic> json) {
+    final transactions = json['transactions'] != null
+        ? (json['transactions'] as List<dynamic>)
+            .map((e) => TransactionModel.fromJson(e as Map<String, dynamic>))
+            .toList()
+        : <TransactionModel>[];
+
+    final finalAmount = (json['finalAmount'] as num).toDouble();
+
+    // Chỉ tính số tiền đã thanh toán từ transaction có status = Paid
+    final paidAmount = transactions
+        .where((t) => t.status.toLowerCase() == 'paid')
+        .fold<double>(0, (sum, t) => sum + t.amount);
+
+    final remainingAmount =
+        (finalAmount - paidAmount).clamp(0, double.infinity).toDouble();
+
     return BookingModel(
       id: json['id'] as int,
       startDate: DateTime.parse(json['startDate'] as String),
       endDate: DateTime.parse(json['endDate'] as String),
       totalPrice: (json['totalPrice'] as num).toDouble(),
       discountAmount: (json['discountAmount'] as num).toDouble(),
-      finalAmount: (json['finalAmount'] as num).toDouble(),
-      paidAmount: (json['paidAmount'] as num).toDouble(),
-      remainingAmount: (json['remainingAmount'] as num).toDouble(),
+      finalAmount: finalAmount,
+      paidAmount: paidAmount,
+      remainingAmount: remainingAmount,
       status: json['status'] as String,
       bookingDate: DateTime.parse(json['bookingDate'] as String),
       createdAt: DateTime.parse(json['createdAt'] as String),
@@ -68,11 +84,7 @@ class BookingModel {
       contract: json['contract'] != null
           ? ContractModel.fromJson(json['contract'] as Map<String, dynamic>)
           : null,
-      transactions: json['transactions'] != null
-          ? (json['transactions'] as List<dynamic>)
-              .map((e) => TransactionModel.fromJson(e as Map<String, dynamic>))
-              .toList()
-          : [],
+      transactions: transactions,
     );
   }
 

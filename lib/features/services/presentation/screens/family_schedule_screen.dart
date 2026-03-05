@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/services/current_account_cache_service.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/widgets/app_app_bar.dart';
 import '../../../../core/widgets/app_loading.dart';
@@ -25,6 +26,8 @@ class FamilyScheduleScreen extends StatefulWidget {
 
 class _FamilyScheduleScreenState extends State<FamilyScheduleScreen> {
   late DateTime _selectedDate;
+  DateTime? _minScheduleDate;
+  DateTime? _maxScheduleDate;
 
   @override
   void initState() {
@@ -32,11 +35,55 @@ class _FamilyScheduleScreenState extends State<FamilyScheduleScreen> {
     // Normalize date to remove time component
     final now = DateTime.now();
     _selectedDate = DateTime(now.year, now.month, now.day);
+    _loadScheduleDateRange();
+  }
+
+  DateTime _normalizeDate(DateTime date) => DateTime(date.year, date.month, date.day);
+
+  Future<void> _loadScheduleDateRange() async {
+    final currentAccount = await CurrentAccountCacheService.getCurrentAccount();
+    final nowPackage = currentAccount?.nowPackage;
+
+    if (nowPackage == null) return;
+
+    final minDate = _normalizeDate(nowPackage.checkinDate);
+    final maxDate = _normalizeDate(nowPackage.checkoutDate);
+
+    final clampedSelectedDate = _selectedDate.isBefore(minDate)
+        ? minDate
+        : (_selectedDate.isAfter(maxDate) ? maxDate : _selectedDate);
+
+    if (!mounted) return;
+
+    setState(() {
+      _minScheduleDate = minDate;
+      _maxScheduleDate = maxDate;
+      _selectedDate = clampedSelectedDate;
+    });
+  }
+
+  bool _isDateInAllowedRange(DateTime date) {
+    final normalizedDate = _normalizeDate(date);
+
+    if (_minScheduleDate != null && normalizedDate.isBefore(_minScheduleDate!)) {
+      return false;
+    }
+
+    if (_maxScheduleDate != null && normalizedDate.isAfter(_maxScheduleDate!)) {
+      return false;
+    }
+
+    return true;
   }
 
   void _handleDateSelected(DateTime date) {
     // Normalize date to remove time component
     final normalizedDate = DateTime(date.year, date.month, date.day);
+
+    if (!_isDateInAllowedRange(normalizedDate)) {
+      return;
+    }
+
     setState(() {
       _selectedDate = normalizedDate;
     });
@@ -174,6 +221,8 @@ class _FamilyScheduleScreenState extends State<FamilyScheduleScreen> {
                       selectedDate: _selectedDate,
                       onDateSelected: _handleDateSelected,
                       datesWithSchedules: datesWithSchedules,
+                      minDate: _minScheduleDate,
+                      maxDate: _maxScheduleDate,
                     ),
                   ),
 
