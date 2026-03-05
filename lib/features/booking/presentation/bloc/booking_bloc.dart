@@ -7,9 +7,8 @@ import '../../domain/usecases/create_payment_link_usecase.dart';
 import '../../domain/usecases/check_payment_status_usecase.dart';
 import '../../../package/domain/usecases/get_packages_usecase.dart';
 import '../../../package/domain/entities/package_entity.dart';
-import '../../../employee/domain/usecases/get_all_rooms.dart';
+import '../../../employee/domain/usecases/get_available_rooms_by_date_range.dart';
 import '../../../employee/domain/entities/room_entity.dart';
-import '../../../employee/domain/entities/room_status.dart';
 import 'booking_event.dart';
 import 'booking_state.dart';
 
@@ -22,7 +21,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   final CreatePaymentLinkUsecase createPaymentLinkUsecase;
   final CheckPaymentStatusUsecase checkPaymentStatusUsecase;
   final GetPackagesUsecase getPackagesUsecase;
-  final GetAllRooms getAllRooms;
+  final GetAvailableRoomsByDateRange getAvailableRoomsByDateRange;
 
   // Current selection state
   int? _selectedPackageId;
@@ -30,6 +29,19 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   DateTime? _selectedDate;
   List<PackageEntity>? _packages;
   List<RoomEntity>? _rooms;
+
+  // Read-only accessors for UI to restore selections when navigating between steps
+  DateTime? get selectedDate => _selectedDate;
+  PackageEntity? get selectedPackage {
+    if (_selectedPackageId == null || _packages == null) return null;
+    try {
+      return _packages!.firstWhere((p) => p.id == _selectedPackageId);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  List<RoomEntity>? get rooms => _rooms;
 
   BookingBloc({
     required this.createBookingUsecase,
@@ -39,7 +51,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     required this.createPaymentLinkUsecase,
     required this.checkPaymentStatusUsecase,
     required this.getPackagesUsecase,
-    required this.getAllRooms,
+    required this.getAvailableRoomsByDateRange,
   }) : super(const BookingInitial()) {
     on<BookingLoadPackages>(_onLoadPackages);
     on<BookingSelectPackage>(_onSelectPackage);
@@ -115,14 +127,36 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     BookingLoadRooms event,
     Emitter<BookingState> emit,
   ) async {
+    // Require package and date to be selected before loading available rooms
+    if (_selectedPackageId == null || _selectedDate == null) {
+      emit(const BookingError('Vui lòng chọn gói và ngày trước khi chọn phòng'));
+      return;
+    }
+
+    // Find selected package to get duration
+    final package = _packages?.firstWhere(
+      (p) => p.id == _selectedPackageId,
+      orElse: () => throw Exception('Không tìm thấy gói đã chọn'),
+    );
+
+    final durationDays = package?.durationDays;
+    if (durationDays == null) {
+      emit(const BookingError('Gói chưa có thời lượng ngày hợp lệ'));
+      return;
+    }
+
+    final startDate = _selectedDate!;
+    final endDate = startDate.add(Duration(days: durationDays));
+
     emit(const BookingLoading());
     try {
-      final rooms = await getAllRooms();
-      // Filter only available rooms
-      final availableRooms = rooms.where((r) => r.status == RoomStatus.available).toList();
-      _rooms = availableRooms;
+      final rooms = await getAvailableRoomsByDateRange(
+        startDate: startDate,
+        endDate: endDate,
+      );
+      _rooms = rooms;
       emit(BookingRoomsLoaded(
-        rooms: availableRooms,
+        rooms: rooms,
         selectedRoomId: _selectedRoomId,
       ));
     } catch (e) {
@@ -169,7 +203,15 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     Emitter<BookingState> emit,
   ) async {
     _selectedDate = event.date;
-    emit(BookingDateSelected(event.date));
+    PackageEntity? package;
+    if (_selectedPackageId != null && _packages != null) {
+      try {
+        package = _packages!.firstWhere((p) => p.id == _selectedPackageId);
+      } catch (_) {
+        package = null;
+      }
+    }
+    emit(BookingDateSelected(event.date, package: package));
     
     // If all selections are made, create summary state
     if (_selectedPackageId != null && _selectedRoomId != null && _selectedDate != null) {

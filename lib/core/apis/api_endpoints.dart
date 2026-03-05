@@ -122,6 +122,9 @@ class ApiEndpoints {
   
   /// Get all rooms
   static const String rooms = '/Room';
+
+  /// Get available rooms for a date range
+  static const String availableRooms = '/Room/available';
   
   /// Get room by ID
   static String roomById(int id) => '/Room/$id';

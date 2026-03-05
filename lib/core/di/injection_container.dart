@@ -67,6 +67,7 @@ import '../../features/employee/domain/repositories/room_repository.dart';
 import '../../features/employee/domain/usecases/get_all_rooms.dart';
 import '../../features/employee/domain/usecases/get_room_by_id.dart';
 import '../../features/employee/domain/usecases/get_available_rooms.dart';
+import '../../features/employee/domain/usecases/get_available_rooms_by_date_range.dart';
 import '../../features/employee/presentation/bloc/room/room_bloc.dart';
 import '../../features/employee/data/datasources/amenity_service_remote_datasource.dart';
 import '../../features/employee/data/repositories/amenity_service_repository_impl.dart';
@@ -329,6 +330,8 @@ class InjectionContainer {
       GetRoomById(roomRepository);
   static GetAvailableRooms get _getAvailableRooms =>
       GetAvailableRooms(roomRepository);
+  static GetAvailableRoomsByDateRange get _getAvailableRoomsByDateRange =>
+      GetAvailableRoomsByDateRange(roomRepository);
   
   // Employee - AmenityService UseCases
   static GetAllAmenityServices get _getAllAmenityServices =>
@@ -510,7 +513,7 @@ class InjectionContainer {
         createPaymentLinkUsecase: _createPaymentLinkUsecase,
         checkPaymentStatusUsecase: _checkPaymentStatusUsecase,
         getPackagesUsecase: _getPackagesUsecase,
-        getAllRooms: _getAllRooms,
+        getAvailableRoomsByDateRange: _getAvailableRoomsByDateRange,
       );
 
   static ContractBloc get contractBloc => ContractBloc(

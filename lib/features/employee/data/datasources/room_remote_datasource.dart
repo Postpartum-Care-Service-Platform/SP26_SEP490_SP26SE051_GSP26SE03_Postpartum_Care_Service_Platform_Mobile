@@ -35,6 +35,32 @@ class RoomRemoteDataSource {
     }
   }
 
+  /// Get available rooms for a specific date range
+  Future<List<RoomModel>> getAvailableRoomsByDateRange({
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    try {
+      final start = startDate.toIso8601String().split('T').first;
+      final end = endDate.toIso8601String().split('T').first;
+
+      final response = await _dio.get(
+        ApiEndpoints.availableRooms,
+        queryParameters: {
+          'startDate': start,
+          'endDate': end,
+        },
+      );
+
+      final List<dynamic> data = response.data as List<dynamic>;
+      return data
+          .map((json) => RoomModel.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   /// Handle Dio errors and convert to readable messages
   String _handleError(DioException error) {
     if (error.response != null) {

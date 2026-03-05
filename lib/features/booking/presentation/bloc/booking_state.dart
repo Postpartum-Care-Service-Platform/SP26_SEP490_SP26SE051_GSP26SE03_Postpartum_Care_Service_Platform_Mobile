@@ -54,11 +54,12 @@ class BookingRoomsLoaded extends BookingState {
 /// Step 3: Date selected
 class BookingDateSelected extends BookingState {
   final DateTime selectedDate;
+  final PackageEntity? package;
 
-  const BookingDateSelected(this.selectedDate);
+  const BookingDateSelected(this.selectedDate, {this.package});
 
   @override
-  List<Object?> get props => [selectedDate];
+  List<Object?> get props => [selectedDate, package];
 }
 
 /// Step 4: Summary ready

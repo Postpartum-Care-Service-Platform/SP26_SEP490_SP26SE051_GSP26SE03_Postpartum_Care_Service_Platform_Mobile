@@ -12,7 +12,15 @@ abstract class RoomRepository {
   /// Returns room entity
   Future<RoomEntity> getRoomById(int roomId);
 
-  /// Get available rooms
+  /// Get available rooms (legacy)
   /// Returns list of available rooms (status = Available)
+  /// without checking date range.
   Future<List<RoomEntity>> getAvailableRooms();
+
+  /// Get available rooms in a specific date range
+  /// Used for customer booking to avoid overlapping reservations.
+  Future<List<RoomEntity>> getAvailableRoomsByDateRange({
+    required DateTime startDate,
+    required DateTime endDate,
+  });
 }
