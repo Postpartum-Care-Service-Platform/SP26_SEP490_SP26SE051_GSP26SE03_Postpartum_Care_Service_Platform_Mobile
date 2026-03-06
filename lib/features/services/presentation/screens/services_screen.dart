@@ -15,6 +15,7 @@ import '../widgets/current_package_view.dart';
 import '../widgets/service_dashboard.dart';
 import '../widgets/services_booking_flow.dart';
 import '../widgets/service_location_selection.dart';
+import '../../../home_service/presentation/screens/home_service_booking_screen.dart';
 
 class ServicesScreen extends StatefulWidget {
   const ServicesScreen({super.key});
@@ -82,11 +83,20 @@ class _ServicesScreenState extends State<ServicesScreen> {
             if (_selectedLocationType == null) {
               return ServiceLocationSelection(
                 onLocationSelected: (locationType) {
-                  // Reset booking flow để tránh giữ state cũ
-                  context.read<BookingBloc>().add(const BookingReset());
-                  setState(() {
-                    _selectedLocationType = locationType;
-                  });
+                  if (locationType == ServiceLocationType.home) {
+                    // Navigate to home service booking screen
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const HomeServiceBookingScreen(),
+                      ),
+                    );
+                  } else {
+                    // Reset booking flow để tránh giữ state cũ
+                    context.read<BookingBloc>().add(const BookingReset());
+                    setState(() {
+                      _selectedLocationType = locationType;
+                    });
+                  }
                 },
               );
             }
@@ -106,10 +116,19 @@ class _ServicesScreenState extends State<ServicesScreen> {
           if (_selectedLocationType == null) {
             return ServiceLocationSelection(
               onLocationSelected: (locationType) {
-                context.read<BookingBloc>().add(const BookingReset());
-                setState(() {
-                  _selectedLocationType = locationType;
-                });
+                if (locationType == ServiceLocationType.home) {
+                  // Navigate to home service booking screen
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const HomeServiceBookingScreen(),
+                    ),
+                  );
+                } else {
+                  context.read<BookingBloc>().add(const BookingReset());
+                  setState(() {
+                    _selectedLocationType = locationType;
+                  });
+                }
               },
             );
           }

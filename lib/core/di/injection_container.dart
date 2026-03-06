@@ -100,7 +100,7 @@ import '../../features/booking/domain/usecases/cancel_booking_usecase.dart';
 import '../../features/booking/domain/usecases/get_booking_by_id_usecase.dart';
 import '../../features/booking/domain/usecases/get_bookings_usecase.dart';
 import '../../features/booking/domain/usecases/create_payment_link_usecase.dart';
-import '../../features/booking/domain/usecases/check_payment_status_usecase.dart';
+import '../../features/booking/domain/usecases/check_payment_status_usecase.dart' as booking;
 import '../../features/booking/presentation/bloc/booking_bloc.dart';
 import '../../features/contract/data/datasources/contract_remote_datasource.dart';
 import '../../features/contract/data/repositories/contract_repository_impl.dart';
@@ -139,6 +139,15 @@ import '../../features/services/domain/usecases/get_amenity_services_usecase.dar
 import '../../features/services/domain/usecases/get_my_amenity_tickets_usecase.dart';
 import '../../features/services/domain/usecases/create_amenity_ticket_usecase.dart';
 import '../../features/services/presentation/bloc/amenity_bloc.dart';
+import '../../features/home_service/data/datasources/home_service_remote_datasource.dart';
+import '../../features/home_service/data/repositories/home_service_repository_impl.dart';
+import '../../features/home_service/domain/repositories/home_service_repository.dart';
+import '../../features/home_service/domain/usecases/get_home_activities_usecase.dart';
+import '../../features/home_service/domain/usecases/get_free_home_staff_usecase.dart';
+import '../../features/home_service/domain/usecases/book_home_service_usecase.dart';
+import '../../features/home_service/domain/usecases/create_home_service_payment_link_usecase.dart';
+import '../../features/home_service/domain/usecases/check_payment_status_usecase.dart' as home_service;
+import '../../features/home_service/presentation/bloc/home_service_bloc.dart';
 import '../apis/api_client.dart';
 
 /// Centralized dependency injection container
@@ -260,8 +269,14 @@ class InjectionContainer {
   static AmenityRemoteDataSource get _amenityRemoteDataSource =>
       AmenityRemoteDataSourceImpl(dio: ApiClient.dio);
 
+  static HomeServiceRemoteDataSource get _homeServiceRemoteDataSource =>
+      HomeServiceRemoteDataSourceImpl(dio: ApiClient.dio);
+
   static AmenityRepository get amenityRepository =>
       AmenityRepositoryImpl(dataSource: _amenityRemoteDataSource);
+
+  static HomeServiceRepository get homeServiceRepository =>
+      HomeServiceRepositoryImpl(remoteDataSource: _homeServiceRemoteDataSource);
 
   // ==================== Use Cases ====================
   
@@ -379,8 +394,8 @@ class InjectionContainer {
       GetBookingsUsecase(bookingRepository);
   static CreatePaymentLinkUsecase get _createPaymentLinkUsecase =>
       CreatePaymentLinkUsecase(bookingRepository);
-  static CheckPaymentStatusUsecase get _checkPaymentStatusUsecase =>
-      CheckPaymentStatusUsecase(bookingRepository);
+  static booking.CheckPaymentStatusUsecase get _checkPaymentStatusUsecase =>
+      booking.CheckPaymentStatusUsecase(bookingRepository);
 
   static GetContractByBookingIdUsecase get _getContractByBookingIdUsecase =>
       GetContractByBookingIdUsecase(contractRepository);
@@ -422,6 +437,17 @@ class InjectionContainer {
       GetMyAmenityTicketsUsecase(amenityRepository);
   static CreateAmenityTicketUsecase get _createAmenityTicketUsecase =>
       CreateAmenityTicketUsecase(amenityRepository);
+
+  static GetHomeActivitiesUsecase get _getHomeActivitiesUsecase =>
+      GetHomeActivitiesUsecase(homeServiceRepository);
+  static GetFreeHomeStaffUsecase get _getFreeHomeStaffUsecase =>
+      GetFreeHomeStaffUsecase(homeServiceRepository);
+  static BookHomeServiceUsecase get _bookHomeServiceUsecase =>
+      BookHomeServiceUsecase(homeServiceRepository);
+  static CreateHomeServicePaymentLinkUsecase get _createHomeServicePaymentLinkUsecase =>
+      CreateHomeServicePaymentLinkUsecase(homeServiceRepository);
+  static home_service.CheckPaymentStatusUsecase get _checkHomeServicePaymentStatusUsecase =>
+      home_service.CheckPaymentStatusUsecase(homeServiceRepository);
 
   // ==================== Blocs ====================
   
@@ -546,6 +572,14 @@ class InjectionContainer {
         getAmenityServicesUsecase: _getAmenityServicesUsecase,
         getMyAmenityTicketsUsecase: _getMyAmenityTicketsUsecase,
         createAmenityTicketUsecase: _createAmenityTicketUsecase,
+      );
+
+  static HomeServiceBloc get homeServiceBloc => HomeServiceBloc(
+        getHomeActivitiesUsecase: _getHomeActivitiesUsecase,
+        getFreeHomeStaffUsecase: _getFreeHomeStaffUsecase,
+        bookHomeServiceUsecase: _bookHomeServiceUsecase,
+        createPaymentLinkUsecase: _createHomeServicePaymentLinkUsecase,
+        checkPaymentStatusUsecase: _checkHomeServicePaymentStatusUsecase,
       );
 
   // ==================== Reset ====================

@@ -218,5 +218,21 @@ class ApiEndpoints {
   
   /// Create feedback
   static const String createFeedback = '/Feedback';
+
+  // ==========================================
+  // Home Service Booking endpoints
+  // ==========================================
+  
+  /// Get home activities
+  static const String homeActivities = '/Activities/home';
+  
+  /// Get free home staff for date list
+  static const String freeHomeStaffInDateList = '/HomeBooking/free-home-staff-in-date-list';
+  
+  /// Book home service
+  static const String bookHomeService = '/HomeBooking/book-home-service';
+  
+  /// Create home service payment link
+  static const String createHomeServicePaymentLink = '/Transaction/create-home-service-payment-link';
 }
 
