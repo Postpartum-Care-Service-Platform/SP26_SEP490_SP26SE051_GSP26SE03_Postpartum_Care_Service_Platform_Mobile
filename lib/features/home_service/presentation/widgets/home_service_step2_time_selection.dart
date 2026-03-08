@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
+import '../../../../core/widgets/app_loading.dart';
 import '../../../../core/widgets/app_widgets.dart';
 import '../../domain/entities/home_activity_entity.dart';
 import '../../domain/entities/home_service_selection_entity.dart';
@@ -21,14 +23,19 @@ class HomeServiceStep2TimeSelection extends StatelessWidget {
 
     return BlocBuilder<HomeServiceBloc, HomeServiceState>(
       builder: (context, state) {
-        if (state is! HomeServiceActivitiesLoaded) {
-          return const SizedBox();
+        if (state is HomeServiceLoading) {
+          return const Center(child: AppLoadingIndicator());
         }
 
-        final selections = state.selections;
+        final selections = _extractSelections(state);
+        if (selections == null) {
+          return const Center(child: AppLoadingIndicator());
+        }
+
         final hasSelectedActivities = selections.isNotEmpty;
 
         return SafeArea(
+          top: false,
           child: Column(
             children: [
               Expanded(
@@ -36,7 +43,7 @@ class HomeServiceStep2TimeSelection extends StatelessWidget {
                   padding: EdgeInsets.all(16 * scale),
                   children: [
                     Text(
-                      'Chọn ngày và giờ cho từng dịch vụ',
+                      AppStrings.homeServiceSelectDateTimeForEachService,
                       style: AppTextStyles.arimo(
                         fontSize: 16 * scale,
                         fontWeight: FontWeight.w600,
@@ -45,7 +52,7 @@ class HomeServiceStep2TimeSelection extends StatelessWidget {
                     SizedBox(height: 12 * scale),
                     if (!hasSelectedActivities)
                       Text(
-                        'Vui lòng quay lại bước trước để chọn dịch vụ.',
+                        AppStrings.homeServiceGoBackToSelectService,
                         style: AppTextStyles.arimo(
                           fontSize: 14 * scale,
                           color: AppColors.textSecondary,
@@ -67,6 +74,19 @@ class HomeServiceStep2TimeSelection extends StatelessWidget {
         );
       },
     );
+  }
+
+  List<HomeServiceSelectionEntity>? _extractSelections(HomeServiceState state) {
+    if (state is HomeServiceActivitiesLoaded) {
+      return state.selections;
+    }
+    if (state is HomeServiceFreeStaffLoaded) {
+      return state.selections;
+    }
+    if (state is HomeServiceSummaryReady) {
+      return state.selections;
+    }
+    return null;
   }
 }
 
@@ -103,7 +123,7 @@ class _SelectionCard extends StatelessWidget {
           Row(
             children: [
               Text(
-                '${selection.activity.duration} phút',
+                '${selection.activity.duration} ${AppStrings.homeServiceMinutes}',
                 style: AppTextStyles.arimo(
                   fontSize: 12 * scale,
                   color: AppColors.textSecondary,
@@ -122,7 +142,7 @@ class _SelectionCard extends StatelessWidget {
           ),
           SizedBox(height: 10 * scale),
           AppWidgets.primaryButton(
-            text: 'Thêm ngày',
+            text: AppStrings.homeServiceAddDate,
             onPressed: () async {
               final pickedDates =
                   await _openMultiDatePicker(context, selection.dateTimeSlots.keys);
@@ -180,18 +200,18 @@ class _SelectionCard extends StatelessWidget {
 
         String monthLabel(DateTime month) {
           const monthNames = [
-            'Tháng 1',
-            'Tháng 2',
-            'Tháng 3',
-            'Tháng 4',
-            'Tháng 5',
-            'Tháng 6',
-            'Tháng 7',
-            'Tháng 8',
-            'Tháng 9',
-            'Tháng 10',
-            'Tháng 11',
-            'Tháng 12',
+            AppStrings.month1,
+            AppStrings.month2,
+            AppStrings.month3,
+            AppStrings.month4,
+            AppStrings.month5,
+            AppStrings.month6,
+            AppStrings.month7,
+            AppStrings.month8,
+            AppStrings.month9,
+            AppStrings.month10,
+            AppStrings.month11,
+            AppStrings.month12,
           ];
           return '${monthNames[month.month - 1]} ${month.year}';
         }
@@ -243,7 +263,7 @@ class _SelectionCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Chọn nhiều ngày',
+                        AppStrings.homeServicePickMultipleDates,
                         style: AppTextStyles.tinos(
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
@@ -297,13 +317,13 @@ class _SelectionCard extends StatelessWidget {
                       const Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _WeekdayText('S'),
-                          _WeekdayText('M'),
-                          _WeekdayText('T'),
-                          _WeekdayText('W'),
-                          _WeekdayText('T'),
-                          _WeekdayText('F'),
-                          _WeekdayText('S'),
+                          _WeekdayText(AppStrings.weekDaySunday),
+                          _WeekdayText(AppStrings.weekDayMonday),
+                          _WeekdayText(AppStrings.weekDayTuesday),
+                          _WeekdayText(AppStrings.weekDayWednesday),
+                          _WeekdayText(AppStrings.weekDayThursday),
+                          _WeekdayText(AppStrings.weekDayFriday),
+                          _WeekdayText(AppStrings.weekDaySaturday),
                         ],
                       ),
                       const SizedBox(height: 6),
@@ -345,7 +365,7 @@ class _SelectionCard extends StatelessWidget {
                                 decoration: BoxDecoration(
                                   color: isSelected
                                       ? AppColors.primary
-                                      : Colors.transparent,
+                                      : AppColors.transparent,
                                   shape: BoxShape.circle,
                                 ),
                                 alignment: Alignment.center,
@@ -369,7 +389,7 @@ class _SelectionCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        'Đã chọn ${selected.length} ngày',
+                        '${AppStrings.homeServiceSelectedDays} ${selected.length} ${AppStrings.homeServiceDays}',
                         style: AppTextStyles.arimo(
                           fontSize: 14,
                           color: AppColors.textPrimary,
@@ -379,17 +399,17 @@ class _SelectionCard extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          TextButton(
-                            onPressed: () =>
-                                Navigator.of(dialogContext).pop(const []),
-                            child: const Text('Hủy'),
+                                              TextButton(
+                            onPressed: () => Navigator.of(dialogContext)
+                                .pop(<DateTime>[]),
+                            child: Text(AppStrings.homeServiceCancel),
                           ),
                           TextButton(
                             onPressed: () {
                               final list = selected.toList()..sort();
                               Navigator.of(dialogContext).pop(list);
                             },
-                            child: const Text('Xong'),
+                            child: Text(AppStrings.homeServiceDone),
                           ),
                         ],
                       ),
@@ -421,7 +441,7 @@ class _SelectionCard extends StatelessWidget {
     }
 
     final reversed = buffer.toString().split('').reversed.join();
-    return '$reversed đ / buổi';
+    return '$reversed ${AppStrings.currencyUnit.trim()} ${AppStrings.homeServicePerSession}';
   }
 }
 
@@ -527,7 +547,7 @@ class _DateTimeRow extends StatelessWidget {
                     ),
                   );
             },
-            child: const Text('Giờ'),
+            child: Text(AppStrings.homeServiceHour),
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline_rounded),

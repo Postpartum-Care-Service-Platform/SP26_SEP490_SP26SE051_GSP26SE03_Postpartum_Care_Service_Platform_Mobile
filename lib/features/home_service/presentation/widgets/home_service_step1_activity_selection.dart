@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_loading.dart';
@@ -45,21 +46,9 @@ class HomeServiceStep1ActivitySelection extends StatelessWidget {
         final selectedActivityIds = data.selections.map((s) => s.activity.id).toSet();
 
         return SafeArea(
+          top: false,
           child: Column(
             children: [
-              Padding(
-                padding: EdgeInsets.fromLTRB(16 * scale, 12 * scale, 16 * scale, 0),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Chọn dịch vụ trước, sang bước sau để chọn ngày và giờ.',
-                    style: AppTextStyles.arimo(
-                      fontSize: 13 * scale,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ),
-              ),
               Expanded(
                 child: ListView.builder(
                   padding: EdgeInsets.all(16 * scale),
@@ -127,9 +116,8 @@ class _ActivityCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
 
-    return InkWell(
+    return GestureDetector(
       onTap: onToggle,
-      borderRadius: BorderRadius.circular(16 * scale),
       child: Container(
         margin: EdgeInsets.only(bottom: 12 * scale),
         padding: EdgeInsets.all(16 * scale),
@@ -166,7 +154,7 @@ class _ActivityCard extends StatelessWidget {
                   ),
                   SizedBox(height: 10 * scale),
                   Text(
-                    '${activity.price.toStringAsFixed(0)}đ • ${activity.duration} phút',
+                    '${activity.price.toStringAsFixed(0)}${AppStrings.currencyUnit.trim()} • ${activity.duration} ${AppStrings.homeServiceMinutes}',
                     style: AppTextStyles.arimo(
                       fontSize: 13 * scale,
                       fontWeight: FontWeight.w700,

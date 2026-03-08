@@ -23,7 +23,9 @@ abstract class BookingRepository {
   /// Create payment link for deposit
   Future<PaymentLinkEntity> createPaymentLink({
     required int bookingId,
-    required String type, // Deposit or Remaining
+    required String type, // Deposit or Remaining or Full
+    bool isHomeService = false,
+    String? staffId,
   });
 
   /// Check payment status by order code

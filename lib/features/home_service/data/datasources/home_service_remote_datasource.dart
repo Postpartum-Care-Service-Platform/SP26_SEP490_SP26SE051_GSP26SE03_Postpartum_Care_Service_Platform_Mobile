@@ -96,19 +96,19 @@ class HomeServiceRemoteDataSourceImpl implements HomeServiceRemoteDataSource {
     required List<HomeServiceSelectionEntity> selections,
   }) async {
     try {
-      // Convert selections to API format
-      final services = selections.map((selection) {
-        // Group by date for each activity
-        final dateGroups = <DateTime, List<ServiceTimeSlot>>{};
-        selection.dateTimeSlots.forEach((date, timeSlot) {
-          dateGroups.putIfAbsent(date, () => []).add(timeSlot);
-        });
+      // Convert selections to API format: one start/end time per activity.
+      final services = selections
+          .where((selection) => selection.dateTimeSlots.isNotEmpty)
+          .map((selection) {
+        final entries = selection.dateTimeSlots.entries.toList()
+          ..sort((a, b) => a.key.compareTo(b.key));
 
-        // For each date group, create a service entry
-        // Note: API expects one entry per activity with all dates
-        // We'll combine all dates for this activity
-        final allDates = selection.dateTimeSlots.keys.toList();
-        final firstTimeSlot = selection.dateTimeSlots.values.first;
+        final allDates = entries
+            .map((entry) => DateTime(entry.key.year, entry.key.month, entry.key.day))
+            .toList();
+
+        // Keep deterministic payload: always use time from earliest selected date.
+        final firstTimeSlot = entries.first.value;
 
         return {
           'activityId': selection.activity.id,
@@ -185,9 +185,11 @@ class HomeServiceRemoteDataSourceImpl implements HomeServiceRemoteDataSource {
       final response = await dio.post(
         ApiEndpoints.createHomeServicePaymentLink,
         data: {
-          'bookingId': bookingId,
-          'type': type,
-          'staffId': staffId,
+          'request': {
+            'bookingId': bookingId,
+            'type': type,
+            'staffId': staffId,
+          },
         },
       );
 

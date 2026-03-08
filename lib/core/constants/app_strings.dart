@@ -441,10 +441,51 @@ class AppStrings {
   static const String bookingMaintenance = 'Bảo trì';
   static const String bookingPriceNotAvailable = '--';
 
+  // Home Service Booking Screen
+  static const String homeServiceBookingTitle = 'Đặt dịch vụ tại nhà';
+  static const String homeServiceStepService = 'Dịch vụ';
+  static const String homeServiceStepDateTime = 'Ngày & Giờ';
+  static const String homeServiceStepStaff = 'Nhân viên';
+  static const String homeServiceStepConfirm = 'Xác nhận';
+  static const String homeServicePay = 'Thanh toán';
+  static const String homeServiceNoFreeStaff = 'Không có nhân viên rảnh';
+  static const String homeServiceSelectDateTimeForEachService =
+      'Chọn ngày và giờ cho từng dịch vụ';
+  static const String homeServiceGoBackToSelectService =
+      'Vui lòng quay lại bước trước để chọn dịch vụ.';
+  static const String homeServiceAddDate = 'Thêm ngày';
+  static const String homeServicePickMultipleDates = 'Chọn nhiều ngày';
+  static const String homeServiceCancel = 'Hủy';
+  static const String homeServiceDone = 'Xong';
+  static const String homeServiceSelectedDays = 'Đã chọn';
+  static const String homeServiceDays = 'ngày';
+  static const String homeServiceSessions = 'buổi';
+  static const String homeServiceSessionsLabel = 'buổi dịch vụ';
+  static const String homeServiceYearsOld = 'tuổi';
+  static const String homeServicePerSession = '/ buổi';
+  static const String homeServiceHour = 'Giờ';
+  static const String homeServiceMinutes = 'phút';
+  static const String homeServiceSectionService = 'Dịch vụ';
+  static const String homeServiceSectionStaff = 'Nhân viên';
+  static const String homeServiceSectionTime = 'Thời gian & lịch từng dịch vụ';
+  static const String homeServiceSectionPaymentMethod = 'Phương thức thanh toán';
+  static const String homeServiceSectionPriceDetails = 'Chi tiết giá';
+  static const String homeServiceSelectedPackages = 'gói đã chọn';
+  static const String homeServicePayViaPayOS = 'Thanh toán qua PayOS';
+  static const String homeServicePleaseSelectServiceAndDate =
+      'Vui lòng chọn dịch vụ và ngày trước';
+  static const String homeServicePleaseCompleteInfo =
+      'Vui lòng chọn đầy đủ thông tin';
+  static const String homeServicePleaseCreateBookingFirst =
+      'Vui lòng tạo booking trước';
+  static const String homeServiceCancelBookingSuccess = 'Hủy booking thành công';
+
   // Payment Screen
   static const String paymentTitle = 'Thanh toán đặt cọc';
   static const String paymentDeposit = 'Đặt cọc';
   static const String paymentRemaining = 'Thanh toán còn lại';
+  static const String paymentFullTitle = 'Thanh toán toàn bộ';
+  static const String paymentFull = 'Toàn bộ';
   static const String paymentAmount = 'Số tiền';
   static const String paymentMethod = 'Phương thức thanh toán';
   static const String paymentPayOS = 'PayOS';

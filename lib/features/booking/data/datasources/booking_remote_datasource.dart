@@ -22,6 +22,8 @@ abstract class BookingRemoteDataSource {
   Future<PaymentLinkModel> createPaymentLink({
     required int bookingId,
     required String type,
+    bool isHomeService = false,
+    String? staffId,
   });
 
   Future<PaymentStatusModel> checkPaymentStatus(String orderCode);
@@ -98,14 +100,24 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
   Future<PaymentLinkModel> createPaymentLink({
     required int bookingId,
     required String type,
+    bool isHomeService = false,
+    String? staffId,
   }) async {
     try {
       final response = await dio.post(
-        ApiEndpoints.createPaymentLink,
-        data: {
-          'bookingId': bookingId,
-          'type': type,
-        },
+        isHomeService
+            ? ApiEndpoints.createHomeServicePaymentLink
+            : ApiEndpoints.createPaymentLink,
+        data: isHomeService
+            ? {
+                'bookingId': bookingId,
+                'type': type,
+                'staffId': staffId ?? '',
+              }
+            : {
+                'bookingId': bookingId,
+                'type': type,
+              },
       );
 
       return PaymentLinkModel.fromJson(response.data as Map<String, dynamic>);

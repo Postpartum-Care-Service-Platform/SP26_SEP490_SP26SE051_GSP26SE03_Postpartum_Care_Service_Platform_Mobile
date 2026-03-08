@@ -23,12 +23,16 @@ import '../widgets/payment/payment_helpers.dart';
 
 class PaymentScreen extends StatefulWidget {
   final BookingEntity booking;
-  final String paymentType; // 'Deposit' or 'Remaining'
+  final String paymentType; // 'Deposit' or 'Remaining' or 'Full'
+  final bool isHomeService;
+  final String? staffId;
 
   const PaymentScreen({
     super.key,
     required this.booking,
     this.paymentType = 'Deposit',
+    this.isHomeService = false,
+    this.staffId,
   });
 
   @override
@@ -49,7 +53,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
     // Create payment link after the widget is built
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        context.read<BookingBloc>().add(BookingCreatePaymentLink(widget.paymentType));
+        context.read<BookingBloc>().add(
+          BookingCreatePaymentLink(
+            widget.paymentType,
+            bookingId: widget.booking.id,
+            isHomeService: widget.isHomeService,
+            staffId: widget.staffId,
+          ),
+        );
       }
     });
   }
@@ -109,7 +120,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppAppBar(
-          title: AppStrings.paymentTitle,
+          title: widget.paymentType == 'Full'
+              ? AppStrings.paymentFullTitle
+              : AppStrings.paymentTitle,
           centerTitle: true,
           titleFontSize: 20 * scale,
           titleFontWeight: FontWeight.w700,
@@ -198,7 +211,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   SizedBox(height: 24 * scale),
                   ElevatedButton(
                     onPressed: () {
-                      context.read<BookingBloc>().add(BookingCreatePaymentLink(widget.paymentType));
+                      context.read<BookingBloc>().add(
+                        BookingCreatePaymentLink(widget.paymentType, bookingId: widget.booking.id),
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
@@ -261,6 +276,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   PaymentInfoCard(
                     paymentLink: _paymentLink!,
                     formatPrice: PaymentHelpers.formatPrice,
+                    paymentType: widget.paymentType,
                   ),
                   SizedBox(height: 28 * scale),
                   QRCodeSection(paymentLink: _paymentLink!),

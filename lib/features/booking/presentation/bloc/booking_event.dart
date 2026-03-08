@@ -55,12 +55,20 @@ class BookingCreateBooking extends BookingEvent {
 
 /// Create payment link
 class BookingCreatePaymentLink extends BookingEvent {
-  final String type; // Deposit or Remaining
+  final String type; // Deposit or Remaining or Full
+  final int? bookingId;
+  final bool isHomeService;
+  final String? staffId;
 
-  const BookingCreatePaymentLink(this.type);
+  const BookingCreatePaymentLink(
+    this.type, {
+    this.bookingId,
+    this.isHomeService = false,
+    this.staffId,
+  });
 
   @override
-  List<Object?> get props => [type];
+  List<Object?> get props => [type, bookingId, isHomeService, staffId];
 }
 
 /// Check payment status

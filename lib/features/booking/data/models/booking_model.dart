@@ -50,9 +50,9 @@ class BookingModel {
             .toList()
         : <TransactionModel>[];
 
-    final finalAmount = (json['finalAmount'] as num).toDouble();
+    final finalAmount = ((json['finalAmount'] as num?) ?? 0).toDouble();
 
-    // Chỉ tính số tiền đã thanh toán từ transaction có status = Paid
+    // Rule nghiệp vụ: chỉ transaction có status = Paid mới tính là đã thanh toán.
     final paidAmount = transactions
         .where((t) => t.status.toLowerCase() == 'paid')
         .fold<double>(0, (sum, t) => sum + t.amount);
@@ -64,12 +64,12 @@ class BookingModel {
       id: json['id'] as int,
       startDate: DateTime.parse(json['startDate'] as String),
       endDate: DateTime.parse(json['endDate'] as String),
-      totalPrice: (json['totalPrice'] as num).toDouble(),
-      discountAmount: (json['discountAmount'] as num).toDouble(),
+      totalPrice: ((json['totalPrice'] as num?) ?? 0).toDouble(),
+      discountAmount: ((json['discountAmount'] as num?) ?? 0).toDouble(),
       finalAmount: finalAmount,
       paidAmount: paidAmount,
       remainingAmount: remainingAmount,
-      status: json['status'] as String,
+      status: (json['status'] as String?) ?? '',
       bookingDate: DateTime.parse(json['bookingDate'] as String),
       createdAt: DateTime.parse(json['createdAt'] as String),
       customer: json['customer'] != null

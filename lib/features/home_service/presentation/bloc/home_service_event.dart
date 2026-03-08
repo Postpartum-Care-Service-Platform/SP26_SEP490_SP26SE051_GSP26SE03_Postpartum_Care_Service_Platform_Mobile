@@ -86,6 +86,21 @@ class HomeServiceSelectStaff extends HomeServiceEvent {
   List<Object?> get props => [staff];
 }
 
+/// Clear selected staff and return to date-time editing
+class HomeServiceClearSelectedStaff extends HomeServiceEvent {
+  const HomeServiceClearSelectedStaff();
+}
+
+/// Prepare summary data before step 4
+class HomeServicePrepareSummary extends HomeServiceEvent {
+  const HomeServicePrepareSummary();
+}
+
+/// Move back from summary to staff selection while keeping loaded staff list
+class HomeServiceBackToStaffSelection extends HomeServiceEvent {
+  const HomeServiceBackToStaffSelection();
+}
+
 /// Create booking
 class HomeServiceCreateBooking extends HomeServiceEvent {
   const HomeServiceCreateBooking();

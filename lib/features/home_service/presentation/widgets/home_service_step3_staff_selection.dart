@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/widgets/app_loading.dart';
 import '../../../../core/utils/app_text_styles.dart';
+import '../../domain/entities/home_staff_entity.dart';
 import '../bloc/home_service_bloc.dart';
 import '../bloc/home_service_event.dart';
 import '../bloc/home_service_state.dart';
@@ -20,10 +22,10 @@ class HomeServiceStep3StaffSelection extends StatelessWidget {
     return BlocBuilder<HomeServiceBloc, HomeServiceState>(
       builder: (context, state) {
         if (state is HomeServiceActivitiesLoaded) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            context.read<HomeServiceBloc>().add(const HomeServiceLoadFreeStaff());
-          });
+          return const Center(child: AppLoadingIndicator());
+        }
 
+        if (state is HomeServiceLoading) {
           return const Center(child: AppLoadingIndicator());
         }
 
@@ -32,22 +34,29 @@ class HomeServiceStep3StaffSelection extends StatelessWidget {
           final selectedStaff = state.selectedStaff;
 
           return SafeArea(
+            top: false,
             child: Column(
               children: [
                 Expanded(
                   child: staffList.isEmpty
                       ? Center(
                           child: Text(
-                            'Không có nhân viên rảnh',
+                            AppStrings.homeServiceNoFreeStaff,
                             style: AppTextStyles.arimo(
                               fontSize: 16 * scale,
                               color: AppColors.textSecondary,
                             ),
                           ),
                         )
-                      : ListView.builder(
+                      : GridView.builder(
                           padding: EdgeInsets.all(16 * scale),
                           itemCount: staffList.length,
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 12 * scale,
+                            mainAxisSpacing: 12 * scale,
+                            childAspectRatio: 0.76,
+                          ),
                           itemBuilder: (context, index) {
                             final staff = staffList[index];
                             final isSelected = selectedStaff?.id == staff.id;
@@ -70,14 +79,27 @@ class HomeServiceStep3StaffSelection extends StatelessWidget {
           );
         }
 
-        return const SizedBox();
+        if (state is HomeServiceError) {
+          return Center(
+            child: Text(
+              state.message,
+              style: AppTextStyles.arimo(
+                fontSize: 14 * scale,
+                color: AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          );
+        }
+
+        return const Center(child: AppLoadingIndicator());
       },
     );
   }
 }
 
 class _StaffCard extends StatelessWidget {
-  final dynamic staff;
+  final HomeStaffEntity staff;
   final bool isSelected;
   final VoidCallback onTap;
 
@@ -94,8 +116,7 @@ class _StaffCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: EdgeInsets.only(bottom: 12 * scale),
-        padding: EdgeInsets.all(16 * scale),
+        padding: EdgeInsets.fromLTRB(12 * scale, 10 * scale, 12 * scale, 10 * scale),
         decoration: BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(16 * scale),
@@ -105,63 +126,79 @@ class _StaffCard extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
+              color: AppColors.homeServiceShadowLight,
               blurRadius: 12 * scale,
               offset: Offset(0, 4 * scale),
             ),
           ],
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            CircleAvatar(
-              radius: 30 * scale,
-              backgroundImage: staff.avatarUrl != null
-                  ? NetworkImage(staff.avatarUrl!)
-                  : null,
-              child: staff.avatarUrl == null
-                  ? Icon(Icons.person, size: 30 * scale)
-                  : null,
-            ),
-            SizedBox(width: 12 * scale),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    staff.fullName ?? staff.username,
-                    style: AppTextStyles.tinos(
-                      fontSize: 16 * scale,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  SizedBox(height: 4 * scale),
-                  Text(
-                    staff.email,
-                    style: AppTextStyles.arimo(
-                      fontSize: 12 * scale,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  if (staff.age != null) ...[
-                    SizedBox(height: 2 * scale),
-                    Text(
-                      '${staff.age} tuổi',
-                      style: AppTextStyles.arimo(
-                        fontSize: 12 * scale,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ],
+            Align(
+              alignment: Alignment.topRight,
+              child: Icon(
+                isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
+                color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                size: 20 * scale,
               ),
             ),
-            if (isSelected)
-              Icon(
-                Icons.check_circle,
-                color: AppColors.primary,
-                size: 24 * scale,
+            Center(
+              child: CircleAvatar(
+                radius: 34 * scale,
+                backgroundImage: staff.avatarUrl != null
+                    ? NetworkImage(staff.avatarUrl!)
+                    : null,
+                child: staff.avatarUrl == null
+                    ? Icon(Icons.person, size: 34 * scale)
+                    : null,
               ),
+            ),
+            SizedBox(height: 8 * scale),
+            Text(
+              staff.fullName ?? staff.username,
+              style: AppTextStyles.tinos(
+                fontSize: 19 * scale,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 4 * scale),
+            Text(
+              staff.email,
+              style: AppTextStyles.arimo(
+                fontSize: 13 * scale,
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 4 * scale),
+            Text(
+              staff.phone,
+              style: AppTextStyles.arimo(
+                fontSize: 13 * scale,
+                color: AppColors.textSecondary,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+            ),
+            if (staff.age != null) ...[
+              SizedBox(height: 4 * scale),
+              Text(
+                '${staff.age} ${AppStrings.homeServiceYearsOld}',
+                style: AppTextStyles.arimo(
+                  fontSize: 13 * scale,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
           ],
         ),
       ),

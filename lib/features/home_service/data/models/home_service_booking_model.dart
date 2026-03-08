@@ -14,14 +14,16 @@ class HomeServiceBookingModel extends HomeServiceBookingEntity {
   });
 
   factory HomeServiceBookingModel.fromJson(Map<String, dynamic> json) {
+    final createdAtRaw = (json['createdAt'] ?? json['bookingDate']) as String?;
+
     return HomeServiceBookingModel(
       id: json['id'] as int,
-      staffId: json['staffId'] as String,
+      staffId: (json['staffId'] as String?) ?? '',
       totalPrice: (json['totalPrice'] as num).toDouble(),
-      paidAmount: (json['paidAmount'] as num).toDouble(),
-      remainingAmount: (json['remainingAmount'] as num).toDouble(),
-      status: json['status'] as String,
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      paidAmount: ((json['paidAmount'] as num?) ?? 0).toDouble(),
+      remainingAmount: ((json['remainingAmount'] as num?) ?? 0).toDouble(),
+      status: (json['status'] as String?) ?? '',
+      createdAt: createdAtRaw != null ? DateTime.parse(createdAtRaw) : DateTime.now(),
       services: (json['services'] as List<dynamic>?)
               ?.map((item) => HomeServiceBookingItemModel.fromJson(
                     item as Map<String, dynamic>,

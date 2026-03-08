@@ -61,11 +61,15 @@ class BookingRepositoryImpl implements BookingRepository {
   Future<PaymentLinkEntity> createPaymentLink({
     required int bookingId,
     required String type,
+    bool isHomeService = false,
+    String? staffId,
   }) async {
     try {
       final model = await remoteDataSource.createPaymentLink(
         bookingId: bookingId,
         type: type,
+        isHomeService: isHomeService,
+        staffId: staffId,
       );
       return model.toEntity();
     } catch (e) {

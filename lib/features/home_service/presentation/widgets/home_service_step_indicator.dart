@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 
@@ -70,7 +71,9 @@ class HomeServiceStepIndicator extends StatelessWidget {
             children: List.generate(totalSteps, (index) {
               return Expanded(
                 child: _buildStepLabel(
-                  index < stepTitles.length ? stepTitles[index] : 'Bước ${index + 1}',
+                  index < stepTitles.length
+                      ? stepTitles[index]
+                      : '${AppStrings.bookingStep1} ${index + 1}',
                   index < currentStep,
                   index == currentStep,
                   scale,

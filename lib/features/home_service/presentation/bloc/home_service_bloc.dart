@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/constants/app_strings.dart';
 import '../../domain/usecases/get_home_activities_usecase.dart';
 import '../../domain/usecases/get_free_home_staff_usecase.dart';
 import '../../domain/usecases/book_home_service_usecase.dart';
@@ -39,6 +40,9 @@ class HomeServiceBloc extends Bloc<HomeServiceEvent, HomeServiceState> {
     on<HomeServiceSelectTime>(_onSelectTime);
     on<HomeServiceLoadFreeStaff>(_onLoadFreeStaff);
     on<HomeServiceSelectStaff>(_onSelectStaff);
+    on<HomeServiceClearSelectedStaff>(_onClearSelectedStaff);
+    on<HomeServicePrepareSummary>(_onPrepareSummary);
+    on<HomeServiceBackToStaffSelection>(_onBackToStaffSelection);
     on<HomeServiceCreateBooking>(_onCreateBooking);
     on<HomeServiceCreatePaymentLink>(_onCreatePaymentLink);
     on<HomeServiceCheckPaymentStatus>(_onCheckPaymentStatus);
@@ -173,11 +177,25 @@ class HomeServiceBloc extends Bloc<HomeServiceEvent, HomeServiceState> {
 
     if (existingIndex >= 0) {
       final existing = _selections[existingIndex];
-      final newSlots = Map<DateTime, ServiceTimeSlot>.from(existing.dateTimeSlots);
-      newSlots[event.date] = ServiceTimeSlot(
-        startTime: event.startTime,
-        endTime: event.endTime,
-      );
+      final duration = event.endTime.difference(event.startTime);
+
+      // API contract: one start/end time for an activity, applied to all selected dates.
+      final newSlots = <DateTime, ServiceTimeSlot>{};
+      for (final date in existing.dateTimeSlots.keys) {
+        final normalizedDate = DateTime(date.year, date.month, date.day);
+        final start = DateTime(
+          normalizedDate.year,
+          normalizedDate.month,
+          normalizedDate.day,
+          event.startTime.hour,
+          event.startTime.minute,
+        );
+        final end = start.add(duration);
+        newSlots[normalizedDate] = ServiceTimeSlot(
+          startTime: start,
+          endTime: end,
+        );
+      }
 
       _selections[existingIndex] = HomeServiceSelectionEntity(
         activity: existing.activity,
@@ -196,7 +214,7 @@ class HomeServiceBloc extends Bloc<HomeServiceEvent, HomeServiceState> {
     Emitter<HomeServiceState> emit,
   ) async {
     if (_selections.isEmpty) {
-      emit(const HomeServiceError('Vui lòng chọn dịch vụ và ngày trước'));
+      emit(const HomeServiceError(AppStrings.homeServicePleaseSelectServiceAndDate));
       return;
     }
 
@@ -232,17 +250,57 @@ class HomeServiceBloc extends Bloc<HomeServiceEvent, HomeServiceState> {
   ) {
     _selectedStaff = event.staff;
 
-    // Calculate total price
+    emit(HomeServiceFreeStaffLoaded(
+      activities: List<HomeActivityEntity>.from(_activities),
+      selections: List<HomeServiceSelectionEntity>.from(_selections),
+      staffList: List<HomeStaffEntity>.from(_staffList),
+      selectedStaff: _selectedStaff,
+    ));
+  }
+
+  void _onClearSelectedStaff(
+    HomeServiceClearSelectedStaff event,
+    Emitter<HomeServiceState> emit,
+  ) {
+    _selectedStaff = null;
+    emit(HomeServiceActivitiesLoaded(
+      activities: List<HomeActivityEntity>.from(_activities),
+      selections: List<HomeServiceSelectionEntity>.from(_selections),
+    ));
+  }
+
+  void _onPrepareSummary(
+    HomeServicePrepareSummary event,
+    Emitter<HomeServiceState> emit,
+  ) {
+    if (_selectedStaff == null || _selections.isEmpty) {
+      emit(const HomeServiceError(AppStrings.homeServicePleaseCompleteInfo));
+      return;
+    }
+
     double totalPrice = 0;
     for (final selection in _selections) {
-      totalPrice += selection.activity.price * selection.dateTimeSlots.length;
+      final sessions = selection.dateTimeSlots.length;
+      totalPrice += selection.activity.price * (sessions > 0 ? sessions : 1);
     }
 
     emit(HomeServiceSummaryReady(
-      activities: _activities,
-      selections: _selections,
+      activities: List<HomeActivityEntity>.from(_activities),
+      selections: List<HomeServiceSelectionEntity>.from(_selections),
       staff: _selectedStaff!,
       totalPrice: totalPrice,
+    ));
+  }
+
+  void _onBackToStaffSelection(
+    HomeServiceBackToStaffSelection event,
+    Emitter<HomeServiceState> emit,
+  ) {
+    emit(HomeServiceFreeStaffLoaded(
+      activities: List<HomeActivityEntity>.from(_activities),
+      selections: List<HomeServiceSelectionEntity>.from(_selections),
+      staffList: List<HomeStaffEntity>.from(_staffList),
+      selectedStaff: _selectedStaff,
     ));
   }
 
@@ -251,7 +309,7 @@ class HomeServiceBloc extends Bloc<HomeServiceEvent, HomeServiceState> {
     Emitter<HomeServiceState> emit,
   ) async {
     if (_selectedStaff == null || _selections.isEmpty) {
-      emit(const HomeServiceError('Vui lòng chọn đầy đủ thông tin'));
+      emit(const HomeServiceError(AppStrings.homeServicePleaseCompleteInfo));
       return;
     }
 
@@ -261,7 +319,12 @@ class HomeServiceBloc extends Bloc<HomeServiceEvent, HomeServiceState> {
         staffId: _selectedStaff!.id,
         selections: _selections,
       );
-      emit(HomeServiceBookingCreated(booking));
+
+      final normalizedBooking = booking.staffId.isNotEmpty
+          ? booking
+          : booking.copyWith(staffId: _selectedStaff!.id);
+
+      emit(HomeServiceBookingCreated(normalizedBooking));
     } catch (e) {
       emit(HomeServiceError(e.toString()));
     }
@@ -279,7 +342,7 @@ class HomeServiceBloc extends Bloc<HomeServiceEvent, HomeServiceState> {
       bookingId = currentState.booking.id;
       staffId = currentState.booking.staffId;
     } else {
-      emit(const HomeServiceError('Vui lòng tạo booking trước'));
+      emit(const HomeServiceError(AppStrings.homeServicePleaseCreateBookingFirst));
       return;
     }
 
@@ -318,7 +381,7 @@ class HomeServiceBloc extends Bloc<HomeServiceEvent, HomeServiceState> {
       // TODO: Implement cancel booking API call
       emit(const HomeServiceBookingCancelled(
         bookingId: 0,
-        message: 'Hủy booking thành công',
+        message: AppStrings.homeServiceCancelBookingSuccess,
       ));
     } catch (e) {
       emit(HomeServiceError(e.toString()));

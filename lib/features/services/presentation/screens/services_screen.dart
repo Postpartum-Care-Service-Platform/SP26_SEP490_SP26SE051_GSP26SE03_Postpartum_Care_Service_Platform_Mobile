@@ -83,20 +83,23 @@ class _ServicesScreenState extends State<ServicesScreen> {
             if (_selectedLocationType == null) {
               return ServiceLocationSelection(
                 onLocationSelected: (locationType) {
-                  if (locationType == ServiceLocationType.home) {
-                    // Navigate to home service booking screen
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const HomeServiceBookingScreen(),
-                      ),
-                    );
-                  } else {
+                  if (locationType == ServiceLocationType.center) {
                     // Reset booking flow để tránh giữ state cũ
                     context.read<BookingBloc>().add(const BookingReset());
-                    setState(() {
-                      _selectedLocationType = locationType;
-                    });
                   }
+                  setState(() {
+                    _selectedLocationType = locationType;
+                  });
+                },
+              );
+            }
+
+            if (_selectedLocationType == ServiceLocationType.home) {
+              return HomeServiceBookingScreen(
+                onBackToLocationSelection: () {
+                  setState(() {
+                    _selectedLocationType = null;
+                  });
                 },
               );
             }
@@ -116,19 +119,22 @@ class _ServicesScreenState extends State<ServicesScreen> {
           if (_selectedLocationType == null) {
             return ServiceLocationSelection(
               onLocationSelected: (locationType) {
-                if (locationType == ServiceLocationType.home) {
-                  // Navigate to home service booking screen
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const HomeServiceBookingScreen(),
-                    ),
-                  );
-                } else {
+                if (locationType == ServiceLocationType.center) {
                   context.read<BookingBloc>().add(const BookingReset());
-                  setState(() {
-                    _selectedLocationType = locationType;
-                  });
                 }
+                setState(() {
+                  _selectedLocationType = locationType;
+                });
+              },
+            );
+          }
+
+          if (_selectedLocationType == ServiceLocationType.home) {
+            return HomeServiceBookingScreen(
+              onBackToLocationSelection: () {
+                setState(() {
+                  _selectedLocationType = null;
+                });
               },
             );
           }
