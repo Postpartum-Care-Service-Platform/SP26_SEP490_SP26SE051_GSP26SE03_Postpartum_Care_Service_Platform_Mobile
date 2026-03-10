@@ -566,10 +566,23 @@ GET /api/StaffSchedule/me?from=2024-01-15&to=2024-01-15
 | Cập nhật nội dung hợp đồng | `PUT /api/Contract/{id}/update-content` | PUT |
 | Xem danh sách hợp đồng | `GET /api/Contract/all` | GET |
 
+**Mobile (Staff app) đã gắn:**
+- **Xem bảng HTML (không chữ ký)**: màn `StaffContractPreviewScreen` (staff mở từ `StaffContractScreen`, đang dùng API `GET /api/Contract/preview/{bookingId}` để render HTML).
+- **Upload bảng hình ảnh có chữ ký**: màn `StaffContractScreen` – nút "Upload đã ký" (gọi `PUT /api/Contract/{id}/upload-signed` qua `uploadSignedFile` / `uploadSigned`).
+- **Xem hợp đồng hoàn thiện (hình ảnh)**: màn `StaffContractScreen` – nút "Xem hợp đồng hoàn thiện (hình ảnh)" (dùng `GET /api/Contract/{id}` để lấy `fileUrl` và hiển thị ảnh).
+- **Gửi hợp đồng cho khách xem/ký**: màn `StaffContractScreen` – nút "Gửi khách" (gọi `PUT /api/Contract/{id}/send`).
+- **Xuất PDF hợp đồng**: màn `StaffContractScreen` – nút "Xuất PDF" (gọi `GET /api/Contract/{id}/export-pdf`).
+- **Cập nhật nội dung hợp đồng**: màn `StaffContractScreen` – nút "Chỉnh sửa" (gọi `PUT /api/Contract/{id}/update-content`).
+- **Xem danh sách hợp đồng**: màn `StaffContractListScreen` (gọi `GET /api/Contract/all` và `GET /api/Contract/no-schedule` cho tab "Chưa lên lịch").
+
 ### 👨‍⚕️ Staff Schedule
 | Tính Năng | API | Method |
 |-----------|-----|--------|
 | Xem lịch làm việc | `GET /api/StaffSchedule/me?from={from}&to={to}` | GET |
+
+**Mobile (Staff app) đã gắn:**
+- **Staff Schedule/Home**: màn `EmployeeScheduleScreenNew` (`employee_schedule_work.dart`) đã gọi `GET /api/StaffSchedule/me?from={from}&to={to}` qua `ApiEndpoints.myStaffSchedules` để lấy lịch làm việc theo ngày.
+- **Check-in/Check-out**: màn `check_in_out_screen.dart` cũng dùng `ApiEndpoints.myStaffSchedules` để lấy lịch staff theo khoảng ngày.
 
 ### 🍽️ Thêm Staff Menu Record
 | Tính Năng | API | Method |
@@ -578,6 +591,18 @@ GET /api/StaffSchedule/me?from=2024-01-15&to=2024-01-15
 | Xem menu record của khách | `GET /api/MenuRecord/customer/{customerId}` | GET |
 | Cập nhật menu record | `PUT /api/MenuRecord/by-staff?customerId={customerId}` | PUT |
 | Xóa menu record | `DELETE /api/MenuRecord/by-staff/{id}?customerId={customerId}` | DELETE |
+
+**Mobile (Staff app) đã gắn:**
+- **Xem menu record của khách**: màn `EmployeeCustomerFamilyProfilesScreen` (tab `Menu Record`) đã gọi `GET /api/MenuRecord/customer/{customerId}` và có flow lọc theo ngày/khoảng ngày.
+- **Tạo/Cập nhật/Xóa menu record cho khách (by-staff)**: đã bổ sung luồng datasource `EmployeeCustomerProfileRemoteDataSource` với các API:
+  - `POST /api/MenuRecord/by-staff?customerId={customerId}`
+  - `PUT /api/MenuRecord/by-staff?customerId={customerId}`
+  - `DELETE /api/MenuRecord/by-staff/{id}?customerId={customerId}`
+- **Trạng thái UI hiện tại**: đã gắn CRUD by-staff trực tiếp tại tab `Menu Record` của màn `EmployeeCustomerFamilyProfilesScreen`:
+  - Nút `Thêm record` gọi flow create (POST by-staff).
+  - Nút `Sửa` trên từng item gọi flow update (PUT by-staff).
+  - Nút `Xóa` trên từng item gọi flow delete (DELETE by-staff).
+  - Sau mỗi thao tác, dữ liệu được reload theo filter hiện tại.
 
 ### ✅ Staff Confirm
 | Tính Năng | API | Method |
@@ -589,6 +614,16 @@ GET /api/StaffSchedule/me?from=2024-01-15&to=2024-01-15
 | Xác nhận booking | `PUT /api/Booking/{id}/confirm` | PUT |
 | Hoàn thành booking | `PUT /api/Booking/{id}/complete` | PUT |
 
+**Mobile (Staff app) đã gắn:**
+- **Xem appointment được assign**: màn `EmployeeAppointmentListScreen` + datasource `AppointmentEmployeeRemoteDataSource.getMyAssignedAppointments()` gọi `GET /api/Appointment/my-assigned`.
+- **Xác nhận/Hoàn thành appointment**: màn `EmployeeAppointmentListScreen` gọi:
+  - `PUT /api/Appointment/{id}/confirm`
+  - `PUT /api/Appointment/{id}/complete`
+- **Xem booking cần xác nhận**: màn `StaffBookingListScreen` dùng `BookingRemoteDataSource.getAllBookings()` gọi `GET /api/Booking/all`.
+- **Xác nhận/Hoàn thành booking**: màn `StaffBookingListScreen` gọi:
+  - `PUT /api/Booking/{id}/confirm`
+  - `PUT /api/Booking/{id}/complete`
+
 ### 💬 Chat (Chỉ Chat Khi Được Phân Công)
 | Tính Năng | API | Method |
 |-----------|-----|--------|
@@ -597,6 +632,15 @@ GET /api/StaffSchedule/me?from=2024-01-15&to=2024-01-15
 | Nhận yêu cầu hỗ trợ (BẮT BUỘC) | `PUT /api/Chat/support-requests/{id}/accept` | PUT |
 | Gửi tin nhắn (sau khi accept) | `POST /api/Chat/conversations/{id}/staff-message` | POST |
 | Đánh dấu đã giải quyết | `PUT /api/Chat/support-requests/{id}/resolve` | PUT |
+
+**Mobile (Staff app) đã gắn:**
+- **Màn chat staff:** `EmployeeChatScreen` (`lib/features/employee/presentation/screens/employee_chat_screen.dart`).
+- **Xem yêu cầu hỗ trợ chờ:** gọi `GET /api/Chat/support-requests` qua event `ChatLoadSupportRequestsRequested`.
+- **Xem yêu cầu đang xử lý:** gọi `GET /api/Chat/support-requests/my` qua event `ChatLoadMySupportRequestsRequested`.
+- **Nhận yêu cầu hỗ trợ:** nút **"Nhận"** gọi `PUT /api/Chat/support-requests/{id}/accept` qua event `ChatAcceptSupportRequestSubmitted`.
+- **Gửi tin nhắn (sau khi accept):** trong `ConversationDetail` (staff mode) gọi `POST /api/Chat/conversations/{id}/staff-message`.
+- **Đánh dấu đã giải quyết:** nút **"Đã xử lý"** gọi `PUT /api/Chat/support-requests/{id}/resolve` qua event `ChatResolveSupportRequestSubmitted`.
+- **Luồng đồng bộ UI:** sau khi accept/resolve thành công, màn hình tự reload lại danh sách chờ + đang xử lý.
 
 ### 🏠 Staff Home & Center
 | Tính Năng | API | Method |
@@ -616,11 +660,33 @@ GET /api/StaffSchedule/me?from=2024-01-15&to=2024-01-15
 | Hồ sơ y tế | `GET /api/MedicalRecord/customer/{customerId}` | GET |
 | Thông tin tài khoản | `GET /api/Account/GetById/{customerId}` | GET |
 
+**Mobile (Staff app) đã gắn:**
+- **Customer Profile (nhiều tab)**: màn `EmployeeCustomerFamilyProfilesScreen` – hiển thị profile khách hàng theo `customerId`, có các tab:
+  - **Tab "Hồ sơ gia đình"** (ĐÃ GẮN API): gọi `GET /api/FamilyProfile/GetByCustomerId/{customerId}` thông qua `FamilyProfileRepository.getFamilyProfilesByCustomerId`, hiển thị danh sách thành viên gia đình bằng `FamilyMemberCard` (staff chỉ được xem, không chỉnh sửa).
+  - **Tab "Menu Record"** (ĐÃ GẮN API + flow lọc):
+    - Gọi `GET /api/MenuRecord/customer/{customerId}` để lấy toàn bộ menu record của khách.
+    - Gọi `GET /api/MenuRecord/customer/{customerId}/date?date={date}` khi lọc theo ngày.
+    - Gọi `GET /api/MenuRecord/customer/{customerId}/date-range?from={from}&to={to}` khi lọc theo khoảng ngày.
+    - UI đã có filter mode `Tất cả / Theo ngày / Khoảng ngày` và reload dữ liệu theo filter đã chọn.
+  - **Tab "Hồ sơ y tế"** (ĐÃ GẮN API): gọi `GET /api/MedicalRecord/customer/{customerId}` để hiển thị danh sách hồ sơ y tế của khách hàng.
+  - **Tab "Booking"** (ĐÃ GẮN API): gọi `GET /api/Booking/all` và filter theo `customerId` để hiển thị lịch sử booking của khách hàng.
+  - **Tab "Lịch hẹn"** (ĐÃ GẮN API): gọi `GET /api/Appointment/all` và filter theo `customerId` để hiển thị lịch hẹn của khách hàng.
+  - **Tab "Giao dịch"** (ĐÃ GẮN API): gọi `GET /api/Transaction/all` và filter theo `customerId` để hiển thị giao dịch của khách hàng.
+  - **Tab "Tài khoản"** (ĐÃ GẮN API): gọi `GET /api/Account/GetById/{customerId}` để hiển thị thông tin tài khoản cơ bản (email, tên, trạng thái, username, role, xác minh email và thông tin owner profile nếu có).
+- **Tổ chức code đã cập nhật theo flow:**
+  - Tách datasource riêng `EmployeeCustomerProfileRemoteDataSource` để gom luồng API cho `MenuRecord/MedicalRecord/Booking/Appointment/Transaction/Account`.
+  - Bổ sung endpoint helper trong `ApiEndpoints`: `menuRecordsByCustomer`, `menuRecordsByCustomerDate`, `menuRecordsByCustomerDateRange`, `medicalRecordsByCustomer`.
+  - Sửa UI border trong màn profile từ `AppColors.divider` sang `AppColors.borderLight` để hết lỗi lint.
+
 ### 📅 Tạo Lịch Gia Đình Khi Check-in
 | Tính Năng | API | Method |
 |-----------|-----|--------|
 | Kiểm tra thanh toán đủ | `GET /api/Transaction/all` hoặc `GET /api/Booking/{id}` | GET |
 | Tạo lịch sinh hoạt | `POST /api/FamilySchedule` | POST |
+
+**Mobile (Staff app) đã gắn:**
+- **Kiểm tra thanh toán đủ**: dùng dữ liệu thanh toán đã tổng hợp trong `BookingModel` (field `remainingAmount`, `paidAmount`, `finalAmount`) từ API `GET /api/Booking/all`; trên app chỉ cho phép tạo lịch nếu `remainingAmount <= 0` (tương đương đã thanh toán đủ), các điều kiện chi tiết vẫn do backend kiểm tra khi tạo lịch.
+- **Tạo lịch sinh hoạt**: màn `EmployeeCustomerFamilyProfilesScreen` (staff mở từ danh sách “Gia đình được phân công”), nút action trên `AppBar` **"Tạo lịch sinh hoạt"** gọi `POST /api/FamilySchedule` qua `FamilyScheduleRemoteDataSource.createFamilySchedule({ customerId, contractId })` với `customerId` của khách và `contractId` lấy từ **hợp đồng mới nhất** gắn với booking mới nhất của khách hàng.
 
 ### 📌 Booking - Hủy & Hoàn Thành
 | Tính Năng | API | Method |
@@ -628,6 +694,11 @@ GET /api/StaffSchedule/me?from=2024-01-15&to=2024-01-15
 | Hủy booking | `PUT /api/Booking/{id}/cancel` | PUT |
 | Hoàn thành booking | `PUT /api/Booking/{id}/complete` | PUT |
 | Kiểm tra điều kiện | `GET /api/Booking/{id}` | GET |
+
+**Mobile (Staff app) đã gắn:**
+- **Hủy booking**: màn `StaffBookingListScreen`, nút **"Hủy"** trong mỗi item booking (chỉ hiển thị khi `status = Pending`, gọi `PUT /api/Booking/{id}/cancel` qua `cancelBooking`).
+- **Hoàn thành booking**: màn `StaffBookingListScreen`, nút **"Hoàn thành"** (chỉ hiển thị khi `status = Confirmed` **và** `remainingAmount <= 0` – tương ứng IsFullyPaid, gọi `PUT /api/Booking/{id}/complete` qua `completeBooking`).
+- **Kiểm tra điều kiện**: thông tin thanh toán (paid/remaining) và trạng thái booking đã được backend tổng hợp trong `GET /api/Booking/all` → `BookingModel`; backend vẫn kiểm tra lại toàn bộ điều kiện khi gọi `/complete` hoặc `/cancel`.
 
 ---
 
@@ -665,5 +736,24 @@ Tất cả các API trên đều yêu cầu:
 
 ---
 
-**Cập nhật lần cuối:** Dựa trên code trong thư mục `WebAPI/Controllers`  
-**Phiên bản:** 1.0
+**Cập nhật lần cuối:** 2026-03-08 – đã đối chiếu docs và code mobile staff, hoàn tất gắn flow Customer Profile đa tab + MenuRecord by-staff CRUD + các tab Booking/Appointment/Transaction theo customerId.  
+**Phiên bản:** 1.1
+
+### 📌 Release Note (Mobile Staff) – 2026-03-08
+- **Phạm vi hoàn tất:**
+  - Hoàn thiện màn `EmployeeCustomerFamilyProfilesScreen` theo flow profile khách hàng.
+  - Gắn đầy đủ API cho các tab: FamilyProfile, MenuRecord, MedicalRecord, Booking, Appointment, Transaction, Account.
+  - Bổ sung filter MenuRecord theo `all/date/range` và CRUD by-staff (tạo/sửa/xóa).
+- **API đã gắn bổ sung:**
+  - `POST /api/MenuRecord/by-staff?customerId={customerId}`
+  - `PUT /api/MenuRecord/by-staff?customerId={customerId}`
+  - `DELETE /api/MenuRecord/by-staff/{id}?customerId={customerId}`
+  - `GET /api/Booking/all` (filter theo `customerId`)
+  - `GET /api/Appointment/all` (filter theo `customerId`)
+  - `GET /api/Transaction/all` (filter theo `customerId`)
+- **Tệp ảnh hưởng chính:**
+  - `lib/features/employee/presentation/screens/employee_customer_family_profiles_screen.dart`
+  - `lib/features/employee/data/datasources/employee_customer_profile_remote_datasource.dart`
+  - `lib/core/apis/api_endpoints.dart`
+  - `docs/Staff_APIs_By_Feature.md`
+- **Trạng thái chất lượng:** lint các file đã chỉnh sửa: **no error**.

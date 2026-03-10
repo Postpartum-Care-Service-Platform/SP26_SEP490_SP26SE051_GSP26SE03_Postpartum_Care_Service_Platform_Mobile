@@ -109,6 +109,7 @@ class ApiEndpoints {
   static const String getAllBookings = '/Booking/all';
   static String confirmBooking(int id) => '/Booking/$id/confirm';
   static String completeBooking(int id) => '/Booking/$id/complete';
+  static String cancelBooking(int id) => '/Booking/$id/cancel';
   static const String createPaymentLink = '/Transaction/create-payment-link';
   static const String createOfflinePayment = '/Transaction/payment';
   static const String getAllTransactions = '/Transaction/all';
@@ -129,8 +130,8 @@ class ApiEndpoints {
       '/Contract/from-booking/$bookingId';
   static String sendContract(int id) => '/Contract/$id/send';
   static String uploadSignedContract(int id) => '/Contract/$id/upload-signed';
-  static String uploadSignedContractFile(int id) =>
-      '/Contract/$id/upload-signed-file';
+  // Backend hiện dùng cùng endpoint upload-signed (body JSON chứa fileUrl + signedDate)
+  static String uploadSignedContractFile(int id) => '/Contract/$id/upload-signed';
   static String updateContractContent(int id) => '/Contract/$id/update-content';
   static const String getNoScheduleContracts = '/Contract/no-schedule';
 
@@ -239,6 +240,28 @@ class ApiEndpoints {
   /// Delete menu record (soft delete)
   static String deleteMenuRecord(int id) => '/MenuRecord/$id';
 
+  /// Staff: create menu records for a customer
+  static const String menuRecordsByStaff = '/MenuRecord/by-staff';
+
+  /// Staff: delete menu record by id for a customer
+  static String menuRecordByStaffId(int id) => '/MenuRecord/by-staff/$id';
+
+  /// Staff: get menu records by customer id
+  static String menuRecordsByCustomer(String customerId) =>
+      '/MenuRecord/customer/$customerId';
+
+  /// Staff: get menu records by customer id and date
+  static String menuRecordsByCustomerDate(String customerId) =>
+      '/MenuRecord/customer/$customerId/date';
+
+  /// Staff: get menu records by customer id and date range
+  static String menuRecordsByCustomerDateRange(String customerId) =>
+      '/MenuRecord/customer/$customerId/date-range';
+
+  /// Staff/Admin/Manager: get medical records by customer id
+  static String medicalRecordsByCustomer(String customerId) =>
+      '/MedicalRecord/customer/$customerId';
+
   // ==========================================
   // Family Schedule endpoints
   // ==========================================
@@ -249,6 +272,9 @@ class ApiEndpoints {
 
   /// Get my family schedules by date
   static String familyScheduleByDate(String date) => '/FamilySchedule/$date';
+
+  /// Create family schedule when customer checks in
+  static const String createFamilySchedule = '/FamilySchedule';
 
   // ==========================================
   // Feedback endpoints

@@ -267,23 +267,41 @@ class ContractRemoteDataSourceImpl implements ContractRemoteDataSource {
     try {
       final formData = FormData.fromMap({
         'file': await MultipartFile.fromFile(filePath),
-        'signedDate': signedDate.toIso8601String().split('T')[0], // yyyy-MM-dd
+        'signedDate': signedDate.toIso8601String().split('T')[0],
       });
 
-      final response = await dio.put(
-        ApiEndpoints.uploadSignedContractFile(id),
+      // Ưu tiên endpoint upload-file nếu backend có hỗ trợ.
+      try {
+        final response = await dio.put(
+          '/Contract/$id/upload-signed-file',
+          data: formData,
+        );
+        final data = response.data;
+        if (data is Map<String, dynamic>) {
+          return data['message'] as String? ?? 'Upload hợp đồng đã ký thành công';
+        }
+        return 'Upload hợp đồng đã ký thành công';
+      } on DioException catch (e) {
+        // Nhiều môi trường chỉ có endpoint /upload-signed.
+        if (e.response?.statusCode != 404) {
+          rethrow;
+        }
+      }
+
+      // Fallback: thử gửi multipart vào endpoint /upload-signed.
+      final fallbackResponse = await dio.put(
+        ApiEndpoints.uploadSignedContract(id),
         data: formData,
       );
-
-      final data = response.data;
-      if (data is Map<String, dynamic>) {
-        return data['message'] as String? ?? 'Upload hợp đồng đã ký thành công';
+      final fallbackData = fallbackResponse.data;
+      if (fallbackData is Map<String, dynamic>) {
+        return fallbackData['message'] as String? ?? 'Upload hợp đồng đã ký thành công';
       }
       return 'Upload hợp đồng đã ký thành công';
     } on DioException catch (e) {
       if (e.response != null) {
         throw Exception(
-          'Failed to upload signed contract file: ${e.response?.statusCode}',
+          'Upload thất bại (${e.response?.statusCode}). Backend có thể chỉ hỗ trợ body JSON fileUrl cho endpoint /upload-signed.',
         );
       } else {
         throw Exception('Network error: ${e.message}');

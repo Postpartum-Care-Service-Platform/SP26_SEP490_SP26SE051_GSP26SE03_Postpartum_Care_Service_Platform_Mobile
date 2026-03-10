@@ -4,7 +4,10 @@ import '../../../../core/apis/api_client.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
+import '../../../../core/widgets/app_toast.dart';
+import '../../../booking/data/datasources/booking_remote_datasource.dart';
 import '../../../employee/presentation/widgets/employee_scaffold.dart';
+import '../../../services/data/datasources/family_schedule_remote_datasource.dart';
 import '../../data/datasources/transaction_remote_datasource.dart';
 import '../../data/models/transaction_with_customer_model.dart';
 
@@ -19,6 +22,10 @@ class StaffTransactionListScreen extends StatefulWidget {
 class _StaffTransactionListScreenState
     extends State<StaffTransactionListScreen> {
   final _dataSource = TransactionRemoteDataSourceImpl(dio: ApiClient.dio);
+  final _bookingDataSource = BookingRemoteDataSourceImpl(dio: ApiClient.dio);
+  final _familyScheduleDataSource = FamilyScheduleRemoteDataSourceImpl(
+    dio: ApiClient.dio,
+  );
   late Future<List<TransactionWithCustomerModel>> _future =
       _loadTransactions();
   String _typeFilter = 'all'; // all, Deposit, Remaining, Full
@@ -46,6 +53,126 @@ class _StaffTransactionListScreenState
     setState(() {
       _future = _loadTransactions();
     });
+  }
+
+  String _statusLabel(String status) {
+    switch (status.toLowerCase()) {
+      case 'paid':
+        return 'Đã thanh toán';
+      case 'pending':
+        return 'Chờ xử lý';
+      case 'failed':
+        return 'Thất bại';
+      default:
+        return status;
+    }
+  }
+
+  String _typeLabel(String? type) {
+    switch ((type ?? '').toLowerCase()) {
+      case 'deposit':
+        return 'Đặt cọc';
+      case 'remaining':
+        return 'Thanh toán còn lại';
+      case 'full':
+        return 'Thanh toán toàn bộ';
+      default:
+        return type ?? '-';
+    }
+  }
+
+  Future<void> _handleCreateFamilySchedule(
+    TransactionWithCustomerModel transaction,
+  ) async {
+    final customerId = transaction.customerId;
+    final bookingId = transaction.bookingId;
+
+    if (customerId == null || customerId.trim().isEmpty) {
+      if (!mounted) return;
+      AppToast.showError(
+        context,
+        message: 'Giao dịch này không có customerId để tạo lịch sinh hoạt.',
+      );
+      return;
+    }
+
+    if (bookingId == null) {
+      if (!mounted) return;
+      AppToast.showError(
+        context,
+        message: 'Giao dịch này không gắn bookingId.',
+      );
+      return;
+    }
+
+    try {
+      final booking = await _bookingDataSource.getBookingById(bookingId);
+      if (booking.customer?.id != customerId) {
+        if (!mounted) return;
+        AppToast.showError(
+          context,
+          message: 'Booking không thuộc đúng khách hàng của giao dịch.',
+        );
+        return;
+      }
+
+      if (booking.remainingAmount > 0) {
+        if (!mounted) return;
+        AppToast.showError(
+          context,
+          message: 'Booking chưa thanh toán đủ. Không thể tạo lịch sinh hoạt.',
+        );
+        return;
+      }
+
+      final contract = booking.contract;
+      if (contract == null) {
+        if (!mounted) return;
+        AppToast.showError(
+          context,
+          message: 'Booking chưa có hợp đồng. Không thể tạo lịch sinh hoạt.',
+        );
+        return;
+      }
+
+      if (!mounted) return;
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Tạo lịch sinh hoạt gia đình'),
+          content: Text(
+            'Tạo lịch cho khách ${transaction.customerUsername ?? transaction.customerEmail ?? customerId}\n'
+            'Booking #$bookingId • Contract #${contract.id}?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Hủy'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('Tạo lịch'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirm != true) return;
+
+      final message = await _familyScheduleDataSource.createFamilySchedule(
+        customerId: customerId,
+        contractId: contract.id,
+      );
+
+      if (!mounted) return;
+      AppToast.showSuccess(context, message: message);
+    } catch (e) {
+      if (!mounted) return;
+      AppToast.showError(
+        context,
+        message: 'Không thể tạo lịch sinh hoạt: $e',
+      );
+    }
   }
 
   List<TransactionWithCustomerModel> _applyFilter(
@@ -266,7 +393,13 @@ class _StaffTransactionListScreenState
                       separatorBuilder: (_, __) => SizedBox(height: 10 * scale),
                       itemBuilder: (context, index) {
                         final t = items[index];
-                        return _TransactionItem(transaction: t);
+                        return _TransactionItem(
+                          transaction: t,
+                          statusLabel: _statusLabel(t.status),
+                          typeLabel: _typeLabel(t.type),
+                          onCreateFamilySchedule: () =>
+                              _handleCreateFamilySchedule(t),
+                        );
                       },
                     ),
                   );
@@ -611,12 +744,15 @@ class _StaffTransactionListScreenState
                     isExpanded: true,
                     items: const [
                       DropdownMenuItem(value: 'all', child: Text('Tất cả')),
-                      DropdownMenuItem(value: 'deposit', child: Text('Deposit')),
+                      DropdownMenuItem(value: 'deposit', child: Text('Đặt cọc')),
                       DropdownMenuItem(
                         value: 'remaining',
-                        child: Text('Remaining'),
+                        child: Text('Thanh toán còn lại'),
                       ),
-                      DropdownMenuItem(value: 'full', child: Text('Full')),
+                      DropdownMenuItem(
+                        value: 'full',
+                        child: Text('Thanh toán toàn bộ'),
+                      ),
                     ],
                     onChanged: (value) {
                       if (value == null) return;
@@ -693,8 +829,16 @@ class _StaffTransactionListScreenState
 
 class _TransactionItem extends StatelessWidget {
   final TransactionWithCustomerModel transaction;
+  final String statusLabel;
+  final String typeLabel;
+  final VoidCallback onCreateFamilySchedule;
 
-  const _TransactionItem({required this.transaction});
+  const _TransactionItem({
+    required this.transaction,
+    required this.statusLabel,
+    required this.typeLabel,
+    required this.onCreateFamilySchedule,
+  });
 
   Color _statusColor(String status) {
     switch (status.toLowerCase()) {
@@ -752,7 +896,7 @@ class _TransactionItem extends StatelessWidget {
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
-                  transaction.status,
+                  statusLabel,
                   style: AppTextStyles.arimo(
                     fontSize: 11 * scale,
                     fontWeight: FontWeight.w700,
@@ -834,7 +978,7 @@ class _TransactionItem extends StatelessWidget {
               ),
               SizedBox(width: 6 * scale),
               Text(
-                '${transaction.type ?? '-'} / ${transaction.paymentMethod ?? '-'}',
+                '$typeLabel / ${transaction.paymentMethod ?? '-'}',
                 style: AppTextStyles.arimo(
                   fontSize: 12 * scale,
                   color: AppColors.textSecondary,
@@ -853,6 +997,15 @@ class _TransactionItem extends StatelessWidget {
               ),
             ),
           ],
+          SizedBox(height: 10 * scale),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: onCreateFamilySchedule,
+              icon: const Icon(Icons.event_available_rounded),
+              label: const Text('Tạo lịch sinh hoạt từ giao dịch này'),
+            ),
+          ),
         ],
       ),
     );

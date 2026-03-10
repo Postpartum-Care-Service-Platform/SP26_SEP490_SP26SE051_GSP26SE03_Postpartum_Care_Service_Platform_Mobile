@@ -81,6 +81,39 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
     }
   }
 
+  Future<void> _handleCancel(BookingModel booking) async {
+    if (_isActionInProgress) return;
+    setState(() => _isActionInProgress = true);
+    try {
+      final message = await _dataSource.cancelBooking(booking.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            message,
+            style: AppTextStyles.arimo(color: AppColors.white),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      await _refresh();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Lỗi hủy booking: $e',
+            style: AppTextStyles.arimo(color: AppColors.white),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (!mounted) return;
+      setState(() => _isActionInProgress = false);
+    }
+  }
+
   Future<void> _handleComplete(BookingModel booking) async {
     if (_isActionInProgress) return;
     setState(() => _isActionInProgress = true);
@@ -306,11 +339,14 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
                         final booking = bookings[index];
                         return _BookingItem(
                           booking: booking,
+                          onCancel: booking.status.toLowerCase() == 'pending'
+                              ? () => _handleCancel(booking)
+                              : null,
                           onConfirm: booking.status.toLowerCase() == 'pending'
                               ? () => _handleConfirm(booking)
                               : null,
-                          onComplete:
-                              booking.status.toLowerCase() == 'confirmed'
+                          onComplete: booking.status.toLowerCase() == 'confirmed' &&
+                                  booking.remainingAmount <= 0
                               ? () => _handleComplete(booking)
                               : null,
                           onRecordOfflinePayment: () async {
@@ -644,6 +680,7 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
 
 class _BookingItem extends StatelessWidget {
   final BookingModel booking;
+  final VoidCallback? onCancel;
   final VoidCallback? onConfirm;
   final VoidCallback? onComplete;
   final VoidCallback? onRecordOfflinePayment;
@@ -651,6 +688,7 @@ class _BookingItem extends StatelessWidget {
 
   const _BookingItem({
     required this.booking,
+    this.onCancel,
     this.onConfirm,
     this.onComplete,
     this.onRecordOfflinePayment,
@@ -792,6 +830,24 @@ class _BookingItem extends StatelessWidget {
             SizedBox(height: 10 * scale),
             Row(
               children: [
+                if (onCancel != null)
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: onCancel,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFFDC2626),
+                        side: const BorderSide(color: Color(0xFFDC2626)),
+                      ),
+                      icon: const Icon(Icons.cancel_outlined, size: 18),
+                      label: const Text('Hủy'),
+                    ),
+                  ),
+                if (onCancel != null &&
+                    (onConfirm != null ||
+                        onComplete != null ||
+                        onRecordOfflinePayment != null ||
+                        onViewContract != null))
+                  SizedBox(width: 8 * scale),
                 if (onConfirm != null)
                   Expanded(
                     child: OutlinedButton.icon(
