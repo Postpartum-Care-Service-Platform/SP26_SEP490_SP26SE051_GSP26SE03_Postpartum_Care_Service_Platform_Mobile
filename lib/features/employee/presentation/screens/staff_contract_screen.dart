@@ -85,10 +85,11 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
         _error = e.toString();
       });
     } finally {
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -193,7 +194,7 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
     if (bookingId == null) {
       AppToast.showError(
         context,
-        message: 'Không tìm thấy booking để preview hợp đồng',
+        message: 'Không tìm thấy booking để xem nội dung hợp đồng (HTML)',
       );
       return;
     }
@@ -203,6 +204,155 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
         builder: (_) => StaffContractPreviewScreen(bookingId: bookingId),
       ),
     );
+  }
+
+  void _openSignedContractImage() {
+    final contract = _contract;
+    final url = contract?.fileUrl;
+
+    if (contract == null || url == null || url.trim().isEmpty) {
+      AppToast.showError(
+        context,
+        message: 'Chưa có hợp đồng đã ký để xem',
+      );
+      return;
+    }
+
+    showDialog<void>(
+      context: context,
+      builder: (ctx) {
+        final scale = AppResponsive.scaleFactor(ctx);
+        return Dialog(
+          insetPadding: EdgeInsets.all(16 * scale),
+          child: Padding(
+            padding: EdgeInsets.all(16 * scale),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.image_rounded,
+                          color: AppColors.primary,
+                          size: 22 * scale,
+                        ),
+                        SizedBox(width: 8 * scale),
+                        Text(
+                          'Hợp đồng đã ký (hình ảnh)',
+                          style: AppTextStyles.arimo(
+                            fontSize: 15 * scale,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      icon: const Icon(Icons.close_rounded),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 12 * scale),
+                Flexible(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12 * scale),
+                    child: Container(
+                      color: AppColors.background,
+                      child: InteractiveViewer(
+                        minScale: 0.7,
+                        maxScale: 4,
+                        child: Image.network(
+                          url,
+                          fit: BoxFit.contain,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(16 * scale),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const CircularProgressIndicator(
+                                      color: AppColors.primary,
+                                    ),
+                                    SizedBox(height: 8 * scale),
+                                    Text(
+                                      'Đang tải hình ảnh hợp đồng...',
+                                      style: AppTextStyles.arimo(
+                                        fontSize: 12 * scale,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            return Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(16 * scale),
+                                child: Text(
+                                  'Không thể tải hình ảnh hợp đồng đã ký',
+                                  textAlign: TextAlign.center,
+                                  style: AppTextStyles.arimo(
+                                    fontSize: 13 * scale,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 16 * scale),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.white,
+                      padding: EdgeInsets.symmetric(vertical: 12 * scale),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10 * scale),
+                      ),
+                    ),
+                    icon: const Icon(Icons.check_rounded),
+                    label: Text(
+                      'Đóng',
+                      style: AppTextStyles.arimo(
+                        fontSize: 14 * scale,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _handleUploadSignedPressed({required bool canUploadSigned}) {
+    if (!canUploadSigned) {
+      AppToast.showError(
+        context,
+        message: 'Vui lòng bấm "Gửi khách" trước khi upload hợp đồng đã ký.',
+      );
+      return;
+    }
+    _showUploadSignedSheet();
   }
 
   Future<void> _showUploadSignedSheet() async {
@@ -223,24 +373,27 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
       ),
       builder: (ctx) {
         final scale = AppResponsive.scaleFactor(ctx);
-        return Container(
-          decoration: BoxDecoration(
-            color: AppColors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Padding(
-            padding: EdgeInsets.only(
-              left: 20 * scale,
-              right: 20 * scale,
-              top: 20 * scale,
-              bottom: MediaQuery.of(ctx).viewInsets.bottom + 20 * scale,
+        return SafeArea(
+          top: false,
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             ),
-            child: StatefulBuilder(
-              builder: (context, setModalState) {
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+            child: Padding(
+              padding: EdgeInsets.only(
+                left: 20 * scale,
+                right: 20 * scale,
+                top: 20 * scale,
+                bottom: MediaQuery.of(ctx).viewInsets.bottom + 20 * scale,
+              ),
+              child: StatefulBuilder(
+                builder: (context, setModalState) {
+                  return SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                     // Handle bar
                     Center(
                       child: Container(
@@ -507,14 +660,15 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
 
                               setModalState(() => isUploading = true);
                               try {
+                                final navigator = Navigator.of(ctx);
                                 final message = await _remote.uploadSignedFile(
                                   id: contract.id,
                                   filePath: pickedImagePath!,
                                   signedDate: signedDate,
                                 );
                                 if (!mounted) return;
-                                Navigator.of(ctx).pop();
-                                AppToast.showSuccess(context, message: message);
+                                navigator.pop();
+                                AppToast.showSuccess(this.context, message: message);
                                 final updated =
                                     await _remote.getContractById(contract.id);
                                 if (!mounted) return;
@@ -524,7 +678,7 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                               } catch (e) {
                                 if (mounted) {
                                   AppToast.showError(
-                                    context,
+                                    this.context,
                                     message:
                                         'Không thể upload hợp đồng đã ký: $e',
                                   );
@@ -554,10 +708,12 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                       ),
                     ),
                   ),
-                ],
-              );
-            },
-          ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
           ),
         );
       },
@@ -568,6 +724,13 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
     final contract = _contract;
     if (contract == null) return;
 
+    final customerNameController = TextEditingController(
+      text: contract.customer?.username ?? '',
+    );
+    final customerPhoneController = TextEditingController(
+      text: contract.customer?.phone ?? '',
+    );
+    final customerAddressController = TextEditingController();
     final totalController = TextEditingController();
     final discountController = TextEditingController();
     final finalController = TextEditingController();
@@ -637,6 +800,28 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                       ),
                     ),
                     SizedBox(height: 12 * scale),
+                    TextField(
+                      controller: customerNameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Tên khách hàng (để trống nếu giữ nguyên)',
+                      ),
+                    ),
+                    SizedBox(height: 8 * scale),
+                    TextField(
+                      controller: customerPhoneController,
+                      keyboardType: TextInputType.phone,
+                      decoration: const InputDecoration(
+                        labelText: 'Số điện thoại (để trống nếu giữ nguyên)',
+                      ),
+                    ),
+                    SizedBox(height: 8 * scale),
+                    TextField(
+                      controller: customerAddressController,
+                      decoration: const InputDecoration(
+                        labelText: 'Địa chỉ (để trống nếu giữ nguyên)',
+                      ),
+                    ),
+                    SizedBox(height: 12 * scale),
                     dateRow('Hiệu lực từ', effectiveFrom, (v) {
                       effectiveFrom = v;
                     }),
@@ -691,10 +876,14 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                             );
                           }
 
-                          Navigator.of(ctx).pop();
+                          final navigator = Navigator.of(ctx);
+                          navigator.pop();
                           try {
                             final updated = await _remote.updateContent(
                               contract.id,
+                              customerName: customerNameController.text,
+                              customerPhone: customerPhoneController.text,
+                              customerAddress: customerAddressController.text,
                               effectiveFrom: effectiveFrom,
                               effectiveTo: effectiveTo,
                               checkinDate: checkinDate,
@@ -705,7 +894,7 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                             );
                             if (mounted) {
                               AppToast.showSuccess(
-                                context,
+                                this.context,
                                 message: 'Cập nhật hợp đồng thành công',
                               );
                               setState(() {
@@ -715,7 +904,7 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                           } catch (e) {
                             if (mounted) {
                               AppToast.showError(
-                                context,
+                                this.context,
                                 message: 'Không thể cập nhật hợp đồng: $e',
                               );
                             }
@@ -794,6 +983,8 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
     }
 
     final contract = _contract;
+    final canUploadSigned =
+        contract != null && contract.status.toLowerCase() == 'sent';
     if (contract == null) {
       return Center(
         child: Text(
@@ -1043,7 +1234,7 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                 SizedBox(height: 12 * scale),
                 _ActionButton(
                   icon: Icons.visibility_rounded,
-                  label: 'Xem trước hợp đồng',
+                  label: 'Xem nội dung hợp đồng (HTML)',
                   color: const Color(0xFF0284C7),
                   onPressed: _openPreview,
                   scale: scale,
@@ -1056,9 +1247,12 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                     Expanded(
                       child: _ActionButton(
                         icon: Icons.cloud_upload_rounded,
-                        label: 'Upload đã ký',
+                        label: canUploadSigned
+                            ? 'Upload đã ký'
+                            : 'Upload đã ký (chờ gửi khách)',
                         color: const Color(0xFF0EA5E9),
-                        onPressed: _showUploadSignedSheet,
+                        onPressed: () =>
+                            _handleUploadSignedPressed(canUploadSigned: canUploadSigned),
                         scale: scale,
                         isOutlined: true,
                       ),
@@ -1076,6 +1270,19 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                     ),
                   ],
                 ),
+                if (contract.fileUrl != null &&
+                    contract.fileUrl!.trim().isNotEmpty) ...[
+                  SizedBox(height: 12 * scale),
+                  _ActionButton(
+                    icon: Icons.image_rounded,
+                    label: 'Xem hợp đồng hoàn thiện (hình ảnh)',
+                    color: const Color(0xFF059669),
+                    onPressed: _openSignedContractImage,
+                    scale: scale,
+                    isOutlined: true,
+                    isFullWidth: true,
+                  ),
+                ],
               ],
             ),
           ),

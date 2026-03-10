@@ -32,6 +32,9 @@ abstract class BookingRemoteDataSource {
   /// Staff/Admin: Confirm booking
   Future<String> confirmBooking(int id);
 
+  /// Staff/Admin: Cancel booking
+  Future<String> cancelBooking(int id);
+
   /// Staff/Admin: Complete booking
   Future<String> completeBooking(int id);
 
@@ -218,6 +221,21 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
         return data['message'] as String? ?? 'Xác nhận booking thành công';
       }
       return 'Xác nhận booking thành công';
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  @override
+  Future<String> cancelBooking(int id) async {
+    try {
+      final response = await dio.put(ApiEndpoints.cancelBooking(id));
+
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        return data['message'] as String? ?? 'Hủy booking thành công';
+      }
+      return 'Hủy booking thành công';
     } on DioException catch (e) {
       throw _handleError(e);
     }

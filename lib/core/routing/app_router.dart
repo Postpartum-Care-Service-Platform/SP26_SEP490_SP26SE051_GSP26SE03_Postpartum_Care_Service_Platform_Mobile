@@ -24,7 +24,8 @@ import '../../features/supportAndPolicy/presentation/screens/about_screen.dart';
 import '../../features/supportAndPolicy/presentation/screens/terms_screen.dart';
 import '../../features/supportAndPolicy/presentation/screens/privacy_screen.dart';
 import '../../features/employee/presentation/screens/employee_portal_menu.dart';
-import '../../features/employee/presentation/screens/tasks_screen.dart';
+import '../../features/employee/presentation/screens/tasks_screen_new.dart';
+import '../../features/employee/presentation/screens/employee_rooms_screen.dart';
 import '../../features/employee/presentation/screens/check_in_out_screen.dart';
 import '../../features/employee/presentation/screens/requests_screen.dart';
 import '../../features/employee/presentation/screens/employee_meal_plan_screen.dart';
@@ -256,7 +257,7 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const ServiceBookingScreen());
 
       case AppRoutes.employeeRooms:
-        return MaterialPageRoute(builder: (_) => const EmployeePortalScreen());
+        return MaterialPageRoute(builder: (_) => const EmployeeRoomsScreen());
 
       case AppRoutes.employeeAssignedFamilies:
         return MaterialPageRoute(
@@ -334,7 +335,7 @@ class AppRouter {
 
       // Employee Routes - Legacy/Mock screens
       case AppRoutes.employeeTasks:
-        return MaterialPageRoute(builder: (_) => const TasksScreen());
+        return MaterialPageRoute(builder: (_) => const TasksScreenNew());
 
       case AppRoutes.employeeCheckInOut:
         return MaterialPageRoute(builder: (_) => const CheckInOutScreen());
