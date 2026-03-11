@@ -9,6 +9,7 @@ class HomeActivityModel extends HomeActivityEntity {
     required super.price,
     required super.target,
     required super.activityTypeId,
+    required super.activityTypeName,
     required super.duration,
     required super.status,
   });
@@ -18,11 +19,12 @@ class HomeActivityModel extends HomeActivityEntity {
       id: json['id'] as int,
       name: json['name'] as String,
       description: json['description'] as String,
-      price: (json['price'] as num).toDouble(),
-      target: json['target'] as int,
+      price: (json['price'] as num?)?.toDouble(),
+      target: json['target'] as String? ?? '',
       activityTypeId: json['activityTypeId'] as int,
+      activityTypeName: json['activityTypeName'] as String? ?? '',
       duration: json['duration'] as int,
-      status: json['status'] as int,
+      status: json['status'] as String? ?? '',
     );
   }
 
@@ -34,6 +36,7 @@ class HomeActivityModel extends HomeActivityEntity {
       'price': price,
       'target': target,
       'activityTypeId': activityTypeId,
+      'activityTypeName': activityTypeName,
       'duration': duration,
       'status': status,
     };
@@ -47,6 +50,7 @@ class HomeActivityModel extends HomeActivityEntity {
       price: price,
       target: target,
       activityTypeId: activityTypeId,
+      activityTypeName: activityTypeName,
       duration: duration,
       status: status,
     );

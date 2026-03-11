@@ -426,7 +426,11 @@ class _SelectionCard extends StatelessWidget {
     return result ?? const [];
   }
 
-  String _formatCurrency(double value) {
+  String _formatCurrency(double? value) {
+    if (value == null) {
+      return AppStrings.bookingPriceNotAvailable;
+    }
+
     final intValue = value.round();
     final str = intValue.toString();
     final buffer = StringBuffer();

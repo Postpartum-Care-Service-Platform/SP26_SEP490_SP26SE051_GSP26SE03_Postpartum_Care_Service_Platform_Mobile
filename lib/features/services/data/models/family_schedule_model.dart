@@ -30,10 +30,10 @@ class FamilyScheduleModel extends FamilyScheduleEntity {
     return FamilyScheduleModel(
       id: json['id'] as int,
       customerId: json['customerId'] as String,
-      customerName: json['customerName'] as String,
+      customerName: json['customerName'] as String?,
       packageId: json['packageId'] as int,
-      packageName: json['packageName'] as String? ?? '',
-      workDate: DateTime.parse(json['workDate'] as String),
+      packageName: json['packageName'] as String?,
+      workDate: _parseDateOnly(json['workDate'] as String),
       startTime: json['startTime'] as String,
       endTime: json['endTime'] as String,
       dayNo: json['dayNo'] as int,
@@ -44,6 +44,20 @@ class FamilyScheduleModel extends FamilyScheduleEntity {
       contractId: json['contractId'] as int?,
       staffSchedules: staffSchedules,
     );
+  }
+
+  static DateTime _parseDateOnly(String value) {
+    final parts = value.split('-');
+    if (parts.length != 3) {
+      return DateTime.parse(value);
+    }
+    final year = int.tryParse(parts[0]);
+    final month = int.tryParse(parts[1]);
+    final day = int.tryParse(parts[2]);
+    if (year == null || month == null || day == null) {
+      return DateTime.parse(value);
+    }
+    return DateTime(year, month, day);
   }
 
   Map<String, dynamic> toJson() {

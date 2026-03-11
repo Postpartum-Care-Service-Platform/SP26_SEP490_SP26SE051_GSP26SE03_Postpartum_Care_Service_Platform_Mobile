@@ -281,7 +281,8 @@ class HomeServiceBloc extends Bloc<HomeServiceEvent, HomeServiceState> {
     double totalPrice = 0;
     for (final selection in _selections) {
       final sessions = selection.dateTimeSlots.length;
-      totalPrice += selection.activity.price * (sessions > 0 ? sessions : 1);
+      final price = selection.activity.price ?? 0;
+      totalPrice += price * (sessions > 0 ? sessions : 1);
     }
 
     emit(HomeServiceSummaryReady(

@@ -724,7 +724,339 @@ class AppWidgets {
       maxDate: maxDate,
     );
   }
+
+  /// Month Calendar Picker - Reusable calendar widget showing month view
+  static Widget monthCalendarPicker({
+    required BuildContext context,
+    required DateTime selectedDate,
+    required ValueChanged<DateTime> onDateSelected,
+    required bool Function(DateTime date) hasData,
+    DateTime? minDate,
+    DateTime? maxDate,
+  }) {
+    return _AppMonthCalendarPicker(
+      selectedDate: selectedDate,
+      onDateSelected: onDateSelected,
+      hasData: hasData,
+      minDate: minDate,
+      maxDate: maxDate,
+    );
+  }
 }
+
+/// Internal stateful widget for month calendar picker
+class _AppMonthCalendarPicker extends StatefulWidget {
+  final DateTime selectedDate;
+  final ValueChanged<DateTime> onDateSelected;
+  final bool Function(DateTime date) hasData;
+  final DateTime? minDate;
+  final DateTime? maxDate;
+
+  const _AppMonthCalendarPicker({
+    required this.selectedDate,
+    required this.onDateSelected,
+    required this.hasData,
+    this.minDate,
+    this.maxDate,
+  });
+
+  @override
+  State<_AppMonthCalendarPicker> createState() =>
+      _AppMonthCalendarPickerState();
+}
+
+class _AppMonthCalendarPickerState extends State<_AppMonthCalendarPicker> {
+  late DateTime _currentMonth;
+  late DateTime _selectedDate;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDate = widget.selectedDate;
+    _currentMonth = DateTime(widget.selectedDate.year, widget.selectedDate.month);
+  }
+
+  @override
+  void didUpdateWidget(_AppMonthCalendarPicker oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.selectedDate != oldWidget.selectedDate) {
+      _selectedDate = widget.selectedDate;
+      _currentMonth = DateTime(widget.selectedDate.year, widget.selectedDate.month);
+    }
+  }
+
+  DateTime _normalizeDate(DateTime date) => DateTime(date.year, date.month, date.day);
+
+  bool _isDateInRange(DateTime date) {
+    final normalizedDate = _normalizeDate(date);
+
+    if (widget.minDate != null) {
+      final min = _normalizeDate(widget.minDate!);
+      if (normalizedDate.isBefore(min)) return false;
+    }
+
+    if (widget.maxDate != null) {
+      final max = _normalizeDate(widget.maxDate!);
+      if (normalizedDate.isAfter(max)) return false;
+    }
+
+    return true;
+  }
+
+  bool _isSameDay(DateTime date1, DateTime date2) {
+    return date1.year == date2.year &&
+        date1.month == date2.month &&
+        date1.day == date2.day;
+  }
+
+  bool _isToday(DateTime date) {
+    final now = DateTime.now();
+    return _isSameDay(date, now);
+  }
+
+  DateTime _firstOfMonth(DateTime month) => DateTime(month.year, month.month, 1);
+
+  int _daysInMonth(DateTime month) {
+    return DateTime(month.year, month.month + 1, 0).day;
+  }
+
+  int _leadingEmptyDays(DateTime month) {
+    final first = _firstOfMonth(month);
+    final weekday = first.weekday; // 1=Mon..7=Sun
+    return (weekday - 1) % 7; // Monday-first
+  }
+
+  bool _canGoPreviousMonth() {
+    if (widget.minDate == null) return true;
+    final prevMonth = DateTime(_currentMonth.year, _currentMonth.month - 1);
+    final prevMonthEnd = DateTime(prevMonth.year, prevMonth.month + 1, 0);
+    final min = _normalizeDate(widget.minDate!);
+    return !prevMonthEnd.isBefore(min);
+  }
+
+  bool _canGoNextMonth() {
+    if (widget.maxDate == null) return true;
+    final nextMonth = DateTime(_currentMonth.year, _currentMonth.month + 1);
+    final nextMonthStart = _normalizeDate(nextMonth);
+    final max = _normalizeDate(widget.maxDate!);
+    return !nextMonthStart.isAfter(max);
+  }
+
+  void _previousMonth() {
+    if (!_canGoPreviousMonth()) return;
+    setState(() {
+      _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1);
+    });
+  }
+
+  void _nextMonth() {
+    if (!_canGoNextMonth()) return;
+    setState(() {
+      _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1);
+    });
+  }
+
+  void _selectDate(DateTime date) {
+    if (!_isDateInRange(date)) return;
+    setState(() {
+      _selectedDate = date;
+      _currentMonth = DateTime(date.year, date.month);
+    });
+    widget.onDateSelected(date);
+  }
+
+  String _getMonthText() {
+    return '${AppFormatters.getMonthName(_currentMonth.month)} ${_currentMonth.year}';
+  }
+
+  List<DateTime?> _buildMonthDays() {
+    final first = _firstOfMonth(_currentMonth);
+    final totalDays = _daysInMonth(_currentMonth);
+    final leadingEmpty = _leadingEmptyDays(_currentMonth);
+
+    final days = <DateTime?>[];
+    for (int i = 0; i < leadingEmpty; i++) {
+      days.add(null);
+    }
+
+    for (int day = 1; day <= totalDays; day++) {
+      days.add(DateTime(first.year, first.month, day));
+    }
+
+    while (days.length % 7 != 0) {
+      days.add(null);
+    }
+
+    return days;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+    final days = _buildMonthDays();
+    final weekDays = AppFormatters.getWeekDayAbbreviations();
+    final canGoPrevious = _canGoPreviousMonth();
+    final canGoNext = _canGoNextMonth();
+
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 20 * scale),
+      padding: EdgeInsets.all(16 * scale),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(24 * scale),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadowMedium,
+            blurRadius: 20 * scale,
+            offset: Offset(0, 6 * scale),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  _getMonthText(),
+                  style: AppTextStyles.tinos(
+                    fontSize: 20 * scale,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              Row(
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      Icons.arrow_back_ios,
+                      size: 20 * scale,
+                      color: canGoPrevious
+                          ? AppColors.textPrimary
+                          : AppColors.textSecondary.withValues(alpha: 0.4),
+                    ),
+                    onPressed: canGoPrevious ? _previousMonth : null,
+                    padding: EdgeInsets.zero,
+                    constraints: BoxConstraints(
+                      minWidth: 24 * scale,
+                      minHeight: 24 * scale,
+                    ),
+                  ),
+                  SizedBox(width: 8 * scale),
+                  IconButton(
+                    icon: Icon(
+                      Icons.arrow_forward_ios,
+                      size: 20 * scale,
+                      color: canGoNext
+                          ? AppColors.textPrimary
+                          : AppColors.textSecondary.withValues(alpha: 0.4),
+                    ),
+                    onPressed: canGoNext ? _nextMonth : null,
+                    padding: EdgeInsets.zero,
+                    constraints: BoxConstraints(
+                      minWidth: 24 * scale,
+                      minHeight: 24 * scale,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          SizedBox(height: 16 * scale),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: weekDays
+                .map(
+                  (label) => Expanded(
+                    child: Center(
+                      child: Text(
+                        label,
+                        style: AppTextStyles.arimo(
+                          fontSize: 13 * scale,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
+          SizedBox(height: 10 * scale),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 7,
+              childAspectRatio: 1.1,
+            ),
+            itemCount: days.length,
+            itemBuilder: (context, index) {
+              final date = days[index];
+              if (date == null) {
+                return const SizedBox.shrink();
+              }
+
+              final isSelected = _isSameDay(date, _selectedDate);
+              final isToday = _isToday(date);
+              final hasData = widget.hasData(date);
+              final isInRange = _isDateInRange(date);
+
+              return GestureDetector(
+                onTap: isInRange ? () => _selectDate(date) : null,
+                child: Opacity(
+                  opacity: isInRange ? 1 : 0.35,
+                  child: Container(
+                    margin: EdgeInsets.all(2 * scale),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? AppColors.primary
+                          : isToday
+                              ? Colors.grey.shade200
+                              : Colors.transparent,
+                      borderRadius: BorderRadius.circular(10 * scale),
+                    ),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Text(
+                          '${date.day}',
+                          style: AppTextStyles.tinos(
+                            fontSize: 15 * scale,
+                            fontWeight: FontWeight.bold,
+                            color: isSelected
+                                ? AppColors.white
+                                : AppColors.textPrimary,
+                          ),
+                        ),
+                        if (hasData)
+                          Positioned(
+                            bottom: 6 * scale,
+                            child: Container(
+                              width: 4 * scale,
+                              height: 4 * scale,
+                              decoration: BoxDecoration(
+                                color: AppColors.primary,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 
 /// Internal stateful widget for week calendar picker
 class _AppWeekCalendarPicker extends StatefulWidget {
@@ -939,11 +1271,10 @@ class _AppWeekCalendarPickerState extends State<_AppWeekCalendarPicker> {
               ),
             ],
           ),
-          SizedBox(height: 16 * scale),
+          SizedBox(height: 12 * scale),
 
           // Calendar days with day labels - only 7 days (Monday to Sunday)
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: days.asMap().entries.map((entry) {
               final index = entry.key;
               final date = entry.value;
@@ -953,74 +1284,76 @@ class _AppWeekCalendarPickerState extends State<_AppWeekCalendarPicker> {
               final isToday = _isToday(date);
               final isInRange = _isDateInRange(date);
 
-              return GestureDetector(
-                onTap: isInRange ? () => _selectDate(date) : null,
-                child: Opacity(
-                  opacity: isInRange ? 1 : 0.38,
-                  child: Container(
-                    width: 44 * scale,
-                    padding: EdgeInsets.only(
-                      top: 8 * scale,
-                      bottom: 8 * scale,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? AppColors.primary
-                          : isToday
-                              ? Colors.grey.shade200
-                              : Colors.transparent,
-                      borderRadius: BorderRadius.circular(12 * scale),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        // Day label (T2, T3, etc.)
-                        Text(
-                          dayLabel,
-                          style: AppTextStyles.arimo(
-                            fontSize: 15 * scale,
-                            fontWeight: FontWeight.normal,
-                            color: isSelected
-                                ? AppColors.white
-                                : AppColors.textSecondary,
-                          ),
-                        ),
-                        SizedBox(height: 4 * scale),
-                        // Date number - fixed height container
-                        SizedBox(
-                          height: 20 * scale,
-                          child: Center(
-                            child: Text(
-                              '${date.day}',
-                              style: AppTextStyles.tinos(
-                                fontSize: 16 * scale,
-                                fontWeight: FontWeight.bold,
-                                color: isSelected
-                                    ? AppColors.white
-                                    : AppColors.textPrimary,
-                              ),
-                              textAlign: TextAlign.center,
+              return Expanded(
+                child: GestureDetector(
+                  onTap: isInRange ? () => _selectDate(date) : null,
+                  child: Opacity(
+                    opacity: isInRange ? 1 : 0.38,
+                    child: Container(
+                      margin: EdgeInsets.symmetric(horizontal: 2 * scale),
+                      padding: EdgeInsets.only(
+                        top: 6 * scale,
+                        bottom: 6 * scale,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColors.primary
+                            : isToday
+                                ? Colors.grey.shade200
+                                : Colors.transparent,
+                        borderRadius: BorderRadius.circular(12 * scale),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // Day label (T2, T3, etc.)
+                          Text(
+                            dayLabel,
+                            style: AppTextStyles.arimo(
+                              fontSize: 15 * scale,
+                              fontWeight: FontWeight.normal,
+                              color: isSelected
+                                  ? AppColors.white
+                                  : AppColors.textSecondary,
                             ),
                           ),
-                        ),
-                        // Fixed space below date number
-                        SizedBox(height: 6 * scale),
-                        // Dot indicator - always reserve same space
-                        SizedBox(
-                          height: 4 * scale,
-                          child: hasData && !isSelected
-                              ? Container(
-                                  width: 4 * scale,
-                                  height: 4 * scale,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary,
-                                    shape: BoxShape.circle,
-                                  ),
-                                )
-                              : const SizedBox.shrink(),
-                        ),
-                      ],
+                          SizedBox(height: 4 * scale),
+                          // Date number - fixed height container
+                          SizedBox(
+                            height: 20 * scale,
+                            child: Center(
+                              child: Text(
+                                '${date.day}',
+                                style: AppTextStyles.tinos(
+                                  fontSize: 16 * scale,
+                                  fontWeight: FontWeight.bold,
+                                  color: isSelected
+                                      ? AppColors.white
+                                      : AppColors.textPrimary,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                          // Fixed space below date number
+                          SizedBox(height: 6 * scale),
+                          // Dot indicator - always reserve same space
+                          SizedBox(
+                            height: 4 * scale,
+                            child: hasData
+                                ? Container(
+                                    width: 4 * scale,
+                                    height: 4 * scale,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  )
+                                : const SizedBox.shrink(),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

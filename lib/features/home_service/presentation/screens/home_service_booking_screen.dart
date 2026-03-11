@@ -332,7 +332,8 @@ class _HomeServiceBookingScreenState extends State<HomeServiceBookingScreen> {
     final currentEstimatedPrice = selections.fold<double>(0, (sum, selection) {
       final sessionsCount = selection.dateTimeSlots.length;
       final displayCount = sessionsCount > 0 ? sessionsCount : 1;
-      final activityTotal = selection.activity.price * displayCount;
+      final price = selection.activity.price ?? 0;
+      final activityTotal = price * displayCount;
       return sum + activityTotal;
     });
 

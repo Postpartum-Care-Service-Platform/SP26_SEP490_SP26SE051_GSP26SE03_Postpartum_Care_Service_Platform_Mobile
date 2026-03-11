@@ -112,6 +112,14 @@ class _ActivityCard extends StatelessWidget {
     required this.onToggle,
   });
 
+  String _formatPrice(double? price, int duration) {
+    if (price == null) {
+      return '${AppStrings.bookingPriceNotAvailable} • $duration ${AppStrings.homeServiceMinutes}';
+    }
+
+    return '${price.toStringAsFixed(0)}${AppStrings.currencyUnit.trim()} • $duration ${AppStrings.homeServiceMinutes}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
@@ -154,7 +162,7 @@ class _ActivityCard extends StatelessWidget {
                   ),
                   SizedBox(height: 10 * scale),
                   Text(
-                    '${activity.price.toStringAsFixed(0)}${AppStrings.currencyUnit.trim()} • ${activity.duration} ${AppStrings.homeServiceMinutes}',
+                    _formatPrice(activity.price, activity.duration),
                     style: AppTextStyles.arimo(
                       fontSize: 13 * scale,
                       fontWeight: FontWeight.w700,

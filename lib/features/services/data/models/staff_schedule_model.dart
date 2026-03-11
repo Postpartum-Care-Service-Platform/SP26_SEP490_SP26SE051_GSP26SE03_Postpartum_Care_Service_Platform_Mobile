@@ -7,11 +7,12 @@ class StaffScheduleModel extends StaffScheduleEntity {
     required super.id,
     required super.staffId,
     super.staffName,
-    required super.managerId,
+    super.managerId,
     super.managerName,
-    required super.familyScheduleId,
+    super.familyScheduleId,
     required super.isChecked,
     super.checkedAt,
+    super.staffAvatar,
   });
 
   factory StaffScheduleModel.fromJson(Map<String, dynamic> json) {
@@ -22,9 +23,10 @@ class StaffScheduleModel extends StaffScheduleEntity {
       id: json['id'] as int,
       staffId: json['staffId'] as String,
       staffName: json['staffName'] as String?,
-      managerId: json['managerId'] as String,
+      managerId: json['managerId'] as String?,
       managerName: json['managerName'] as String?,
-      familyScheduleId: json['familyScheduleId'] as int,
+      staffAvatar: json['staffAvatar'] as String?,
+      familyScheduleId: json['familyScheduleId'] as int?,
       isChecked: json['isChecked'] as bool,
       checkedAt: checkedAt,
     );
@@ -40,6 +42,7 @@ class StaffScheduleModel extends StaffScheduleEntity {
       'familyScheduleId': familyScheduleId,
       'isChecked': isChecked,
       'checkedAt': checkedAt?.toIso8601String(),
+      'staffAvatar': staffAvatar,
     };
   }
 
@@ -50,6 +53,7 @@ class StaffScheduleModel extends StaffScheduleEntity {
       staffName: staffName,
       managerId: managerId,
       managerName: managerName,
+      staffAvatar: staffAvatar,
       familyScheduleId: familyScheduleId,
       isChecked: isChecked,
       checkedAt: checkedAt,

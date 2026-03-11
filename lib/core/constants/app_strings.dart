@@ -83,6 +83,12 @@ class AppStrings {
   static const String homeServiceGalleryNote =
       'Hình ảnh minh họa – bạn sẽ được chọn phòng & gói phù hợp sau.';
 
+  static const String homeServiceExpandCalendar = 'Mở rộng lịch';
+  static const String homeServiceCollapseCalendar = 'Thu gọn lịch';
+  static const String homeServiceBookingIdLabel = 'Booking ID';
+  static const String homeServiceBookingStatusLabel = 'Trạng thái';
+  static const String homeServicePackageNameLabel = 'Gói dịch vụ';
+
   static const String homeExperienceTitle = 'The Joyful Experience';
   static const String homeExperienceSubtitle =
       '28 ngày đầu: khởi nguồn yêu thương, định hình hành trình làm mẹ.';
@@ -292,6 +298,7 @@ class AppStrings {
   static const String accountStatusLocked = 'Bị khóa';
   static const String accountCreatedAt = 'Ngày tạo';
   static const String accountUpdatedAt = 'Cập nhật lần cuối';
+  static const String accountAddress = 'Địa chỉ';
   static const String accountSecurityTitle = 'Bảo mật & mật khẩu';
   static const String changePasswordTitle = 'Đổi mật khẩu';
   static const String changePasswordDescription =
@@ -632,6 +639,17 @@ class AppStrings {
   static const String servicesLocationHomeSubtitle =
       'Điều dưỡng đến tận nhà\nthoải mái như ở nhà mình';
   static const String servicesLocationStartNow = 'Bắt đầu ngay';
+  static const String servicesInProgressTitle = 'Dịch vụ đang diễn ra';
+  static const String servicesHomeInProgressHint =
+      'Lịch chăm sóc tại nhà đã được lên. Chọn ngày để xem hoạt động.';
+  static const String servicesCenterInProgressHint =
+      'Dịch vụ tại trung tâm đang được thực hiện theo lịch phòng.';
+  static const String servicesTypeHome = 'Tại nhà';
+  static const String servicesTypeCenter = 'Trung tâm';
+  static const String servicesPackageName = 'Tên gói';
+  static const String servicesBookingStatus = 'Trạng thái';
+  static const String servicesCheckinDate = 'Ngày nhận phòng';
+  static const String servicesCheckoutDate = 'Ngày trả phòng';
 
   // Feedback Screen
   static const String feedbackTitle = 'Đánh giá dịch vụ';

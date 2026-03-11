@@ -5,11 +5,12 @@ class HomeActivityEntity extends Equatable {
   final int id;
   final String name;
   final String description;
-  final double price;
-  final int target; // 0 = mother, 1 = baby
+  final double? price;
+  final String target; // Mom, Baby, Both
   final int activityTypeId;
+  final String activityTypeName;
   final int duration; // minutes
-  final int status;
+  final String status;
 
   const HomeActivityEntity({
     required this.id,
@@ -18,12 +19,24 @@ class HomeActivityEntity extends Equatable {
     required this.price,
     required this.target,
     required this.activityTypeId,
+    required this.activityTypeName,
     required this.duration,
     required this.status,
   });
 
-  bool get isActive => status == 0;
-  String get targetLabel => target == 0 ? 'Mẹ' : 'Bé';
+  bool get isActive => status.toLowerCase() == 'active';
+  String get targetLabel {
+    switch (target.toLowerCase()) {
+      case 'mom':
+        return 'Mẹ';
+      case 'baby':
+        return 'Bé';
+      case 'both':
+        return 'Cả hai';
+      default:
+        return target;
+    }
+  }
 
   @override
   List<Object?> get props => [
@@ -33,6 +46,7 @@ class HomeActivityEntity extends Equatable {
         price,
         target,
         activityTypeId,
+        activityTypeName,
         duration,
         status,
       ];

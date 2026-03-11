@@ -28,7 +28,8 @@ class HomeServiceStep4Summary extends StatelessWidget {
         final subtotal = selections.fold<double>(0, (sum, selection) {
           final sessions = selection.dateTimeSlots.length;
           final count = sessions > 0 ? sessions : 1;
-          return sum + (selection.activity.price * count);
+          final price = selection.activity.price ?? 0;
+          return sum + (price * count);
         });
         final total = state.totalPrice > 0 ? state.totalPrice : subtotal;
         const discount = 0.0;

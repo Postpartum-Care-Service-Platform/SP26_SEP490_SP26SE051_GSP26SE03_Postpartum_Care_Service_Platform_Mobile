@@ -57,8 +57,13 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
 
     if (nowPackage == null) return;
 
-    final minDate = _normalizeDate(nowPackage.checkinDate);
-    final maxDate = _normalizeDate(nowPackage.checkoutDate);
+    final checkinDate = nowPackage.checkinDate ?? nowPackage.firstServiceDate;
+    final checkoutDate = nowPackage.checkoutDate ?? nowPackage.lastServiceDate;
+
+    if (checkinDate == null || checkoutDate == null) return;
+
+    final minDate = _normalizeDate(checkinDate);
+    final maxDate = _normalizeDate(checkoutDate);
 
     final clampedSelectedDate = _selectedDate.isBefore(minDate)
         ? minDate

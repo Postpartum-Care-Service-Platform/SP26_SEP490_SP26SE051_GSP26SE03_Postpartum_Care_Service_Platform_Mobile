@@ -107,6 +107,30 @@ class _ResortKeyCardState extends State<ResortKeyCard>
   }
 
 
+  DateTime? _getStartDate() {
+    if (widget.nowPackage.checkinDate != null) {
+      return widget.nowPackage.checkinDate;
+    }
+    if (widget.nowPackage.serviceDates.isNotEmpty) {
+      return widget.nowPackage.serviceDates
+          .map((e) => e.date)
+          .reduce((a, b) => a.isBefore(b) ? a : b);
+    }
+    return null;
+  }
+
+  DateTime? _getEndDate() {
+    if (widget.nowPackage.checkoutDate != null) {
+      return widget.nowPackage.checkoutDate;
+    }
+    if (widget.nowPackage.serviceDates.isNotEmpty) {
+      return widget.nowPackage.serviceDates
+          .map((e) => e.date)
+          .reduce((a, b) => a.isAfter(b) ? a : b);
+    }
+    return null;
+  }
+
   Widget _buildFront(BuildContext context, double scale) {
     return Container(
       width: double.infinity,
@@ -241,7 +265,9 @@ class _ResortKeyCardState extends State<ResortKeyCard>
                           ),
                           SizedBox(width: 4 * scale),
                           Text(
-                            formatDateLocal(widget.nowPackage.checkinDate),
+                            _getStartDate() != null
+                                ? formatDateLocal(_getStartDate()!)
+                                : '—',
                             style: AppTextStyles.arimo(
                               fontSize: 13.5 * scale,
                               fontWeight: FontWeight.w700,
@@ -270,7 +296,9 @@ class _ResortKeyCardState extends State<ResortKeyCard>
                           ),
                           SizedBox(width: 4 * scale),
                           Text(
-                            formatDateLocal(widget.nowPackage.checkoutDate),
+                            _getEndDate() != null
+                                ? formatDateLocal(_getEndDate()!)
+                                : '—',
                             style: AppTextStyles.arimo(
                               fontSize: 13.5 * scale,
                               fontWeight: FontWeight.w700,
@@ -303,22 +331,27 @@ class _ResortKeyCardState extends State<ResortKeyCard>
       return;
     }
 
-    final nowPackage = widget.nowPackage;
-    final totalNights = nowPackage.checkoutDate
-        .difference(nowPackage.checkinDate)
-        .inDays;
-    final daysPassed = now.isBefore(nowPackage.checkinDate)
+    final startDate = _getStartDate();
+    final endDate = _getEndDate();
+    if (startDate == null || endDate == null) {
+      _cachedRemainingDays = 0;
+      _lastCalculationDate = now;
+      return;
+    }
+
+    final totalNights = endDate.difference(startDate).inDays;
+    final daysPassed = now.isBefore(startDate)
         ? 0
-        : now.isAfter(nowPackage.checkoutDate)
-        ? totalNights
-        : now.difference(nowPackage.checkinDate).inDays;
+        : now.isAfter(endDate)
+            ? totalNights
+            : now.difference(startDate).inDays;
     _cachedRemainingDays = (totalNights - daysPassed).clamp(0, totalNights);
     _lastCalculationDate = now;
   }
 
   Widget _buildBack(BuildContext context, double scale) {
     final nowPackage = widget.nowPackage;
-    
+
     // Recalculate if needed (only once per day)
     _calculateRemainingDays();
     final remainingDays = _cachedRemainingDays ?? 0;
@@ -501,7 +534,7 @@ class _ResortKeyCardState extends State<ResortKeyCard>
                       _InfoTile(
                         icon: Icons.bed_outlined,
                         label: AppStrings.bookingRoomType,
-                        value: nowPackage.roomTypeName,
+                        value: nowPackage.roomTypeName ?? '—',
                         scale: scale,
                       ),
                       SizedBox(height: 10 * scale),

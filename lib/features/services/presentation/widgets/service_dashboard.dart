@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
@@ -7,8 +8,17 @@ import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/routing/app_routes.dart';
+import '../../../../core/widgets/app_loading.dart';
+import '../../../../core/widgets/app_widgets.dart';
+import '../../../../core/di/injection_container.dart';
 import '../../../auth/data/models/current_account_model.dart';
+import '../../domain/entities/family_schedule_entity.dart';
+import '../bloc/family_schedule_bloc.dart';
+import '../bloc/family_schedule_event.dart';
+import '../bloc/family_schedule_state.dart';
 import 'resort_key_card.dart';
+import 'schedule_calendar_picker.dart';
+import 'schedule_day_view.dart';
 import 'service_action_card.dart';
 
 class ServiceDashboard extends StatelessWidget {
@@ -22,6 +32,7 @@ class ServiceDashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
+    final isHomeService = nowPackage.type.toLowerCase() == 'home';
 
     return SafeArea(
       child: Container(
@@ -48,13 +59,16 @@ class ServiceDashboard extends StatelessWidget {
               // Welcome Section
               _buildWelcomeSection(context, scale),
               SizedBox(height: 24 * scale),
-              
-              // Key Card - First element after header
-              ResortKeyCard(nowPackage: nowPackage),
-              SizedBox(height: 24 * scale),
-              
-              // Services Section
-              _buildServicesSection(context, scale),
+              if (isHomeService) ...[
+                _HomeServiceDashboard(nowPackage: nowPackage),
+              ] else ...[
+                // Key Card - First element after header
+                ResortKeyCard(nowPackage: nowPackage),
+                SizedBox(height: 24 * scale),
+
+                // Services Section
+                _buildServicesSection(context, scale),
+              ],
             ],
           ),
         ),
@@ -240,5 +254,315 @@ class ServiceDashboard extends StatelessWidget {
       ),
     );
   }
-
 }
+
+class _HomeServiceDashboard extends StatelessWidget {
+  final NowPackageModel nowPackage;
+
+  const _HomeServiceDashboard({
+    required this.nowPackage,
+  });
+
+  DateTime _normalizeDate(DateTime date) {
+    final local = date.toLocal();
+    return DateTime(local.year, local.month, local.day);
+  }
+
+  List<DateTime> _getServiceDates() {
+    return nowPackage.serviceDates
+        .map((item) => _normalizeDate(item.date))
+        .toSet()
+        .toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+    final serviceDates = _getServiceDates();
+
+    if (serviceDates.isEmpty) {
+      return AppWidgets.sectionContainer(
+        context,
+        padding: EdgeInsets.all(16 * scale),
+        children: [
+          Text(
+            AppStrings.scheduleNoScheduleForDay,
+            style: AppTextStyles.arimo(
+              fontSize: 12 * scale,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      );
+    }
+
+    return BlocProvider(
+      create: (context) => InjectionContainer.familyScheduleBloc
+        ..add(const FamilyScheduleLoadRequested()),
+      child: _HomeServiceDashboardContent(
+        serviceDates: serviceDates,
+        nowPackage: nowPackage,
+      ),
+    );
+  }
+}
+
+class _HomeServiceDashboardContent extends StatefulWidget {
+  final List<DateTime> serviceDates;
+  final NowPackageModel nowPackage;
+
+  const _HomeServiceDashboardContent({
+    required this.serviceDates,
+    required this.nowPackage,
+  });
+
+  @override
+  State<_HomeServiceDashboardContent> createState() =>
+      _HomeServiceDashboardContentState();
+}
+
+class _HomeServiceDashboardContentState
+    extends State<_HomeServiceDashboardContent> {
+  late DateTime _selectedDate;
+  bool _isPackageExpanded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    _selectedDate = DateTime(now.year, now.month, now.day);
+
+    final initialDate = _initialSelectedDate();
+    if (initialDate != null) {
+      _selectedDate = initialDate;
+    }
+  }
+
+  void _togglePackageInfo() {
+    setState(() {
+      _isPackageExpanded = !_isPackageExpanded;
+    });
+  }
+
+  DateTime _normalizeDate(DateTime date) {
+    final local = date.toLocal();
+    return DateTime(local.year, local.month, local.day);
+  }
+
+  DateTime? _initialSelectedDate() {
+    if (widget.serviceDates.isEmpty) return null;
+
+    final today = _normalizeDate(DateTime.now());
+    if (widget.serviceDates.any((d) => _normalizeDate(d) == today)) {
+      return today;
+    }
+
+    final sortedDates = List<DateTime>.from(widget.serviceDates)
+      ..sort((a, b) => a.compareTo(b));
+    return sortedDates.first;
+  }
+
+  void _handleDateSelected(DateTime date) {
+    final normalizedDate = _normalizeDate(date);
+    setState(() {
+      _selectedDate = normalizedDate;
+    });
+  }
+
+  List<FamilyScheduleEntity> _filterSchedules(
+    List<FamilyScheduleEntity> schedules,
+  ) {
+    final normalizedSelected = _normalizeDate(_selectedDate);
+    return schedules.where((schedule) {
+      final scheduleDate = _normalizeDate(schedule.workDate);
+      return scheduleDate == normalizedSelected;
+    }).toList();
+  }
+
+  Widget _buildPackageSummary(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+    final nowPackage = widget.nowPackage;
+
+    return Container(
+      padding: EdgeInsets.all(14 * scale),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(16 * scale),
+        border: Border.all(color: AppColors.borderLight),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadowMedium,
+            blurRadius: 10 * scale,
+            offset: Offset(0, 4 * scale),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          InkWell(
+            onTap: _togglePackageInfo,
+            borderRadius: BorderRadius.circular(12 * scale),
+            child: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10 * scale,
+                    vertical: 4 * scale,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12 * scale),
+                  ),
+                  child: Text(
+                    nowPackage.type,
+                    style: AppTextStyles.arimo(
+                      fontSize: 12 * scale,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+                SizedBox(width: 10 * scale),
+                Expanded(
+                  child: Text(
+                    nowPackage.packageName,
+                    style: AppTextStyles.arimo(
+                      fontSize: 13 * scale,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Icon(
+                  _isPackageExpanded
+                      ? Icons.keyboard_arrow_up
+                      : Icons.keyboard_arrow_down,
+                  color: AppColors.textSecondary,
+                ),
+              ],
+            ),
+          ),
+          if (_isPackageExpanded) ...[
+            SizedBox(height: 10 * scale),
+            _buildPackageDetailRow(
+              AppStrings.homeServiceBookingIdLabel,
+              nowPackage.bookingId.toString(),
+            ),
+            SizedBox(height: 6 * scale),
+            _buildPackageDetailRow(
+              AppStrings.homeServiceBookingStatusLabel,
+              nowPackage.bookingStatus,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPackageDetailRow(String label, String value) {
+    final scale = AppResponsive.scaleFactor(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 100 * scale,
+          child: Text(
+            label,
+            style: AppTextStyles.arimo(
+              fontSize: 12 * scale,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: AppTextStyles.arimo(
+              fontSize: 12 * scale,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+
+    return BlocBuilder<FamilyScheduleBloc, FamilyScheduleState>(
+      builder: (context, state) {
+        if (state is FamilyScheduleLoading) {
+          final height = MediaQuery.of(context).size.height;
+          return SizedBox(
+            height: height * 0.45,
+            child: const Center(
+              child: AppLoadingIndicator(color: AppColors.primary),
+            ),
+          );
+        }
+
+        if (state is FamilyScheduleError) {
+          return AppWidgets.sectionContainer(
+            context,
+            padding: EdgeInsets.all(16 * scale),
+            children: [
+              Text(
+                state.message,
+                style: AppTextStyles.arimo(
+                  fontSize: 12 * scale,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              SizedBox(height: 12 * scale),
+              AppWidgets.primaryButton(
+                text: AppStrings.retry,
+                onPressed: () {
+                  context
+                      .read<FamilyScheduleBloc>()
+                      .add(const FamilyScheduleLoadRequested());
+                },
+              ),
+            ],
+          );
+        }
+
+        if (state is FamilyScheduleLoaded) {
+          final schedulesForDate = _filterSchedules(state.schedules);
+          final dayNo = schedulesForDate.isNotEmpty
+              ? schedulesForDate.first.dayNo
+              : 0;
+          final scheduleDates = state.schedules
+              .map((schedule) => _normalizeDate(schedule.workDate))
+              .toSet()
+              .toList();
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildPackageSummary(context),
+              SizedBox(height: 10 * scale),
+              ScheduleCalendarPicker(
+                selectedDate: _selectedDate,
+                onDateSelected: _handleDateSelected,
+                datesWithSchedules: scheduleDates,
+              ),
+              ScheduleDayView(
+                date: _selectedDate,
+                schedules: schedulesForDate,
+                dayNo: dayNo,
+              ),
+            ],
+          );
+        }
+
+        return const SizedBox.shrink();
+      },
+    );
+  }
+}
+

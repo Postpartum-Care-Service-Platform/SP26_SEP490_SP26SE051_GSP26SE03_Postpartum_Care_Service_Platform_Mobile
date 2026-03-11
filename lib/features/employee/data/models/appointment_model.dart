@@ -35,7 +35,7 @@ class AppointmentModel {
       name: json['name'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),
       status: json['status'] as String,
-      appointmentDate: DateTime.parse(json['appointmentDate'] as String),
+      appointmentDate: _parseAppointmentDate(json),
       customer: json['customer'] != null
           ? CustomerInfoModel.fromJson(json['customer'] as Map<String, dynamic>)
           : null,
@@ -58,6 +58,26 @@ class AppointmentModel {
       'customer': customer?.toJson(),
       'staff': staff?.toJson(),
     };
+  }
+
+  static DateTime _parseAppointmentDate(Map<String, dynamic> json) {
+    final appointmentDateOnly = json['appointmentDateOnly'] as String?;
+    final appointmentTimeOnly = json['appointmentTimeOnly'] as String?;
+    final appointmentDate = json['appointmentDate'] as String?;
+
+    if (appointmentDateOnly != null && appointmentTimeOnly != null) {
+      return DateTime.parse('${appointmentDateOnly}T$appointmentTimeOnly');
+    }
+
+    if (appointmentDateOnly != null) {
+      return DateTime.parse(appointmentDateOnly);
+    }
+
+    if (appointmentDate != null) {
+      return DateTime.parse(appointmentDate);
+    }
+
+    throw Exception('Missing appointment date in response');
   }
 
   /// Convert to Entity
