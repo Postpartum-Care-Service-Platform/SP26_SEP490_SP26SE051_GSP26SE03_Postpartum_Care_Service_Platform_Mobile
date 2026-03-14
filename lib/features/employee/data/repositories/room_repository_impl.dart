@@ -43,4 +43,20 @@ class RoomRepositoryImpl implements RoomRepository {
       rethrow;
     }
   }
+
+  @override
+  Future<List<RoomEntity>> getAvailableRoomsByDateRange({
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    try {
+      final models = await remoteDataSource.getAvailableRoomsByDateRange(
+        startDate: startDate,
+        endDate: endDate,
+      );
+      return models.map((model) => model.toEntity()).toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/usecases/create_booking_usecase.dart';
+import '../../domain/usecases/cancel_booking_usecase.dart';
 import '../../domain/usecases/create_booking_for_customer_usecase.dart';
 import '../../domain/usecases/get_booking_by_id_usecase.dart';
 import '../../domain/usecases/get_bookings_usecase.dart';
@@ -8,21 +9,22 @@ import '../../domain/usecases/check_payment_status_usecase.dart';
 import '../../domain/usecases/create_offline_payment_usecase.dart';
 import '../../../package/domain/usecases/get_packages_usecase.dart';
 import '../../../package/domain/entities/package_entity.dart';
-import '../../../employee/domain/usecases/get_all_rooms.dart';
+import '../../../employee/domain/usecases/get_available_rooms_by_date_range.dart';
 import '../../../employee/domain/entities/room_entity.dart';
-import '../../../employee/domain/entities/room_status.dart';
 import 'booking_event.dart';
 import 'booking_state.dart';
 
 /// Booking BloC
 class BookingBloc extends Bloc<BookingEvent, BookingState> {
   final CreateBookingUsecase createBookingUsecase;
+  final CancelBookingUsecase cancelBookingUsecase;
   final CreateBookingForCustomerUsecase createBookingForCustomerUsecase;
   final GetBookingByIdUsecase getBookingByIdUsecase;
   final GetBookingsUsecase getBookingsUsecase;
   final CreatePaymentLinkUsecase createPaymentLinkUsecase;
   final CheckPaymentStatusUsecase checkPaymentStatusUsecase;
   final GetPackagesUsecase getPackagesUsecase;
+  final GetAvailableRoomsByDateRange getAvailableRoomsByDateRange;
   final GetAllRooms getAllRooms;
   final CreateOfflinePaymentUsecase createOfflinePaymentUsecase;
 
@@ -33,14 +35,29 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   List<PackageEntity>? _packages;
   List<RoomEntity>? _rooms;
 
+  // Read-only accessors for UI to restore selections when navigating between steps
+  DateTime? get selectedDate => _selectedDate;
+  PackageEntity? get selectedPackage {
+    if (_selectedPackageId == null || _packages == null) return null;
+    try {
+      return _packages!.firstWhere((p) => p.id == _selectedPackageId);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  List<RoomEntity>? get rooms => _rooms;
+
   BookingBloc({
     required this.createBookingUsecase,
+    required this.cancelBookingUsecase,
     required this.createBookingForCustomerUsecase,
     required this.getBookingByIdUsecase,
     required this.getBookingsUsecase,
     required this.createPaymentLinkUsecase,
     required this.checkPaymentStatusUsecase,
     required this.getPackagesUsecase,
+    required this.getAvailableRoomsByDateRange,
     required this.getAllRooms,
     required this.createOfflinePaymentUsecase,
   }) : super(const BookingInitial()) {
@@ -56,6 +73,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     on<BookingCheckPaymentStatus>(_onCheckPaymentStatus);
     on<BookingLoadById>(_onLoadById);
     on<BookingLoadAll>(_onLoadAll);
+    on<BookingCancelRequested>(_onCancelBooking);
     on<BookingReset>(_onReset);
   }
 
@@ -129,20 +147,38 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     BookingLoadRooms event,
     Emitter<BookingState> emit,
   ) async {
+    // Require package and date to be selected before loading available rooms
+    if (_selectedPackageId == null || _selectedDate == null) {
+      emit(const BookingError('Vui lòng chọn gói và ngày trước khi chọn phòng'));
+      return;
+    }
+
+    // Find selected package to get duration
+    final package = _packages?.firstWhere(
+      (p) => p.id == _selectedPackageId,
+      orElse: () => throw Exception('Không tìm thấy gói đã chọn'),
+    );
+
+    final durationDays = package?.durationDays;
+    if (durationDays == null) {
+      emit(const BookingError('Gói chưa có thời lượng ngày hợp lệ'));
+      return;
+    }
+
+    final startDate = _selectedDate!;
+    final endDate = startDate.add(Duration(days: durationDays));
+
     emit(const BookingLoading());
     try {
-      final rooms = await getAllRooms();
-      // Filter only available rooms
-      final availableRooms = rooms
-          .where((r) => r.status == RoomStatus.available)
-          .toList();
-      _rooms = availableRooms;
-      emit(
-        BookingRoomsLoaded(
-          rooms: availableRooms,
-          selectedRoomId: _selectedRoomId,
-        ),
+      final rooms = await getAvailableRoomsByDateRange(
+        startDate: startDate,
+        endDate: endDate,
       );
+      _rooms = rooms;
+      emit(BookingRoomsLoaded(
+        rooms: rooms,
+        selectedRoomId: _selectedRoomId,
+      ));
     } catch (e) {
       emit(BookingError(e.toString()));
     }
@@ -195,8 +231,16 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     Emitter<BookingState> emit,
   ) async {
     _selectedDate = event.date;
-    emit(BookingDateSelected(event.date));
-
+    PackageEntity? package;
+    if (_selectedPackageId != null && _packages != null) {
+      try {
+        package = _packages!.firstWhere((p) => p.id == _selectedPackageId);
+      } catch (_) {
+        package = null;
+      }
+    }
+    emit(BookingDateSelected(event.date, package: package));
+    
     // If all selections are made, create summary state
     if (_selectedPackageId != null &&
         _selectedRoomId != null &&
@@ -279,16 +323,18 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     Emitter<BookingState> emit,
   ) async {
     final currentState = state;
-    int? bookingId;
+    int? bookingId = event.bookingId;
 
-    // Support both BookingCreated and BookingLoaded states
-    if (currentState is BookingCreated) {
-      bookingId = currentState.booking.id;
-    } else if (currentState is BookingLoaded) {
-      bookingId = currentState.booking.id;
-    } else {
-      emit(const BookingError('Vui lòng tạo booking trước'));
-      return;
+    if (bookingId == null) {
+      // Support both BookingCreated and BookingLoaded states
+      if (currentState is BookingCreated) {
+        bookingId = currentState.booking.id;
+      } else if (currentState is BookingLoaded) {
+        bookingId = currentState.booking.id;
+      } else {
+        emit(const BookingError('Vui lòng tạo booking trước'));
+        return;
+      }
     }
 
     emit(const BookingLoading());
@@ -296,6 +342,8 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       final paymentLink = await createPaymentLinkUsecase(
         bookingId: bookingId,
         type: event.type,
+        isHomeService: event.isHomeService,
+        staffId: event.staffId,
       );
       emit(BookingPaymentLinkCreated(paymentLink));
     } catch (e) {
@@ -361,7 +409,23 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     }
   }
 
-  Future<void> _onReset(BookingReset event, Emitter<BookingState> emit) async {
+  Future<void> _onCancelBooking(
+    BookingCancelRequested event,
+    Emitter<BookingState> emit,
+  ) async {
+    emit(const BookingLoading());
+    try {
+      final message = await cancelBookingUsecase(event.id);
+      emit(BookingCancelled(bookingId: event.id, message: message));
+    } catch (e) {
+      emit(BookingError(e.toString()));
+    }
+  }
+
+  Future<void> _onReset(
+    BookingReset event,
+    Emitter<BookingState> emit,
+  ) async {
     _selectedPackageId = null;
     _selectedRoomId = null;
     _selectedDate = null;

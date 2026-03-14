@@ -222,6 +222,21 @@ class ScheduleActivityDetailSheet extends StatelessWidget {
                       )
                     : null,
               ),
+              SizedBox(width: 10 * scale),
+              CircleAvatar(
+                radius: 16 * scale,
+                backgroundColor: AppColors.borderLight,
+                backgroundImage: staff.staffAvatar != null
+                    ? NetworkImage(staff.staffAvatar!)
+                    : null,
+                child: staff.staffAvatar == null
+                    ? Icon(
+                        Icons.person,
+                        size: 18 * scale,
+                        color: AppColors.textSecondary,
+                      )
+                    : null,
+              ),
               SizedBox(width: 12 * scale),
               Expanded(
                 child: Column(

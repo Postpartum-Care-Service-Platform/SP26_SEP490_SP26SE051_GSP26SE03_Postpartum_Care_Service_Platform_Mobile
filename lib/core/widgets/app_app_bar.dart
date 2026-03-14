@@ -61,7 +61,7 @@ class AppAppBar extends StatelessWidget implements PreferredSizeWidget {
       leading: leadingWidget,
       title: Text(
         title,
-        style: AppTextStyles.arimo(
+        style: AppTextStyles.tinos(
           fontSize: fontSize,
           fontWeight: fontWeight,
           color: textColor,

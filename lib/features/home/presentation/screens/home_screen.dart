@@ -15,9 +15,8 @@ import '../../../../features/package/presentation/widgets/package_carousel.dart'
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../widgets/home_header.dart';
-import '../widgets/quick_action_card.dart';
 import '../widgets/section_header.dart';
-import '../widgets/upcoming_schedule_card.dart';
+import '../widgets/home_experience_sections.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -34,6 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
           InjectionContainer.packageBloc..add(const PackageLoadRequested()),
       child: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, authState) {
+          final scale = AppResponsive.scaleFactor(context);
           String? username;
           String? avatarUrl;
           bool isEmailVerified = false;
@@ -61,62 +61,34 @@ class _HomeScreenState extends State<HomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Top inset is already handled by SafeArea.
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8 * scale),
                   HomeHeader(
                     userName: username,
                     avatarUrl: avatarUrl,
                     isEmailVerified: isEmailVerified,
                     isLoading: isLoading,
                   ),
-                  const SizedBox(height: 32),
+                  SizedBox(height: 24 * scale),
 
-                  // Quick Actions Section
-                  const SectionHeader(title: AppStrings.quickActions),
-                  const SizedBox(height: 16),
-                  GridView.count(
-                    crossAxisCount: 4,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    children: [
-                      QuickActionCard(
-                        icon: Icons.spa_outlined,
-                        title: AppStrings.spaAndCare,
-                        onTap: () {},
-                      ),
-                      QuickActionCard(
-                        icon: Icons.child_care_outlined,
-                        title: AppStrings.babyActivities,
-                        onTap: () {},
-                      ),
-                      QuickActionCard(
-                        icon: Icons.restaurant_menu_outlined,
-                        title: AppStrings.nutritionMenu,
-                        onTap: () {},
-                      ),
-                      QuickActionCard(
-                        icon: Icons.map_outlined,
-                        title: AppStrings.resortMap,
-                        onTap: () {},
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 32),
+                  // 1) Welcome section
+                  const HomeWelcomeSection(),
+                  SizedBox(height: 28 * scale),
 
-                  // Upcoming Schedule Section
-                  SectionHeader(
-                    title: AppStrings.upcomingSchedule,
-                    actionText: AppStrings.viewAll,
-                    onActionPressed: () {},
-                  ),
-                  const SizedBox(height: 16),
-                  const UpcomingScheduleCard(
-                    time: '10:00 AM',
-                    title: 'Yoga cho mẹ bầu',
-                    location: 'Phòng Zen',
-                  ),
-                  const SizedBox(height: 32),
+                  // 2) Service / facility / cuisine gallery
+                  const HomeServiceGallerySection(),
+                  SizedBox(height: 28 * scale),
+
+                  // 3) Hero banner
+                  const HomeExperienceBanner(),
+                  SizedBox(height: 28 * scale),
+
+                  // 4) Testimonial banner with slide
+                  const HomeTestimonialBanner(),
+                  SizedBox(height: 28 * scale),
+
+                  // 5) Continuous feedback image slider
+                  const HomeLoveWallSection(),
+                  SizedBox(height: 32 * scale),
 
                   // Promotions Section
                   Builder(

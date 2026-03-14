@@ -26,13 +26,17 @@ abstract class BookingRepository {
   /// Get all bookings for current user
   Future<List<BookingEntity>> getBookings();
 
+  /// Cancel booking by ID
+  Future<String> cancelBooking(int id);
   /// Get all bookings (for staff/admin)
   Future<List<BookingEntity>> getAllBookings();
 
   /// Create payment link for deposit
   Future<PaymentLinkEntity> createPaymentLink({
     required int bookingId,
-    required String type, // Deposit or Remaining
+    required String type, // Deposit or Remaining or Full
+    bool isHomeService = false,
+    String? staffId,
   });
 
   /// Check payment status by order code

@@ -64,6 +64,53 @@ class AppStrings {
   static const String promotions = 'Ưu đãi & Gói dịch vụ';
   static const String viewAll = 'Xem tất cả';
 
+  // Home Screen - Experience sections
+  static const String homeWelcomeTitle = 'Chào mừng bạn đến với The Joyful Nest';
+  static const String homeWelcomeSubtitle =
+      'Một trải nghiệm nghỉ dưỡng đẳng cấp cho mẹ sau sinh và bé.';
+  static const String homeWelcomeDescription =
+      'Những tuần đầu tiên trong vai trò làm mẹ là cột mốc thiêng liêng, nơi niềm '
+      'hạnh phúc và những trăn trở đan xen. The Joyful Nest được thiết kế như một tổ ấm '
+      'dịu êm, nơi bạn được nâng niu, lắng nghe và chăm sóc trọn vẹn cả về thể chất lẫn tinh thần.';
+  static const String homeWelcomeIconSpa = 'Spa & Chăm sóc';
+  static const String homeWelcomeIconCuisine = 'Ẩm thực dinh dưỡng';
+  static const String homeWelcomeIconCare = 'Chăm sóc mẹ & bé toàn diện';
+
+  static const String homeServiceGalleryTitle = 'Không gian & dịch vụ nghỉ dưỡng';
+  static const String homeServiceGallerySubtitle =
+      'Từ phòng nghỉ ấm áp, thực đơn dưỡng sinh đến những khoảnh khắc bên con – '
+      'mọi chi tiết đều được chăm chút tinh tế để hành trình sau sinh của bạn thêm trọn vẹn.';
+  static const String homeServiceGalleryNote =
+      'Hình ảnh minh họa – bạn sẽ được chọn phòng & gói phù hợp sau.';
+
+  static const String homeServiceExpandCalendar = 'Mở rộng lịch';
+  static const String homeServiceCollapseCalendar = 'Thu gọn lịch';
+  static const String homeServiceBookingIdLabel = 'Booking ID';
+  static const String homeServiceBookingStatusLabel = 'Trạng thái';
+  static const String homeServicePackageNameLabel = 'Gói dịch vụ';
+
+  static const String homeExperienceTitle = 'The Joyful Experience';
+  static const String homeExperienceSubtitle =
+      '28 ngày đầu: khởi nguồn yêu thương, định hình hành trình làm mẹ.';
+  static const String homeExperienceCta = 'Khám phá hành trình của bạn';
+
+  static const String homeTestimonialTitle = 'Những câu chuyện đã được gửi gắm';
+  static const String homeTestimonialSample1 =
+      'Cảm ơn The Joyful Nest đã mang đến cho gia đình mình một hành trình sau sinh thật '
+      'nhẹ nhàng, ấm áp và tràn ngập yêu thương. Đội ngũ điều dưỡng luôn tận tâm, tinh tế '
+      'trong từng chi tiết nhỏ.';
+  static const String homeTestimonialSample2 =
+      'Ở đây, mình được hướng dẫn tỉ mỉ cách chăm con, được nghỉ ngơi trọn vẹn và thưởng thức '
+      'những bữa ăn vừa ngon miệng vừa đầy đủ dinh dưỡng. Khi rời The Joyful Nest, mình cảm '
+      'thấy cơ thể phục hồi, tinh thần tươi mới và tự tin hơn với hành trình làm mẹ phía trước.';
+  static const String homeTestimonialSample3 =
+      'Không gian yên tĩnh, sạch sẽ, ấm áp như ở nhà; bé được chăm sóc chu đáo, còn ba mẹ thì '
+      'có thời gian nghỉ ngơi và lưu giữ những khoảnh khắc đầu đời thật đẹp.';
+
+  static const String homeLoveWallTitle = 'Yêu thương gửi đến The Joyful Nest';
+  static const String homeLoveWallSubtitle =
+      'Mỗi khung hình là một lời cảm ơn, một kỷ niệm nhỏ mà gia đình gửi tặng sau hành trình nghỉ dưỡng.';
+
   // Quick Actions
   static const String spaAndCare = 'Spa & Chăm sóc';
   static const String babyActivities = 'Hoạt động cho bé';
@@ -251,6 +298,7 @@ class AppStrings {
   static const String accountStatusLocked = 'Bị khóa';
   static const String accountCreatedAt = 'Ngày tạo';
   static const String accountUpdatedAt = 'Cập nhật lần cuối';
+  static const String accountAddress = 'Địa chỉ';
   static const String accountSecurityTitle = 'Bảo mật & mật khẩu';
   static const String changePasswordTitle = 'Đổi mật khẩu';
   static const String changePasswordDescription =
@@ -363,8 +411,8 @@ class AppStrings {
   // Booking Screen
   static const String bookingTitle = 'Đặt gói dịch vụ';
   static const String bookingStep1 = 'Gói';
-  static const String bookingStep2 = 'Phòng';
-  static const String bookingStep3 = 'Ngày';
+  static const String bookingStep2 = 'Ngày';
+  static const String bookingStep3 = 'Phòng';
   static const String bookingStep4 = 'Xác nhận';
   static const String bookingNext = 'Tiếp theo';
   static const String bookingPrevious = 'Quay lại';
@@ -400,10 +448,51 @@ class AppStrings {
   static const String bookingMaintenance = 'Bảo trì';
   static const String bookingPriceNotAvailable = '--';
 
+  // Home Service Booking Screen
+  static const String homeServiceBookingTitle = 'Đặt dịch vụ tại nhà';
+  static const String homeServiceStepService = 'Dịch vụ';
+  static const String homeServiceStepDateTime = 'Ngày & Giờ';
+  static const String homeServiceStepStaff = 'Nhân viên';
+  static const String homeServiceStepConfirm = 'Xác nhận';
+  static const String homeServicePay = 'Thanh toán';
+  static const String homeServiceNoFreeStaff = 'Không có nhân viên rảnh';
+  static const String homeServiceSelectDateTimeForEachService =
+      'Chọn ngày và giờ cho từng dịch vụ';
+  static const String homeServiceGoBackToSelectService =
+      'Vui lòng quay lại bước trước để chọn dịch vụ.';
+  static const String homeServiceAddDate = 'Thêm ngày';
+  static const String homeServicePickMultipleDates = 'Chọn nhiều ngày';
+  static const String homeServiceCancel = 'Hủy';
+  static const String homeServiceDone = 'Xong';
+  static const String homeServiceSelectedDays = 'Đã chọn';
+  static const String homeServiceDays = 'ngày';
+  static const String homeServiceSessions = 'buổi';
+  static const String homeServiceSessionsLabel = 'buổi dịch vụ';
+  static const String homeServiceYearsOld = 'tuổi';
+  static const String homeServicePerSession = '/ buổi';
+  static const String homeServiceHour = 'Giờ';
+  static const String homeServiceMinutes = 'phút';
+  static const String homeServiceSectionService = 'Dịch vụ';
+  static const String homeServiceSectionStaff = 'Nhân viên';
+  static const String homeServiceSectionTime = 'Thời gian & lịch từng dịch vụ';
+  static const String homeServiceSectionPaymentMethod = 'Phương thức thanh toán';
+  static const String homeServiceSectionPriceDetails = 'Chi tiết giá';
+  static const String homeServiceSelectedPackages = 'gói đã chọn';
+  static const String homeServicePayViaPayOS = 'Thanh toán qua PayOS';
+  static const String homeServicePleaseSelectServiceAndDate =
+      'Vui lòng chọn dịch vụ và ngày trước';
+  static const String homeServicePleaseCompleteInfo =
+      'Vui lòng chọn đầy đủ thông tin';
+  static const String homeServicePleaseCreateBookingFirst =
+      'Vui lòng tạo booking trước';
+  static const String homeServiceCancelBookingSuccess = 'Hủy booking thành công';
+
   // Payment Screen
   static const String paymentTitle = 'Thanh toán đặt cọc';
   static const String paymentDeposit = 'Đặt cọc';
   static const String paymentRemaining = 'Thanh toán còn lại';
+  static const String paymentFullTitle = 'Thanh toán toàn bộ';
+  static const String paymentFull = 'Toàn bộ';
   static const String paymentAmount = 'Số tiền';
   static const String paymentMethod = 'Phương thức thanh toán';
   static const String paymentPayOS = 'PayOS';
@@ -418,6 +507,16 @@ class AppStrings {
   static const String paymentPending = 'Đang chờ thanh toán';
   static const String paymentCheckStatus = 'Kiểm tra trạng thái';
   static const String paymentCreateError = 'Không thể tạo link thanh toán';
+  static const String paymentCancelConfirmTitle = 'Hủy thanh toán?';
+  static const String paymentCancelConfirmMessage =
+      'Bạn có muốn hủy thanh toán và hủy booking này không?';
+  static const String paymentCancelConfirmYes = 'Có, hủy booking';
+  static const String paymentCancelConfirmNo = 'Tiếp tục thanh toán';
+  static const String bookingCancelledTitle = 'Bạn đã hủy booking';
+  static const String bookingCancelledSubtitle =
+      'Booking của bạn đã được hủy thành công.';
+  static const String bookingCancelledBackToServices = 'Về trang dịch vụ';
+  static const String bookingCancelling = 'Đang hủy booking...';
     // Booking History Screen
   static const String noBookingHistory = 'Chưa có lịch sử đặt phòng';
   static const String noCustomerInformation = 'Chưa có thông tin khách hàng';
@@ -503,6 +602,10 @@ class AppStrings {
   static const String servicesDepositPaid = 'Đã thanh toán đặt cọc';
   static const String servicesRemainingPaymentMessage =
       'Phần thanh toán còn lại sẽ được mở sau khi hợp đồng được ký.';
+  static const String servicesRemainingPaymentOverdueTitle =
+      'Đã đến ngày sử dụng dịch vụ';
+  static const String servicesRemainingPaymentOverdueMessage =
+      'Bạn vẫn còn khoản thanh toán cho gói nghỉ dưỡng này. Vui lòng thanh toán phần còn lại để dịch vụ được kích hoạt đầy đủ và minh bạch.';
   static const String servicesAwaitingActivationMessage =
       'Bạn đã thanh toán đủ. Dịch vụ sẽ kích hoạt khi đến ngày check-in.';
   static const String servicesPayRemaining = 'Thanh toán phần còn lại';
@@ -536,6 +639,17 @@ class AppStrings {
   static const String servicesLocationHomeSubtitle =
       'Điều dưỡng đến tận nhà\nthoải mái như ở nhà mình';
   static const String servicesLocationStartNow = 'Bắt đầu ngay';
+  static const String servicesInProgressTitle = 'Dịch vụ đang diễn ra';
+  static const String servicesHomeInProgressHint =
+      'Lịch chăm sóc tại nhà đã được lên. Chọn ngày để xem hoạt động.';
+  static const String servicesCenterInProgressHint =
+      'Dịch vụ tại trung tâm đang được thực hiện theo lịch phòng.';
+  static const String servicesTypeHome = 'Tại nhà';
+  static const String servicesTypeCenter = 'Trung tâm';
+  static const String servicesPackageName = 'Tên gói';
+  static const String servicesBookingStatus = 'Trạng thái';
+  static const String servicesCheckinDate = 'Ngày nhận phòng';
+  static const String servicesCheckoutDate = 'Ngày trả phòng';
 
   // Feedback Screen
   static const String feedbackTitle = 'Đánh giá dịch vụ';
@@ -737,4 +851,8 @@ class AppStrings {
   static const String privacySection5 = '5. Quyền của bạn';
   static const String privacySection5Content =
       'Bạn có quyền truy cập, chỉnh sửa, xóa hoặc yêu cầu ngừng xử lý thông tin cá nhân của mình. Để thực hiện các quyền này, vui lòng liên hệ với chúng tôi.';
+
+  static const String cannotSetAppointmentInPast = 'Không thể đặt lịch hẹn vào thời gian quá khứ';
+  static const String canOnlySetAppointmentDuringBusinessHours = 'Chỉ có thể đặt lịch trong giờ hành chính (8:00 - 17:00)';
+
 }

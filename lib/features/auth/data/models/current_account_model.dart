@@ -117,27 +117,60 @@ class NowTransactionResponseModel extends Equatable {
 }
 
 /// Information about the customer's current/active package (nowPackage)
+class ServiceDateModel extends Equatable {
+  final DateTime date;
+  final String startTime;
+  final String endTime;
+
+  const ServiceDateModel({
+    required this.date,
+    required this.startTime,
+    required this.endTime,
+  });
+
+  factory ServiceDateModel.fromJson(Map<String, dynamic> json) {
+    return ServiceDateModel(
+      date: DateTime.parse(json['date'] as String),
+      startTime: json['startTime'] as String? ?? '',
+      endTime: json['endTime'] as String? ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'date': date.toIso8601String().split('T')[0],
+        'startTime': startTime,
+        'endTime': endTime,
+      };
+
+  @override
+  List<Object?> get props => [date, startTime, endTime];
+}
+
+/// Information about the customer's current/active package (nowPackage)
 class NowPackageModel extends Equatable {
   final bool serviceIsActive;
+  final String type;
   final int bookingId;
   final String bookingStatus;
   final double paidAmount;
   final double remainingAmount;
   final int packageId;
   final String packageName;
-  final DateTime checkinDate;
-  final DateTime checkoutDate;
-  final int roomTypeId;
-  final String roomTypeName;
+  final DateTime? checkinDate;
+  final DateTime? checkoutDate;
+  final List<ServiceDateModel> serviceDates;
+  final int? roomTypeId;
+  final String? roomTypeName;
   final String? roomName;
   final int? floor;
-  final int contractId;
-  final String contractCode;
+  final int? contractId;
+  final String? contractCode;
   final String contractStatus;
   final List<NowTransactionResponseModel> nowTransactionResponses;
 
   const NowPackageModel({
     required this.serviceIsActive,
+    required this.type,
     required this.bookingId,
     required this.bookingStatus,
     required this.paidAmount,
@@ -146,15 +179,22 @@ class NowPackageModel extends Equatable {
     required this.packageName,
     required this.checkinDate,
     required this.checkoutDate,
-    required this.roomTypeId,
-    required this.roomTypeName,
+    this.serviceDates = const [],
+    this.roomTypeId,
+    this.roomTypeName,
     this.roomName,
     this.floor,
-    required this.contractId,
-    required this.contractCode,
+    this.contractId,
+    this.contractCode,
     required this.contractStatus,
     this.nowTransactionResponses = const [],
   });
+
+  DateTime? get firstServiceDate =>
+      serviceDates.isEmpty ? null : serviceDates.first.date;
+
+  DateTime? get lastServiceDate =>
+      serviceDates.isEmpty ? null : serviceDates.last.date;
 
   factory NowPackageModel.fromJson(Map<String, dynamic> json) {
     final rawPaidAmount = json['paidAmount'];
@@ -162,24 +202,38 @@ class NowPackageModel extends Equatable {
     final rawRemainingAmount = json['remainingAmount'];
     final remainingAmount =
         rawRemainingAmount is num ? rawRemainingAmount.toDouble() : 0.0;
+    final serviceDates = (json['serviceDates'] as List<dynamic>?)
+            ?.map(
+              (e) => ServiceDateModel.fromJson(
+                e as Map<String, dynamic>,
+              ),
+            )
+            .toList() ??
+        const <ServiceDateModel>[];
 
     return NowPackageModel(
       serviceIsActive: json['serviceIsActive'] as bool? ?? false,
+      type: json['type'] as String? ?? '',
       bookingId: json['bookingId'] as int,
-      bookingStatus: json['bookingStatus'] as String,
+      bookingStatus: json['bookingStatus'] as String? ?? '',
       paidAmount: paidAmount,
       remainingAmount: remainingAmount,
-      packageId: json['packageId'] as int,
-      packageName: json['packageName'] as String,
-      checkinDate: DateTime.parse(json['checkinDate'] as String),
-      checkoutDate: DateTime.parse(json['checkoutDate'] as String),
-      roomTypeId: json['roomTypeId'] as int,
-      roomTypeName: json['roomTypeName'] as String,
+      packageId: json['packageId'] as int? ?? 0,
+      packageName: json['packageName'] as String? ?? '',
+      checkinDate: json['checkinDate'] != null
+          ? DateTime.tryParse(json['checkinDate'] as String)
+          : null,
+      checkoutDate: json['checkoutDate'] != null
+          ? DateTime.tryParse(json['checkoutDate'] as String)
+          : null,
+      serviceDates: serviceDates,
+      roomTypeId: json['roomTypeId'] as int?,
+      roomTypeName: json['roomTypeName'] as String?,
       roomName: json['roomName'] as String?,
       floor: json['floor'] as int?,
-      contractId: json['contractId'] as int,
-      contractCode: json['contractCode'] as String,
-      contractStatus: json['contractStatus'] as String,
+      contractId: json['contractId'] as int?,
+      contractCode: json['contractCode'] as String?,
+      contractStatus: json['contractStatus'] as String? ?? '',
       nowTransactionResponses: (json['nowTransactionResponses'] as List<dynamic>?)
               ?.map(
                 (e) => NowTransactionResponseModel.fromJson(
@@ -193,14 +247,16 @@ class NowPackageModel extends Equatable {
 
   Map<String, dynamic> toJson() => <String, dynamic>{
         'serviceIsActive': serviceIsActive,
+        'type': type,
         'bookingId': bookingId,
         'bookingStatus': bookingStatus,
         'paidAmount': paidAmount,
         'remainingAmount': remainingAmount,
         'packageId': packageId,
         'packageName': packageName,
-        'checkinDate': checkinDate.toIso8601String(),
-        'checkoutDate': checkoutDate.toIso8601String(),
+        'checkinDate': checkinDate?.toIso8601String(),
+        'checkoutDate': checkoutDate?.toIso8601String(),
+        'serviceDates': serviceDates.map((e) => e.toJson()).toList(),
         'roomTypeId': roomTypeId,
         'roomTypeName': roomTypeName,
         'roomName': roomName,
@@ -215,6 +271,7 @@ class NowPackageModel extends Equatable {
   @override
   List<Object?> get props => [
         serviceIsActive,
+        type,
         bookingId,
         bookingStatus,
         paidAmount,
@@ -223,6 +280,7 @@ class NowPackageModel extends Equatable {
         packageName,
         checkinDate,
         checkoutDate,
+        serviceDates,
         roomTypeId,
         roomTypeName,
         roomName,

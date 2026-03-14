@@ -175,6 +175,9 @@ class ApiEndpoints {
   /// Get all rooms
   static const String rooms = '/Room';
 
+  /// Get available rooms for a date range
+  static const String availableRooms = '/Room/available';
+  
   /// Get room by ID
   static String roomById(int id) => '/Room/$id';
 
@@ -288,4 +291,20 @@ class ApiEndpoints {
 
   /// Create feedback
   static const String createFeedback = '/Feedback';
+
+  // ==========================================
+  // Home Service Booking endpoints
+  // ==========================================
+  
+  /// Get home activities
+  static const String homeActivities = '/Activities/home';
+  
+  /// Get free home staff for date list
+  static const String freeHomeStaffInDateList = '/HomeBooking/free-home-staff-in-date-list';
+  
+  /// Book home service
+  static const String bookHomeService = '/HomeBooking/book-home-service';
+  
+  /// Create home service payment link
+  static const String createHomeServicePaymentLink = '/Transaction/create-home-service-payment-link';
 }

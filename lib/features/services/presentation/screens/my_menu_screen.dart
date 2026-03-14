@@ -11,6 +11,7 @@ import '../../../../core/widgets/app_app_bar.dart';
 import '../../../../core/widgets/app_loading.dart';
 import '../../../../core/widgets/app_toast.dart';
 import '../../../../core/widgets/app_widgets.dart';
+import '../../../../core/services/current_account_cache_service.dart';
 import '../bloc/menu_bloc.dart';
 import '../bloc/menu_event.dart';
 import '../bloc/menu_state.dart';
@@ -32,6 +33,8 @@ class MyMenuScreen extends StatefulWidget {
 
 class _MyMenuScreenState extends State<MyMenuScreen> {
   late DateTime _selectedDate;
+  DateTime? _minMenuDate;
+  DateTime? _maxMenuDate;
   // Unsaved selections (user is currently selecting, not yet saved)
   final Map<int, MenuEntity> _unsavedSelections = {}; // menuTypeId -> MenuEntity
   // Track deletion state
@@ -43,11 +46,61 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
     // Normalize date to remove time component
     final now = DateTime.now();
     _selectedDate = DateTime(now.year, now.month, now.day);
+    _loadMenuDateRange();
+  }
+
+  DateTime _normalizeDate(DateTime date) => DateTime(date.year, date.month, date.day);
+
+  Future<void> _loadMenuDateRange() async {
+    final currentAccount = await CurrentAccountCacheService.getCurrentAccount();
+    final nowPackage = currentAccount?.nowPackage;
+
+    if (nowPackage == null) return;
+
+    final checkinDate = nowPackage.checkinDate ?? nowPackage.firstServiceDate;
+    final checkoutDate = nowPackage.checkoutDate ?? nowPackage.lastServiceDate;
+
+    if (checkinDate == null || checkoutDate == null) return;
+
+    final minDate = _normalizeDate(checkinDate);
+    final maxDate = _normalizeDate(checkoutDate);
+
+    final clampedSelectedDate = _selectedDate.isBefore(minDate)
+        ? minDate
+        : (_selectedDate.isAfter(maxDate) ? maxDate : _selectedDate);
+
+    if (!mounted) return;
+
+    setState(() {
+      _minMenuDate = minDate;
+      _maxMenuDate = maxDate;
+      _selectedDate = clampedSelectedDate;
+      _unsavedSelections.clear();
+    });
+  }
+
+  bool _isDateInAllowedRange(DateTime date) {
+    final normalizedDate = _normalizeDate(date);
+
+    if (_minMenuDate != null && normalizedDate.isBefore(_minMenuDate!)) {
+      return false;
+    }
+
+    if (_maxMenuDate != null && normalizedDate.isAfter(_maxMenuDate!)) {
+      return false;
+    }
+
+    return true;
   }
 
   void _handleDateSelected(DateTime date) {
     // Normalize date to remove time component
     final normalizedDate = DateTime(date.year, date.month, date.day);
+
+    if (!_isDateInAllowedRange(normalizedDate)) {
+      return;
+    }
+
     setState(() {
       _selectedDate = normalizedDate;
       // Clear unsaved selections when changing date
@@ -486,6 +539,8 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
                     selectedDate: _selectedDate,
                     onDateSelected: _handleDateSelected,
                     datesWithMenus: datesWithMenus,
+                    minDate: _minMenuDate,
+                    maxDate: _maxMenuDate,
                   ),
                 ),
 

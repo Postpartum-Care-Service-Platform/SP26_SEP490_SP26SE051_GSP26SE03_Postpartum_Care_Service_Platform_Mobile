@@ -17,11 +17,13 @@ import 'service_location_selection.dart';
 
 class ServicesBookingFlow extends StatefulWidget {
   final ServiceLocationType? locationType;
+  final VoidCallback onBackToLocationSelection;
   final VoidCallback? onConfirmOverride;
 
   const ServicesBookingFlow({
     super.key,
     this.locationType,
+    required this.onBackToLocationSelection,
     this.onConfirmOverride,
   });
 
@@ -75,9 +77,18 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
           },
         );
       case 1:
+        // Step 2 in indicator: select date (check-in)
+        // Packages are already loaded from step 0
+        return BookingStep3DateSelection(
+          onDateSelected: (date) {
+            context.read<BookingBloc>().add(BookingSelectDate(date));
+          },
+        );
+      case 2:
+        // Step 3 in indicator: select room based on selected date & package
         // Only load rooms if not already loaded
-        if (state is! BookingRoomsLoaded && 
-            state is! BookingSummaryReady && 
+        if (state is! BookingRoomsLoaded &&
+            state is! BookingSummaryReady &&
             !_roomsLoadRequested) {
           _roomsLoadRequested = true;
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -86,17 +97,9 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
             }
           });
         }
-        // Don't reload packages here - they should already be loaded from step 0
         return BookingStep2RoomSelection(
           onRoomSelected: (roomId) {
             context.read<BookingBloc>().add(BookingSelectRoom(roomId));
-          },
-        );
-      case 2:
-        // Don't reload packages here - they should already be loaded from step 0
-        return BookingStep3DateSelection(
-          onDateSelected: (date) {
-            context.read<BookingBloc>().add(BookingSelectDate(date));
           },
         );
       case 3:
@@ -189,11 +192,11 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
                 setState(() {
                   _currentStep++;
                   // Reset flags when changing steps
-                  if (_currentStep == 1) {
+                  if (_currentStep == 2) {
                     _roomsLoadRequested = false;
                   }
                 });
-                if (_currentStep == 1) {
+                if (_currentStep == 2) {
                   context.read<BookingBloc>().add(const BookingLoadRooms());
                 }
               } else if (_currentStep == 3) {
@@ -260,10 +263,12 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
       case 0:
         return state is BookingPackagesLoaded && state.selectedPackageId != null;
       case 1:
+        // Require date selected to proceed to room selection
+        return state is BookingDateSelected || state is BookingSummaryReady;
+      case 2:
+        // Require room selected (or summary already ready) to confirm
         return (state is BookingRoomsLoaded && state.selectedRoomId != null) ||
             (state is BookingSummaryReady);
-      case 2:
-        return state is BookingDateSelected || state is BookingSummaryReady;
       case 3:
         return state is BookingSummaryReady;
       default:
@@ -284,34 +289,48 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
           children: [
             SizedBox(
               width: 52 * scale,
-              child: _currentStep > 0
-                  ? GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _currentStep--;
-                          // Reset flags when going back
-                          if (_currentStep == 0) {
-                            _packagesLoadRequested = false;
-                          } else if (_currentStep == 1) {
-                            _roomsLoadRequested = false;
-                          }
-                        });
-                      },
-                      child: Container(
-                        width: 30 * scale,
-                        height: 30 * scale,
-                        decoration: BoxDecoration(
-                          color: AppColors.background,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.arrow_back_ios_new_rounded,
-                          size: 20 * scale,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                    )
-                  : const SizedBox.shrink(),
+              child: GestureDetector(
+                onTap: () {
+                  if (_currentStep > 0) {
+                    setState(() {
+                      _currentStep--;
+                      // Reset flags when going back
+                      if (_currentStep == 0) {
+                        _packagesLoadRequested = false;
+                      } else if (_currentStep == 2) {
+                        _roomsLoadRequested = false;
+                      }
+                    });
+
+                    // Khi quay từ bước Phòng (2) về bước Ngày (1),
+                    // emit lại BookingDateSelected để nút "Tiếp theo" không bị khóa.
+                    if (_currentStep == 1) {
+                      final bloc = context.read<BookingBloc>();
+                      final selectedDate = bloc.selectedDate;
+                      if (selectedDate != null) {
+                        bloc.add(BookingSelectDate(selectedDate));
+                      }
+                    }
+                    return;
+                  }
+
+                  // Step 1 → quay về màn chọn loại dịch vụ
+                  widget.onBackToLocationSelection();
+                },
+                child: Container(
+                  width: 30 * scale,
+                  height: 30 * scale,
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.arrow_back_ios_new_rounded,
+                    size: 20 * scale,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
             ),
             Expanded(
               child: Text(

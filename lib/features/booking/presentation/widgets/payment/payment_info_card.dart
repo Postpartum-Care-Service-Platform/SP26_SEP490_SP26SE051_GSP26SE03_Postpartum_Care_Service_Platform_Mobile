@@ -8,11 +8,13 @@ import '../../../domain/entities/payment_link_entity.dart';
 class PaymentInfoCard extends StatelessWidget {
   final PaymentLinkEntity paymentLink;
   final String Function(double) formatPrice;
+  final String paymentType;
 
   const PaymentInfoCard({
     super.key,
     required this.paymentLink,
     required this.formatPrice,
+    this.paymentType = 'Deposit',
   });
 
   @override
@@ -59,7 +61,11 @@ class PaymentInfoCard extends StatelessWidget {
               SizedBox(width: 10 * scale),
               Expanded(
                 child: Text(
-                  AppStrings.paymentDeposit,
+                  paymentType == 'Full'
+                      ? AppStrings.paymentFull
+                      : paymentType == 'Remaining'
+                          ? AppStrings.paymentRemaining
+                          : AppStrings.paymentDeposit,
                   style: AppTextStyles.tinos(
                     fontSize: 20 * scale,
                     fontWeight: FontWeight.bold,

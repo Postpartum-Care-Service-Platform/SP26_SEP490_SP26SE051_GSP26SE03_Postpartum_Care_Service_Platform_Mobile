@@ -5,9 +5,9 @@ import 'staff_schedule_entity.dart';
 class FamilyScheduleEntity extends Equatable {
   final int id;
   final String customerId;
-  final String customerName;
+  final String? customerName;
   final int packageId;
-  final String packageName;
+  final String? packageName;
   final DateTime workDate;
   final String startTime; // Format: "HH:mm:ss"
   final String endTime; // Format: "HH:mm:ss"

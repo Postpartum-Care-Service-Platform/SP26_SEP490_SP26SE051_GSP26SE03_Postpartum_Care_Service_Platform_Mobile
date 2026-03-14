@@ -38,11 +38,16 @@ class AppointmentModel extends Equatable {
         throw Exception('Invalid id type: ${idValue.runtimeType}');
       }
       
-      // Handle appointmentDate
-      final appointmentDateValue = json['appointmentDate'];
+      // Handle appointment date/time (new API uses appointmentDateOnly + appointmentTimeOnly)
+      final appointmentDateValue = json['appointmentDateOnly'] ?? json['appointmentDate'];
+      final appointmentTimeValue = json['appointmentTimeOnly'];
       final DateTime appointmentDate;
       if (appointmentDateValue is String) {
-        appointmentDate = DateTime.parse(appointmentDateValue);
+        if (appointmentTimeValue is String && appointmentTimeValue.isNotEmpty) {
+          appointmentDate = DateTime.parse('${appointmentDateValue}T$appointmentTimeValue');
+        } else {
+          appointmentDate = DateTime.parse(appointmentDateValue);
+        }
       } else {
         throw Exception('Invalid appointmentDate type: ${appointmentDateValue.runtimeType}');
       }
