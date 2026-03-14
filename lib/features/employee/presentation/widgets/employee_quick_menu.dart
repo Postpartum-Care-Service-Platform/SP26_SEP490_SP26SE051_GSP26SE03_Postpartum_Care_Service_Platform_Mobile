@@ -26,6 +26,7 @@ enum EmployeeQuickMenuExtraAction {
   createCustomer,
   transactions,
   contracts,
+  customerProfileQuickTest,
 }
 
 /// Model định nghĩa 1 item trong menu nhanh
@@ -567,6 +568,12 @@ class EmployeeQuickMenuPresets {
         label: 'Lịch hẹn',
         iconAsset: AppAssets.calendar,
         action: EmployeeQuickMenuExtraAction.appointments,
+      ),
+      EmployeeQuickMenuItem.extra(
+        id: 'customer_profile_quick_test',
+        label: 'Test Profile KH',
+        iconAsset: AppAssets.family,
+        action: EmployeeQuickMenuExtraAction.customerProfileQuickTest,
       ),
     ];
   }

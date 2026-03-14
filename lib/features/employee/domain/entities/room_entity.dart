@@ -5,30 +5,42 @@ import 'room_status.dart';
 class RoomEntity {
   /// Room ID
   final int id;
-  
+
   /// Room Type ID
   final int roomTypeId;
-  
+
   /// Room Type Name
   final String roomTypeName;
-  
+
   /// Room name/number
   final String name;
-  
+
   /// Floor number
   final int? floor;
-  
+
   /// Room status
   final RoomStatus status;
-  
+
   /// Is active
   final bool isActive;
-  
+
   /// Created at timestamp
   final DateTime createdAt;
-  
+
   /// Updated at timestamp
   final DateTime updatedAt;
+
+  /// Booking ID (current or upcoming)
+  final int? bookingId;
+
+  /// Booking start date
+  final DateTime? bookingStartDate;
+
+  /// Booking end date
+  final DateTime? bookingEndDate;
+
+  /// Is room currently occupied
+  final bool isOccupied;
 
   const RoomEntity({
     required this.id,
@@ -40,6 +52,10 @@ class RoomEntity {
     required this.isActive,
     required this.createdAt,
     required this.updatedAt,
+    this.bookingId,
+    this.bookingStartDate,
+    this.bookingEndDate,
+    this.isOccupied = false,
   });
 
   /// Create a copy with updated fields
@@ -53,6 +69,10 @@ class RoomEntity {
     bool? isActive,
     DateTime? createdAt,
     DateTime? updatedAt,
+    int? bookingId,
+    DateTime? bookingStartDate,
+    DateTime? bookingEndDate,
+    bool? isOccupied,
   }) {
     return RoomEntity(
       id: id ?? this.id,
@@ -64,6 +84,10 @@ class RoomEntity {
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      bookingId: bookingId ?? this.bookingId,
+      bookingStartDate: bookingStartDate ?? this.bookingStartDate,
+      bookingEndDate: bookingEndDate ?? this.bookingEndDate,
+      isOccupied: isOccupied ?? this.isOccupied,
     );
   }
 }

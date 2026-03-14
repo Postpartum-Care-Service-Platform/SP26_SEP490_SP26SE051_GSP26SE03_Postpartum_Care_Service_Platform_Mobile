@@ -181,6 +181,9 @@ class ApiEndpoints {
   /// Get room by ID
   static String roomById(int id) => '/Room/$id';
 
+  /// Get room booking periods
+  static const String roomBookingPeriods = '/Room/booking-periods';
+
   // ==========================================
   // Employee - AmenityService endpoints
   // ==========================================

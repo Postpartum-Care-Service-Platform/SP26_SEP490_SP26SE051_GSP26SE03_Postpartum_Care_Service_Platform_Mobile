@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import '../../../../core/apis/api_client.dart';
 import '../../../../core/apis/api_endpoints.dart';
+import '../models/room_booking_period_model.dart';
 import '../models/room_model.dart';
 
 /// Room Remote Data Source
@@ -14,7 +15,7 @@ class RoomRemoteDataSource {
   Future<List<RoomModel>> getAllRooms() async {
     try {
       final response = await _dio.get(ApiEndpoints.rooms);
-      
+
       final List<dynamic> data = response.data as List<dynamic>;
       return data
           .map((json) => RoomModel.fromJson(json as Map<String, dynamic>))
@@ -28,33 +29,22 @@ class RoomRemoteDataSource {
   Future<RoomModel> getRoomById(int roomId) async {
     try {
       final response = await _dio.get(ApiEndpoints.roomById(roomId));
-      
+
       return RoomModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw _handleError(e);
     }
   }
 
-  /// Get available rooms for a specific date range
-  Future<List<RoomModel>> getAvailableRoomsByDateRange({
-    required DateTime startDate,
-    required DateTime endDate,
-  }) async {
+  /// Get room booking periods
+  Future<List<RoomBookingPeriodModel>> getRoomBookingPeriods() async {
     try {
-      final start = startDate.toIso8601String().split('T').first;
-      final end = endDate.toIso8601String().split('T').first;
-
-      final response = await _dio.get(
-        ApiEndpoints.availableRooms,
-        queryParameters: {
-          'startDate': start,
-          'endDate': end,
-        },
-      );
+      final response = await _dio.get(ApiEndpoints.roomBookingPeriods);
 
       final List<dynamic> data = response.data as List<dynamic>;
       return data
-          .map((json) => RoomModel.fromJson(json as Map<String, dynamic>))
+          .map((json) =>
+              RoomBookingPeriodModel.fromJson(json as Map<String, dynamic>))
           .toList();
     } on DioException catch (e) {
       throw _handleError(e);
@@ -68,11 +58,11 @@ class RoomRemoteDataSource {
       final data = error.response!.data;
 
       String message = 'Có lỗi xảy ra';
-      
+
       if (data is Map<String, dynamic>) {
-        message = data['error'] as String? ?? 
-                  data['message'] as String? ?? 
-                  message;
+        message = data['error'] as String? ??
+            data['message'] as String? ??
+            message;
       } else if (data is String) {
         message = data;
       }

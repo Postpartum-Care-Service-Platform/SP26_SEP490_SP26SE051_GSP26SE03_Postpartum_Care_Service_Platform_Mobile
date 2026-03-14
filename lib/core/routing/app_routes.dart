@@ -96,4 +96,8 @@ class AppRoutes {
 
   // Employee Appointment Routes
   static const String employeeAppointmentList = '/employee-appointment-list';
+
+  // Employee Customer Profile Routes
+  static const String employeeCustomerFamilyProfile =
+      '/employee-customer-family-profile';
 }

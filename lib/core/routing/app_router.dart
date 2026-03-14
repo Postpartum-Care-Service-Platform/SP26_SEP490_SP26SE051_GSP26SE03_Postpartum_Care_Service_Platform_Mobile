@@ -41,6 +41,7 @@ import '../../features/employee/presentation/screens/staff_contract_preview_scre
 import '../../features/employee/presentation/screens/staff_member_type_detail_screen.dart';
 import '../../features/employee/presentation/screens/staff_amenity_ticket_list_screen.dart';
 import '../../features/employee/presentation/screens/employee_appointment_list_screen.dart';
+import '../../features/employee/presentation/screens/employee_customer_family_profiles_screen.dart';
 import '../../features/employee/data/models/account_model.dart';
 import '../../features/chat/presentation/screens/conversation_list_screen.dart';
 import '../../features/chat/presentation/screens/conversation_detail_screen.dart';
@@ -332,6 +333,21 @@ class AppRouter {
         return MaterialPageRoute(
           builder: (_) => const EmployeeAppointmentListScreen(),
         );
+
+      case AppRoutes.employeeCustomerFamilyProfile:
+        if (args is Map<String, dynamic>) {
+          final customerId = args['customerId'] as String?;
+          if (customerId == null || customerId.trim().isEmpty) {
+            return null;
+          }
+          return MaterialPageRoute(
+            builder: (_) => EmployeeCustomerFamilyProfilesScreen(
+              customerId: customerId,
+              customerName: (args['customerName'] as String?) ?? '',
+            ),
+          );
+        }
+        return null;
 
       // Employee Routes - Legacy/Mock screens
       case AppRoutes.employeeTasks:

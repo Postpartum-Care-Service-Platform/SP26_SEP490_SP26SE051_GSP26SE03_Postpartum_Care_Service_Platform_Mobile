@@ -2,6 +2,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/services/current_account_cache_service.dart';
+import '../../../family_profile/domain/repositories/family_profile_repository.dart';
+import '../../data/models/current_account_model.dart';
 import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/register_usecase.dart';
 import '../../domain/usecases/verify_email_usecase.dart';
@@ -29,6 +31,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final GetAccountByIdUsecase getAccountByIdUsecase;
   final GetCurrentAccountUsecase getCurrentAccountUsecase;
   final ChangePasswordUsecase changePasswordUsecase;
+  final FamilyProfileRepository familyProfileRepository;
 
   AuthBloc({
     required this.loginUsecase,
@@ -42,6 +45,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required this.getAccountByIdUsecase,
     required this.getCurrentAccountUsecase,
     required this.changePasswordUsecase,
+    required this.familyProfileRepository,
   }) : super(const AuthInitial(isPasswordObscured: true)) {
     on<AuthLoginWithEmailPassword>(_onLoginWithEmailPassword);
     on<AuthLoginWithGoogle>(_onLoginWithGoogle);
@@ -416,9 +420,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     try {
       final account = await getCurrentAccountUsecase();
+      final enrichedAccount = await _enrichAccountMemberType(account);
 
       emit(AuthCurrentAccountLoaded(
-        account: account,
+        account: enrichedAccount,
         isPasswordObscured: state.isPasswordObscured,
       ));
     } catch (e) {
@@ -437,8 +442,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       final cachedAccount = await CurrentAccountCacheService.getCurrentAccount();
       if (cachedAccount != null) {
+        final enrichedAccount = await _enrichAccountMemberType(cachedAccount);
         emit(AuthCurrentAccountLoaded(
-          account: cachedAccount,
+          account: enrichedAccount,
           isPasswordObscured: state.isPasswordObscured,
         ));
       }
@@ -497,6 +503,67 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         message: e.toString().replaceAll('Exception: ', ''),
         isPasswordObscured: state.isPasswordObscured,
       ));
+    }
+  }
+
+  Future<CurrentAccountModel> _enrichAccountMemberType(
+    CurrentAccountModel account,
+  ) async {
+    final memberTypeId = account.ownerProfile?.memberTypeId;
+
+    if (memberTypeId == null) {
+      return account;
+    }
+
+    final existingName = account.ownerProfile?.memberTypeName?.trim();
+    if (existingName != null && existingName.isNotEmpty) {
+      return account;
+    }
+
+    try {
+      final memberType = await familyProfileRepository.getMemberTypeById(
+        memberTypeId,
+      );
+
+      final owner = account.ownerProfile;
+      if (owner == null) {
+        return account;
+      }
+
+      final enrichedOwner = OwnerProfileModel(
+        id: owner.id,
+        memberTypeId: owner.memberTypeId,
+        memberTypeName: memberType.name,
+        customerId: owner.customerId,
+        fullName: owner.fullName,
+        dateOfBirth: owner.dateOfBirth,
+        gender: owner.gender,
+        address: owner.address,
+        phoneNumber: owner.phoneNumber,
+        avatarUrl: owner.avatarUrl,
+        createdAt: owner.createdAt,
+        updatedAt: owner.updatedAt,
+        isDeleted: owner.isDeleted,
+        isOwner: owner.isOwner,
+      );
+
+      return CurrentAccountModel(
+        id: account.id,
+        roleId: account.roleId,
+        email: account.email,
+        phone: account.phone,
+        username: account.username,
+        isActive: account.isActive,
+        createdAt: account.createdAt,
+        updatedAt: account.updatedAt,
+        roleName: account.roleName,
+        isEmailVerified: account.isEmailVerified,
+        avatarUrl: account.avatarUrl,
+        ownerProfile: enrichedOwner,
+        nowPackage: account.nowPackage,
+      );
+    } catch (_) {
+      return account;
     }
   }
 }

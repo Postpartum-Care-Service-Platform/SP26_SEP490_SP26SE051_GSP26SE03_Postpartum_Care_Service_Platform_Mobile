@@ -218,6 +218,16 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
       return;
     }
 
+    final isImageUrl = RegExp(
+      r'\.(png|jpe?g|gif|webp|bmp)(\?|$)',
+      caseSensitive: false,
+    ).hasMatch(url);
+
+    if (!isImageUrl) {
+      _openSignedContractLink(url);
+      return;
+    }
+
     showDialog<void>(
       context: context,
       builder: (ctx) {
@@ -342,6 +352,17 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
         );
       },
     );
+  }
+
+  Future<void> _openSignedContractLink(String url) async {
+    final uri = Uri.parse(url);
+    final opened = await launchUrl(uri, mode: LaunchMode.inAppWebView);
+    if (!opened && mounted) {
+      AppToast.showError(
+        context,
+        message: 'Không thể mở liên kết hợp đồng đã ký',
+      );
+    }
   }
 
   void _handleUploadSignedPressed({required bool canUploadSigned}) {

@@ -239,7 +239,85 @@ class EmployeeMoreSheet {
           ),
         );
         break;
+      case EmployeeQuickMenuExtraAction.customerProfileQuickTest:
+        _showCustomerProfileQuickTestDialog(context);
+        break;
     }
+  }
+
+  static Future<void> _showCustomerProfileQuickTestDialog(
+    BuildContext context,
+  ) async {
+    final customerIdController = TextEditingController();
+    final customerNameController = TextEditingController();
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Test Profile KH'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: customerIdController,
+                decoration: const InputDecoration(
+                  labelText: 'Customer ID',
+                  hintText: 'Nhập customerId',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: customerNameController,
+                decoration: const InputDecoration(
+                  labelText: 'Tên khách (tuỳ chọn)',
+                  hintText: 'VD: Nguyễn A',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Huỷ'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Vào profile'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    final customerId = customerIdController.text.trim();
+    final customerName = customerNameController.text.trim();
+    if (customerId.isEmpty) {
+      if (!context.mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng nhập customerId.')),
+      );
+      return;
+    }
+
+    if (!context.mounted) {
+      return;
+    }
+
+    AppRouter.push(
+      context,
+      AppRoutes.employeeCustomerFamilyProfile,
+      arguments: {
+        'customerId': customerId,
+        'customerName': customerName.isEmpty ? null : customerName,
+      },
+    );
   }
 }
 

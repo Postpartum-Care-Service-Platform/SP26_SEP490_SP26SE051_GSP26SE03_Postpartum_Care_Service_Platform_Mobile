@@ -413,6 +413,16 @@ class _LoadedContentState extends State<_LoadedContent> {
                         ),
                       );
                       break;
+                    case EmployeeQuickMenuExtraAction.customerProfileQuickTest:
+                      AppRouter.push(
+                        context,
+                        AppRoutes.employeeCustomerFamilyProfile,
+                        arguments: const {
+                          'customerId': 'TEST',
+                          'customerName': 'Test Profile',
+                        },
+                      );
+                      break;
                   }
                 },
               ),

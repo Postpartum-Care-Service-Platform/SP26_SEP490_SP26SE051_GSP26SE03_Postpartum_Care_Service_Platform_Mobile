@@ -229,7 +229,13 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
                     ),
                   ],
                 ),
-                SizedBox(height: 16 * scale),
+                SizedBox(height: 12 * scale),
+                // Employee type badge
+                _EmployeeTypeBadge(
+                  label: _resolveEmployeeTypeLabel(account),
+                  scale: scale,
+                ),
+                SizedBox(height: 12 * scale),
                 // Role badge
                 Container(
                   padding: EdgeInsets.symmetric(
@@ -262,6 +268,8 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
   }
 
   Widget _buildAccountDetailsSection(double scale, dynamic account) {
+    final employeeType = _resolveEmployeeTypeLabel(account);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -283,6 +291,10 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
                 label: AppStrings.accountPhoneNumber,
                 value: account.phone,
               ),
+            AccountInfoRow(
+              label: AppStrings.employeeTypeLabel,
+              value: employeeType,
+            ),
             AccountInfoRow(
               label: AppStrings.accountStatus,
               value: account.isActive
@@ -317,6 +329,73 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
           ],
         ),
       ],
+    );
+  }
+
+  String _resolveEmployeeTypeLabel(dynamic account) {
+    final memberTypeName = account.ownerProfile?.memberTypeName?.trim();
+    final raw = memberTypeName?.toLowerCase();
+
+    if (raw == null || raw.isEmpty) {
+      return AppStrings.employeeTypeUnknown;
+    }
+
+    if (raw.contains('tại nhà') || raw.contains('tai nha')) {
+      return AppStrings.employeeTypeHomeCare;
+    }
+
+    if (raw.contains('điều dưỡng') || raw.contains('dieu duong')) {
+      return AppStrings.employeeTypeCenterCare;
+    }
+
+    return memberTypeName;
+  }
+}
+
+class _EmployeeTypeBadge extends StatelessWidget {
+  final String label;
+  final double scale;
+
+  const _EmployeeTypeBadge({required this.label, required this.scale});
+
+  @override
+  Widget build(BuildContext context) {
+    final isHomeNurse =
+        label.toLowerCase().contains('tại nhà') ||
+        label.toLowerCase().contains('tai nha');
+    final badgeColor = isHomeNurse
+        ? const Color(0xFF10B981)
+        : const Color(0xFF2563EB);
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: 14 * scale,
+        vertical: 6 * scale,
+      ),
+      decoration: BoxDecoration(
+        color: badgeColor.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: badgeColor, width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isHomeNurse ? Icons.home_outlined : Icons.local_hospital_outlined,
+            size: 14 * scale,
+            color: badgeColor,
+          ),
+          SizedBox(width: 6 * scale),
+          Text(
+            label,
+            style: AppTextStyles.arimo(
+              fontSize: 12 * scale,
+              fontWeight: FontWeight.w600,
+              color: badgeColor,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
