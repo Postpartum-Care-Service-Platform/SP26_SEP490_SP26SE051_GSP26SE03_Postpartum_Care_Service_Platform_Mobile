@@ -228,6 +228,7 @@ class _FamilyScheduleScreenState extends State<FamilyScheduleScreen> {
                       datesWithSchedules: datesWithSchedules,
                       minDate: _minScheduleDate,
                       maxDate: _maxScheduleDate,
+                      expandIconRight: 24,
                     ),
                   ),
 

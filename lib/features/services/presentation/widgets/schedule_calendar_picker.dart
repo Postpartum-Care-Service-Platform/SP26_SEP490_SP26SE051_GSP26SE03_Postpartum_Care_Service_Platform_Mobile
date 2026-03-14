@@ -11,6 +11,8 @@ class ScheduleCalendarPicker extends StatefulWidget {
   final List<DateTime> datesWithSchedules;
   final DateTime? minDate;
   final DateTime? maxDate;
+  final EdgeInsets? margin;
+  final double? expandIconRight;
 
   const ScheduleCalendarPicker({
     super.key,
@@ -19,6 +21,8 @@ class ScheduleCalendarPicker extends StatefulWidget {
     this.datesWithSchedules = const [],
     this.minDate,
     this.maxDate,
+    this.margin,
+    this.expandIconRight,
   });
 
   @override
@@ -56,6 +60,7 @@ class _ScheduleCalendarPickerState extends State<ScheduleCalendarPicker> {
             hasData: _hasSchedule,
             minDate: widget.minDate,
             maxDate: widget.maxDate,
+            margin: widget.margin,
           )
         : AppWidgets.weekCalendarPicker(
             context: context,
@@ -64,14 +69,15 @@ class _ScheduleCalendarPickerState extends State<ScheduleCalendarPicker> {
             hasData: _hasSchedule,
             minDate: widget.minDate,
             maxDate: widget.maxDate,
+            margin: widget.margin,
           );
 
     return Stack(
       children: [
         calendar,
         Positioned(
-          right: 24 * scale,
-          bottom: -6 * scale,
+          right: (widget.expandIconRight ?? 8) * scale,
+          bottom: -8 * scale,
           child: IconButton(
             onPressed: _toggleExpanded,
             icon: Icon(

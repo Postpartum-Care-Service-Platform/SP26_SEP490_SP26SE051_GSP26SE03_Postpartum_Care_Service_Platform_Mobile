@@ -58,13 +58,13 @@ class ServiceDashboard extends StatelessWidget {
             children: [
               // Welcome Section
               _buildWelcomeSection(context, scale),
-              SizedBox(height: 24 * scale),
+              SizedBox(height: 12 * scale),
               if (isHomeService) ...[
                 _HomeServiceDashboard(nowPackage: nowPackage),
               ] else ...[
                 // Key Card - First element after header
                 ResortKeyCard(nowPackage: nowPackage),
-                SizedBox(height: 24 * scale),
+                SizedBox(height: 18 * scale),
 
                 // Services Section
                 _buildServicesSection(context, scale),
@@ -98,7 +98,6 @@ class ServiceDashboard extends StatelessWidget {
             color: AppColors.textPrimary,
           ),
         ),
-        SizedBox(height: 6 * scale),
         Text(
           AppStrings.servicesResortExperienceDescription,
           style: AppTextStyles.arimo(
@@ -550,11 +549,14 @@ class _HomeServiceDashboardContentState
                 selectedDate: _selectedDate,
                 onDateSelected: _handleDateSelected,
                 datesWithSchedules: scheduleDates,
+                margin: EdgeInsets.zero,
               ),
+              SizedBox(height: 16 * scale),
               ScheduleDayView(
                 date: _selectedDate,
                 schedules: schedulesForDate,
                 dayNo: dayNo,
+                margin: EdgeInsets.zero,
               ),
             ],
           );

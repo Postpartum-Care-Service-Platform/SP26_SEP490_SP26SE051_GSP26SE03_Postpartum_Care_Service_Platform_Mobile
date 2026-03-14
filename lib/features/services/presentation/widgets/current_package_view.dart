@@ -669,12 +669,14 @@ class _HomeServiceScheduleContentState
                 datesWithSchedules: widget.serviceDates,
                 minDate: minDate,
                 maxDate: maxDate,
+                margin: EdgeInsets.zero,
               ),
               SizedBox(height: 12 * scale),
               ScheduleDayView(
                 date: _selectedDate,
                 schedules: schedulesForDate,
                 dayNo: dayNo,
+                margin: EdgeInsets.zero,
               ),
             ],
           );

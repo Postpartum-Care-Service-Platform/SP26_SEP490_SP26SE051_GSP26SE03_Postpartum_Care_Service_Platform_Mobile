@@ -715,6 +715,7 @@ class AppWidgets {
     required bool Function(DateTime date) hasData,
     DateTime? minDate,
     DateTime? maxDate,
+    EdgeInsets? margin,
   }) {
     return _AppWeekCalendarPicker(
       selectedDate: selectedDate,
@@ -722,6 +723,7 @@ class AppWidgets {
       hasData: hasData,
       minDate: minDate,
       maxDate: maxDate,
+      margin: margin,
     );
   }
 
@@ -733,6 +735,7 @@ class AppWidgets {
     required bool Function(DateTime date) hasData,
     DateTime? minDate,
     DateTime? maxDate,
+    EdgeInsets? margin,
   }) {
     return _AppMonthCalendarPicker(
       selectedDate: selectedDate,
@@ -740,6 +743,7 @@ class AppWidgets {
       hasData: hasData,
       minDate: minDate,
       maxDate: maxDate,
+      margin: margin,
     );
   }
 }
@@ -751,6 +755,7 @@ class _AppMonthCalendarPicker extends StatefulWidget {
   final bool Function(DateTime date) hasData;
   final DateTime? minDate;
   final DateTime? maxDate;
+  final EdgeInsets? margin;
 
   const _AppMonthCalendarPicker({
     required this.selectedDate,
@@ -758,6 +763,7 @@ class _AppMonthCalendarPicker extends StatefulWidget {
     required this.hasData,
     this.minDate,
     this.maxDate,
+    this.margin,
   });
 
   @override
@@ -899,18 +905,15 @@ class _AppMonthCalendarPickerState extends State<_AppMonthCalendarPicker> {
     final canGoNext = _canGoNextMonth();
 
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 20 * scale),
+      margin: widget.margin ?? EdgeInsets.symmetric(horizontal: 20 * scale),
       padding: EdgeInsets.all(16 * scale),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(24 * scale),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadowMedium,
-            blurRadius: 20 * scale,
-            offset: Offset(0, 6 * scale),
-          ),
-        ],
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.2),
+          width: 1,
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1065,6 +1068,7 @@ class _AppWeekCalendarPicker extends StatefulWidget {
   final bool Function(DateTime date) hasData;
   final DateTime? minDate;
   final DateTime? maxDate;
+  final EdgeInsets? margin;
 
   const _AppWeekCalendarPicker({
     required this.selectedDate,
@@ -1072,6 +1076,7 @@ class _AppWeekCalendarPicker extends StatefulWidget {
     required this.hasData,
     this.minDate,
     this.maxDate,
+    this.margin,
   });
 
   @override
@@ -1204,18 +1209,15 @@ class _AppWeekCalendarPickerState extends State<_AppWeekCalendarPicker> {
     final canGoNextWeek = _canGoNextWeek();
 
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 20 * scale),
+      margin: widget.margin ?? EdgeInsets.symmetric(horizontal: 20 * scale),
       padding: EdgeInsets.all(20 * scale),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(24 * scale),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadowMedium,
-            blurRadius: 20 * scale,
-            offset: Offset(0, 6 * scale),
-          ),
-        ],
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.2),
+          width: 1,
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
