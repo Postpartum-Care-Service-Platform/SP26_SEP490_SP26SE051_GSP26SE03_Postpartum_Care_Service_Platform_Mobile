@@ -215,6 +215,9 @@ class _EmployeePackageBookingScreenState
                 child: Padding(
                   padding: EdgeInsets.all(8 * scale),
                   child: ServicesBookingFlow(
+                    onBackToLocationSelection: () {
+                      Navigator.of(context).maybePop();
+                    },
                     onConfirmOverride: () => _onStaffConfirmBooking(context),
                   ),
                 ),

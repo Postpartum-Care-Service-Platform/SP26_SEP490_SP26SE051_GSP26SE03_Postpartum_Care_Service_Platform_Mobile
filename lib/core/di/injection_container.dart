@@ -341,9 +341,6 @@ class InjectionContainer {
   static GetPackagesUsecase get _getPackagesUsecase =>
       GetPackagesUsecase(packageRepository);  
 
-  static GetPackageTypesUsecase get _getPackageTypesUsecase =>
-      GetPackageTypesUsecase(packageTypeRepository);
-
   static GetCarePlanDetailsUsecase get _getCarePlanDetailsUsecase =>
       GetCarePlanDetailsUsecase(carePlanRepository);
 
@@ -577,17 +574,15 @@ class InjectionContainer {
   static BookingBloc get bookingBloc => BookingBloc(
         createBookingUsecase: _createBookingUsecase,
         cancelBookingUsecase: _cancelBookingUsecase,
+        createBookingForCustomerUsecase: _createBookingForCustomerUsecase,
         getBookingByIdUsecase: _getBookingByIdUsecase,
         getBookingsUsecase: _getBookingsUsecase,
         createPaymentLinkUsecase: _createPaymentLinkUsecase,
         checkPaymentStatusUsecase: _checkPaymentStatusUsecase,
         getPackagesUsecase: _getPackagesUsecase,
         getAvailableRoomsByDateRange: _getAvailableRoomsByDateRange,
+        createOfflinePaymentUsecase: _createOfflinePaymentUsecase,
       );
-    getAllRooms: _getAllRooms,
-    createBookingForCustomerUsecase: _createBookingForCustomerUsecase,
-    createOfflinePaymentUsecase: _createOfflinePaymentUsecase,
-  );
 
   static ContractBloc get contractBloc => ContractBloc(
     getContractByBookingIdUsecase: _getContractByBookingIdUsecase,

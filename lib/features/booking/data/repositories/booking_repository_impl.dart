@@ -74,6 +74,12 @@ class BookingRepositoryImpl implements BookingRepository {
   Future<String> cancelBooking(int id) async {
     try {
       return await remoteDataSource.cancelBooking(id);
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
+
+  @override
   Future<List<BookingEntity>> getAllBookings() async {
     try {
       final models = await remoteDataSource.getAllBookings();

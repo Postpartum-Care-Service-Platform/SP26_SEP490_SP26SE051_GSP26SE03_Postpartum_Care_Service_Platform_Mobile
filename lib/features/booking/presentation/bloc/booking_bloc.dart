@@ -25,7 +25,6 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   final CheckPaymentStatusUsecase checkPaymentStatusUsecase;
   final GetPackagesUsecase getPackagesUsecase;
   final GetAvailableRoomsByDateRange getAvailableRoomsByDateRange;
-  final GetAllRooms getAllRooms;
   final CreateOfflinePaymentUsecase createOfflinePaymentUsecase;
 
   // Current selection state
@@ -58,7 +57,6 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     required this.checkPaymentStatusUsecase,
     required this.getPackagesUsecase,
     required this.getAvailableRoomsByDateRange,
-    required this.getAllRooms,
     required this.createOfflinePaymentUsecase,
   }) : super(const BookingInitial()) {
     on<BookingLoadPackages>(_onLoadPackages);

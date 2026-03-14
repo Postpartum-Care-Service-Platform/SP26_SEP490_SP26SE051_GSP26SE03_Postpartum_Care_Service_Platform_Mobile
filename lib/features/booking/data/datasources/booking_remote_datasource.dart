@@ -141,14 +141,6 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
   }
 
   @override
-  Future<String> cancelBooking(int id) async {
-    try {
-      final response = await dio.put(ApiEndpoints.cancelBooking(id));
-      final data = response.data;
-      if (data is Map<String, dynamic>) {
-        return data['message'] as String? ?? 'Hủy booking thành công.';
-      }
-      return 'Hủy booking thành công.';
   Future<List<BookingModel>> getAllBookings() async {
     try {
       final response = await dio.get(ApiEndpoints.getAllBookings);
@@ -186,7 +178,7 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
               },
       );
 
-      return PaymentStatusModel.fromJson(response.data as Map<String, dynamic>);
+      return PaymentLinkModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw _handleError(e);
     }
@@ -245,6 +237,32 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
         return data['message'] as String? ?? 'Hoàn thành booking thành công';
       }
       return 'Hoàn thành booking thành công';
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  @override
+  Future<PaymentStatusModel> createOfflinePayment({
+    required int bookingId,
+    required String customerId,
+    required double amount,
+    required String paymentMethod,
+    String? note,
+  }) async {
+    try {
+      final response = await dio.post(
+        ApiEndpoints.createOfflinePayment,
+        data: {
+          'bookingId': bookingId,
+          'customerId': customerId,
+          'amount': amount,
+          'paymentMethod': paymentMethod,
+          if (note != null && note.isNotEmpty) 'note': note,
+        },
+      );
+
+      return PaymentStatusModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw _handleError(e);
     }
