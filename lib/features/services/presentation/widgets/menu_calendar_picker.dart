@@ -7,12 +7,16 @@ class MenuCalendarPicker extends StatelessWidget {
   final DateTime selectedDate;
   final ValueChanged<DateTime> onDateSelected;
   final List<DateTime> datesWithMenus;
+  final DateTime? minDate;
+  final DateTime? maxDate;
 
   const MenuCalendarPicker({
     super.key,
     required this.selectedDate,
     required this.onDateSelected,
     this.datesWithMenus = const [],
+    this.minDate,
+    this.maxDate,
   });
 
   bool _isSameDay(DateTime date1, DateTime date2) {
@@ -32,6 +36,8 @@ class MenuCalendarPicker extends StatelessWidget {
       selectedDate: selectedDate,
       onDateSelected: onDateSelected,
       hasData: _hasMenu,
+      minDate: minDate,
+      maxDate: maxDate,
     );
   }
 }

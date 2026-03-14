@@ -8,11 +8,13 @@ import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_loading.dart';
 import '../../../../core/widgets/app_toast.dart';
 import '../../../../core/widgets/app_app_bar.dart';
+import '../../../../core/widgets/app_widgets.dart';
 import '../../domain/entities/booking_entity.dart';
 import '../../domain/entities/payment_link_entity.dart';
 import '../bloc/booking_bloc.dart';
 import '../bloc/booking_event.dart';
 import '../bloc/booking_state.dart';
+import 'booking_cancelled_screen.dart';
 import 'invoice_screen.dart';
 import '../widgets/payment/payment_info_card.dart';
 import '../widgets/payment/qr_code_section.dart';
@@ -21,12 +23,16 @@ import '../widgets/payment/payment_helpers.dart';
 
 class PaymentScreen extends StatefulWidget {
   final BookingEntity booking;
-  final String paymentType; // 'Deposit' or 'Remaining'
+  final String paymentType; // 'Deposit' or 'Remaining' or 'Full'
+  final bool isHomeService;
+  final String? staffId;
 
   const PaymentScreen({
     super.key,
     required this.booking,
     this.paymentType = 'Deposit',
+    this.isHomeService = false,
+    this.staffId,
   });
 
   @override
@@ -39,6 +45,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   bool _isCheckingStatus = false;
   bool _paymentSuccess = false;
   int? _paidBookingId;
+  bool _isCancellingBooking = false;
 
   @override
   void initState() {
@@ -46,7 +53,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
     // Create payment link after the widget is built
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        context.read<BookingBloc>().add(BookingCreatePaymentLink(widget.paymentType));
+        context.read<BookingBloc>().add(
+          BookingCreatePaymentLink(
+            widget.paymentType,
+            bookingId: widget.booking.id,
+            isHomeService: widget.isHomeService,
+            staffId: widget.staffId,
+          ),
+        );
       }
     });
   }
@@ -69,19 +83,54 @@ class _PaymentScreenState extends State<PaymentScreen> {
     });
   }
 
+  Future<void> _handleBackPressed() async {
+    if (_isCancellingBooking || _paymentSuccess) return;
+
+    final confirmed = await AppWidgets.showConfirmDialog(
+      context,
+      title: AppStrings.paymentCancelConfirmTitle,
+      message: AppStrings.paymentCancelConfirmMessage,
+      confirmText: AppStrings.paymentCancelConfirmYes,
+      cancelText: AppStrings.paymentCancelConfirmNo,
+      confirmColor: AppColors.red,
+      icon: Icons.warning_amber_rounded,
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() {
+      _isCancellingBooking = true;
+    });
+
+    _statusCheckTimer?.cancel();
+    AppLoading.show(context, message: AppStrings.bookingCancelling);
+    context.read<BookingBloc>().add(BookingCancelRequested(widget.booking.id));
+  }
+
   @override
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppAppBar(
-        title: AppStrings.paymentTitle,
-        centerTitle: true,
-        titleFontSize: 20 * scale,
-        titleFontWeight: FontWeight.w700,
-      ),
-      body: BlocConsumer<BookingBloc, BookingState>(
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) {
+        if (didPop) return;
+        _handleBackPressed();
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppAppBar(
+          title: widget.paymentType == 'Full'
+              ? AppStrings.paymentFullTitle
+              : AppStrings.paymentTitle,
+          centerTitle: true,
+          titleFontSize: 20 * scale,
+          titleFontWeight: FontWeight.w700,
+          onBackPressed: () {
+            _handleBackPressed();
+          },
+        ),
+        body: BlocConsumer<BookingBloc, BookingState>(
         listener: (context, state) {
           if (state is BookingPaymentLinkCreated) {
             setState(() {
@@ -114,9 +163,23 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 );
               });
             }
-          } else if (state is BookingError) {
+          } else if (state is BookingCancelled) {
+            AppLoading.hide(context);
             setState(() {
               _isCheckingStatus = false;
+              _isCancellingBooking = false;
+            });
+
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (_) => BookingCancelledScreen(message: state.message),
+              ),
+            );
+          } else if (state is BookingError) {
+            AppLoading.hide(context);
+            setState(() {
+              _isCheckingStatus = false;
+              _isCancellingBooking = false;
             });
             AppToast.showError(context, message: state.message);
           }
@@ -148,7 +211,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   SizedBox(height: 24 * scale),
                   ElevatedButton(
                     onPressed: () {
-                      context.read<BookingBloc>().add(BookingCreatePaymentLink(widget.paymentType));
+                      context.read<BookingBloc>().add(
+                        BookingCreatePaymentLink(widget.paymentType, bookingId: widget.booking.id),
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
@@ -211,6 +276,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   PaymentInfoCard(
                     paymentLink: _paymentLink!,
                     formatPrice: PaymentHelpers.formatPrice,
+                    paymentType: widget.paymentType,
                   ),
                   SizedBox(height: 28 * scale),
                   QRCodeSection(paymentLink: _paymentLink!),
@@ -221,6 +287,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             ),
           );
         },
+        ),
       ),
     );
   }

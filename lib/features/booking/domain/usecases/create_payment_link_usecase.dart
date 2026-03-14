@@ -9,11 +9,15 @@ class CreatePaymentLinkUsecase {
 
   Future<PaymentLinkEntity> call({
     required int bookingId,
-    required String type, // Deposit or Remaining
+    required String type, // Deposit or Remaining or Full
+    bool isHomeService = false,
+    String? staffId,
   }) async {
     return await repository.createPaymentLink(
       bookingId: bookingId,
       type: type,
+      isHomeService: isHomeService,
+      staffId: staffId,
     );
   }
 }

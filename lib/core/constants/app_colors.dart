@@ -13,6 +13,7 @@ class AppColors {
   // Background Colors
   static const Color background = Color(0xFFFFFBF5); // Light beige - #fffbf5
   static const Color white = Color(0xFFFFFFFF); // White
+  static const Color transparent = Colors.transparent;
 
   // Text Colors
   static const Color textPrimary = Color(0xFF000000); // Black
@@ -58,5 +59,10 @@ class AppColors {
   static const Color shadowLight = Color(0x0D000000); // Black with 5% opacity
   static const Color shadowMedium = Color(0x14000000); // Black with 8% opacity
   static const Color starRating = Color(0xFFFACC15); // Gold for star rating
+
+  // Home Service
+  static const Color homeServiceScheduleHighlightBg = Color(0xFFFFF4E8);
+  static const Color homeServiceShadow = Color(0x0A000000);
+  static const Color homeServiceShadowLight = Color(0x08000000);
 }
 

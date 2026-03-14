@@ -19,10 +19,10 @@ class PackageInfoModel {
   factory PackageInfoModel.fromJson(Map<String, dynamic> json) {
     return PackageInfoModel(
       id: json['id'] as int,
-      packageName: json['packageName'] as String,
-      durationDays: json['durationDays'] as int,
-      basePrice: (json['basePrice'] as num).toDouble(),
-      roomTypeName: json['roomTypeName'] as String,
+      packageName: (json['packageName'] as String?) ?? '',
+      durationDays: (json['durationDays'] as int?) ?? 0,
+      basePrice: ((json['basePrice'] as num?) ?? 0).toDouble(),
+      roomTypeName: (json['roomTypeName'] as String?) ?? '',
     );
   }
 

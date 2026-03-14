@@ -37,7 +37,7 @@ class _BookingStep3DateSelectionState extends State<BookingStep3DateSelection> {
         if (state is BookingSummaryReady) {
           selectedPackage = state.package;
           // Always update selected date from summary when available
-            _selectedDate = state.startDate;
+          _selectedDate = state.startDate;
         } else if (state is BookingPackagesLoaded &&
             state.selectedPackageId != null) {
           // Try to get package from packages list
@@ -53,9 +53,20 @@ class _BookingStep3DateSelectionState extends State<BookingStep3DateSelection> {
         // Update selected date from state if available
         if (state is BookingDateSelected) {
           _selectedDate = state.selectedDate;
+          // Prefer package from BookingDateSelected if available
+          if (state.package != null) {
+            selectedPackage = state.package;
+          }
         } else if (state is BookingSummaryReady && _selectedDate == null) {
           // Fallback: get from summary if not set
           _selectedDate = state.startDate;
+        }
+
+        // If still null (e.g., coming back from room step), restore from bloc
+        if (_selectedDate == null) {
+          final bloc = context.read<BookingBloc>();
+          _selectedDate = bloc.selectedDate;
+          selectedPackage ??= bloc.selectedPackage;
         }
 
         // Calculate check-out date if we have both package and selected date

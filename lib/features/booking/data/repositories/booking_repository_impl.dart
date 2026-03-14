@@ -71,6 +71,9 @@ class BookingRepositoryImpl implements BookingRepository {
   }
 
   @override
+  Future<String> cancelBooking(int id) async {
+    try {
+      return await remoteDataSource.cancelBooking(id);
   Future<List<BookingEntity>> getAllBookings() async {
     try {
       final models = await remoteDataSource.getAllBookings();
@@ -84,11 +87,15 @@ class BookingRepositoryImpl implements BookingRepository {
   Future<PaymentLinkEntity> createPaymentLink({
     required int bookingId,
     required String type,
+    bool isHomeService = false,
+    String? staffId,
   }) async {
     try {
       final model = await remoteDataSource.createPaymentLink(
         bookingId: bookingId,
         type: type,
+        isHomeService: isHomeService,
+        staffId: staffId,
       );
       return model.toEntity();
     } catch (e) {

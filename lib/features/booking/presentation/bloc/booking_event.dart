@@ -92,12 +92,20 @@ class BookingCreateOfflinePayment extends BookingEvent {
 
 /// Create payment link
 class BookingCreatePaymentLink extends BookingEvent {
-  final String type; // Deposit or Remaining
+  final String type; // Deposit or Remaining or Full
+  final int? bookingId;
+  final bool isHomeService;
+  final String? staffId;
 
-  const BookingCreatePaymentLink(this.type);
+  const BookingCreatePaymentLink(
+    this.type, {
+    this.bookingId,
+    this.isHomeService = false,
+    this.staffId,
+  });
 
   @override
-  List<Object?> get props => [type];
+  List<Object?> get props => [type, bookingId, isHomeService, staffId];
 }
 
 /// Check payment status
@@ -123,6 +131,16 @@ class BookingLoadById extends BookingEvent {
 /// Load all bookings
 class BookingLoadAll extends BookingEvent {
   const BookingLoadAll();
+}
+
+/// Cancel booking (e.g., user cancels payment)
+class BookingCancelRequested extends BookingEvent {
+  final int id;
+
+  const BookingCancelRequested(this.id);
+
+  @override
+  List<Object?> get props => [id];
 }
 
 /// Reset booking state

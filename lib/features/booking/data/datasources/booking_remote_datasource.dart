@@ -41,6 +41,8 @@ abstract class BookingRemoteDataSource {
   Future<PaymentLinkModel> createPaymentLink({
     required int bookingId,
     required String type,
+    bool isHomeService = false,
+    String? staffId,
   });
 
   Future<PaymentStatusModel> checkPaymentStatus(String orderCode);
@@ -139,6 +141,14 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
   }
 
   @override
+  Future<String> cancelBooking(int id) async {
+    try {
+      final response = await dio.put(ApiEndpoints.cancelBooking(id));
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        return data['message'] as String? ?? 'Hủy booking thành công.';
+      }
+      return 'Hủy booking thành công.';
   Future<List<BookingModel>> getAllBookings() async {
     try {
       final response = await dio.get(ApiEndpoints.getAllBookings);
@@ -156,40 +166,24 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
   Future<PaymentLinkModel> createPaymentLink({
     required int bookingId,
     required String type,
+    bool isHomeService = false,
+    String? staffId,
   }) async {
     try {
       final response = await dio.post(
-        ApiEndpoints.createPaymentLink,
-        data: {'bookingId': bookingId, 'type': type},
-      );
-
-      return PaymentLinkModel.fromJson(response.data as Map<String, dynamic>);
-    } on DioException catch (e) {
-      throw _handleError(e);
-    }
-  }
-
-  /// Staff ghi nhận thanh toán offline cho booking.
-  ///
-  /// Sử dụng POST /api/Transaction/payment.
-  @override
-  Future<PaymentStatusModel> createOfflinePayment({
-    required int bookingId,
-    required String customerId,
-    required double amount,
-    required String paymentMethod,
-    String? note,
-  }) async {
-    try {
-      final response = await dio.post(
-        ApiEndpoints.createOfflinePayment,
-        data: {
-          'bookingId': bookingId,
-          'customerId': customerId,
-          'amount': amount,
-          'paymentMethod': paymentMethod,
-          if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
-        },
+        isHomeService
+            ? ApiEndpoints.createHomeServicePaymentLink
+            : ApiEndpoints.createPaymentLink,
+        data: isHomeService
+            ? {
+                'bookingId': bookingId,
+                'type': type,
+                'staffId': staffId ?? '',
+              }
+            : {
+                'bookingId': bookingId,
+                'type': type,
+              },
       );
 
       return PaymentStatusModel.fromJson(response.data as Map<String, dynamic>);

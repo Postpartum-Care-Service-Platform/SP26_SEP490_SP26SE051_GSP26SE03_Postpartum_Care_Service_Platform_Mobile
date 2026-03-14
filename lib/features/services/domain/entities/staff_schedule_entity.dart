@@ -5,9 +5,10 @@ class StaffScheduleEntity extends Equatable {
   final int id;
   final String staffId;
   final String? staffName;
-  final String managerId;
+  final String? managerId;
   final String? managerName;
-  final int familyScheduleId;
+  final String? staffAvatar;
+  final int? familyScheduleId;
   final bool isChecked;
   final DateTime? checkedAt;
 
@@ -15,9 +16,10 @@ class StaffScheduleEntity extends Equatable {
     required this.id,
     required this.staffId,
     this.staffName,
-    required this.managerId,
+    this.managerId,
     this.managerName,
-    required this.familyScheduleId,
+    this.staffAvatar,
+    this.familyScheduleId,
     required this.isChecked,
     this.checkedAt,
   });
@@ -29,6 +31,7 @@ class StaffScheduleEntity extends Equatable {
         staffName,
         managerId,
         managerName,
+        staffAvatar,
         familyScheduleId,
         isChecked,
         checkedAt,

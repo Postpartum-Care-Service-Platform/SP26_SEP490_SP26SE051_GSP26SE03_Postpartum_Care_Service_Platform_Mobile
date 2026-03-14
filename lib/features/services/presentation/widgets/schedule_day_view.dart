@@ -14,12 +14,14 @@ class ScheduleDayView extends StatelessWidget {
   final DateTime date;
   final List<FamilyScheduleEntity> schedules;
   final int dayNo;
+  final EdgeInsets? margin;
 
   const ScheduleDayView({
     super.key,
     required this.date,
     required this.schedules,
     required this.dayNo,
+    this.margin,
   });
 
   /// Sort schedules by start time
@@ -51,7 +53,7 @@ class ScheduleDayView extends StatelessWidget {
 
     if (sortedSchedules.isEmpty) {
       return Container(
-        margin: EdgeInsets.symmetric(horizontal: 12 * scale, vertical: 8 * scale),
+        margin: margin ?? EdgeInsets.symmetric(horizontal: 12 * scale, vertical: 8 * scale),
         padding: EdgeInsets.symmetric(
           horizontal: 48 * scale,
           vertical: 48 * scale,
@@ -121,7 +123,7 @@ class ScheduleDayView extends StatelessWidget {
     }
 
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 20 * scale, vertical: 8 * scale),
+      margin: margin ?? EdgeInsets.symmetric(horizontal: 20 * scale, vertical: 8 * scale),
       padding: EdgeInsets.all(20 * scale),
       decoration: BoxDecoration(
         color: AppColors.white,

@@ -10,13 +10,21 @@ import '../../../booking/presentation/bloc/booking_bloc.dart';
 import '../../../booking/presentation/bloc/booking_event.dart';
 import '../../../booking/presentation/bloc/booking_state.dart';
 
-class BookingStep2RoomSelection extends StatelessWidget {
+class BookingStep2RoomSelection extends StatefulWidget {
   final Function(int) onRoomSelected;
 
   const BookingStep2RoomSelection({
     super.key,
     required this.onRoomSelected,
   });
+
+  @override
+  State<BookingStep2RoomSelection> createState() =>
+      _BookingStep2RoomSelectionState();
+}
+
+class _BookingStep2RoomSelectionState extends State<BookingStep2RoomSelection> {
+  int? _selectedFloor;
 
   @override
   Widget build(BuildContext context) {
@@ -55,23 +63,30 @@ class BookingStep2RoomSelection extends StatelessWidget {
         // Get rooms and selected room ID from various states
         List<RoomEntity> rooms;
         int? selectedRoomId;
-        
+
         if (state is BookingRoomsLoaded) {
           rooms = state.rooms;
           selectedRoomId = state.selectedRoomId;
         } else if (state is BookingSummaryReady) {
-          // If we have summary, we need to load rooms again
-          // But we can get selected room ID from summary
-          selectedRoomId = state.roomId;
-          // Trigger room load
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (context.mounted) {
-              context.read<BookingBloc>().add(const BookingLoadRooms());
-            }
-          });
-          return const Center(child: AppLoadingIndicator());
+          // Đã có tóm tắt (đầy đủ thông tin) nhưng vẫn đang ở bước chọn phòng.
+          // Tận dụng danh sách phòng đã load trong BookingBloc để tránh gọi API lại.
+          final bloc = context.read<BookingBloc>();
+          final cachedRooms = bloc.rooms;
+          if (cachedRooms != null && cachedRooms.isNotEmpty) {
+            rooms = cachedRooms;
+            selectedRoomId = state.roomId;
+          } else {
+            // Chỉ khi chưa có cache mới gọi lại API
+            selectedRoomId = state.roomId;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (context.mounted) {
+                context.read<BookingBloc>().add(const BookingLoadRooms());
+              }
+            });
+            return const Center(child: AppLoadingIndicator());
+          }
         } else {
-          // If state is not BookingRoomsLoaded, trigger load
+          // Nếu chưa load phòng lần nào, trigger load một lần
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted) {
               context.read<BookingBloc>().add(const BookingLoadRooms());
@@ -79,7 +94,7 @@ class BookingStep2RoomSelection extends StatelessWidget {
           });
           return const Center(child: AppLoadingIndicator());
         }
-        
+
         if (rooms.isEmpty) {
           return Center(
             child: Column(
@@ -107,10 +122,7 @@ class BookingStep2RoomSelection extends StatelessWidget {
         final Map<int?, List<RoomEntity>> roomsByFloor = {};
         for (final room in rooms) {
           final floor = room.floor;
-          if (!roomsByFloor.containsKey(floor)) {
-            roomsByFloor[floor] = [];
-          }
-          roomsByFloor[floor]!.add(room);
+          roomsByFloor.putIfAbsent(floor, () => <RoomEntity>[]).add(room);
         }
 
         // Sort floors
@@ -121,80 +133,242 @@ class BookingStep2RoomSelection extends StatelessWidget {
             return a.compareTo(b);
           });
 
-        return ListView.builder(
-          padding: EdgeInsets.all(16 * scale),
-          itemCount: sortedFloors.length,
-          itemBuilder: (context, floorIndex) {
-            final floor = sortedFloors[floorIndex];
-            final floorRooms = roomsByFloor[floor]!;
+        // Sort rooms inside each floor theo thứ tự số phòng tăng dần
+        for (final entry in roomsByFloor.entries) {
+          entry.value.sort((a, b) {
+            final aNum = int.tryParse(a.name);
+            final bNum = int.tryParse(b.name);
+            if (aNum != null && bNum != null) {
+              return aNum.compareTo(bNum);
+            }
+            return a.name.compareTo(b.name);
+          });
+        }
 
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Floor header
-                Padding(
-                  padding: EdgeInsets.only(bottom: 12 * scale),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.layers,
-                        size: 18 * scale,
-                        color: AppColors.primary,
+        if (sortedFloors.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        // Determine effective selected floor (keep previous selection if possible)
+        final effectiveFloor = _selectedFloor ?? sortedFloors.first;
+        final currentFloorRooms = roomsByFloor[effectiveFloor] ?? rooms;
+
+        return Padding(
+          padding: EdgeInsets.all(16 * scale),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                AppStrings.bookingRoom,
+                style: AppTextStyles.tinos(
+                  fontSize: 20 * scale,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              SizedBox(height: 8 * scale),
+              Text(
+                'Chọn phòng trên sơ đồ từng tầng',
+                style: AppTextStyles.arimo(
+                  fontSize: 13 * scale,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              SizedBox(height: 16 * scale),
+
+              // Floor selector (as horizontal chips)
+              SizedBox(
+                height: 40 * scale,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: sortedFloors.length,
+                  separatorBuilder: (_, __) => SizedBox(width: 8 * scale),
+                  itemBuilder: (context, index) {
+                    final floor = sortedFloors[index];
+                    final isSelectedFloor = floor == effectiveFloor;
+                    final label = floor != null
+                        ? '${AppStrings.bookingFloor} $floor'
+                        : 'không rõ tầng';
+
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _selectedFloor = floor;
+                        });
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 14 * scale,
+                          vertical: 8 * scale,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelectedFloor
+                              ? AppColors.primary
+                              : AppColors.white,
+                          borderRadius: BorderRadius.circular(20 * scale),
+                          border: Border.all(
+                            color: isSelectedFloor
+                                ? AppColors.primary
+                                : AppColors.borderLight,
+                            width: 1.5,
+                          ),
+                          boxShadow: isSelectedFloor
+                              ? [
+                                  BoxShadow(
+                                    color: AppColors.primary
+                                        .withValues(alpha: 0.25),
+                                    blurRadius: 10 * scale,
+                                    offset: Offset(0, 3 * scale),
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: Center(
+                          child: Text(
+                            label,
+                            style: AppTextStyles.arimo(
+                              fontSize: 13 * scale,
+                              fontWeight: FontWeight.w600,
+                              color: isSelectedFloor
+                                  ? AppColors.white
+                                  : AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
                       ),
-                      SizedBox(width: 8 * scale),
-                      Text(
-                        floor != null
-                            ? '${AppStrings.bookingFloor} $floor'
-                            : 'Không xác định tầng',
-                        style: AppTextStyles.arimo(
-                          fontSize: 16 * scale,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
+                    );
+                  },
+                ),
+              ),
+
+              SizedBox(height: 16 * scale),
+
+              // Floor map container
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(16 * scale),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(20 * scale),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.shadowMedium,
+                        blurRadius: 18 * scale,
+                        offset: Offset(0, 6 * scale),
+                      ),
+                    ],
+                    border: Border.all(
+                      color: AppColors.borderLight,
+                      width: 1,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.map_rounded,
+                            size: 20 * scale,
+                            color: AppColors.primary,
+                          ),
+                          SizedBox(width: 8 * scale),
+                          Text(
+                            effectiveFloor != null
+                                ? 'Sơ đồ tầng $effectiveFloor'
+                                : 'Sơ đồ phòng',
+                            style: AppTextStyles.arimo(
+                              fontSize: 15 * scale,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const Spacer(),
+                          // Legend: Đang chọn (cam có tick) / Chưa chọn (ô tròn trắng)
+                          _LegendSelected(scale: scale),
+                          SizedBox(width: 16 * scale),
+                          _LegendUnselected(scale: scale),
+                        ],
+                      ),
+                      SizedBox(height: 16 * scale),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: _buildTwoColumnMap(
+                            context,
+                            currentFloorRooms,
+                            selectedRoomId,
+                            scale,
+                            onRoomTap: (room) {
+                              widget.onRoomSelected(room.id);
+                            },
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
-                // Rooms grid for this floor
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 12 * scale,
-                    mainAxisSpacing: 12 * scale,
-                    childAspectRatio: 1.1,
-                  ),
-                  itemCount: floorRooms.length,
-                  itemBuilder: (context, roomIndex) {
-                    final room = floorRooms[roomIndex];
-                    final isSelected = selectedRoomId == room.id;
-
-                    return _RoomCard(
-                      room: room,
-                      isSelected: isSelected,
-                      onTap: () {
-                        onRoomSelected(room.id);
-                      },
-                    );
-                  },
-                ),
-                SizedBox(height: 24 * scale),
-              ],
-            );
-          },
+              ),
+            ],
+          ),
         );
       },
     );
   }
 }
 
-class _RoomCard extends StatelessWidget {
+Widget _buildTwoColumnMap(
+  BuildContext context,
+  List<RoomEntity> rooms,
+  int? selectedRoomId,
+  double scale, {
+  required void Function(RoomEntity room) onRoomTap,
+}) {
+  // Chia danh sách phòng thành 2 dãy lần lượt (ziczac) theo index
+  final col1 = <RoomEntity>[];
+  final col2 = <RoomEntity>[];
+
+  for (var i = 0; i < rooms.length; i++) {
+    if (i.isEven) {
+      col1.add(rooms[i]);
+    } else {
+      col2.add(rooms[i]);
+    }
+  }
+
+  Widget buildColumn(List<RoomEntity> columnRooms) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: columnRooms
+          .map((room) => Padding(
+                padding: EdgeInsets.symmetric(vertical: 6 * scale),
+                child: _RoomTile(
+                  room: room,
+                  isSelected: selectedRoomId == room.id,
+                  onTap: () => onRoomTap(room),
+                ),
+              ))
+          .toList(),
+    );
+  }
+
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Flexible(child: buildColumn(col1)),
+      SizedBox(width: 12 * scale),
+      Flexible(child: buildColumn(col2)),
+    ],
+  );
+}
+
+class _RoomTile extends StatelessWidget {
   final RoomEntity room;
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _RoomCard({
+  const _RoomTile({
     required this.room,
     required this.isSelected,
     required this.onTap,
@@ -207,10 +381,17 @@ class _RoomCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.all(10 * scale),
+        width: 120 * scale,
+        constraints: BoxConstraints(
+          minHeight: 110 * scale,
+        ),
+        padding: EdgeInsets.symmetric(
+          horizontal: 10 * scale,
+          vertical: 10 * scale,
+        ),
         decoration: BoxDecoration(
           color: AppColors.white,
-          borderRadius: BorderRadius.circular(16 * scale),
+          borderRadius: BorderRadius.circular(12 * scale),
           border: Border.all(
             color: isSelected
                 ? AppColors.primary
@@ -232,29 +413,72 @@ class _RoomCard extends StatelessWidget {
           ],
         ),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.max,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Room icon
-            Container(
-              width: 40 * scale,
-              height: 40 * scale,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10 * scale),
-              ),
-              child: Icon(
-                Icons.hotel,
-                size: 20 * scale,
-                color: AppColors.primary,
-              ),
+            // Top row: icon + tầng
+            Row(
+              children: [
+                Container(
+                  width: 20 * scale,
+                  height: 20 * scale,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(6 * scale),
+                  ),
+                  child: Icon(
+                    Icons.hotel,
+                    size: 13 * scale,
+                    color: AppColors.primary,
+                  ),
+                ),
+                SizedBox(width: 6 * scale),
+                Expanded(
+                  child: Text(
+                    room.floor != null
+                        ? '${AppStrings.bookingFloor} ${room.floor}'
+                        : '',
+                    style: AppTextStyles.arimo(
+                      fontSize: 10 * scale,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                SizedBox(width: 6 * scale),
+                Container(
+                  width: 16 * scale,
+                  height: 16 * scale,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isSelected
+                        ? AppColors.primary
+                        : Colors.transparent,
+                    border: Border.all(
+                      color: isSelected
+                          ? AppColors.primary
+                          : AppColors.borderLight,
+                      width: 1.6,
+                    ),
+                  ),
+                  child: isSelected
+                      ? Icon(
+                          Icons.check,
+                          size: 11 * scale,
+                          color: AppColors.white,
+                        )
+                      : null,
+                ),
+              ],
             ),
-            SizedBox(height: 8 * scale),
-            // Room name
+            SizedBox(height: 6 * scale),
+            // Room name (center, to, rõ)
             Text(
               'Phòng ${room.name}',
               style: AppTextStyles.tinos(
-                fontSize: 14 * scale,
+                fontSize: 15 * scale,
                 fontWeight: FontWeight.bold,
                 color: AppColors.textPrimary,
               ),
@@ -263,47 +487,96 @@ class _RoomCard extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
             SizedBox(height: 4 * scale),
-            // Room type
-            Flexible(
-              child: Text(
-                room.roomTypeName,
-                style: AppTextStyles.arimo(
-                  fontSize: 10 * scale,
-                  color: AppColors.textSecondary,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            SizedBox(height: 6 * scale),
-            // Selection indicator
-            Container(
-              width: 20 * scale,
-              height: 20 * scale,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isSelected
-                    ? AppColors.primary
-                    : AppColors.borderLight,
-                border: Border.all(
-                  color: isSelected
-                      ? AppColors.primary
-                      : AppColors.borderLight,
-                  width: 2,
+            // Room type (giới hạn chiều cao cố định để tránh overflow)
+            SizedBox(
+              height: 28 * scale,
+              child: Center(
+                child: Text(
+                  room.roomTypeName,
+                  style: AppTextStyles.arimo(
+                    fontSize: 10 * scale,
+                    color: AppColors.textSecondary,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              child: isSelected
-                  ? Icon(
-                      Icons.check,
-                      size: 14 * scale,
-                      color: AppColors.white,
-                    )
-                  : null,
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _LegendSelected extends StatelessWidget {
+  final double scale;
+
+  const _LegendSelected({required this.scale});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 14 * scale,
+          height: 14 * scale,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppColors.primary,
+          ),
+          child: Icon(
+            Icons.check,
+            size: 9 * scale,
+            color: AppColors.white,
+          ),
+        ),
+        SizedBox(width: 6 * scale),
+        Text(
+          'Đang chọn',
+          style: AppTextStyles.arimo(
+            fontSize: 10 * scale,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _LegendUnselected extends StatelessWidget {
+  final double scale;
+
+  const _LegendUnselected({required this.scale});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 14 * scale,
+          height: 14 * scale,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppColors.white,
+            border: Border.all(
+              color: AppColors.borderLight,
+              width: 1.5,
+            ),
+          ),
+        ),
+        SizedBox(width: 6 * scale),
+        Text(
+          'Chưa chọn',
+          style: AppTextStyles.arimo(
+            fontSize: 10 * scale,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ],
     );
   }
 }

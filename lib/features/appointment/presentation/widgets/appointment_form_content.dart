@@ -139,7 +139,7 @@ class AppointmentFormContentState extends State<AppointmentFormContent> {
     if (_selectedDate == null) {
       AppToast.showError(
         context,
-        message: 'Vui lòng chọn ngày trước',
+        message: AppStrings.pleaseSelectDate,
       );
       return;
     }
@@ -195,7 +195,7 @@ class AppointmentFormContentState extends State<AppointmentFormContent> {
     if (appointmentDateTime.isBefore(now)) {
       AppToast.showError(
         context,
-        message: 'Không thể đặt lịch hẹn vào thời gian quá khứ',
+        message: AppStrings.cannotSetAppointmentInPast,
       );
       return false;
     }
@@ -204,7 +204,7 @@ class AppointmentFormContentState extends State<AppointmentFormContent> {
     if (_selectedTime!.hour < 8 || _selectedTime!.hour > 17) {
       AppToast.showError(
         context,
-        message: 'Chỉ có thể đặt lịch trong giờ hành chính (8:00 - 17:00)',
+        message: AppStrings.canOnlySetAppointmentDuringBusinessHours,
       );
       return false;
     }

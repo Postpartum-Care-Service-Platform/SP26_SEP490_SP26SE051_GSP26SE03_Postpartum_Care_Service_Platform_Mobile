@@ -109,7 +109,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         context,
                         children: [
                           ProfileMenuItem(
-                            icon: Icons.person_outline_rounded,
+                            svgIcon: AppAssets.profile,
                             title: AppStrings.myAccount,
                             onTap: () {
                               if (userId == null) return;
