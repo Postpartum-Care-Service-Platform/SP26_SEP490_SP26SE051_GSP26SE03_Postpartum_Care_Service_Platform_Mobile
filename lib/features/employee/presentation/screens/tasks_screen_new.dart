@@ -49,6 +49,18 @@ class _TasksScreenContent extends StatelessWidget {
                   context.read<AppointmentBloc>().add(const LoadMyAssignedAppointments());
                 },
                 child: BlocConsumer<AppointmentBloc, AppointmentState>(
+                  listenWhen: (previous, current) {
+                    return current is AppointmentError || current is AppointmentActionSuccess;
+                  },
+                  buildWhen: (previous, current) {
+                    if (current is AppointmentActionSuccess) {
+                      return false;
+                    }
+                    if (current is AppointmentLoading && previous is AppointmentLoaded) {
+                      return false;
+                    }
+                    return true;
+                  },
                   listener: (context, state) {
                     if (state is AppointmentError) {
                       ScaffoldMessenger.of(context).showSnackBar(

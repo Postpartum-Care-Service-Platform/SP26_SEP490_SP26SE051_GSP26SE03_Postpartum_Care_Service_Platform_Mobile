@@ -60,6 +60,12 @@ class AppStrings {
   static const String goodEvening = 'Chào buổi chiều';
   static const String goodNight = 'Chào buổi tối';
   static const String quickActions = 'Lối tắt';
+  static const String quickActionsCenterNurse = 'Lối tắt tại trung tâm';
+  static const String quickActionsHomeNurse = 'Lối tắt điều dưỡng tại nhà';
+  static const String quickActionRouteMap = 'Lộ trình';
+  static const String quickActionVisits = 'Ca thăm';
+  static const String quickActionSupport = 'Hỗ trợ';
+  static const String quickActionReports = 'Báo cáo';
   static const String upcomingSchedule = 'Lịch trình sắp tới';
   static const String promotions = 'Ưu đãi & Gói dịch vụ';
   static const String viewAll = 'Xem tất cả';
@@ -71,7 +77,8 @@ class AppStrings {
   static const String resortMap = 'Bản đồ Resort';
 
   //Error Input
-  static const String errorInputEmail = 'Vui lòng nhập email hoặc tên đăng nhập';
+  static const String errorInputEmail =
+      'Vui lòng nhập email hoặc tên đăng nhập';
   static const String errorInputPassword = 'Vui lòng nhập mật khẩu';
   static const String errorInputUsername = 'Vui lòng nhập tên đăng nhập';
   static const String errorInputPhone = 'Vui lòng nhập số điện thoại';
@@ -80,8 +87,7 @@ class AppStrings {
   static const String errorInputPasswordRequired = 'Vui lòng nhập mật khẩu';
   static const String errorInputPasswordMinLength =
       'Mật khẩu phải có ít nhất 6 ký tự';
-  static const String errorInputConfirmPassword =
-      'Vui lòng xác nhận mật khẩu';
+  static const String errorInputConfirmPassword = 'Vui lòng xác nhận mật khẩu';
   static const String errorInputPasswordsNotMatch = 'Mật khẩu không khớp';
   static const String errorFillAllFields = 'Vui lòng điền đầy đủ thông tin';
   static const String errorOtpInvalid = 'Vui lòng nhập mã OTP 6 chữ số hợp lệ';
@@ -123,6 +129,10 @@ class AppStrings {
   static const String noEmployeeProfile = 'Không thể tải thông tin nhân viên.';
   static const String employeeProfileHint =
       'Vui lòng kiểm tra kết nối mạng hoặc đăng nhập lại để tải hồ sơ.';
+  static const String employeeTypeLabel = 'Loại nhân viên';
+  static const String employeeTypeCenterCare = 'Điều dưỡng';
+  static const String employeeTypeHomeCare = 'Điều dưỡng tại nhà';
+  static const String employeeTypeUnknown = 'Chưa xác định';
 
   // Profile Menu Items
   static const String myAccount = 'Tài khoản của tôi';
@@ -280,7 +290,8 @@ class AppStrings {
   static const String notificationStatus = 'Trạng thái';
   static const String notificationStatusRead = 'Đã đọc';
   static const String notificationStatusUnread = 'Chưa đọc';
-  static const String notificationUnreadSummary = 'Bạn có {count} thông báo chưa đọc';
+  static const String notificationUnreadSummary =
+      'Bạn có {count} thông báo chưa đọc';
   static const String notificationUnreadCta = 'Xem ngay';
 
   // Package Screen
@@ -418,7 +429,7 @@ class AppStrings {
   static const String paymentPending = 'Đang chờ thanh toán';
   static const String paymentCheckStatus = 'Kiểm tra trạng thái';
   static const String paymentCreateError = 'Không thể tạo link thanh toán';
-    // Booking History Screen
+  // Booking History Screen
   static const String noBookingHistory = 'Chưa có lịch sử đặt phòng';
   static const String noCustomerInformation = 'Chưa có thông tin khách hàng';
   static const String noTransactions = 'Chưa có giao dịch';
@@ -591,8 +602,10 @@ class AppStrings {
   static const String amenityCreateSuccess = 'Tạo yêu cầu tiện ích thành công';
   static const String amenityCreateError = 'Không thể tạo yêu cầu tiện ích';
   static const String amenityLoadError = 'Không thể tải dữ liệu tiện ích';
-  static const String amenityPleaseSelectService = 'Vui lòng chọn dịch vụ tiện ích';
-  static const String amenityPleaseSelectTime = 'Vui lòng chọn thời gian bắt đầu';
+  static const String amenityPleaseSelectService =
+      'Vui lòng chọn dịch vụ tiện ích';
+  static const String amenityPleaseSelectTime =
+      'Vui lòng chọn thời gian bắt đầu';
   static const String amenityStatusBooked = 'Đã đặt';
   static const String amenityStatusAccepted = 'Đã chấp nhận';
   static const String amenityStatusCompleted = 'Đã hoàn thành';
@@ -600,9 +613,12 @@ class AppStrings {
   static const String amenityMyTickets = 'Yêu cầu của tôi';
   static const String amenityAvailableServices = 'Dịch vụ có sẵn';
   static const String amenityCurrentSchedule = 'Lịch trình hiện tại';
-  static const String amenityScheduleConflict = 'Thời gian này trùng với lịch trình khác';
-  static const String amenityScheduleConflictWarning = 'Cảnh báo: Thời gian này có thể trùng với lịch trình khác';
-  static const String amenityNoConflict = 'Thời gian này không trùng với lịch trình khác';
+  static const String amenityScheduleConflict =
+      'Thời gian này trùng với lịch trình khác';
+  static const String amenityScheduleConflictWarning =
+      'Cảnh báo: Thời gian này có thể trùng với lịch trình khác';
+  static const String amenityNoConflict =
+      'Thời gian này không trùng với lịch trình khác';
   static const String amenityViewSchedule = 'Xem lịch trình';
   static const String amenityServiceDescription = 'Mô tả';
   static const String amenityServiceDurationLabel = 'Thời lượng dự kiến';

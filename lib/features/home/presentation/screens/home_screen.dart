@@ -53,6 +53,12 @@ class _HomeScreenState extends State<HomeScreen> {
             isLoading = true;
           }
 
+          final isHomeNurse = _isHomeNurse(authState);
+          final quickActionsTitle = isHomeNurse
+              ? AppStrings.quickActionsHomeNurse
+              : AppStrings.quickActionsCenterNurse;
+          final quickActions = _buildQuickActions(context, isHomeNurse);
+
           return SafeArea(
             bottom: false,
             child: SingleChildScrollView(
@@ -71,7 +77,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 32),
 
                   // Quick Actions Section
-                  const SectionHeader(title: AppStrings.quickActions),
+                  SectionHeader(title: quickActionsTitle),
                   const SizedBox(height: 16),
                   GridView.count(
                     crossAxisCount: 4,
@@ -79,28 +85,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     physics: const NeverScrollableScrollPhysics(),
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
-                    children: [
-                      QuickActionCard(
-                        icon: Icons.spa_outlined,
-                        title: AppStrings.spaAndCare,
-                        onTap: () {},
-                      ),
-                      QuickActionCard(
-                        icon: Icons.child_care_outlined,
-                        title: AppStrings.babyActivities,
-                        onTap: () {},
-                      ),
-                      QuickActionCard(
-                        icon: Icons.restaurant_menu_outlined,
-                        title: AppStrings.nutritionMenu,
-                        onTap: () {},
-                      ),
-                      QuickActionCard(
-                        icon: Icons.map_outlined,
-                        title: AppStrings.resortMap,
-                        onTap: () {},
-                      ),
-                    ],
+                    children: quickActions,
                   ),
                   const SizedBox(height: 32),
 
@@ -212,5 +197,80 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       ),
     );
+  }
+
+  bool _isHomeNurse(AuthState authState) {
+    if (authState is! AuthCurrentAccountLoaded) {
+      return false;
+    }
+
+    final memberTypeName = authState.account.ownerProfile?.memberTypeName
+        ?.toLowerCase()
+        .trim();
+
+    if (memberTypeName == null || memberTypeName.isEmpty) {
+      return false;
+    }
+
+    return memberTypeName.contains('tại nhà') ||
+        memberTypeName.contains('tai nha');
+  }
+
+  List<Widget> _buildQuickActions(BuildContext context, bool isHomeNurse) {
+    if (isHomeNurse) {
+      return [
+        QuickActionCard(
+          icon: Icons.map_outlined,
+          title: AppStrings.quickActionRouteMap,
+          onTap: () {
+            AppRouter.push(context, AppRoutes.employeeCheckInOut);
+          },
+        ),
+        QuickActionCard(
+          icon: Icons.schedule_outlined,
+          title: AppStrings.quickActionVisits,
+          onTap: () {
+            AppRouter.push(context, AppRoutes.employeeTasks);
+          },
+        ),
+        QuickActionCard(
+          icon: Icons.support_agent_outlined,
+          title: AppStrings.quickActionSupport,
+          onTap: () {
+            AppRouter.push(context, AppRoutes.employeeRequests);
+          },
+        ),
+        QuickActionCard(
+          icon: Icons.assignment_outlined,
+          title: AppStrings.quickActionReports,
+          onTap: () {
+            AppRouter.push(context, AppRoutes.employeeAppointmentList);
+          },
+        ),
+      ];
+    }
+
+    return [
+      QuickActionCard(
+        icon: Icons.spa_outlined,
+        title: AppStrings.spaAndCare,
+        onTap: () {},
+      ),
+      QuickActionCard(
+        icon: Icons.child_care_outlined,
+        title: AppStrings.babyActivities,
+        onTap: () {},
+      ),
+      QuickActionCard(
+        icon: Icons.restaurant_menu_outlined,
+        title: AppStrings.nutritionMenu,
+        onTap: () {},
+      ),
+      QuickActionCard(
+        icon: Icons.map_outlined,
+        title: AppStrings.resortMap,
+        onTap: () {},
+      ),
+    ];
   }
 }

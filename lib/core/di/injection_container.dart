@@ -470,6 +470,7 @@ class InjectionContainer {
     getAccountByIdUsecase: _getAccountByIdUsecase,
     getCurrentAccountUsecase: _getCurrentAccountUsecase,
     changePasswordUsecase: _changePasswordUsecase,
+    familyProfileRepository: familyProfileRepository,
   );
 
   static FamilyProfileBloc get familyProfileBloc => FamilyProfileBloc(
