@@ -9,6 +9,8 @@ enum ChatSendStatus { idle, sending, success, failure }
 
 enum ChatSupportStatus { idle, submitting, success, failure }
 
+enum ChatSupportRequestActionStatus { idle, processing, success, failure }
+
 class ChatState extends Equatable {
   final List<ChatConversation> conversations;
   final ChatConversation? selectedConversation;
@@ -21,6 +23,12 @@ class ChatState extends Equatable {
   final bool isAiTyping;
   final Map<int, AiStructuredData> aiStructuredByMessageId;
   final String searchQuery;
+  // Staff Support Requests
+  final List<SupportRequest> supportRequests; // Yêu cầu đang chờ
+  final List<SupportRequest> mySupportRequests; // Yêu cầu đang xử lý
+  final ChatStatus supportRequestsStatus;
+  final ChatStatus mySupportRequestsStatus;
+  final ChatSupportRequestActionStatus supportRequestActionStatus;
 
   const ChatState({
     this.conversations = const [],
@@ -34,6 +42,11 @@ class ChatState extends Equatable {
     this.isAiTyping = false,
     this.aiStructuredByMessageId = const {},
     this.searchQuery = '',
+    this.supportRequests = const [],
+    this.mySupportRequests = const [],
+    this.supportRequestsStatus = ChatStatus.initial,
+    this.mySupportRequestsStatus = ChatStatus.initial,
+    this.supportRequestActionStatus = ChatSupportRequestActionStatus.idle,
   });
 
   ChatState copyWith({
@@ -48,6 +61,11 @@ class ChatState extends Equatable {
     bool? isAiTyping,
     Map<int, AiStructuredData>? aiStructuredByMessageId,
     String? searchQuery,
+    List<SupportRequest>? supportRequests,
+    List<SupportRequest>? mySupportRequests,
+    ChatStatus? supportRequestsStatus,
+    ChatStatus? mySupportRequestsStatus,
+    ChatSupportRequestActionStatus? supportRequestActionStatus,
   }) {
     return ChatState(
       conversations: conversations ?? this.conversations,
@@ -63,6 +81,11 @@ class ChatState extends Equatable {
       aiStructuredByMessageId:
           aiStructuredByMessageId ?? this.aiStructuredByMessageId,
       searchQuery: searchQuery ?? this.searchQuery,
+      supportRequests: supportRequests ?? this.supportRequests,
+      mySupportRequests: mySupportRequests ?? this.mySupportRequests,
+      supportRequestsStatus: supportRequestsStatus ?? this.supportRequestsStatus,
+      mySupportRequestsStatus: mySupportRequestsStatus ?? this.mySupportRequestsStatus,
+      supportRequestActionStatus: supportRequestActionStatus ?? this.supportRequestActionStatus,
     );
   }
 
@@ -79,6 +102,11 @@ class ChatState extends Equatable {
         isAiTyping,
         aiStructuredByMessageId,
         searchQuery,
+        supportRequests,
+        mySupportRequests,
+        supportRequestsStatus,
+        mySupportRequestsStatus,
+        supportRequestActionStatus,
       ];
 }
 

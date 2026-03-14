@@ -2,8 +2,12 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/di/injection_container.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
+import '../../domain/entities/appointment_entity.dart';
+import '../widgets/employee_scaffold.dart';
+import 'employee_customer_family_profiles_screen.dart';
 
 class EmployeeMealPlanScreen extends StatefulWidget {
   const EmployeeMealPlanScreen({super.key});
@@ -13,25 +17,54 @@ class EmployeeMealPlanScreen extends StatefulWidget {
 }
 
 class _EmployeeMealPlanScreenState extends State<EmployeeMealPlanScreen> {
-  int? _selectedFamilyId;
+  late final Future<List<_AssignedCustomer>> _futureCustomers =
+      _loadAssignedCustomers();
+  String? _selectedCustomerId;
 
-  static const _families = [
-    {'id': 1, 'name': 'Gia đình Trần Thị B', 'room': 'Phòng 101'},
-    {'id': 2, 'name': 'Gia đình Nguyễn Văn C', 'room': 'Phòng 203'},
-    {'id': 3, 'name': 'Gia đình Lê Thị D', 'room': 'Phòng 305'},
-  ];
+  Future<List<_AssignedCustomer>> _loadAssignedCustomers() async {
+    final appointments = await InjectionContainer.appointmentEmployeeRepository
+        .getMyAssignedAppointments();
+
+    final byCustomer = <String, List<AppointmentEntity>>{};
+    for (final a in appointments) {
+      final id = a.customerId.trim();
+      if (id.isEmpty) continue;
+      byCustomer.putIfAbsent(id, () => []).add(a);
+    }
+
+    final result = <_AssignedCustomer>[];
+    for (final entry in byCustomer.entries) {
+      final customerId = entry.key;
+      final items = entry.value;
+      final info = items.first.customer;
+      final email = info?.email ?? '';
+      final displayName = (info?.username?.trim().isNotEmpty == true)
+          ? info!.username!.trim()
+          : (email.isNotEmpty ? email : customerId);
+
+      result.add(
+        _AssignedCustomer(
+          customerId: customerId,
+          displayName: displayName,
+          email: email,
+        ),
+      );
+    }
+
+    result.sort((a, b) => a.displayName.compareTo(b.displayName));
+    return result;
+  }
 
   @override
   Widget build(BuildContext context) {
     final padding = AppResponsive.pagePadding(context);
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
+    return EmployeeScaffold(
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
         title: Text(
-          'Bữa ăn của gia đình',
+          'Suất ăn / Menu Record',
           style: AppTextStyles.arimo(
             fontSize: 16,
             fontWeight: FontWeight.w800,
@@ -40,103 +73,146 @@ class _EmployeeMealPlanScreenState extends State<EmployeeMealPlanScreen> {
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: padding,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 12),
-              _HeaderCard(
-                title: 'Chọn bữa ăn 🍽️',
-                subtitle: 'Hỗ trợ gia đình chọn thực đơn',
-              ),
-              const SizedBox(height: 12),
-              Container(
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 14,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
+        child: FutureBuilder<List<_AssignedCustomer>>(
+          future: _futureCustomers,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                child: CircularProgressIndicator(color: AppColors.primary),
+              );
+            }
+
+            if (snapshot.hasError) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Text(
+                    'Không tải được danh sách gia đình: ${snapshot.error}',
+                    textAlign: TextAlign.center,
+                  ),
                 ),
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      'Chọn gia đình',
-                      style: AppTextStyles.arimo(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
-                      ),
+              );
+            }
+
+            final customers = snapshot.data ?? const [];
+            if (customers.isEmpty) {
+              return const Center(
+                child: Text('Bạn chưa được phân công gia đình nào để quản lý suất ăn.'),
+              );
+            }
+
+            _selectedCustomerId ??= customers.first.customerId;
+            final selected = customers.firstWhere(
+              (e) => e.customerId == _selectedCustomerId,
+              orElse: () => customers.first,
+            );
+
+            return SingleChildScrollView(
+              padding: padding,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 12),
+                  const _HeaderCard(
+                    title: 'Quản lý suất ăn',
+                    subtitle:
+                        'Chọn gia đình được phân công để vào màn profile và thao tác tab Menu Record',
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    const SizedBox(height: 10),
-                    DropdownButtonFormField<int>(
-                      initialValue: _selectedFamilyId,
-                      items: [
-                        for (final f in _families)
-                          DropdownMenuItem<int>(
-                            value: f['id'] as int,
-                            child: Text(
-                              '${f['name']} - ${f['room']}',
-                              style: AppTextStyles.arimo(),
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          'Chọn gia đình',
+                          style: AppTextStyles.arimo(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        DropdownButtonFormField<String>(
+                          initialValue: selected.customerId,
+                          items: [
+                            for (final c in customers)
+                              DropdownMenuItem<String>(
+                                value: c.customerId,
+                                child: Text(
+                                  '${c.displayName} • ${c.email}',
+                                  style: AppTextStyles.arimo(),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                          ],
+                          onChanged: (v) {
+                            if (v == null) return;
+                            setState(() => _selectedCustomerId = v);
+                          },
+                          decoration: InputDecoration(
+                            hintText: '— Chọn gia đình —',
+                            hintStyle: AppTextStyles.arimo(
+                              color: AppColors.textSecondary,
                             ),
-                          )
+                            filled: true,
+                            fillColor: AppColors.background,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: AppColors.borderLight),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(color: AppColors.borderLight),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: AppColors.primary),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        FilledButton.icon(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => EmployeeCustomerFamilyProfilesScreen(
+                                  customerId: selected.customerId,
+                                  customerName: selected.displayName,
+                                ),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.restaurant_menu_rounded),
+                          label: const Text('Mở màn Profile khách hàng'),
+                        ),
                       ],
-                      onChanged: (v) => setState(() => _selectedFamilyId = v),
-                      decoration: InputDecoration(
-                        hintText: '— Chọn gia đình —',
-                        hintStyle: AppTextStyles.arimo(color: AppColors.textSecondary),
-                        filled: true,
-                        fillColor: AppColors.background,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: AppColors.borderLight),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: AppColors.borderLight),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppColors.primary),
-                        ),
-                      ),
                     ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppColors.background,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Text(
-                        _selectedFamilyId == null
-                            ? 'Vui lòng chọn một hộ gia đình để xem thực đơn.'
-                            : 'Tính năng đang được phát triển...\n(Bên React cũng đang để placeholder)',
-                        textAlign: TextAlign.center,
-                        style: AppTextStyles.arimo(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    )
-                  ],
-                ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 24),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
   }
+}
+
+class _AssignedCustomer {
+  final String customerId;
+  final String displayName;
+  final String email;
+
+  const _AssignedCustomer({
+    required this.customerId,
+    required this.displayName,
+    required this.email,
+  });
 }
 
 class _HeaderCard extends StatelessWidget {
@@ -151,13 +227,6 @@ class _HeaderCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
       ),
       padding: const EdgeInsets.all(16),
       child: Column(

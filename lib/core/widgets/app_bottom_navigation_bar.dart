@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -201,39 +203,51 @@ class _PillBottomNavState extends State<_PillBottomNav>
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              // Background with enhanced shadow and border
+              // Background with glassmorphism-style blur, shadow and subtle border
               Positioned(
                 left: 0,
                 right: 0,
                 top: 0,
                 bottom: 0,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(topBorderRadius),
-                      topRight: Radius.circular(topBorderRadius),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(topBorderRadius),
+                    topRight: Radius.circular(topBorderRadius),
+                  ),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(
+                      sigmaX: 16 * scale,
+                      sigmaY: 16 * scale,
                     ),
-                    border: Border(
-                      top: BorderSide(
-                        color: Colors.black.withValues(alpha: 0.12),
-                        width: 1.0 * scale,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: AppColors.white.withValues(alpha: 0.94),
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(topBorderRadius),
+                          topRight: Radius.circular(topBorderRadius),
+                        ),
+                        border: Border(
+                          top: BorderSide(
+                            color: Colors.black.withValues(alpha: 0.06),
+                            width: 0.8 * scale,
+                          ),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.08),
+                            blurRadius: shadowBlur,
+                            offset: Offset(0, shadowOffsetY),
+                            spreadRadius: 0,
+                          ),
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: shadowBlur * 0.5,
+                            offset: Offset(0, shadowOffsetY * 0.5),
+                            spreadRadius: 0,
+                          ),
+                        ],
                       ),
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: shadowBlur,
-                        offset: Offset(0, shadowOffsetY),
-                        spreadRadius: 0,
-                      ),
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.04),
-                        blurRadius: shadowBlur * 0.5,
-                        offset: Offset(0, shadowOffsetY * 0.5),
-                        spreadRadius: 0,
-                      ),
-                    ],
                   ),
                 ),
               ),

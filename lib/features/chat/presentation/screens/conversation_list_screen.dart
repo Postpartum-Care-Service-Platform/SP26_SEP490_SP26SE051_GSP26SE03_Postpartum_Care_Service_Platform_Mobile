@@ -9,6 +9,8 @@ import '../../../../core/widgets/app_widgets.dart';
 import '../../../../core/widgets/app_drawer_form.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/routing/app_routes.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
 import '../bloc/chat_bloc.dart';
 import '../bloc/chat_event.dart';
 import '../widgets/conversation_list.dart';
@@ -88,9 +90,20 @@ class _ConversationScreenState extends State<ConversationListScreen> {
     );
   }
 
+  bool _isStaff(BuildContext context) {
+    final authState = context.read<AuthBloc>().state;
+    if (authState is AuthCurrentAccountLoaded) {
+      final role = authState.account.roleName.toLowerCase();
+      return role == 'staff' || role == 'manager' || role == 'admin';
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
+    final isStaff = _isStaff(context);
+    
     return BlocProvider(
       create: (_) => InjectionContainer.chatBloc
         ..add(const ChatStarted(autoSelectFirstConversation: false)),
@@ -143,8 +156,9 @@ class _ConversationScreenState extends State<ConversationListScreen> {
                       SizedBox(height: 16 * scale),
                       Expanded(
                         child: ConversationList(
-                          onCreate: () =>
-                              _showCreateConversationDialog(contextWithBloc),
+                          onCreate: isStaff
+                              ? null
+                              : () => _showCreateConversationDialog(contextWithBloc),
                           onConversationTap: (id) =>
                               _openConversation(contextWithBloc, id),
                         ),
@@ -154,11 +168,14 @@ class _ConversationScreenState extends State<ConversationListScreen> {
                 ),
               ),
             ),
-            floatingActionButton: AppWidgets.primaryFabIcon(
-              context: contextWithBloc,
-              icon: Icons.add_comment_rounded,
-              onPressed: () => _showCreateConversationDialog(contextWithBloc),
-            ),
+            floatingActionButton: isStaff
+                ? null
+                : AppWidgets.primaryFabExtended(
+                    context: contextWithBloc,
+                    text: AppStrings.chatNewConversation,
+                    icon: Icons.add_comment_rounded,
+                    onPressed: () => _showCreateConversationDialog(contextWithBloc),
+                  ),
           );
         },
       ),

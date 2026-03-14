@@ -46,6 +46,16 @@ class AppRoutes {
 
   // Employee Routes
   static const String employeePortal = '/employee-portal';
+  static const String employeeAmenities = '/employee-amenities';
+  static const String employeeRooms = '/employee-rooms';
+  static const String employeeAssignedFamilies = '/employee-assigned-families';
+  static const String employeeCreateCustomer = '/employee-create-customer';
+  static const String employeePackageBooking = '/employee-package-booking';
+  static const String staffBookingList = '/staff-booking-list';
+  static const String staffTransactionList = '/staff-transaction-list';
+  static const String staffContractList = '/staff-contract-list';
+  static const String staffContractPreview = '/staff-contract-preview';
+  static const String staffMemberTypeDetail = '/staff-member-type-detail';
 
   // Family Routes
   static const String familyPortal = '/family-portal';
@@ -63,12 +73,12 @@ class AppRoutes {
   static const String chatShell = '/chat-shell';
 
   // Employee Routes (additional)
-  static const String employeeSchedule = '/employee-schedule';
   static const String employeeTasks = '/employee-tasks';
   static const String employeeRequests = '/employee-requests';
   static const String employeeServiceBooking = '/employee-service-booking';
   static const String employeeMealPlan = '/employee-meal-plan';
   static const String employeeCheckInOut = '/employee-check-in-out';
+  static const String employeeChat = '/employee-chat';
   static const String serviceBooking = '/service-booking';
 
   // Menu Routes
@@ -82,4 +92,8 @@ class AppRoutes {
 
   // Amenity Routes
   static const String amenity = '/amenity';
+  static const String staffAmenityTicketList = '/staff-amenity-ticket-list';
+
+  // Employee Appointment Routes
+  static const String employeeAppointmentList = '/employee-appointment-list';
 }

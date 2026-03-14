@@ -1,5 +1,6 @@
 import '../entities/user_entity.dart';
 import '../../data/models/current_account_model.dart';
+import '../entities/create_customer_result_entity.dart';
 
 /// Authentication repository interface
 abstract class AuthRepository {
@@ -54,6 +55,13 @@ abstract class AuthRepository {
     required String currentPassword,
     required String newPassword,
     required String confirmNewPassword,
+  });
+
+  /// Staff/Admin/Manager tạo tài khoản customer
+  Future<CreateCustomerResultEntity> createCustomer({
+    required String email,
+    String? phone,
+    String? username,
   });
 }
 

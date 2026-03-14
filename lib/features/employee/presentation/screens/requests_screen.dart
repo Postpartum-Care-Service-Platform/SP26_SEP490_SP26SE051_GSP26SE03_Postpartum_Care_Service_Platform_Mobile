@@ -1,9 +1,11 @@
-// lib/features/employee/presentation/screens/requests_screen.dart
 import 'package:flutter/material.dart';
 
+import '../../../../core/apis/api_client.dart';
+import '../../../../core/apis/api_endpoints.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
+import '../widgets/employee_scaffold.dart';
 
 class RequestsScreen extends StatefulWidget {
   const RequestsScreen({super.key});
@@ -12,100 +14,411 @@ class RequestsScreen extends StatefulWidget {
   State<RequestsScreen> createState() => _RequestsScreenState();
 }
 
-enum _RequestTab { pending, approved, rejected }
+enum _RequestTab { sent, incoming }
 
-enum _RequestType { leave, swap }
+class _ScheduleOption {
+  final int id;
+  final String label;
 
-class _RequestModel {
-  final _RequestType type;
-  final String title;
-  final String date;
+  const _ScheduleOption({required this.id, required this.label});
+
+  factory _ScheduleOption.fromJson(Map<String, dynamic> json) {
+    final familySchedule = json['familyScheduleResponse'] as Map<String, dynamic>?;
+    final session = familySchedule?['session']?.toString() ?? '';
+    final name = familySchedule?['name']?.toString() ?? 'Schedule #${json['id']}';
+
+    return _ScheduleOption(
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      label: session.isEmpty ? '$name (#${json['id']})' : '$name - $session (#${json['id']})',
+    );
+  }
+}
+
+class _StaffReceiver {
+  final String id;
+  final String displayName;
+
+  const _StaffReceiver({required this.id, required this.displayName});
+
+  factory _StaffReceiver.fromJson(Map<String, dynamic> json) {
+    final id = (json['id'] ?? '').toString();
+    final username = (json['username'] ?? '').toString();
+    final email = (json['email'] ?? '').toString();
+
+    return _StaffReceiver(
+      id: id,
+      displayName: username.isNotEmpty ? '$username ($email)' : email,
+    );
+  }
+
+  static bool isStaff(Map<String, dynamic> json) {
+    final role = (json['roleName'] ?? '').toString().toLowerCase();
+    return role == 'staff';
+  }
+}
+
+class _SwapRequest {
+  final int id;
+  final int fromScheduleId;
+  final int toScheduleId;
+  final String requesterName;
+  final String receiverName;
   final String reason;
-  final _RequestTab status;
+  final String status;
+  final DateTime? createdAt;
 
-  const _RequestModel({
-    required this.type,
-    required this.title,
-    required this.date,
+  const _SwapRequest({
+    required this.id,
+    required this.fromScheduleId,
+    required this.toScheduleId,
+    required this.requesterName,
+    required this.receiverName,
     required this.reason,
     required this.status,
+    required this.createdAt,
   });
+
+  factory _SwapRequest.fromJson(Map<String, dynamic> json) {
+    return _SwapRequest(
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      fromScheduleId: (json['fromScheduleId'] as num?)?.toInt() ?? 0,
+      toScheduleId: (json['toScheduleId'] as num?)?.toInt() ?? 0,
+      requesterName: (json['requesterName'] ?? '').toString(),
+      receiverName: (json['receiverName'] ?? '').toString(),
+      reason: (json['reason'] ?? '').toString(),
+      status: (json['status'] ?? 'Pending').toString(),
+      createdAt: DateTime.tryParse((json['createdAt'] ?? '').toString()),
+    );
+  }
 }
 
 class _RequestsScreenState extends State<RequestsScreen> {
-  _RequestTab _tab = _RequestTab.pending;
+  _RequestTab _tab = _RequestTab.sent;
+  bool _loading = true;
+  bool _creating = false;
+  String? _error;
+  DateTime? _selectedDate;
+  List<_SwapRequest> _sent = const [];
+  List<_SwapRequest> _incoming = const [];
+  List<_ScheduleOption> _mySchedules = const [];
+  List<_StaffReceiver> _staffReceivers = const [];
 
-  static const _all = <_RequestModel>[
-    _RequestModel(
-      type: _RequestType.leave,
-      title: 'Xin nghỉ phép',
-      date: '28/11/2024',
-      reason: 'Có việc gia đình',
-      status: _RequestTab.pending,
-    ),
-    _RequestModel(
-      type: _RequestType.swap,
-      title: 'Đổi ca làm việc',
-      date: '30/11/2024',
-      reason: 'Đổi ca với đồng nghiệp',
-      status: _RequestTab.pending,
-    ),
-    _RequestModel(
-      type: _RequestType.leave,
-      title: 'Xin nghỉ phép',
-      date: '20/11/2024',
-      reason: 'Khám bệnh',
-      status: _RequestTab.approved,
-    ),
-    _RequestModel(
-      type: _RequestType.swap,
-      title: 'Đổi ca làm việc',
-      date: '15/11/2024',
-      reason: 'Không đủ nhân sự thay thế',
-      status: _RequestTab.rejected,
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
 
-  List<_RequestModel> get _items =>
-      _all.where((e) => e.status == _tab).toList(growable: false);
+  Future<void> _loadData() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
 
-  void _openCreateRequestSheet() {
-    showModalBottomSheet(
+    try {
+      final now = DateTime.now();
+      final from = now.subtract(const Duration(days: 30));
+      final to = now.add(const Duration(days: 30));
+
+      final sentFuture = ApiClient.dio.get(
+        ApiEndpoints.mySwapRequests,
+        queryParameters: {
+          'from': from.toIso8601String(),
+          'to': to.toIso8601String(),
+        },
+      );
+
+      final incomingFuture = ApiClient.dio.get(
+        ApiEndpoints.myIncomingSwapRequests,
+        queryParameters: {
+          'from': from.toIso8601String(),
+          'to': to.toIso8601String(),
+        },
+      );
+
+      final schedulesFuture = ApiClient.dio.get(
+        ApiEndpoints.familyScheduleMySchedules,
+      );
+
+      final staffsFuture = ApiClient.dio.get(ApiEndpoints.getAllAccounts);
+
+      final results = await Future.wait([
+        sentFuture,
+        incomingFuture,
+        schedulesFuture,
+        staffsFuture,
+      ]);
+
+      List<_SwapRequest> toSwapRequests(dynamic raw) {
+        if (raw is List) {
+          return raw
+              .whereType<Map>()
+              .map((e) => _SwapRequest.fromJson(Map<String, dynamic>.from(e)))
+              .toList();
+        }
+        return const [];
+      }
+
+      List<_ScheduleOption> toSchedules(dynamic raw) {
+        if (raw is List) {
+          return raw
+              .whereType<Map>()
+              .map((e) => _ScheduleOption.fromJson(Map<String, dynamic>.from(e)))
+              .toList();
+        }
+        return const [];
+      }
+
+      List<_StaffReceiver> toStaffs(dynamic raw) {
+        if (raw is List) {
+          return raw
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .where(_StaffReceiver.isStaff)
+              .map(_StaffReceiver.fromJson)
+              .toList();
+        }
+        return const [];
+      }
+
+      final sent = toSwapRequests(results[0].data);
+      final incoming = toSwapRequests(results[1].data);
+      final schedules = toSchedules(results[2].data);
+      final staffs = toStaffs(results[3].data);
+
+      if (!mounted) return;
+      setState(() {
+        _sent = sent;
+        _incoming = incoming;
+        _mySchedules = schedules;
+        _staffReceivers = staffs;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _createRequest() async {
+    final fromSchedule = await _pickSchedule();
+    if (fromSchedule == null) return;
+
+    final toSchedule = await _pickSchedule(title: 'Chọn lịch muốn đổi');
+    if (toSchedule == null) return;
+
+    final receiver = await _pickReceiver();
+    if (receiver == null) return;
+
+    final reasonController = TextEditingController();
+    if (!mounted) {
+      reasonController.dispose();
+      return;
+    }
+
+    final confirm = await showDialog<bool>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => const _CreateRequestSheet(),
+      builder: (ctx) => AlertDialog(
+        title: const Text('Tạo yêu cầu đổi lịch'),
+        content: TextField(
+          controller: reasonController,
+          maxLines: 3,
+          decoration: const InputDecoration(
+            hintText: 'Lý do đổi lịch',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Hủy'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Gửi'),
+          ),
+        ],
+      ),
     );
+
+    if (confirm != true) return;
+
+    setState(() => _creating = true);
+    try {
+      await ApiClient.dio.post(
+        ApiEndpoints.swapStaffSchedule,
+        data: {
+          'fromScheduleId': fromSchedule.id,
+          'toScheduleId': toSchedule.id,
+          'receiverId': receiver.id,
+          'reason': reasonController.text.trim(),
+        },
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đã gửi yêu cầu đổi lịch.')),
+      );
+      await _loadData();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Tạo yêu cầu thất bại: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _creating = false);
+      }
+      reasonController.dispose();
+    }
+  }
+
+  Future<_ScheduleOption?> _pickSchedule({String title = 'Chọn lịch hiện tại'}) async {
+    if (_mySchedules.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Không có lịch để chọn.')),
+        );
+      }
+      return null;
+    }
+
+    return showModalBottomSheet<_ScheduleOption>(
+      context: context,
+      builder: (ctx) => _SelectBottomSheet<_ScheduleOption>(
+        title: title,
+        items: _mySchedules,
+        labelBuilder: (x) => x.label,
+      ),
+    );
+  }
+
+  Future<_StaffReceiver?> _pickReceiver() async {
+    if (_staffReceivers.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Không có nhân viên để chọn.')),
+        );
+      }
+      return null;
+    }
+
+    return showModalBottomSheet<_StaffReceiver>(
+      context: context,
+      builder: (ctx) => _SelectBottomSheet<_StaffReceiver>(
+        title: 'Chọn người nhận yêu cầu',
+        items: _staffReceivers,
+        labelBuilder: (x) => x.displayName,
+      ),
+    );
+  }
+
+  Future<void> _respondRequest(int requestId, bool approve) async {
+    setState(() => _creating = true);
+    try {
+      await ApiClient.dio.post(
+        ApiEndpoints.respondSwapRequest(requestId, approve),
+        data: {'approve': approve},
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(approve ? 'Đã chấp nhận yêu cầu.' : 'Đã từ chối yêu cầu.'),
+        ),
+      );
+      await _loadData();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Xử lý yêu cầu thất bại: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _creating = false);
+      }
+    }
+  }
+
+  bool _sameDate(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
   @override
   Widget build(BuildContext context) {
     final padding = AppResponsive.pagePadding(context);
+    final source = _tab == _RequestTab.sent ? _sent : _incoming;
+    final items = _selectedDate == null
+        ? source
+        : source
+            .where((e) => e.createdAt != null && _sameDate(e.createdAt!, _selectedDate!))
+            .toList();
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
+    return EmployeeScaffold(
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: padding,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 12),
-              const _HeaderCard(),
-              const SizedBox(height: 12),
-              _TabBar(tab: _tab, onChanged: (t) => setState(() => _tab = t)),
-              const SizedBox(height: 12),
-              for (final item in _items) ...[
-                _RequestCard(item: item),
+        child: RefreshIndicator(
+          onRefresh: _loadData,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: padding,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
                 const SizedBox(height: 12),
+                const _HeaderCard(),
+                const SizedBox(height: 12),
+                _TabBar(tab: _tab, onChanged: (t) => setState(() => _tab = t)),
+                const SizedBox(height: 10),
+                _DateFilterBar(
+                  selected: _selectedDate,
+                  onPick: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2100),
+                      initialDate: _selectedDate ?? DateTime.now(),
+                    );
+                    if (picked != null) {
+                      setState(() => _selectedDate = picked);
+                    }
+                  },
+                  onClear: _selectedDate == null ? null : () => setState(() => _selectedDate = null),
+                ),
+                const SizedBox(height: 10),
+                if (_loading)
+                  const _LoadingCard()
+                else if (_error != null)
+                  _ErrorCard(
+                    message: _error!,
+                    onRetry: _loadData,
+                  )
+                else ...[
+                  _ActionRow(
+                    creating: _creating,
+                    onCreate: _createRequest,
+                  ),
+                  const SizedBox(height: 12),
+                  if (items.isEmpty)
+                    const _EmptyCard()
+                  else
+                    ...items.map(
+                      (e) => Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: _RequestCard(
+                          request: e,
+                          showActions: _tab == _RequestTab.incoming && e.status.toLowerCase() == 'pending',
+                          busy: _creating,
+                          onApprove: () => _respondRequest(e.id, true),
+                          onReject: () => _respondRequest(e.id, false),
+                        ),
+                      ),
+                    ),
+                ],
+                const SizedBox(height: 24),
               ],
-              const SizedBox(height: 4),
-              _PrimaryButton(
-                label: '+ Tạo yêu cầu mới',
-                onPressed: _openCreateRequestSheet,
-              ),
-              const SizedBox(height: 24),
-            ],
+            ),
           ),
         ),
       ),
@@ -135,7 +448,7 @@ class _HeaderCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Yêu cầu của tôi 📝',
+            'Yêu cầu đổi lịch 🔁',
             style: AppTextStyles.arimo(
               fontSize: 20,
               fontWeight: FontWeight.w700,
@@ -144,7 +457,7 @@ class _HeaderCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Quản lý các yêu cầu nghỉ phép, đổi ca',
+            'Gửi / nhận yêu cầu đổi ca giữa nhân viên',
             style: AppTextStyles.arimo(
               fontSize: 14,
               fontWeight: FontWeight.w400,
@@ -166,41 +479,25 @@ class _TabBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
       ),
+      padding: const EdgeInsets.all(4),
       child: Row(
         children: [
           Expanded(
             child: _TabButton(
-              label: 'Chờ duyệt',
-              selected: tab == _RequestTab.pending,
-              onTap: () => onChanged(_RequestTab.pending),
+              active: tab == _RequestTab.sent,
+              text: 'Đã gửi',
+              onTap: () => onChanged(_RequestTab.sent),
             ),
           ),
-          const SizedBox(width: 8),
           Expanded(
             child: _TabButton(
-              label: 'Đã duyệt',
-              selected: tab == _RequestTab.approved,
-              onTap: () => onChanged(_RequestTab.approved),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _TabButton(
-              label: 'Từ chối',
-              selected: tab == _RequestTab.rejected,
-              onTap: () => onChanged(_RequestTab.rejected),
+              active: tab == _RequestTab.incoming,
+              text: 'Đã nhận',
+              onTap: () => onChanged(_RequestTab.incoming),
             ),
           ),
         ],
@@ -210,35 +507,187 @@ class _TabBar extends StatelessWidget {
 }
 
 class _TabButton extends StatelessWidget {
-  final String label;
-  final bool selected;
+  final bool active;
+  final String text;
   final VoidCallback onTap;
 
-  const _TabButton({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
+  const _TabButton({required this.active, required this.text, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      borderRadius: BorderRadius.circular(12),
       onTap: onTap,
-      child: Container(
-        alignment: Alignment.center,
+      borderRadius: BorderRadius.circular(12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : Colors.transparent,
+          color: active ? AppColors.primary : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
-          label,
+          text,
+          textAlign: TextAlign.center,
           style: AppTextStyles.arimo(
-            fontSize: 12,
+            fontSize: 13,
             fontWeight: FontWeight.w700,
-            color: selected ? AppColors.white : AppColors.textSecondary,
+            color: active ? AppColors.white : AppColors.textSecondary,
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DateFilterBar extends StatelessWidget {
+  final DateTime? selected;
+  final VoidCallback onPick;
+  final VoidCallback? onClear;
+
+  const _DateFilterBar({required this.selected, required this.onPick, required this.onClear});
+
+  @override
+  Widget build(BuildContext context) {
+    final label = selected == null
+        ? 'Lọc theo ngày (tùy chọn)'
+        : 'Ngày: ${selected!.day.toString().padLeft(2, '0')}/${selected!.month.toString().padLeft(2, '0')}/${selected!.year}';
+
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: onPick,
+            icon: const Icon(Icons.calendar_today_outlined, size: 18),
+            label: Text(label),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.textPrimary,
+              side: BorderSide(color: AppColors.borderLight),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            ),
+          ),
+        ),
+        if (selected != null) ...[
+          const SizedBox(width: 8),
+          IconButton(
+            onPressed: onClear,
+            icon: const Icon(Icons.close),
+            tooltip: 'Xóa lọc ngày',
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _ActionRow extends StatelessWidget {
+  final bool creating;
+  final VoidCallback onCreate;
+
+  const _ActionRow({required this.creating, required this.onCreate});
+
+  @override
+  Widget build(BuildContext context) {
+    return FilledButton.icon(
+      onPressed: creating ? null : onCreate,
+      icon: creating
+          ? const SizedBox(
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.white),
+            )
+          : const Icon(Icons.swap_horiz),
+      label: Text(creating ? 'Đang xử lý...' : 'Tạo yêu cầu đổi lịch'),
+      style: FilledButton.styleFrom(
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.white,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+}
+
+class _LoadingCard extends StatelessWidget {
+  const _LoadingCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: const Center(
+        child: CircularProgressIndicator(color: AppColors.primary),
+      ),
+    );
+  }
+}
+
+class _ErrorCard extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _ErrorCard({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Không tải được dữ liệu',
+            style: AppTextStyles.arimo(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: Colors.red,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            message,
+            style: AppTextStyles.arimo(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton(
+            onPressed: onRetry,
+            child: const Text('Thử lại'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyCard extends StatelessWidget {
+  const _EmptyCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Text(
+        'Chưa có yêu cầu nào trong phạm vi thời gian này.',
+        textAlign: TextAlign.center,
+        style: AppTextStyles.arimo(
+          fontSize: 13,
+          color: AppColors.textSecondary,
         ),
       ),
     );
@@ -246,13 +695,35 @@ class _TabButton extends StatelessWidget {
 }
 
 class _RequestCard extends StatelessWidget {
-  final _RequestModel item;
+  final _SwapRequest request;
+  final bool showActions;
+  final bool busy;
+  final VoidCallback onApprove;
+  final VoidCallback onReject;
 
-  const _RequestCard({required this.item});
+  const _RequestCard({
+    required this.request,
+    required this.showActions,
+    required this.busy,
+    required this.onApprove,
+    required this.onReject,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final badge = _statusBadge(item.status);
+    final statusLower = request.status.toLowerCase();
+    final isPending = statusLower == 'pending';
+    final isApproved = statusLower == 'approved';
+    final statusColor = isApproved
+        ? const Color(0xFF1B7F3A)
+        : isPending
+            ? const Color(0xFF9A6B00)
+            : const Color(0xFFB91C1C);
+    final statusBg = isApproved
+        ? const Color(0xFFE8F7EE)
+        : isPending
+            ? const Color(0xFFFFF6E5)
+            : const Color(0xFFFEE2E2);
 
     return Container(
       decoration: BoxDecoration(
@@ -260,13 +731,13 @@ class _RequestCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -274,364 +745,134 @@ class _RequestCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  item.title,
+                  '${request.requesterName} → ${request.receiverName}',
                   style: AppTextStyles.arimo(
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
                   ),
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: badge.bg,
+                  color: statusBg,
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
-                  badge.text,
+                  request.status,
                   style: AppTextStyles.arimo(
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: badge.fg,
+                    color: statusColor,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          _MetaRow(icon: Icons.calendar_month, text: item.date),
           const SizedBox(height: 8),
-          _MetaRow(icon: Icons.chat_bubble_outline, text: item.reason),
+          Text(
+            'Lịch hiện tại: #${request.fromScheduleId}  •  Lịch muốn đổi: #${request.toScheduleId}',
+            style: AppTextStyles.arimo(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Lý do: ${request.reason.isEmpty ? '(Không có)' : request.reason}',
+            style: AppTextStyles.arimo(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          if (request.createdAt != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              'Tạo lúc: ${request.createdAt!.day.toString().padLeft(2, '0')}/${request.createdAt!.month.toString().padLeft(2, '0')}/${request.createdAt!.year} ${request.createdAt!.hour.toString().padLeft(2, '0')}:${request.createdAt!.minute.toString().padLeft(2, '0')}',
+              style: AppTextStyles.arimo(
+                fontSize: 11,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+          if (showActions) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: busy ? null : onReject,
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFFB91C1C)),
+                      foregroundColor: const Color(0xFFB91C1C),
+                    ),
+                    child: const Text('Từ chối'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: busy ? null : onApprove,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF1B7F3A),
+                      foregroundColor: AppColors.white,
+                    ),
+                    child: const Text('Chấp nhận'),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
   }
 }
 
-class _MetaRow extends StatelessWidget {
-  final IconData icon;
-  final String text;
+class _SelectBottomSheet<T> extends StatelessWidget {
+  final String title;
+  final List<T> items;
+  final String Function(T) labelBuilder;
 
-  const _MetaRow({required this.icon, required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 16, color: AppColors.textSecondary),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            text,
-            style: AppTextStyles.arimo(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textSecondary,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-typedef _BadgeCfg = ({String text, Color bg, Color fg});
-
-_BadgeCfg _statusBadge(_RequestTab tab) {
-  switch (tab) {
-    case _RequestTab.pending:
-      return (
-        text: 'Chờ duyệt',
-        bg: const Color(0xFFFFF6E5),
-        fg: const Color(0xFF9A6B00),
-      );
-    case _RequestTab.approved:
-      return (
-        text: 'Đã duyệt',
-        bg: const Color(0xFFE8F7EE),
-        fg: const Color(0xFF1B7F3A),
-      );
-    case _RequestTab.rejected:
-      return (
-        text: 'Từ chối',
-        bg: const Color(0xFFFEE2E2),
-        fg: const Color(0xFFB91C1C),
-      );
-  }
-}
-
-class _PrimaryButton extends StatelessWidget {
-  final String label;
-  final VoidCallback onPressed;
-
-  const _PrimaryButton({required this.label, required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onPressed,
-      child: Container(
-        alignment: Alignment.center,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [AppColors.primary, Color(0xFFFFA952)],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-          ),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.18),
-              blurRadius: 14,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Text(
-          label,
-          style: AppTextStyles.arimo(
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-            color: AppColors.white,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _CreateRequestSheet extends StatefulWidget {
-  const _CreateRequestSheet();
-
-  @override
-  State<_CreateRequestSheet> createState() => _CreateRequestSheetState();
-}
-
-class _CreateRequestSheetState extends State<_CreateRequestSheet> {
-  _RequestType _type = _RequestType.swap;
-  final _dateCtrl = TextEditingController();
-  final _reasonCtrl = TextEditingController();
-
-  @override
-  void dispose() {
-    _dateCtrl.dispose();
-    _reasonCtrl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _pickDate() async {
-    final now = DateTime.now();
-    final picked = await showDatePicker(
-      context: context,
-      firstDate: DateTime(now.year - 1),
-      lastDate: DateTime(now.year + 2),
-      initialDate: now,
-    );
-    if (picked == null) return;
-    setState(() {
-      _dateCtrl.text =
-          '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
-    });
-  }
-
-  void _submit() {
-    if (_dateCtrl.text.trim().isEmpty || _reasonCtrl.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Vui lòng nhập đầy đủ ngày và lý do.',
-            style: AppTextStyles.arimo(color: AppColors.white),
-          ),
-          backgroundColor: AppColors.textPrimary,
-        ),
-      );
-      return;
-    }
-
-    Navigator.of(context).pop();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Đã gửi yêu cầu thành công (mock).',
-          style: AppTextStyles.arimo(color: AppColors.white),
-        ),
-        backgroundColor: AppColors.textPrimary,
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final bottom = MediaQuery.of(context).viewInsets.bottom;
-
-    return Container(
-      decoration: const BoxDecoration(color: Colors.transparent),
-      child: Padding(
-        padding: EdgeInsets.only(bottom: bottom),
-        child: Container(
-          decoration: BoxDecoration(
-            color: AppColors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Tạo yêu cầu',
-                      style: AppTextStyles.arimo(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              _TypeSelector(
-                value: _type,
-                onChanged: (v) => setState(() => _type = v),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _dateCtrl,
-                readOnly: true,
-                onTap: _pickDate,
-                decoration: InputDecoration(
-                  labelText: 'Ngày',
-                  labelStyle: AppTextStyles.arimo(
-                    color: AppColors.textSecondary,
-                  ),
-                  filled: true,
-                  fillColor: AppColors.background,
-                  suffixIcon: const Icon(Icons.calendar_month),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: AppColors.borderLight),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: AppColors.borderLight),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.primary),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _reasonCtrl,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  labelText: 'Lý do',
-                  labelStyle: AppTextStyles.arimo(
-                    color: AppColors.textSecondary,
-                  ),
-                  filled: true,
-                  fillColor: AppColors.background,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: AppColors.borderLight),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: AppColors.borderLight),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.primary),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              _PrimaryButton(label: 'Gửi yêu cầu', onPressed: _submit),
-              const SizedBox(height: 12),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _TypeSelector extends StatelessWidget {
-  final _RequestType value;
-  final ValueChanged<_RequestType> onChanged;
-
-  const _TypeSelector({required this.value, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _TypeChip(
-            label: 'Đổi ca',
-            selected: value == _RequestType.swap,
-            onTap: () => onChanged(_RequestType.swap),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _TypeChip(
-            label: 'Nghỉ phép',
-            selected: value == _RequestType.leave,
-            onTap: () => onChanged(_RequestType.leave),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _TypeChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _TypeChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
+  const _SelectBottomSheet({
+    required this.title,
+    required this.items,
+    required this.labelBuilder,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
-      onTap: onTap,
-      child: Container(
-        alignment: Alignment.center,
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.primary : AppColors.background,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.borderLight),
-        ),
-        child: Text(
-          label,
-          style: AppTextStyles.arimo(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: selected ? AppColors.white : AppColors.textPrimary,
+    return SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 10),
+          Text(
+            title,
+            style: AppTextStyles.arimo(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
           ),
-        ),
+          const SizedBox(height: 8),
+          Flexible(
+            child: ListView.separated(
+              shrinkWrap: true,
+              itemCount: items.length,
+              separatorBuilder: (_, __) => const Divider(height: 1),
+              itemBuilder: (ctx, i) {
+                final item = items[i];
+                return ListTile(
+                  title: Text(labelBuilder(item)),
+                  onTap: () => Navigator.pop(ctx, item),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
       ),
     );
   }

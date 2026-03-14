@@ -10,7 +10,11 @@ import '../models/update_family_profile_request_model.dart';
 /// Remote data source for family profile
 abstract class FamilyProfileRemoteDataSource {
   Future<List<FamilyProfileModel>> getMyFamilyProfiles();
+  Future<List<FamilyProfileModel>> getFamilyProfilesByCustomerId(
+    String customerId,
+  );
   Future<List<MemberTypeModel>> getMemberTypes();
+  Future<MemberTypeModel> getMemberTypeById(int id);
   Future<FamilyProfileModel> createFamilyProfile(
     CreateFamilyProfileRequestModel request,
   );
@@ -50,6 +54,47 @@ class FamilyProfileRemoteDataSourceImpl
   }
 
   @override
+  Future<List<FamilyProfileModel>> getFamilyProfilesByCustomerId(
+    String customerId,
+  ) async {
+    if (customerId.trim().isEmpty) {
+      // Không có customerId hợp lệ => không gọi API, trả về rỗng.
+      return [];
+    }
+
+    try {
+      final response = await dio.get(
+        ApiEndpoints.getFamilyProfilesByCustomerId(customerId),
+      );
+
+      final List<dynamic> data = response.data as List<dynamic>;
+      return data
+          .map(
+            (json) => FamilyProfileModel.fromJson(
+              json as Map<String, dynamic>,
+            ),
+          )
+          .toList();
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      if (status == 404) {
+        // BE chưa hỗ trợ hoặc không có hồ sơ cho customer này -> coi như không có dữ liệu.
+        return [];
+      }
+
+      if (e.response != null) {
+        throw Exception(
+          'Failed to load family profiles: ${e.response?.statusCode}',
+        );
+      } else {
+        throw Exception('Network error: ${e.message}');
+      }
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  @override
   Future<List<MemberTypeModel>> getMemberTypes() async {
     try {
       final response = await dio.get(
@@ -63,6 +108,25 @@ class FamilyProfileRemoteDataSourceImpl
     } on DioException catch (e) {
       if (e.response != null) {
         throw Exception('Failed to load member types: ${e.response?.statusCode}');
+      } else {
+        throw Exception('Network error: ${e.message}');
+      }
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  @override
+  Future<MemberTypeModel> getMemberTypeById(int id) async {
+    try {
+      final response = await dio.get(
+        ApiEndpoints.getMemberTypeById(id),
+      );
+
+      return MemberTypeModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception('Failed to load member type: ${e.response?.statusCode}');
       } else {
         throw Exception('Network error: ${e.message}');
       }

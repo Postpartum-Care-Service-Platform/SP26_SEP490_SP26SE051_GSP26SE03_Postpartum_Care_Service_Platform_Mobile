@@ -16,14 +16,32 @@ import '../../features/booking/presentation/screens/payment_screen.dart';
 import '../../features/booking/presentation/screens/invoice_screen.dart';
 import '../../features/contract/presentation/screens/contract_screen.dart';
 import '../../features/package/presentation/screens/package_screen.dart';
-import '../../features/package/presentation/bloc/package_event.dart';
+import '../../features/package/presentation/bloc/package_bloc.dart';
 import '../../features/supportAndPolicy/presentation/screens/support_and_policy_screen.dart';
 import '../../features/supportAndPolicy/presentation/screens/help_screen.dart';
 import '../../features/supportAndPolicy/presentation/screens/contact_screen.dart';
 import '../../features/supportAndPolicy/presentation/screens/about_screen.dart';
 import '../../features/supportAndPolicy/presentation/screens/terms_screen.dart';
 import '../../features/supportAndPolicy/presentation/screens/privacy_screen.dart';
-import '../../features/employee/presentation/screens/employee_portal_screen.dart';
+import '../../features/employee/presentation/screens/employee_portal_menu.dart';
+import '../../features/employee/presentation/screens/tasks_screen_new.dart';
+import '../../features/employee/presentation/screens/employee_rooms_screen.dart';
+import '../../features/employee/presentation/screens/check_in_out_screen.dart';
+import '../../features/employee/presentation/screens/requests_screen.dart';
+import '../../features/employee/presentation/screens/employee_meal_plan_screen.dart';
+import '../../features/employee/presentation/screens/employee_chat_screen.dart';
+import '../../features/employee/presentation/screens/service_booking_screen.dart';
+import '../../features/employee/presentation/screens/employee_assigned_families_screen.dart';
+import '../../features/employee/presentation/screens/employee_create_customer_screen.dart';
+import '../../features/employee/presentation/screens/employee_package_booking_screen.dart';
+import '../../features/employee/presentation/screens/staff_booking_list_screen.dart';
+import '../../features/transaction/presentation/screens/staff_transaction_list_screen.dart';
+import '../../features/employee/presentation/screens/staff_contract_list_screen.dart';
+import '../../features/employee/presentation/screens/staff_contract_preview_screen.dart';
+import '../../features/employee/presentation/screens/staff_member_type_detail_screen.dart';
+import '../../features/employee/presentation/screens/staff_amenity_ticket_list_screen.dart';
+import '../../features/employee/presentation/screens/employee_appointment_list_screen.dart';
+import '../../features/employee/data/models/account_model.dart';
 import '../../features/chat/presentation/screens/conversation_list_screen.dart';
 import '../../features/chat/presentation/screens/conversation_detail_screen.dart';
 import '../../features/chat/presentation/screens/chat_shell_screen.dart';
@@ -70,9 +88,8 @@ class AppRouter {
       case AppRoutes.otpVerification:
         if (args is Map<String, dynamic>) {
           return MaterialPageRoute(
-            builder: (_) => OtpVerificationScreen(
-              email: args['email'] as String,
-            ),
+            builder: (_) =>
+                OtpVerificationScreen(email: args['email'] as String),
           );
         }
         return null;
@@ -80,9 +97,8 @@ class AppRouter {
       case AppRoutes.resetOtpVerification:
         if (args is Map<String, dynamic>) {
           return MaterialPageRoute(
-            builder: (_) => ResetOtpVerificationScreen(
-              email: args['email'] as String,
-            ),
+            builder: (_) =>
+                ResetOtpVerificationScreen(email: args['email'] as String),
           );
         }
         return null;
@@ -109,9 +125,7 @@ class AppRouter {
       case AppRoutes.profile:
         // These are handled by AppScaffold, not individual routes
         // Return AppScaffold as fallback
-        return MaterialPageRoute(
-          builder: (_) => const AppScaffold(),
-        );
+        return MaterialPageRoute(builder: (_) => const AppScaffold());
 
       // Profile Routes
       case AppRoutes.accountDetails:
@@ -125,9 +139,7 @@ class AppRouter {
                       userId: args['userId'] as String,
                     ),
                   )
-                : AccountDetailsScreen(
-                    userId: args['userId'] as String,
-                  ),
+                : AccountDetailsScreen(userId: args['userId'] as String),
           );
         }
         return null;
@@ -191,9 +203,7 @@ class AppRouter {
           return MaterialPageRoute(
             builder: (_) => BlocProvider<BookingBloc>.value(
               value: args['bookingBloc'] as BookingBloc,
-              child: InvoiceScreen(
-                bookingId: args['bookingId'] as int,
-              ),
+              child: InvoiceScreen(bookingId: args['bookingId'] as int),
             ),
           );
         }
@@ -203,9 +213,7 @@ class AppRouter {
       case AppRoutes.contract:
         if (args is Map<String, dynamic>) {
           return MaterialPageRoute(
-            builder: (_) => ContractScreen(
-              bookingId: args['bookingId'] as int,
-            ),
+            builder: (_) => ContractScreen(bookingId: args['bookingId'] as int),
           );
         }
         return null;
@@ -213,10 +221,9 @@ class AppRouter {
       // Package Routes
       case AppRoutes.package:
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => InjectionContainer.packageBloc
-              ..add(const PackageLoadRequested()),
-            child: const PackageScreen(),
+          builder: (_) => BlocProvider<PackageBloc>.value(
+            value: InjectionContainer.packageBloc,
+            child: const PackageScreen(showBackButton: true),
           ),
         );
 
@@ -243,15 +250,108 @@ class AppRouter {
 
       // Employee Routes
       case AppRoutes.employeePortal:
+        return MaterialPageRoute(builder: (_) => const EmployeePortalScreen());
+
+      // Employee Routes - Quick Menu
+      case AppRoutes.employeeAmenities:
+        return MaterialPageRoute(builder: (_) => const ServiceBookingScreen());
+
+      case AppRoutes.employeeRooms:
+        return MaterialPageRoute(builder: (_) => const EmployeeRoomsScreen());
+
+      case AppRoutes.employeeAssignedFamilies:
         return MaterialPageRoute(
-          builder: (_) => const EmployeePortalScreen(),
+          builder: (_) => const EmployeeAssignedFamiliesScreen(),
         );
+
+      case AppRoutes.employeeCreateCustomer:
+        return MaterialPageRoute(
+          builder: (_) => const EmployeeCreateCustomerScreen(),
+        );
+
+      case AppRoutes.employeePackageBooking:
+        return MaterialPageRoute(
+          builder: (_) => const EmployeePackageBookingScreen(),
+        );
+
+      case AppRoutes.staffBookingList:
+        return MaterialPageRoute(
+          builder: (_) => const StaffBookingListScreen(),
+        );
+
+      case AppRoutes.staffTransactionList:
+        return MaterialPageRoute(
+          builder: (_) => const StaffTransactionListScreen(),
+        );
+
+      case AppRoutes.staffContractList:
+        return MaterialPageRoute(
+          builder: (_) => const StaffContractListScreen(),
+        );
+
+      case AppRoutes.staffContractPreview:
+        if (settings.arguments is Map<String, dynamic>) {
+          final args = settings.arguments as Map<String, dynamic>;
+          final bookingId = args['bookingId'] as int;
+          return MaterialPageRoute(
+            builder: (_) => StaffContractPreviewScreen(bookingId: bookingId),
+          );
+        }
+        return null;
+
+      case AppRoutes.staffMemberTypeDetail:
+        if (settings.arguments is int) {
+          final memberTypeId = settings.arguments as int;
+          return MaterialPageRoute(
+            builder: (_) => StaffMemberTypeDetailScreen(memberTypeId: memberTypeId),
+          );
+        }
+        return null;
+
+      case AppRoutes.employeeMealPlan:
+        return MaterialPageRoute(
+          builder: (_) => const EmployeeMealPlanScreen(),
+        );
+
+      case AppRoutes.serviceBooking:
+        return MaterialPageRoute(builder: (_) => const ServiceBookingScreen());
+
+      case AppRoutes.staffAmenityTicketList:
+        if (settings.arguments is Map<String, dynamic>) {
+          final args = settings.arguments as Map<String, dynamic>;
+          final customer = args['customer'] as AccountModel?;
+          return MaterialPageRoute(
+            builder: (_) => StaffAmenityTicketListScreen(selectedCustomer: customer),
+          );
+        }
+        return MaterialPageRoute(
+          builder: (_) => const StaffAmenityTicketListScreen(),
+        );
+
+      case AppRoutes.employeeAppointmentList:
+        return MaterialPageRoute(
+          builder: (_) => const EmployeeAppointmentListScreen(),
+        );
+
+      // Employee Routes - Legacy/Mock screens
+      case AppRoutes.employeeTasks:
+        return MaterialPageRoute(builder: (_) => const TasksScreenNew());
+
+      case AppRoutes.employeeCheckInOut:
+        return MaterialPageRoute(builder: (_) => const CheckInOutScreen());
+
+      case AppRoutes.employeeChat:
+        return MaterialPageRoute(builder: (_) => const EmployeeChatScreen());
+
+      case AppRoutes.employeeRequests:
+        return MaterialPageRoute(builder: (_) => const RequestsScreen());
 
       // Chat Routes
       case AppRoutes.conversationList:
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
-            create: (_) => InjectionContainer.chatBloc
+            create: (_) =>
+                InjectionContainer.chatBloc
               ..add(const ChatStarted(autoSelectFirstConversation: false)),
             child: const ConversationListScreen(),
           ),
@@ -274,23 +374,22 @@ class AppRouter {
       case AppRoutes.chatShell:
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
-            create: (_) => InjectionContainer.chatBloc..add(const ChatStarted()),
+            create: (_) =>
+                InjectionContainer.chatBloc..add(const ChatStarted()),
             child: const ChatShellScreen(),
           ),
         );
 
       // Family Routes
       case AppRoutes.familyPortal:
-        return MaterialPageRoute(
-          builder: (_) => const FamilyPortalScreen(),
-        );
+        return MaterialPageRoute(builder: (_) => const FamilyPortalScreen());
 
       // Menu Routes
       case AppRoutes.myMenu:
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
-            create: (_) => InjectionContainer.menuBloc
-              ..add(const MenuLoadRequested()),
+            create: (_) =>
+                InjectionContainer.menuBloc..add(const MenuLoadRequested()),
             child: const MyMenuScreen(),
           ),
         );
@@ -299,7 +398,8 @@ class AppRouter {
       case AppRoutes.familySchedule:
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
-            create: (_) => InjectionContainer.familyScheduleBloc
+            create: (_) =>
+                InjectionContainer.familyScheduleBloc
               ..add(const FamilyScheduleLoadRequested()),
             child: const FamilyScheduleScreen(),
           ),
@@ -319,9 +419,7 @@ class AppRouter {
         return MaterialPageRoute(
           builder: (_) => MultiBlocProvider(
             providers: [
-              BlocProvider(
-                create: (_) => InjectionContainer.amenityBloc,
-              ),
+              BlocProvider(create: (_) => InjectionContainer.amenityBloc),
               BlocProvider(
                 create: (_) => InjectionContainer.familyScheduleBloc,
               ),
@@ -333,9 +431,7 @@ class AppRouter {
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(
-            body: Center(
-              child: Text('Route not found: ${settings.name}'),
-            ),
+            body: Center(child: Text('Route not found: ${settings.name}')),
           ),
         );
     }
@@ -384,10 +480,9 @@ class AppRouter {
       RouteSettings(name: routeName, arguments: arguments),
     );
     if (route != null) {
-      return Navigator.of(context).pushAndRemoveUntil<T>(
-        route as Route<T>,
-        predicate ?? (route) => false,
-      );
+      return Navigator.of(
+        context,
+      ).pushAndRemoveUntil<T>(route as Route<T>, predicate ?? (route) => false);
     }
     throw Exception('Route not found: $routeName');
   }

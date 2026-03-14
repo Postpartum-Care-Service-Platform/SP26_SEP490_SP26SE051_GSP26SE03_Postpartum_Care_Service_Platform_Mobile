@@ -5,6 +5,8 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/widgets/app_drawer_form.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
 import '../bloc/chat_bloc.dart';
 import '../bloc/chat_event.dart';
 import '../bloc/chat_state.dart';
@@ -13,7 +15,12 @@ import '../widgets/conversation_detail.dart';
 import '../widgets/conversation_list.dart';
 
 class ChatShellScreen extends StatefulWidget {
-  const ChatShellScreen({super.key});
+  /// Nếu là staff, UI sẽ bị giới hạn: không tạo cuộc hội thoại mới,
+  /// không gửi yêu cầu hỗ trợ (chỉ nhận & trả lời tin nhắn khách hàng).
+  /// Nếu không truyền, sẽ tự động check từ AuthBloc.
+  final bool? isStaff;
+
+  const ChatShellScreen({super.key, this.isStaff});
 
   @override
   State<ChatShellScreen> createState() => _ChatShellScreenState();
@@ -74,7 +81,10 @@ class _ChatShellScreenState extends State<ChatShellScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12 * scale),
-                  borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                  borderSide: const BorderSide(
+                    color: AppColors.primary,
+                    width: 2,
+                  ),
                 ),
                 filled: true,
                 fillColor: AppColors.white,
@@ -124,7 +134,10 @@ class _ChatShellScreenState extends State<ChatShellScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12 * scale),
-                  borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                  borderSide: const BorderSide(
+                    color: AppColors.primary,
+                    width: 2,
+                  ),
                 ),
                 filled: true,
                 fillColor: AppColors.white,
@@ -140,8 +153,32 @@ class _ChatShellScreenState extends State<ChatShellScreen> {
     );
   }
 
+  bool _checkIsStaff(BuildContext context) {
+    // Nếu đã truyền isStaff từ bên ngoài, dùng giá trị đó
+    if (widget.isStaff != null) {
+      return widget.isStaff!;
+    }
+
+    // Nếu không, cố gắng check từ AuthBloc (nếu có trong context)
+    try {
+      final authBloc = BlocProvider.of<AuthBloc>(context, listen: false);
+      final authState = authBloc.state;
+      if (authState is AuthCurrentAccountLoaded) {
+        final role = authState.account.roleName.toLowerCase();
+        return role == 'staff' || role == 'manager' || role == 'admin';
+      }
+    } catch (e) {
+      // Nếu không có AuthBloc trong context, mặc định là false (family)
+    }
+
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Check isStaff trước khi build
+    final isStaff = _checkIsStaff(context);
+
     return BlocProvider(
       create: (_) => InjectionContainer.chatBloc..add(const ChatStarted()),
       child: BlocListener<ChatBloc, ChatState>(
@@ -163,7 +200,9 @@ class _ChatShellScreenState extends State<ChatShellScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       ChatHeader(
-                        onCreateConversation: () => _showCreateConversationDialog(context),
+                        onCreateConversation: isStaff
+                            ? null
+                            : () => _showCreateConversationDialog(context),
                       ),
                       SizedBox(height: 16 * scale),
                       Expanded(
@@ -173,15 +212,22 @@ class _ChatShellScreenState extends State<ChatShellScreen> {
                                   SizedBox(
                                     width: 320 * scale,
                                     child: ConversationList(
-                                      onCreate: () => _showCreateConversationDialog(context),
+                                      onCreate: isStaff
+                                          ? null
+                                          : () => _showCreateConversationDialog(
+                                              context,
+                                            ),
                                     ),
                                   ),
                                   SizedBox(width: 16 * scale),
                                   Expanded(
                                     child: ConversationDetail(
-                                      onSupport: () => _showSupportDialog(context),
+                                      onSupport: isStaff
+                                          ? null
+                                          : () => _showSupportDialog(context),
                                       controller: _messageController,
-                                      scrollController: _messageScrollController,
+                                      scrollController:
+                                          _messageScrollController,
                                     ),
                                   ),
                                 ],
@@ -191,15 +237,22 @@ class _ChatShellScreenState extends State<ChatShellScreen> {
                                   SizedBox(
                                     height: 280 * scale,
                                     child: ConversationList(
-                                      onCreate: () => _showCreateConversationDialog(context),
+                                      onCreate: isStaff
+                                          ? null
+                                          : () => _showCreateConversationDialog(
+                                              context,
+                                            ),
                                     ),
                                   ),
                                   SizedBox(height: 12 * scale),
                                   Expanded(
                                     child: ConversationDetail(
-                                      onSupport: () => _showSupportDialog(context),
+                                      onSupport: isStaff
+                                          ? null
+                                          : () => _showSupportDialog(context),
                                       controller: _messageController,
-                                      scrollController: _messageScrollController,
+                                      scrollController:
+                                          _messageScrollController,
                                     ),
                                   ),
                                 ],
@@ -216,4 +269,3 @@ class _ChatShellScreenState extends State<ChatShellScreen> {
     );
   }
 }
-

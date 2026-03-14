@@ -67,3 +67,27 @@ class AmenityTicketError extends AmenityTicketState {
 class AmenityTicketEmpty extends AmenityTicketState {
   const AmenityTicketEmpty();
 }
+
+/// Ticket updated successfully
+class TicketUpdated extends AmenityTicketState {
+  final AmenityTicketEntity ticket;
+  final String message;
+
+  const TicketUpdated({
+    required this.ticket,
+    this.message = 'Cập nhật ticket thành công',
+  });
+
+  @override
+  List<Object?> get props => [ticket, message];
+}
+
+/// Single ticket loaded
+class TicketLoaded extends AmenityTicketState {
+  final AmenityTicketEntity ticket;
+
+  const TicketLoaded(this.ticket);
+
+  @override
+  List<Object?> get props => [ticket];
+}

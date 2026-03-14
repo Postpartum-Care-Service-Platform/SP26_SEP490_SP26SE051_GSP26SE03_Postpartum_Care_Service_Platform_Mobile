@@ -13,11 +13,30 @@ abstract class BookingRemoteDataSource {
     required DateTime startDate,
   });
 
+  /// Staff creates booking for a specific customer
+  Future<BookingModel> createBookingForCustomer({
+    required String customerId,
+    required int packageId,
+    required int roomId,
+    required DateTime startDate,
+    double? discountAmount,
+  });
+
   Future<BookingModel> getBookingById(int id);
 
   Future<List<BookingModel>> getBookings();
 
+  /// Staff/Admin: Get all bookings in system
+  Future<List<BookingModel>> getAllBookings();
+
+  /// Staff/Admin: Confirm booking
+  Future<String> confirmBooking(int id);
+
+  /// Staff/Admin: Cancel booking
   Future<String> cancelBooking(int id);
+
+  /// Staff/Admin: Complete booking
+  Future<String> completeBooking(int id);
 
   Future<PaymentLinkModel> createPaymentLink({
     required int bookingId,
@@ -27,6 +46,15 @@ abstract class BookingRemoteDataSource {
   });
 
   Future<PaymentStatusModel> checkPaymentStatus(String orderCode);
+
+  /// Staff ghi nhận thanh toán offline cho booking.
+  Future<PaymentStatusModel> createOfflinePayment({
+    required int bookingId,
+    required String customerId,
+    required double amount,
+    required String paymentMethod,
+    String? note,
+  });
 }
 
 /// Booking Remote Data Source Implementation
@@ -49,6 +77,36 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
           'roomId': roomId,
           'startDate': startDate.toIso8601String().split('T')[0],
         },
+      );
+
+      return BookingModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  @override
+  Future<BookingModel> createBookingForCustomer({
+    required String customerId,
+    required int packageId,
+    required int roomId,
+    required DateTime startDate,
+    double? discountAmount,
+  }) async {
+    try {
+      final body = <String, dynamic>{
+        'customerId': customerId,
+        'packageId': packageId,
+        'roomId': roomId,
+        'startDate': startDate.toIso8601String().split('T')[0],
+      };
+      if (discountAmount != null) {
+        body['discountAmount'] = discountAmount;
+      }
+
+      final response = await dio.post(
+        ApiEndpoints.createBookingForCustomer,
+        data: body,
       );
 
       return BookingModel.fromJson(response.data as Map<String, dynamic>);
@@ -91,6 +149,14 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
         return data['message'] as String? ?? 'Hủy booking thành công.';
       }
       return 'Hủy booking thành công.';
+  Future<List<BookingModel>> getAllBookings() async {
+    try {
+      final response = await dio.get(ApiEndpoints.getAllBookings);
+
+      final List<dynamic> data = response.data as List<dynamic>;
+      return data
+          .map((json) => BookingModel.fromJson(json as Map<String, dynamic>))
+          .toList();
     } on DioException catch (e) {
       throw _handleError(e);
     }
@@ -120,7 +186,7 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
               },
       );
 
-      return PaymentLinkModel.fromJson(response.data as Map<String, dynamic>);
+      return PaymentStatusModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw _handleError(e);
     }
@@ -139,6 +205,51 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
     }
   }
 
+  @override
+  Future<String> confirmBooking(int id) async {
+    try {
+      final response = await dio.put(ApiEndpoints.confirmBooking(id));
+
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        return data['message'] as String? ?? 'Xác nhận booking thành công';
+      }
+      return 'Xác nhận booking thành công';
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  @override
+  Future<String> cancelBooking(int id) async {
+    try {
+      final response = await dio.put(ApiEndpoints.cancelBooking(id));
+
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        return data['message'] as String? ?? 'Hủy booking thành công';
+      }
+      return 'Hủy booking thành công';
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  @override
+  Future<String> completeBooking(int id) async {
+    try {
+      final response = await dio.put(ApiEndpoints.completeBooking(id));
+
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        return data['message'] as String? ?? 'Hoàn thành booking thành công';
+      }
+      return 'Hoàn thành booking thành công';
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   String _handleError(DioException error) {
     if (error.response != null) {
       final statusCode = error.response!.statusCode;
@@ -147,9 +258,8 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
       String message = 'Có lỗi xảy ra';
 
       if (data is Map<String, dynamic>) {
-        message = data['error'] as String? ??
-            data['message'] as String? ??
-            message;
+        message =
+            data['error'] as String? ?? data['message'] as String? ?? message;
       } else if (data is String) {
         message = data;
       }

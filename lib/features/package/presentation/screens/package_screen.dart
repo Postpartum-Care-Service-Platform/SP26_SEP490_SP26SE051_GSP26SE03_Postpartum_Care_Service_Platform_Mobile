@@ -15,7 +15,12 @@ import '../widgets/package_filter_tabs.dart';
 import '../../../../features/care_plan/presentation/widgets/care_plan_bottom_sheet.dart';
 
 class PackageScreen extends StatefulWidget {
-  const PackageScreen({super.key});
+  final bool showBackButton;
+
+  const PackageScreen({
+    super.key,
+    this.showBackButton = true,
+  });
 
   @override
   State<PackageScreen> createState() => _PackageScreenState();
@@ -39,6 +44,7 @@ class _PackageScreenState extends State<PackageScreen> {
         centerTitle: true,
         titleFontSize: 20 * scale,
         titleFontWeight: FontWeight.w700,
+        showBackButton: widget.showBackButton,
       ),
       body: BlocBuilder<PackageBloc, PackageState>(
         builder: (context, state) {

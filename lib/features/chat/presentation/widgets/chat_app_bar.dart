@@ -8,12 +8,16 @@ import '../../../../core/utils/app_text_styles.dart';
 
 class ChatAppBar extends StatelessWidget {
   final String title;
-  final VoidCallback onSupport;
+  /// Thông tin khách hàng (cho staff) - Map chứa name, displayName, etc.
+  final Map<String, dynamic>? customerInfo;
+  /// null nếu không cho phép gửi yêu cầu hỗ trợ (staff mode).
+  final VoidCallback? onSupport;
   final VoidCallback? onBack;
 
   const ChatAppBar({
     super.key,
     required this.title,
+    this.customerInfo,
     required this.onSupport,
     this.onBack,
   });
@@ -27,8 +31,13 @@ class ChatAppBar extends StatelessWidget {
         builder: (context, constraints) {
           final compact = constraints.maxWidth < 360 * scale;
 
+          // Hiển thị customer name nếu có (cho staff), nếu không thì dùng title
+          final displayTitle = customerInfo != null
+              ? _getCustomerName(customerInfo!)
+              : title;
+
           final titleWidget = Text(
-            title,
+            displayTitle,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: AppTextStyles.tinos(
@@ -96,32 +105,43 @@ class ChatAppBar extends StatelessWidget {
                   ],
                 ),
               ),
-              if (compact)
-                IconButton(
-                  onPressed: onSupport,
-                  tooltip: AppStrings.chatRequestSupport,
-                  icon: const Icon(Icons.support_agent, color: AppColors.primary),
-                )
-              else
-                TextButton.icon(
-                  onPressed: onSupport,
-                  icon: const Icon(Icons.support_agent, color: AppColors.primary),
-                  label: Text(
-                    AppStrings.chatRequestSupport,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.arimo(
-                      fontSize: 12 * scale,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ),
+              if (onSupport != null)
+                (compact
+                    ? IconButton(
+                        onPressed: onSupport,
+                        tooltip: AppStrings.chatRequestSupport,
+                        icon: const Icon(Icons.support_agent,
+                            color: AppColors.primary),
+                      )
+                    : TextButton.icon(
+                        onPressed: onSupport,
+                        icon: const Icon(Icons.support_agent,
+                            color: AppColors.primary),
+                        label: Text(
+                          AppStrings.chatRequestSupport,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.arimo(
+                            fontSize: 12 * scale,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      )),
             ],
           );
         },
       ),
     );
+  }
+
+  String _getCustomerName(Map<String, dynamic> customerInfo) {
+    // Thử các key phổ biến cho customer name
+    return customerInfo['name']?.toString() ??
+        customerInfo['displayName']?.toString() ??
+        customerInfo['fullName']?.toString() ??
+        customerInfo['customerName']?.toString() ??
+        'Khách hàng';
   }
 }
 

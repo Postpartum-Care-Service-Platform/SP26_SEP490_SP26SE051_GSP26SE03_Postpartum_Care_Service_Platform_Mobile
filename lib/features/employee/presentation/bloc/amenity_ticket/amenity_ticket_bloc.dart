@@ -21,6 +21,8 @@ class AmenityTicketBloc extends Bloc<AmenityTicketEvent, AmenityTicketState> {
     on<CancelTicketEvent>(_onCancelTicket);
     on<ConfirmTicketEvent>(_onConfirmTicket);
     on<CompleteTicketEvent>(_onCompleteTicket);
+    on<UpdateTicketEvent>(_onUpdateTicket);
+    on<LoadTicketById>(_onLoadTicketById);
     on<RefreshTickets>(_onRefreshTickets);
   }
 
@@ -177,6 +179,52 @@ class AmenityTicketBloc extends Bloc<AmenityTicketEvent, AmenityTicketState> {
       if (currentState is AmenityTicketLoaded) {
         emit(currentState);
       }
+    }
+  }
+
+  /// Handle update ticket
+  Future<void> _onUpdateTicket(
+    UpdateTicketEvent event,
+    Emitter<AmenityTicketState> emit,
+  ) async {
+    final currentState = state;
+    emit(const AmenityTicketLoading());
+
+    try {
+      final ticket = await repository.updateTicket(
+        ticketId: event.ticketId,
+        amenityServiceId: event.amenityServiceId,
+        startTime: event.startTime,
+        endTime: event.endTime,
+      );
+      
+      emit(TicketUpdated(ticket: ticket));
+      
+      // Reload tickets if we have a loaded state
+      if (currentState is AmenityTicketLoaded) {
+        add(const RefreshTickets());
+      }
+    } catch (e) {
+      emit(AmenityTicketError(e.toString()));
+      
+      if (currentState is AmenityTicketLoaded) {
+        emit(currentState);
+      }
+    }
+  }
+
+  /// Handle load ticket by ID
+  Future<void> _onLoadTicketById(
+    LoadTicketById event,
+    Emitter<AmenityTicketState> emit,
+  ) async {
+    emit(const AmenityTicketLoading());
+
+    try {
+      final ticket = await repository.getTicketById(event.ticketId);
+      emit(TicketLoaded(ticket));
+    } catch (e) {
+      emit(AmenityTicketError(e.toString()));
     }
   }
 

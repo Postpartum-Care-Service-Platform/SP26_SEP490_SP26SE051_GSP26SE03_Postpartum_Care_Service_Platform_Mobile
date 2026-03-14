@@ -8,61 +8,69 @@ import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_widgets.dart';
 
 class ChatHeader extends StatelessWidget {
-  final VoidCallback onCreateConversation;
+  /// null nếu không cho phép tạo cuộc hội thoại mới (staff mode).
+  final VoidCallback? onCreateConversation;
 
   const ChatHeader({
     super.key,
-    required this.onCreateConversation,
+    this.onCreateConversation,
   });
 
   @override
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 48 * scale,
-          height: 48 * scale,
-          padding: EdgeInsets.all(8 * scale),
-          decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.12),
-            shape: BoxShape.circle,
-          ),
-          child: SvgPicture.asset(
-            AppAssets.appIcon,
-            fit: BoxFit.contain,
-          ),
-        ),
-        SizedBox(width: 12 * scale),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                AppStrings.chatTitle,
-                style: AppTextStyles.tinos(
-                  fontSize: 20 * scale,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                ),
+        Row(
+          children: [
+            Container(
+              width: 48 * scale,
+              height: 48 * scale,
+              padding: EdgeInsets.all(8 * scale),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
               ),
-              SizedBox(height: 4 * scale),
-              Text(
-                AppStrings.chatSubtitle,
-                style: AppTextStyles.arimo(
-                  fontSize: 13 * scale,
-                  color: AppColors.textSecondary,
-                ),
+              child: SvgPicture.asset(
+                AppAssets.appIcon,
+                fit: BoxFit.contain,
               ),
-            ],
+            ),
+            SizedBox(width: 12 * scale),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppStrings.chatTitle,
+                    style: AppTextStyles.tinos(
+                      fontSize: 20 * scale,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  SizedBox(height: 4 * scale),
+                  Text(
+                    AppStrings.chatSubtitle,
+                    style: AppTextStyles.arimo(
+                      fontSize: 13 * scale,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        if (onCreateConversation != null) ...[
+          SizedBox(height: 12 * scale),
+          AppWidgets.secondaryButton(
+            text: AppStrings.chatNewConversation,
+            onPressed: onCreateConversation!,
+            height: 44 * scale,
           ),
-        ),
-        AppWidgets.secondaryButton(
-          text: AppStrings.chatNewConversation,
-          onPressed: onCreateConversation,
-          width: 200 * scale,
-          height: 42 * scale,
-        ),
+        ],
       ],
     );
   }

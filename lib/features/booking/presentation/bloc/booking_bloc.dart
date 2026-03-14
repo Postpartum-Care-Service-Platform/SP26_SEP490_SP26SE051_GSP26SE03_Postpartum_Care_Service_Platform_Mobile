@@ -1,10 +1,12 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/usecases/create_booking_usecase.dart';
 import '../../domain/usecases/cancel_booking_usecase.dart';
+import '../../domain/usecases/create_booking_for_customer_usecase.dart';
 import '../../domain/usecases/get_booking_by_id_usecase.dart';
 import '../../domain/usecases/get_bookings_usecase.dart';
 import '../../domain/usecases/create_payment_link_usecase.dart';
 import '../../domain/usecases/check_payment_status_usecase.dart';
+import '../../domain/usecases/create_offline_payment_usecase.dart';
 import '../../../package/domain/usecases/get_packages_usecase.dart';
 import '../../../package/domain/entities/package_entity.dart';
 import '../../../employee/domain/usecases/get_available_rooms_by_date_range.dart';
@@ -16,12 +18,15 @@ import 'booking_state.dart';
 class BookingBloc extends Bloc<BookingEvent, BookingState> {
   final CreateBookingUsecase createBookingUsecase;
   final CancelBookingUsecase cancelBookingUsecase;
+  final CreateBookingForCustomerUsecase createBookingForCustomerUsecase;
   final GetBookingByIdUsecase getBookingByIdUsecase;
   final GetBookingsUsecase getBookingsUsecase;
   final CreatePaymentLinkUsecase createPaymentLinkUsecase;
   final CheckPaymentStatusUsecase checkPaymentStatusUsecase;
   final GetPackagesUsecase getPackagesUsecase;
   final GetAvailableRoomsByDateRange getAvailableRoomsByDateRange;
+  final GetAllRooms getAllRooms;
+  final CreateOfflinePaymentUsecase createOfflinePaymentUsecase;
 
   // Current selection state
   int? _selectedPackageId;
@@ -46,12 +51,15 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   BookingBloc({
     required this.createBookingUsecase,
     required this.cancelBookingUsecase,
+    required this.createBookingForCustomerUsecase,
     required this.getBookingByIdUsecase,
     required this.getBookingsUsecase,
     required this.createPaymentLinkUsecase,
     required this.checkPaymentStatusUsecase,
     required this.getPackagesUsecase,
     required this.getAvailableRoomsByDateRange,
+    required this.getAllRooms,
+    required this.createOfflinePaymentUsecase,
   }) : super(const BookingInitial()) {
     on<BookingLoadPackages>(_onLoadPackages);
     on<BookingSelectPackage>(_onSelectPackage);
@@ -59,7 +67,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     on<BookingSelectRoom>(_onSelectRoom);
     on<BookingSelectDate>(_onSelectDate);
     on<BookingCreateBooking>(_onCreateBooking);
+    on<BookingCreateBookingForCustomer>(_onCreateBookingForCustomer);
     on<BookingCreatePaymentLink>(_onCreatePaymentLink);
+    on<BookingCreateOfflinePayment>(_onCreateOfflinePayment);
     on<BookingCheckPaymentStatus>(_onCheckPaymentStatus);
     on<BookingLoadById>(_onLoadById);
     on<BookingLoadAll>(_onLoadAll);
@@ -75,15 +85,17 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     if (state is BookingLoading || state is BookingPackagesLoaded) {
       return;
     }
-    
+
     emit(const BookingLoading());
     try {
       final packages = await getPackagesUsecase();
       _packages = packages;
-      emit(BookingPackagesLoaded(
-        packages: packages,
-        selectedPackageId: _selectedPackageId,
-      ));
+      emit(
+        BookingPackagesLoaded(
+          packages: packages,
+          selectedPackageId: _selectedPackageId,
+        ),
+      );
     } catch (e) {
       emit(BookingError(e.toString()));
     }
@@ -96,26 +108,34 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     _selectedPackageId = event.packageId;
     final currentState = state;
     if (currentState is BookingPackagesLoaded) {
-      emit(BookingPackagesLoaded(
-        packages: currentState.packages,
-        selectedPackageId: _selectedPackageId,
-      ));
+      emit(
+        BookingPackagesLoaded(
+          packages: currentState.packages,
+          selectedPackageId: _selectedPackageId,
+        ),
+      );
     }
-    
+
     // If all selections are made, create summary state
-    if (_selectedPackageId != null && _selectedRoomId != null && _selectedDate != null) {
+    if (_selectedPackageId != null &&
+        _selectedRoomId != null &&
+        _selectedDate != null) {
       try {
-        final package = _packages?.firstWhere((p) => p.id == _selectedPackageId);
+        final package = _packages?.firstWhere(
+          (p) => p.id == _selectedPackageId,
+        );
         final room = _rooms?.firstWhere((r) => r.id == _selectedRoomId);
-        
+
         if (package != null && room != null) {
-          emit(BookingSummaryReady(
-            packageId: _selectedPackageId!,
-            roomId: _selectedRoomId!,
-            startDate: _selectedDate!,
-            package: package,
-            room: room,
-          ));
+          emit(
+            BookingSummaryReady(
+              packageId: _selectedPackageId!,
+              roomId: _selectedRoomId!,
+              startDate: _selectedDate!,
+              package: package,
+              room: room,
+            ),
+          );
         }
       } catch (e) {
         // Package or room not found, ignore
@@ -171,26 +191,34 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     _selectedRoomId = event.roomId;
     final currentState = state;
     if (currentState is BookingRoomsLoaded) {
-      emit(BookingRoomsLoaded(
-        rooms: currentState.rooms,
-        selectedRoomId: _selectedRoomId,
-      ));
+      emit(
+        BookingRoomsLoaded(
+          rooms: currentState.rooms,
+          selectedRoomId: _selectedRoomId,
+        ),
+      );
     }
-    
+
     // If all selections are made, create summary state
-    if (_selectedPackageId != null && _selectedRoomId != null && _selectedDate != null) {
+    if (_selectedPackageId != null &&
+        _selectedRoomId != null &&
+        _selectedDate != null) {
       try {
-        final package = _packages?.firstWhere((p) => p.id == _selectedPackageId);
+        final package = _packages?.firstWhere(
+          (p) => p.id == _selectedPackageId,
+        );
         final room = _rooms?.firstWhere((r) => r.id == _selectedRoomId);
-        
+
         if (package != null && room != null) {
-          emit(BookingSummaryReady(
-            packageId: _selectedPackageId!,
-            roomId: _selectedRoomId!,
-            startDate: _selectedDate!,
-            package: package,
-            room: room,
-          ));
+          emit(
+            BookingSummaryReady(
+              packageId: _selectedPackageId!,
+              roomId: _selectedRoomId!,
+              startDate: _selectedDate!,
+              package: package,
+              room: room,
+            ),
+          );
         }
       } catch (e) {
         // Package or room not found, ignore
@@ -214,19 +242,25 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     emit(BookingDateSelected(event.date, package: package));
     
     // If all selections are made, create summary state
-    if (_selectedPackageId != null && _selectedRoomId != null && _selectedDate != null) {
+    if (_selectedPackageId != null &&
+        _selectedRoomId != null &&
+        _selectedDate != null) {
       try {
-        final package = _packages?.firstWhere((p) => p.id == _selectedPackageId);
+        final package = _packages?.firstWhere(
+          (p) => p.id == _selectedPackageId,
+        );
         final room = _rooms?.firstWhere((r) => r.id == _selectedRoomId);
-        
+
         if (package != null && room != null) {
-          emit(BookingSummaryReady(
-            packageId: _selectedPackageId!,
-            roomId: _selectedRoomId!,
-            startDate: _selectedDate!,
-            package: package,
-            room: room,
-          ));
+          emit(
+            BookingSummaryReady(
+              packageId: _selectedPackageId!,
+              roomId: _selectedRoomId!,
+              startDate: _selectedDate!,
+              package: package,
+              room: room,
+            ),
+          );
         }
       } catch (e) {
         // Package or room not found, ignore
@@ -238,7 +272,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     BookingCreateBooking event,
     Emitter<BookingState> emit,
   ) async {
-    if (_selectedPackageId == null || _selectedRoomId == null || _selectedDate == null) {
+    if (_selectedPackageId == null ||
+        _selectedRoomId == null ||
+        _selectedDate == null) {
       emit(const BookingError('Vui lòng chọn đầy đủ thông tin'));
       return;
     }
@@ -249,6 +285,32 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         packageId: _selectedPackageId!,
         roomId: _selectedRoomId!,
         startDate: _selectedDate!,
+      );
+      emit(BookingCreated(booking));
+    } catch (e) {
+      emit(BookingError(e.toString()));
+    }
+  }
+
+  Future<void> _onCreateBookingForCustomer(
+    BookingCreateBookingForCustomer event,
+    Emitter<BookingState> emit,
+  ) async {
+    if (_selectedPackageId == null ||
+        _selectedRoomId == null ||
+        _selectedDate == null) {
+      emit(const BookingError('Vui lòng chọn đầy đủ thông tin'));
+      return;
+    }
+
+    emit(const BookingLoading());
+    try {
+      final booking = await createBookingForCustomerUsecase(
+        customerId: event.customerId,
+        packageId: _selectedPackageId!,
+        roomId: _selectedRoomId!,
+        startDate: _selectedDate!,
+        discountAmount: event.discountAmount,
       );
       emit(BookingCreated(booking));
     } catch (e) {
@@ -284,6 +346,25 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         staffId: event.staffId,
       );
       emit(BookingPaymentLinkCreated(paymentLink));
+    } catch (e) {
+      emit(BookingError(e.toString()));
+    }
+  }
+
+  Future<void> _onCreateOfflinePayment(
+    BookingCreateOfflinePayment event,
+    Emitter<BookingState> emit,
+  ) async {
+    emit(const BookingLoading());
+    try {
+      final status = await createOfflinePaymentUsecase(
+        bookingId: event.bookingId,
+        customerId: event.customerId,
+        amount: event.amount,
+        paymentMethod: event.paymentMethod,
+        note: event.note,
+      );
+      emit(BookingPaymentStatusChecked(status));
     } catch (e) {
       emit(BookingError(e.toString()));
     }

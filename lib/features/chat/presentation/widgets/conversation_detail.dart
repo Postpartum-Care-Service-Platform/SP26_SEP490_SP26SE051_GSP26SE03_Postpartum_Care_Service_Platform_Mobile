@@ -21,10 +21,14 @@ import 'messenger_composer.dart';
 import 'messenger_top_bar.dart';
 
 class ConversationDetail extends StatelessWidget {
-  final VoidCallback onSupport;
+  /// null nếu không cho phép gửi yêu cầu hỗ trợ (staff mode).
+  final VoidCallback? onSupport;
   final VoidCallback? onBack;
   final TextEditingController controller;
   final ScrollController scrollController;
+
+  /// true nếu đây là staff mode (sẽ dùng staff-message endpoint)
+  final bool isStaff;
 
   const ConversationDetail({
     super.key,
@@ -32,6 +36,7 @@ class ConversationDetail extends StatelessWidget {
     this.onBack,
     required this.controller,
     required this.scrollController,
+    this.isStaff = false,
   });
 
   @override
@@ -44,216 +49,229 @@ class ConversationDetail extends StatelessWidget {
         final currentAccount = snapshot.data;
 
         return BlocConsumer<ChatBloc, ChatState>(
-      listenWhen: (p, c) =>
-          p.supportStatus != c.supportStatus ||
-          p.sendStatus != c.sendStatus ||
-          p.errorMessage != c.errorMessage,
-      listener: (context, state) {
-        if (state.supportStatus == ChatSupportStatus.success) {
-          AppToast.showSuccess(
-            context,
-            message: AppStrings.chatRequestSupportSuccess,
-          );
-        }
-        if (state.errorMessage != null &&
-            (state.sendStatus == ChatSendStatus.failure ||
-                state.supportStatus == ChatSupportStatus.failure ||
-                state.conversationDetailStatus == ChatStatus.failure)) {
-          AppToast.showError(
-            context,
-            message: state.errorMessage!,
-          );
-        }
-      },
-      builder: (context, state) {
-        final conversation = state.selectedConversation;
-        if (state.conversationDetailStatus == ChatStatus.loading) {
-          return const Center(child: AppLoadingIndicator(color: AppColors.primary));
-        }
-        if (conversation == null) {
-          return const EmptyPlaceholder(
-            icon: Icons.chat_bubble_outline_rounded,
-            title: AppStrings.chatEmptyMessage,
-            subtitle: AppStrings.chatTypingHint,
-          );
-        }
+          listenWhen: (p, c) =>
+              p.supportStatus != c.supportStatus ||
+              p.sendStatus != c.sendStatus ||
+              p.errorMessage != c.errorMessage,
+          listener: (context, state) {
+            if (state.supportStatus == ChatSupportStatus.success) {
+              AppToast.showSuccess(
+                context,
+                message: AppStrings.chatRequestSupportSuccess,
+              );
+            }
+            if (state.errorMessage != null &&
+                (state.sendStatus == ChatSendStatus.failure ||
+                    state.supportStatus == ChatSupportStatus.failure ||
+                    state.conversationDetailStatus == ChatStatus.failure)) {
+              AppToast.showError(context, message: state.errorMessage!);
+            }
+          },
+          builder: (context, state) {
+            final conversation = state.selectedConversation;
+            if (state.conversationDetailStatus == ChatStatus.loading) {
+              return const Center(
+                child: AppLoadingIndicator(color: AppColors.primary),
+              );
+            }
+            if (conversation == null) {
+              return const EmptyPlaceholder(
+                icon: Icons.chat_bubble_outline_rounded,
+                title: AppStrings.chatEmptyMessage,
+                subtitle: AppStrings.chatTypingHint,
+              );
+            }
 
-        final messages = List<ChatMessage>.from(conversation.messages)
-          ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
-        final showTyping = state.isAiTyping;
+            final messages = List<ChatMessage>.from(conversation.messages)
+              ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+            final showTyping = state.isAiTyping;
 
-        final content = Column(
-          children: [
-            if (messengerStyle)
-              MessengerTopBar(
-                title: conversation.name,
-                subtitle: AppStrings.chatMessengerLabel,
-                onBack: onBack!,
-                onSupport: onSupport,
-              )
-            else
-              ChatAppBar(
-                title: conversation.name,
-                onSupport: onSupport,
-                onBack: onBack,
-              ),
-            if (!messengerStyle) const Divider(height: 1, color: AppColors.borderLight),
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 12 * scale),
-                child: ListView.builder(
-                  controller: scrollController,
-                  itemCount: 1 + messages.length + (showTyping ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    // Intro banner (scrolls with messages)
-                    if (index == 0) {
-                      return Padding(
-                        padding: EdgeInsets.only(bottom: 12 * scale),
-                        child: const _AiIntroBanner(),
-                      );
-                    }
+            final content = Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (messengerStyle)
+                  MessengerTopBar(
+                    title: conversation.name,
+                    subtitle: AppStrings.chatMessengerLabel,
+                    onBack: onBack!,
+                    onSupport: onSupport,
+                  )
+                else
+                  ChatAppBar(
+                    title: conversation.name,
+                    customerInfo: conversation.customerInfo,
+                    onSupport: onSupport,
+                    onBack: onBack,
+                  ),
+                if (!messengerStyle)
+                  const Divider(height: 1, color: AppColors.borderLight),
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16 * scale,
+                      vertical: 12 * scale,
+                    ),
+                    child: ListView.builder(
+                      controller: scrollController,
+                      itemCount: 1 + messages.length + (showTyping ? 1 : 0),
+                      itemBuilder: (context, index) {
+                        // Intro banner (scrolls with messages)
+                        if (index == 0) {
+                          return Padding(
+                            padding: EdgeInsets.only(bottom: 12 * scale),
+                            child: const _AiIntroBanner(),
+                          );
+                        }
 
-                    final messageIndex = index - 1;
+                        final messageIndex = index - 1;
 
-                    if (showTyping && messageIndex == messages.length) {
-                      return Padding(
-                        padding: EdgeInsets.only(top: 4 * scale),
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 12 * scale,
-                              vertical: 8 * scale,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.06),
-                              borderRadius: BorderRadius.circular(16 * scale),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                SizedBox(
-                                  width: 18 * scale,
-                                  height: 6 * scale,
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: List.generate(
-                                      3,
-                                      (i) => Container(
-                                        width: 4 * scale,
-                                        height: 4 * scale,
-                                        decoration: BoxDecoration(
-                                          color: AppColors.textSecondary
-                                              .withValues(alpha: 0.7),
-                                          shape: BoxShape.circle,
+                        if (showTyping && messageIndex == messages.length) {
+                          return Padding(
+                            padding: EdgeInsets.only(top: 4 * scale),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 12 * scale,
+                                  vertical: 8 * scale,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.06),
+                                  borderRadius: BorderRadius.circular(
+                                    16 * scale,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    SizedBox(
+                                      width: 18 * scale,
+                                      height: 6 * scale,
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: List.generate(
+                                          3,
+                                          (i) => Container(
+                                            width: 4 * scale,
+                                            height: 4 * scale,
+                                            decoration: BoxDecoration(
+                                              color: AppColors.textSecondary
+                                                  .withValues(alpha: 0.7),
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
+                                    SizedBox(width: 8 * scale),
+                                    Text(
+                                      AppStrings.chatAiTypingStatus,
+                                      style: AppTextStyles.arimo(
+                                        fontSize: 12 * scale,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                SizedBox(width: 8 * scale),
-                                Text(
-                                  AppStrings.chatAiTypingStatus,
-                                  style: AppTextStyles.arimo(
-                                    fontSize: 12 * scale,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
-                          ),
-                        ),
-                      );
-                    }
+                          );
+                        }
 
-                    final message = messages[messageIndex];
-                    final sender = message.senderType.toLowerCase();
-                    final prevSender = messageIndex > 0
-                        ? messages[messageIndex - 1].senderType.toLowerCase()
-                        : null;
-                    final nextSender = messageIndex < messages.length - 1
-                        ? messages[messageIndex + 1].senderType.toLowerCase()
-                        : null;
-                    final isFirstInGroup = prevSender != sender;
-                    final isLastInGroup = nextSender != sender;
+                        final message = messages[messageIndex];
+                        final sender = message.senderType.toLowerCase();
+                        final prevSender = messageIndex > 0
+                            ? messages[messageIndex - 1].senderType
+                                  .toLowerCase()
+                            : null;
+                        final nextSender = messageIndex < messages.length - 1
+                            ? messages[messageIndex + 1].senderType
+                                  .toLowerCase()
+                            : null;
+                        final isFirstInGroup = prevSender != sender;
+                        final isLastInGroup = nextSender != sender;
 
-                    final isMine = sender == 'customer';
-                    final isAI = sender == 'ai';
-                    final isStaff = sender == 'staff' ||
-                        sender == 'employee' ||
-                        sender == 'nurse' ||
-                        sender == 'consultant';
+                        final isMine = sender == 'customer';
+                        final isAI = sender == 'ai';
+                        final isStaff =
+                            sender == 'staff' ||
+                            sender == 'employee' ||
+                            sender == 'nurse' ||
+                            sender == 'consultant';
 
-                    // Force initials per requirement: AI => "AI", staff => "NV"
-                    final displayName = isAI
-                        ? 'AI'
-                        : (isStaff
-                            ? 'NV'
-                            : (isMine
-                                ? (currentAccount?.displayName ?? 'Bạn')
-                                : (message.senderName ?? 'NV')));
-                    final avatarUrl = isMine ? currentAccount?.avatarUrl : null;
-                    final structured = state.aiStructuredByMessageId[message.id];
+                        // Force initials per requirement: AI => "AI", staff => "NV"
+                        final displayName = isAI
+                            ? 'AI'
+                            : (isStaff
+                                  ? 'NV'
+                                  : (isMine
+                                        ? (currentAccount?.displayName ?? 'Bạn')
+                                        : (message.senderName ?? 'NV')));
+                        final avatarUrl = isMine
+                            ? currentAccount?.avatarUrl
+                            : null;
+                        final structured =
+                            state.aiStructuredByMessageId[message.id];
 
-                    return MessageBubble(
-                      message: message,
-                      isMine: isMine,
-                      isAI: isAI,
-                      isFirstInGroup: isFirstInGroup,
-                      isLastInGroup: isLastInGroup,
-                      displayName: displayName,
-                      avatarUrl: avatarUrl,
-                      structuredData: structured,
-                    );
-                  },
+                        return MessageBubble(
+                          message: message,
+                          isMine: isMine,
+                          isAI: isAI,
+                          isFirstInGroup: isFirstInGroup,
+                          isLastInGroup: isLastInGroup,
+                          displayName: displayName,
+                          avatarUrl: avatarUrl,
+                          structuredData: structured,
+                        );
+                      },
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            if (messengerStyle)
-              MessengerComposer(
-                controller: controller,
-                onSend: (text) => context.read<ChatBloc>().add(ChatSendMessageSubmitted(text)),
-                sending: state.sendStatus == ChatSendStatus.sending,
-              )
-            else
-              Composer(
-                controller: controller,
-                onSend: (text) {
-                  context.read<ChatBloc>().add(ChatSendMessageSubmitted(text));
-                },
-                sending: state.sendStatus == ChatSendStatus.sending,
-              ),
-          ],
-        );
+                if (messengerStyle)
+                  MessengerComposer(
+                    controller: controller,
+                    onSend: (text) => context.read<ChatBloc>().add(
+                      ChatSendMessageSubmitted(text, isStaff: isStaff),
+                    ),
+                    sending: state.sendStatus == ChatSendStatus.sending,
+                  )
+                else
+                  Composer(
+                    controller: controller,
+                    onSend: (text) {
+                      context.read<ChatBloc>().add(
+                        ChatSendMessageSubmitted(text, isStaff: isStaff),
+                      );
+                    },
+                    sending: state.sendStatus == ChatSendStatus.sending,
+                  ),
+              ],
+            );
 
-        if (messengerStyle) {
-          return Container(
-            color: AppColors.white,
-            child: SafeArea(
-              top: true,
-              bottom: true,
+            if (messengerStyle) {
+              return Container(
+                color: AppColors.white,
+                child: SafeArea(top: true, bottom: true, child: content),
+              );
+            }
+
+            return Container(
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(18 * scale),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 16 * scale,
+                    offset: Offset(0, 6 * scale),
+                  ),
+                ],
+              ),
               child: content,
-            ),
-          );
-        }
-
-        return Container(
-          decoration: BoxDecoration(
-            color: AppColors.white,
-            borderRadius: BorderRadius.circular(18 * scale),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 16 * scale,
-                offset: Offset(0, 6 * scale),
-              ),
-            ],
-          ),
-          child: content,
+            );
+          },
         );
-      },
-    );
       },
     );
   }
@@ -270,7 +288,8 @@ class _AiIntroBanner extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.symmetric(
         horizontal: 16 * scale,
-        vertical: 18 * scale,
+        // Giảm padding dọc một chút để tránh tràn khi hiển thị kèm bottom nav nhân viên
+        vertical: 12 * scale,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -283,7 +302,7 @@ class _AiIntroBanner extends StatelessWidget {
               fit: BoxFit.contain,
             ),
           ),
-          SizedBox(height: 10 * scale),
+          SizedBox(height: 8 * scale),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

@@ -41,11 +41,12 @@ class ChatCreateConversationSubmitted extends ChatEvent {
 
 class ChatSendMessageSubmitted extends ChatEvent {
   final String content;
+  final bool isStaff; // true nếu là staff gửi tin nhắn
 
-  const ChatSendMessageSubmitted(this.content);
+  const ChatSendMessageSubmitted(this.content, {this.isStaff = false});
 
   @override
-  List<Object?> get props => [content];
+  List<Object?> get props => [content, isStaff];
 }
 
 class ChatRequestSupportSubmitted extends ChatEvent {
@@ -118,4 +119,35 @@ class ChatRealtimeErrorReceived extends ChatEvent {
 
   @override
   List<Object?> get props => [message];
+}
+
+// Staff Chat Events
+class ChatLoadAllConversationsRequested extends ChatEvent {
+  const ChatLoadAllConversationsRequested();
+}
+
+class ChatLoadSupportRequestsRequested extends ChatEvent {
+  const ChatLoadSupportRequestsRequested();
+}
+
+class ChatLoadMySupportRequestsRequested extends ChatEvent {
+  const ChatLoadMySupportRequestsRequested();
+}
+
+class ChatAcceptSupportRequestSubmitted extends ChatEvent {
+  final int supportRequestId;
+
+  const ChatAcceptSupportRequestSubmitted(this.supportRequestId);
+
+  @override
+  List<Object?> get props => [supportRequestId];
+}
+
+class ChatResolveSupportRequestSubmitted extends ChatEvent {
+  final int supportRequestId;
+
+  const ChatResolveSupportRequestSubmitted(this.supportRequestId);
+
+  @override
+  List<Object?> get props => [supportRequestId];
 }
