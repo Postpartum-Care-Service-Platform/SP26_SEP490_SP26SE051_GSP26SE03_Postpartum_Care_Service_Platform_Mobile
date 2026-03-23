@@ -185,7 +185,7 @@ class ConversationList extends StatelessWidget {
                       ),
                       child: Icon(
                         Icons.chat_bubble_outline_rounded,
-                        size: 64 * scale,
+                        size: 44 * scale,
                         color: AppColors.primary,
                       ),
                     ),
@@ -193,8 +193,8 @@ class ConversationList extends StatelessWidget {
                     Text(
                       AppStrings.chatNoConversation,
                       textAlign: TextAlign.center,
-                      style: AppTextStyles.arimo(
-                        fontSize: 18 * scale,
+                      style: AppTextStyles.tinos(
+                        fontSize: 22 * scale,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
                       ),

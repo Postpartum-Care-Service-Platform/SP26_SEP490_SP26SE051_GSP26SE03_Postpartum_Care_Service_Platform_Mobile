@@ -13,6 +13,7 @@ class CarePlanModel extends Equatable {
   final String endTime;
   final String? instruction;
   final int sortOrder;
+  final DateTime? homeServiceDate;
 
   const CarePlanModel({
     required this.id,
@@ -25,6 +26,7 @@ class CarePlanModel extends Equatable {
     required this.endTime,
     this.instruction,
     required this.sortOrder,
+    this.homeServiceDate,
   });
 
   factory CarePlanModel.fromJson(Map<String, dynamic> json) {
@@ -38,7 +40,10 @@ class CarePlanModel extends Equatable {
       startTime: json['startTime'] as String,
       endTime: json['endTime'] as String,
       instruction: json['instruction'] as String?,
-      sortOrder: json['sortOrder'] as int,
+      sortOrder: json['sortOrder'] as int? ?? 0,
+      homeServiceDate: json['homeServiceDate'] != null
+          ? DateTime.tryParse(json['homeServiceDate'] as String)
+          : null,
     );
   }
 
@@ -54,6 +59,7 @@ class CarePlanModel extends Equatable {
       'endTime': endTime,
       'instruction': instruction,
       'sortOrder': sortOrder,
+      'homeServiceDate': homeServiceDate?.toIso8601String(),
     };
   }
 
@@ -69,6 +75,7 @@ class CarePlanModel extends Equatable {
       endTime: endTime,
       instruction: instruction,
       sortOrder: sortOrder,
+      homeServiceDate: homeServiceDate,
     );
   }
 
@@ -84,5 +91,6 @@ class CarePlanModel extends Equatable {
         endTime,
         instruction,
         sortOrder,
+        homeServiceDate,
       ];
 }

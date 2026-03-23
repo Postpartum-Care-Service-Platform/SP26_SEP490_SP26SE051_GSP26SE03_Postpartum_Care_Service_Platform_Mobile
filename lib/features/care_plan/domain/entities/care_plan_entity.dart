@@ -12,6 +12,7 @@ class CarePlanEntity extends Equatable {
   final String endTime;
   final String? instruction;
   final int sortOrder;
+  final DateTime? homeServiceDate;
 
   const CarePlanEntity({
     required this.id,
@@ -24,6 +25,7 @@ class CarePlanEntity extends Equatable {
     required this.endTime,
     this.instruction,
     required this.sortOrder,
+    this.homeServiceDate,
   });
 
   @override
@@ -38,5 +40,6 @@ class CarePlanEntity extends Equatable {
         endTime,
         instruction,
         sortOrder,
+        homeServiceDate,
       ];
 }

@@ -94,18 +94,37 @@ class BookingHistoryScreen extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.history_rounded,
-                        size: 64 * scale,
-                        color: AppColors.textSecondary,
+                      Container(
+                        width: 88 * scale,
+                        height: 88 * scale,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.event_note_rounded,
+                          size: 44 * scale,
+                          color: AppColors.primary,
+                        ),
                       ),
-                      SizedBox(height: 16 * scale),
+                      SizedBox(height: 20 * scale),
                       Text(
                         AppStrings.noBookingHistory,
+                        style: AppTextStyles.tinos(
+                          fontSize: 22 * scale,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 8 * scale),
+                      Text(
+                        AppStrings.bookingHistoryEmptyHint,
                         style: AppTextStyles.arimo(
-                          fontSize: 16 * scale,
+                          fontSize: 14 * scale,
                           color: AppColors.textSecondary,
                         ),
+                        textAlign: TextAlign.center,
                       ),
                     ],
                   ),

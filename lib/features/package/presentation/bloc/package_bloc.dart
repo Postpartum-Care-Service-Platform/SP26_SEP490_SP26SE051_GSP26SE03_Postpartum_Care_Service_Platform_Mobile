@@ -65,19 +65,25 @@ class PackageBloc extends Bloc<PackageEvent, PackageState> {
     }
   }
 
-  /// Categorize packages by type: Center (id: 2) and Home (id: 3)
+  /// Categorize packages by type.
+  ///
+  /// Backend mới cho endpoint `/Packages/center` đang trả về packageTypeId = 1
+  /// ("Trung tâm"). Vì vậy ưu tiên gom tất cả vào center và chỉ tách home khi
+  /// nhận diện rõ là gói tại nhà.
   ({List<PackageEntity> centerPackages, List<PackageEntity> homePackages})
       _categorizePackages(List<PackageEntity> packages) {
     final centerPackages = <PackageEntity>[];
     final homePackages = <PackageEntity>[];
 
     for (final package in packages) {
-      if (package.packageTypeId == 2) {
-        // Center
-        centerPackages.add(package);
-      } else if (package.packageTypeId == 3) {
-        // Home
+      final packageTypeName = package.packageTypeName?.toLowerCase() ?? '';
+      final isHome = package.packageTypeId == 3 || packageTypeName.contains('home');
+
+      if (isHome) {
         homePackages.add(package);
+      } else {
+        // Mặc định xem là gói trung tâm (bao gồm packageTypeId == 1).
+        centerPackages.add(package);
       }
     }
 

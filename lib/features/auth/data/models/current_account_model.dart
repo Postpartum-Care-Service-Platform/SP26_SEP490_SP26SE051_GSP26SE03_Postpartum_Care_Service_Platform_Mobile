@@ -6,7 +6,7 @@ class OwnerProfileModel extends Equatable {
   final int id;
   final int? memberTypeId;
   final String? memberTypeName;
-  final String customerId;
+  final String accountId;
   final String fullName;
   final DateTime? dateOfBirth;
   final String? gender;
@@ -22,7 +22,7 @@ class OwnerProfileModel extends Equatable {
     required this.id,
     this.memberTypeId,
     this.memberTypeName,
-    required this.customerId,
+    required this.accountId,
     required this.fullName,
     this.dateOfBirth,
     this.gender,
@@ -40,7 +40,7 @@ class OwnerProfileModel extends Equatable {
         id: json['id'] as int,
         memberTypeId: json['memberTypeId'] as int?,
         memberTypeName: json['memberTypeName'] as String?,
-        customerId: json['customerId'] as String,
+        accountId: json['accountId'] as String,
         fullName: json['fullName'] as String,
         dateOfBirth: json['dateOfBirth'] != null
             ? DateTime.parse(json['dateOfBirth'] as String)
@@ -60,7 +60,7 @@ class OwnerProfileModel extends Equatable {
         id,
         memberTypeId,
         memberTypeName,
-        customerId,
+        accountId,
         fullName,
         dateOfBirth,
         gender,
@@ -369,7 +369,7 @@ class CurrentAccountModel extends Equatable {
                 'id': ownerProfile!.id,
                 'memberTypeId': ownerProfile!.memberTypeId,
                 'memberTypeName': ownerProfile!.memberTypeName,
-                'customerId': ownerProfile!.customerId,
+                'accountId': ownerProfile!.accountId,
                 'fullName': ownerProfile!.fullName,
                 'dateOfBirth': ownerProfile!.dateOfBirth?.toIso8601String(),
                 'gender': ownerProfile!.gender,

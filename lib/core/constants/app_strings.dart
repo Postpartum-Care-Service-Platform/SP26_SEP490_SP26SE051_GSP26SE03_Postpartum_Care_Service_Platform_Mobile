@@ -529,7 +529,8 @@ class AppStrings {
   static const String bookingCancelledBackToServices = 'Về trang dịch vụ';
   static const String bookingCancelling = 'Đang hủy booking...';
     // Booking History Screen
-  static const String noBookingHistory = 'Chưa có lịch sử đặt phòng';
+  static const String noBookingHistory = 'Chưa có lịch sử đặt lịch';
+  static const String bookingHistoryEmptyHint = 'Bạn chưa có lịch đặt dịch vụ nào';
   static const String noCustomerInformation = 'Chưa có thông tin khách hàng';
   static const String noTransactions = 'Chưa có giao dịch';
   static const String noContract = 'Chưa có hợp đồng';

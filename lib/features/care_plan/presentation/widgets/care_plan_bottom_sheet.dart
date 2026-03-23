@@ -276,7 +276,11 @@ class _CarePlanBottomSheetState extends State<CarePlanBottomSheet> {
                       final dayActivities = state.carePlans
                           .where((cp) => cp.dayNo == dayNo)
                           .toList()
-                        ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+                        ..sort((a, b) {
+                          final byOrder = a.sortOrder.compareTo(b.sortOrder);
+                          if (byOrder != 0) return byOrder;
+                          return a.startTime.compareTo(b.startTime);
+                        });
 
                       return CarePlanTimelineView(
                         dayNo: dayNo,
