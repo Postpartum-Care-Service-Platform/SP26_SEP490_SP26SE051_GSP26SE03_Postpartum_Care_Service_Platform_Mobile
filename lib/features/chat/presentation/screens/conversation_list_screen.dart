@@ -170,9 +170,8 @@ class _ConversationScreenState extends State<ConversationListScreen> {
             ),
             floatingActionButton: isStaff
                 ? null
-                : AppWidgets.primaryFabExtended(
+                : AppWidgets.primaryFabExtendedIconOnly(
                     context: contextWithBloc,
-                    text: AppStrings.chatNewConversation,
                     icon: Icons.add_comment_rounded,
                     onPressed: () => _showCreateConversationDialog(contextWithBloc),
                   ),

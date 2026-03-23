@@ -252,9 +252,8 @@ class _FamilyProfileScreenState extends State<FamilyProfileScreen> {
               : state.members.isEmpty
                   ? _buildEmptyState(scale)
                   : _buildMembersList(scale, state.members, state.memberTypes),
-          floatingActionButton: AppWidgets.primaryFabExtended(
+          floatingActionButton: AppWidgets.primaryFabExtendedIconOnly(
             context: context,
-            text: AppStrings.addFamilyMember,
             icon: Icons.add_rounded,
             onPressed: _showAddMemberDrawer,
           ),

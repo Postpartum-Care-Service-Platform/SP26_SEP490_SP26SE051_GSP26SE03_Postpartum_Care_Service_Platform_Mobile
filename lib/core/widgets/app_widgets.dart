@@ -197,6 +197,72 @@ class AppWidgets {
     );
   }
 
+  /// Primary Extended FAB - pill button with icon only (no label text).
+  ///
+  /// Dùng khi bạn muốn giữ style "pill" giống `primaryFabExtended` nhưng
+  /// chỉ hiển thị icon.
+  static Widget primaryFabExtendedIconOnly({
+    required BuildContext context,
+    IconData? icon,
+    String? iconSvg,
+    required VoidCallback onPressed,
+    EdgeInsets? margin,
+  }) {
+    final scale = AppResponsive.scaleFactor(context);
+    Widget iconWidget;
+
+    if (iconSvg != null) {
+      iconWidget = SvgPicture.asset(
+        iconSvg,
+        width: 20 * scale,
+        height: 20 * scale,
+        colorFilter: const ColorFilter.mode(
+          AppColors.white,
+          BlendMode.srcIn,
+        ),
+      );
+    } else if (icon != null) {
+      iconWidget = Icon(
+        icon,
+        color: AppColors.white,
+        size: 20 * scale,
+      );
+    } else {
+      iconWidget = const Icon(
+        Icons.add,
+        color: AppColors.white,
+      );
+    }
+
+    return Container(
+      margin: margin ?? EdgeInsets.only(bottom: 12 * scale),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20 * scale),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.4),
+            blurRadius: 14 * scale,
+            offset: Offset(0, 3 * scale),
+          ),
+        ],
+      ),
+      child: SizedBox(
+        width: 56 * scale,
+        height: 56 * scale,
+        child: FloatingActionButton(
+          onPressed: onPressed,
+          backgroundColor: AppColors.primary,
+          foregroundColor: AppColors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18 * scale),
+          ),
+          child: iconWidget,
+        ),
+      ),
+    );
+  }
+
   /// Secondary Button - White background with black border
   static Widget secondaryButton({
     required String text,
