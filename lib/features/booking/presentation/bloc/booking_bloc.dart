@@ -41,6 +41,8 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
   // Read-only accessors for UI to restore selections when navigating between steps
   DateTime? get selectedDate => _selectedDate;
+  int? get selectedPackageId => _selectedPackageId;
+  int? get selectedRoomId => _selectedRoomId;
   List<int> get selectedFamilyProfileIds => List.unmodifiable(_selectedFamilyProfileIds);
   List<FamilyProfileEntity>? get familyProfiles => _familyProfiles;
   PackageEntity? get selectedPackage {
@@ -183,9 +185,34 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       return;
     }
 
+    final startDate = event.startDate ?? _selectedDate;
+    if (startDate == null) {
+      emit(const BookingError('Vui lòng chọn ngày bắt đầu trước khi chọn phòng'));
+      return;
+    }
+
+    PackageEntity? selectedPackage;
+    if (_packages != null) {
+      try {
+        selectedPackage = _packages!.firstWhere((p) => p.id == _selectedPackageId);
+      } catch (_) {
+        selectedPackage = null;
+      }
+    }
+
+    final durationDays = selectedPackage?.durationDays ?? 0;
+    final fallbackEndDate = durationDays > 0
+        ? startDate.add(Duration(days: durationDays))
+        : startDate;
+    final endDate = event.endDate ?? fallbackEndDate;
+
     emit(const BookingLoading());
     try {
-      final rooms = await getRoomsByPackage(_selectedPackageId!);
+      final rooms = await getRoomsByPackage(
+        packageId: _selectedPackageId!,
+        startDate: startDate,
+        endDate: endDate,
+      );
       _rooms = rooms;
       emit(BookingRoomsLoaded(
         rooms: rooms,

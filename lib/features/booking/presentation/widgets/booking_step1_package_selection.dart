@@ -27,12 +27,14 @@ class BookingStep1PackageSelection extends StatelessWidget {
 
     return BlocBuilder<BookingBloc, BookingState>(
       builder: (context, bookingState) {
-        // Get selected package ID from various states
+        // Get selected package ID from various states, fallback to bloc cache
         int? selectedPackageId;
         if (bookingState is BookingPackagesLoaded) {
           selectedPackageId = bookingState.selectedPackageId;
         } else if (bookingState is BookingSummaryReady) {
           selectedPackageId = bookingState.packageId;
+        } else {
+          selectedPackageId = context.read<BookingBloc>().selectedPackageId;
         }
         
         // Use existing PackageBloc from parent or create one if not available
@@ -126,23 +128,24 @@ class BookingStep1PackageSelection extends StatelessWidget {
 
                 // Use selectedPackageId from outer scope
 
-                return GridView.builder(
+                return ListView.separated(
                   padding: EdgeInsets.all(16 * scale),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 12 * scale,
-                    mainAxisSpacing: 12 * scale,
-                    childAspectRatio: 0.75,
-                  ),
                   itemCount: packageState.centerPackages.length,
+                  separatorBuilder: (_, __) => SizedBox(height: 12 * scale),
                   itemBuilder: (context, index) {
                     final package = packageState.centerPackages[index];
                     final isSelected = selectedPackageId == package.id;
 
-                    return GestureDetector(
+                    return SizedBox(
+                      height: 220 * scale,
+                      child: GestureDetector(
                       onTap: () {
                         onPackageSelected(package.id);
                       },
+                        child: AnimatedScale(
+                          duration: const Duration(milliseconds: 180),
+                          curve: Curves.easeOut,
+                          scale: isSelected ? 1.01 : 1.0,
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(16 * scale),
@@ -150,13 +153,14 @@ class BookingStep1PackageSelection extends StatelessWidget {
                             color: isSelected
                                 ? AppColors.primary
                                 : AppColors.borderLight,
-                            width: isSelected ? 2 : 1,
+                                width: isSelected ? 2.2 : 1,
                           ),
                           boxShadow: isSelected
                               ? [
                                   BoxShadow(
-                                    color: AppColors.primary.withValues(alpha: 0.2),
-                                    blurRadius: 8 * scale,
+                                        color: AppColors.primary.withValues(alpha: 0.28),
+                                        blurRadius: 12 * scale,
+                                        spreadRadius: 1 * scale,
                                     offset: Offset(0, 4 * scale),
                                   ),
                                 ]
@@ -168,11 +172,61 @@ class BookingStep1PackageSelection extends StatelessWidget {
                                   ),
                                 ],
                         ),
+                            child: Stack(
+                              children: [
+                                Positioned.fill(
                         child: PackageCard(
                           package: package,
                           onTap: () {
                             onPackageSelected(package.id);
                           },
+                                  ),
+                                ),
+                                if (isSelected)
+                                  Positioned(
+                                    right: 10 * scale,
+                                    bottom: 10 * scale,
+                                    child: Container(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 10 * scale,
+                                        vertical: 5 * scale,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primary,
+                                        borderRadius:
+                                            BorderRadius.circular(16 * scale),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(alpha: 0.2),
+                                            blurRadius: 6 * scale,
+                                            offset: Offset(0, 2 * scale),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.check_circle,
+                                            size: 13 * scale,
+                                            color: AppColors.white,
+                                          ),
+                                          SizedBox(width: 5 * scale),
+                                          Text(
+                                            AppStrings.bookingSelecting,
+                                            style: AppTextStyles.arimo(
+                                              fontSize: 11 * scale,
+                                              fontWeight: FontWeight.w700,
+                                              color: AppColors.white,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     );

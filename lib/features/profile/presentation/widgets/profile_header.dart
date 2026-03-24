@@ -71,10 +71,20 @@ class ProfileHeader extends StatelessWidget {
                     ),
                     if (isEmailVerified) ...[
                       SizedBox(width: 8 * scale),
-                      Icon(
-                        Icons.verified,
-                        size: 24 * scale,
-                        color: AppColors.primary,
+                      Tooltip(
+                        message: AppStrings.emailVerified,
+                        triggerMode: TooltipTriggerMode.tap,
+                        waitDuration: Duration.zero,
+                        showDuration: const Duration(seconds: 2),
+                        preferBelow: false,
+                        child: Transform.translate(
+                          offset: Offset(0, -3 * scale),
+                          child: Icon(
+                            Icons.verified,
+                            size: 24 * scale,
+                            color: AppColors.primary,
+                          ),
+                        ),
                       ),
                     ],
                   ],

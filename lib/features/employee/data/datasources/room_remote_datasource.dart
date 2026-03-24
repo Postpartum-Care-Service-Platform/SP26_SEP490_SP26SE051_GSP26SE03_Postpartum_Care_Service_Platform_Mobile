@@ -74,10 +74,20 @@ class RoomRemoteDataSource {
     }
   }
 
-  /// Get rooms by package ID
-  Future<List<RoomModel>> getRoomsByPackage(int packageId) async {
+  /// Get rooms by package ID and booking date range
+  Future<List<RoomModel>> getRoomsByPackage({
+    required int packageId,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
     try {
-      final response = await _dio.get(ApiEndpoints.roomsByPackage(packageId));
+      final response = await _dio.get(
+        ApiEndpoints.roomsByPackage(packageId),
+        queryParameters: {
+          'startDate': startDate.toIso8601String().split('T')[0],
+          'endDate': endDate.toIso8601String().split('T')[0],
+        },
+      );
 
       final List<dynamic> data = response.data as List<dynamic>;
       return data

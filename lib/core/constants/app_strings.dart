@@ -306,6 +306,7 @@ class AppStrings {
   static const String accountStatus = 'Trạng thái';
   static const String accountStatusActive = 'Đang hoạt động';
   static const String accountStatusLocked = 'Bị khóa';
+  static const String emailVerified = 'Email đã được xác thực';
   static const String accountCreatedAt = 'Ngày tạo';
   static const String accountUpdatedAt = 'Cập nhật lần cuối';
   static const String accountAddress = 'Địa chỉ';
@@ -459,6 +460,30 @@ class AppStrings {
   static const String bookingOccupied = 'Đang sử dụng';
   static const String bookingMaintenance = 'Bảo trì';
   static const String bookingPriceNotAvailable = '--';
+  static const String bookingStepLabel = 'Bước {step}';
+  static const String bookingSelecting = 'Đang chọn';
+  static const String bookingUnselected = 'Chưa chọn';
+  static const String bookingUnknownFloor = 'không rõ tầng';
+  static const String bookingFloorMap = 'Sơ đồ phòng';
+  static const String bookingFloorMapByFloor = 'Sơ đồ tầng {floor}';
+  static const String bookingLoadingInfo = 'Đang tải thông tin...';
+  static const String bookingSummaryServiceInfo = 'Thông tin gói dịch vụ';
+  static const String bookingSummarySelectedRoom = 'Phòng đã chọn';
+  static const String bookingSummaryRoomName = 'Tên phòng';
+  static const String bookingSummarySelectedMembers = 'Thành viên đã chọn ({count})';
+  static const String bookingSummaryNoSelectedMembers = 'Chưa chọn thành viên';
+  static const String bookingSummaryStayDuration = 'Thời gian lưu trú';
+  static const String bookingSummaryPaymentMethod = 'Phương thức thanh toán';
+  static const String bookingSummaryPayOsSafe = 'Thanh toán online an toàn qua PayOS';
+  static const String bookingNoFamilyMembers = 'Chưa có thành viên gia đình';
+  static const String bookingNotUpdated = 'Chưa cập nhật';
+  static const String bookingProfileOwner = 'Chủ hộ';
+  static const String bookingProfileMother = 'Mẹ';
+  static const String bookingProfileBaby = 'Em bé';
+  static const String bookingProfileRelative = 'Người thân';
+  static const String bookingProfileMember = 'Thành viên';
+  static const String bookingSummaryServiceInfoWithCount =
+      'Thành viên đã chọn ({count})';
 
   // Home Service Booking Screen
   static const String homeServiceBookingTitle = 'Đặt dịch vụ tại nhà';

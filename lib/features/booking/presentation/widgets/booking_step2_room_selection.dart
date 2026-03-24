@@ -80,7 +80,10 @@ class _BookingStep2RoomSelectionState extends State<BookingStep2RoomSelection> {
             selectedRoomId = state.roomId;
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (context.mounted) {
-                context.read<BookingBloc>().add(const BookingLoadRooms());
+                final bookingBloc = context.read<BookingBloc>();
+                bookingBloc.add(
+                  BookingLoadRooms(startDate: bookingBloc.selectedDate),
+                );
               }
             });
             return const Center(child: AppLoadingIndicator());
@@ -89,7 +92,10 @@ class _BookingStep2RoomSelectionState extends State<BookingStep2RoomSelection> {
           // Nếu chưa load phòng lần nào, trigger load một lần
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted) {
-              context.read<BookingBloc>().add(const BookingLoadRooms());
+              final bookingBloc = context.read<BookingBloc>();
+              bookingBloc.add(
+                BookingLoadRooms(startDate: bookingBloc.selectedDate),
+              );
             }
           });
           return const Center(child: AppLoadingIndicator());
@@ -158,24 +164,6 @@ class _BookingStep2RoomSelectionState extends State<BookingStep2RoomSelection> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                AppStrings.bookingRoom,
-                style: AppTextStyles.tinos(
-                  fontSize: 20 * scale,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              SizedBox(height: 8 * scale),
-              Text(
-                'Chọn phòng trên sơ đồ từng tầng',
-                style: AppTextStyles.arimo(
-                  fontSize: 13 * scale,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              SizedBox(height: 16 * scale),
-
               // Floor selector (as horizontal chips)
               SizedBox(
                 height: 40 * scale,
@@ -188,7 +176,7 @@ class _BookingStep2RoomSelectionState extends State<BookingStep2RoomSelection> {
                     final isSelectedFloor = floor == effectiveFloor;
                     final label = floor != null
                         ? '${AppStrings.bookingFloor} $floor'
-                        : 'không rõ tầng';
+                        : AppStrings.bookingUnknownFloor;
 
                     return GestureDetector(
                       onTap: () {
@@ -276,8 +264,9 @@ class _BookingStep2RoomSelectionState extends State<BookingStep2RoomSelection> {
                           SizedBox(width: 8 * scale),
                           Text(
                             effectiveFloor != null
-                                ? 'Sơ đồ tầng $effectiveFloor'
-                                : 'Sơ đồ phòng',
+                                ? AppStrings.bookingFloorMapByFloor
+                                    .replaceAll('{floor}', '$effectiveFloor')
+                                : AppStrings.bookingFloorMap,
                             style: AppTextStyles.arimo(
                               fontSize: 15 * scale,
                               fontWeight: FontWeight.w600,
@@ -476,7 +465,7 @@ class _RoomTile extends StatelessWidget {
             SizedBox(height: 6 * scale),
             // Room name (center, to, rõ)
             Text(
-              'Phòng ${room.name}',
+              room.name,
               style: AppTextStyles.tinos(
                 fontSize: 15 * scale,
                 fontWeight: FontWeight.bold,
@@ -535,7 +524,7 @@ class _LegendSelected extends StatelessWidget {
         ),
         SizedBox(width: 6 * scale),
         Text(
-          'Đang chọn',
+          AppStrings.bookingSelecting,
           style: AppTextStyles.arimo(
             fontSize: 10 * scale,
             color: AppColors.textSecondary,
@@ -570,7 +559,7 @@ class _LegendUnselected extends StatelessWidget {
         ),
         SizedBox(width: 6 * scale),
         Text(
-          'Chưa chọn',
+          AppStrings.bookingUnselected,
           style: AppTextStyles.arimo(
             fontSize: 10 * scale,
             color: AppColors.textSecondary,

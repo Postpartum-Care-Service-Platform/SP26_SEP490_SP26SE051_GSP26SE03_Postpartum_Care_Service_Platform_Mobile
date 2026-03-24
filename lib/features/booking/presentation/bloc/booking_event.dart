@@ -40,7 +40,13 @@ class BookingSelectFamilyProfiles extends BookingEvent {
 
 /// Load rooms for selection
 class BookingLoadRooms extends BookingEvent {
-  const BookingLoadRooms();
+  final DateTime? startDate;
+  final DateTime? endDate;
+
+  const BookingLoadRooms({this.startDate, this.endDate});
+
+  @override
+  List<Object?> get props => [startDate, endDate];
 }
 
 /// Select room

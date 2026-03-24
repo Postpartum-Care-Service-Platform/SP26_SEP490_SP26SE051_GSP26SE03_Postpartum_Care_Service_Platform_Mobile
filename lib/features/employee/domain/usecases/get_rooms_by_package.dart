@@ -6,7 +6,15 @@ class GetRoomsByPackage {
 
   GetRoomsByPackage(this.repository);
 
-  Future<List<RoomEntity>> call(int packageId) {
-    return repository.getRoomsByPackage(packageId);
+  Future<List<RoomEntity>> call({
+    required int packageId,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) {
+    return repository.getRoomsByPackage(
+      packageId: packageId,
+      startDate: startDate,
+      endDate: endDate,
+    );
   }
 }

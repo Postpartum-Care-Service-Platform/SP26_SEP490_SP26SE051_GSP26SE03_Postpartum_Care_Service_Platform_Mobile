@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
-import '../../../../core/constants/app_assets.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../booking/presentation/bloc/booking_bloc.dart';
 import '../../../booking/presentation/bloc/booking_state.dart';
+import '../../../employee/domain/entities/room_entity.dart';
+import '../../../family_profile/domain/entities/family_profile_entity.dart';
+import '../../../package/domain/entities/package_entity.dart';
 
 class BookingStep4Summary extends StatelessWidget {
   final VoidCallback onConfirm;
@@ -20,19 +23,62 @@ class BookingStep4Summary extends StatelessWidget {
   String _formatPrice(double price) {
     final priceInt = price.toInt();
     final priceStr = priceInt.toString();
-    
-    // Format with thousand separators
     final buffer = StringBuffer();
-    final length = priceStr.length;
-    
-    for (int i = 0; i < length; i++) {
-      if (i > 0 && (length - i) % 3 == 0) {
+
+    for (int i = 0; i < priceStr.length; i++) {
+      if (i > 0 && (priceStr.length - i) % 3 == 0) {
         buffer.write('.');
       }
       buffer.write(priceStr[i]);
     }
-    
-    return buffer.toString() + AppStrings.currencyUnit;
+
+    return '${buffer.toString()}${AppStrings.currencyUnit}';
+  }
+
+  String _getWeekdayLabel(DateTime date) {
+    final days = [
+      AppStrings.weekDaySunday,
+      AppStrings.weekDayMonday,
+      AppStrings.weekDayTuesday,
+      AppStrings.weekDayWednesday,
+      AppStrings.weekDayThursday,
+      AppStrings.weekDayFriday,
+      AppStrings.weekDaySaturday,
+    ];
+    return days[date.weekday % 7];
+  }
+
+  String _formatShortDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
+  }
+
+  String _getMemberTypeLabel(FamilyProfileEntity profile) {
+    if (profile.isOwner) return AppStrings.bookingProfileOwner;
+
+    switch (profile.memberTypeId) {
+      case 1:
+        return AppStrings.bookingProfileOwner;
+      case 2:
+        return AppStrings.bookingProfileMother;
+      case 3:
+        return AppStrings.bookingProfileBaby;
+      case 4:
+        return AppStrings.bookingProfileRelative;
+      default:
+        return AppStrings.bookingProfileMember;
+    }
+  }
+
+  String _getGenderLabel(String? gender) {
+    if (gender == null || gender.trim().isEmpty) return AppStrings.bookingNotUpdated;
+
+    final normalized = gender.trim().toLowerCase();
+    if (normalized == 'male' || normalized == 'nam') return AppStrings.male;
+    if (normalized == 'female' || normalized == 'nữ' || normalized == 'nu') {
+      return AppStrings.female;
+    }
+
+    return gender;
   }
 
   @override
@@ -41,9 +87,32 @@ class BookingStep4Summary extends StatelessWidget {
 
     return BlocBuilder<BookingBloc, BookingState>(
       builder: (context, state) {
-        // Get summary data from state
-        if (state is! BookingSummaryReady) {
-          // If not ready, show loading or error
+        final bookingBloc = context.read<BookingBloc>();
+
+        PackageEntity? package;
+        RoomEntity? room;
+        DateTime? startDate;
+
+        if (state is BookingSummaryReady) {
+          package = state.package;
+          room = state.room;
+          startDate = state.startDate;
+        } else {
+          package = bookingBloc.selectedPackage;
+          startDate = bookingBloc.selectedDate;
+
+          final selectedRoomId = bookingBloc.selectedRoomId;
+          final rooms = bookingBloc.rooms;
+          if (selectedRoomId != null && rooms != null && rooms.isNotEmpty) {
+            try {
+              room = rooms.firstWhere((r) => r.id == selectedRoomId);
+            } catch (_) {
+              room = null;
+            }
+          }
+        }
+
+        if (package == null || room == null || startDate == null) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -51,7 +120,7 @@ class BookingStep4Summary extends StatelessWidget {
                 CircularProgressIndicator(color: AppColors.primary),
                 SizedBox(height: 16 * scale),
                 Text(
-                  'Đang tải thông tin...',
+                  AppStrings.bookingLoadingInfo,
                   style: AppTextStyles.arimo(
                     fontSize: 14 * scale,
                     color: AppColors.textSecondary,
@@ -62,200 +131,144 @@ class BookingStep4Summary extends StatelessWidget {
           );
         }
 
-        final package = state.package;
-        final room = state.room;
-        final startDate = state.startDate;
         final endDate = package.durationDays != null
             ? startDate.add(Duration(days: package.durationDays!))
             : startDate;
+
+        final allProfiles = bookingBloc.familyProfiles ?? [];
+        final selectedIds = bookingBloc.selectedFamilyProfileIds;
+        final selectedProfiles = allProfiles
+            .where((profile) => selectedIds.contains(profile.id))
+            .toList();
+
         final totalPrice = package.basePrice;
-        final depositAmount = totalPrice * 0.1; // 10% deposit
+        final depositAmount = totalPrice * 0.1;
 
         return SingleChildScrollView(
           padding: EdgeInsets.all(16 * scale),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Package and Room info - side by side (30% / 70%)
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Package info - 30%
-                  Expanded(
-                    flex: 3,
-                    child: _SummarySection(
-                title: AppStrings.bookingPackage,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      package.packageName,
-                      style: AppTextStyles.tinos(
-                        fontSize: 18 * scale,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                    Expanded(
+                      child: _ServicePackageCard(
+                        packageName: package.packageName,
+                        roomTypeName: package.roomTypeName ?? AppStrings.bookingNotUpdated,
+                        durationText: package.durationDays != null
+                            ? '${package.durationDays} ${AppStrings.bookingDays}'
+                            : AppStrings.bookingDays,
                       ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
                     ),
-                    SizedBox(height: 4 * scale),
-                    if (package.durationDays != null)
-                      Text(
-                        '${package.durationDays} ${AppStrings.bookingDays}',
-                        style: AppTextStyles.arimo(
-                          fontSize: 14 * scale,
-                          color: AppColors.textSecondary,
-                        ),
+                    SizedBox(width: 10 * scale),
+                    Expanded(
+                      child: _SelectedRoomCard(
+                        roomName: room.name,
+                        floorText: room.floor != null
+                            ? '${room.floor}'
+                            : AppStrings.bookingNotUpdated,
                       ),
+                    ),
                   ],
                 ),
               ),
-                  ),
-                  SizedBox(width: 12 * scale),
-                  // Room info - 70%
-                  Expanded(
-                    flex: 7,
-                    child: _SummarySection(
-                title: AppStrings.bookingRoom,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Expanded(
-                                child: Text(
-                      'Phòng ${room.name}',
-                      style: AppTextStyles.tinos(
-                        fontSize: 18 * scale,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (room.floor != null)
-                      Text(
-                        '${AppStrings.bookingFloor} ${room.floor}',
+              SizedBox(height: 14 * scale),
+              _SummarySection(
+                title: AppStrings.bookingSummaryServiceInfoWithCount
+                    .replaceAll('{count}', '${selectedProfiles.length}'),
+                child: selectedProfiles.isEmpty
+                    ? Text(
+                        AppStrings.bookingSummaryNoSelectedMembers,
                         style: AppTextStyles.arimo(
                           fontSize: 14 * scale,
                           color: AppColors.textSecondary,
                         ),
+                      )
+                    : Column(
+                        children: selectedProfiles
+                            .map(
+                              (profile) => Padding(
+                                padding: EdgeInsets.only(bottom: 10 * scale),
+                                child: _SelectedMemberTile(
+                                  profile: profile,
+                                  memberTypeLabel: _getMemberTypeLabel(profile),
+                                  genderLabel: _getGenderLabel(profile.gender),
                                 ),
-                            ],
+                              ),
+                            )
+                            .toList(),
                       ),
-                    SizedBox(height: 4 * scale),
-                    Text(
-                      room.roomTypeName,
-                      style: AppTextStyles.arimo(
-                        fontSize: 14 * scale,
-                        color: AppColors.textSecondary,
-                      ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-                    ),
-                  ),
-                ],
               ),
-              SizedBox(height: 16 * scale),
-              // Date info
+              SizedBox(height: 14 * scale),
               _SummarySection(
-                title: 'Thời gian',
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                title: AppStrings.bookingSummaryStayDuration,
+                child: Row(
                   children: [
-                    _DateRow(
-                      label: AppStrings.bookingCheckIn,
-                      date: startDate,
-                      scale: scale,
-                    ),
-                    SizedBox(height: 12 * scale),
-                    _DateRow(
-                      label: AppStrings.bookingCheckOut,
-                      date: endDate,
-                      scale: scale,
-                    ),
-                    SizedBox(height: 12 * scale),
-                    Container(
-                      padding: EdgeInsets.all(12 * scale),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8 * scale),
+                    Expanded(
+                      child: _DateInfoCard(
+                        icon: Icons.login,
+                        title: AppStrings.bookingCheckIn,
+                        dayLabel: _getWeekdayLabel(startDate),
+                        dateLabel: _formatShortDate(startDate),
                       ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.access_time,
-                            size: 20 * scale,
-                            color: AppColors.primary,
-                          ),
-                          SizedBox(width: 8 * scale),
-                          Text(
-                            package.durationDays != null
-                                ? '${package.durationDays} ${AppStrings.bookingDays}'
-                                : AppStrings.bookingDays,
-                            style: AppTextStyles.arimo(
-                              fontSize: 14 * scale,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ],
+                    ),
+                    SizedBox(width: 10 * scale),
+                    Expanded(
+                      child: _DateInfoCard(
+                        icon: Icons.logout,
+                        title: AppStrings.bookingCheckOut,
+                        dayLabel: _getWeekdayLabel(endDate),
+                        dateLabel: _formatShortDate(endDate),
                       ),
                     ),
                   ],
                 ),
               ),
-              SizedBox(height: 16 * scale),
-              // Payment method section
+              SizedBox(height: 14 * scale),
               _SummarySection(
-                title: AppStrings.paymentMethod,
+                title: AppStrings.bookingSummaryPaymentMethod,
                 child: Container(
-                  padding: EdgeInsets.all(8 * scale),
+                  padding: EdgeInsets.all(12 * scale),
                   decoration: BoxDecoration(
                     color: AppColors.background,
                     borderRadius: BorderRadius.circular(12 * scale),
-                    border: Border.all(
-                      color: AppColors.borderLight,
-                      width: 1,
-                    ),
+                    border: Border.all(color: AppColors.borderLight),
                   ),
                   child: Row(
                     children: [
-                      // PayOS Logo
                       Container(
-                        width: 80 * scale,
-                        height: 40 * scale,
+                        width: 76 * scale,
+                        height: 38 * scale,
                         padding: EdgeInsets.all(2 * scale),
                         child: SvgPicture.asset(
                           AppAssets.payosLogo,
                           fit: BoxFit.contain,
-                          colorFilter: ColorFilter.mode(AppColors.verified, BlendMode.srcIn),
+                          colorFilter: ColorFilter.mode(
+                            AppColors.verified,
+                            BlendMode.srcIn,
+                          ),
                         ),
                       ),
-                      // Payment method text
+                      SizedBox(width: 10 * scale),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               AppStrings.paymentPayOS,
-                              style: AppTextStyles.tinos(
-                                fontSize: 18 * scale,
-                                fontWeight: FontWeight.bold,
+                              style: AppTextStyles.arimo(
+                                fontSize: 15 * scale,
+                                fontWeight: FontWeight.w700,
                                 color: AppColors.textPrimary,
                               ),
                             ),
-                            SizedBox(height: 4 * scale),
+                            SizedBox(height: 2 * scale),
                             Text(
-                              'Thanh toán qua PayOS',
+                              AppStrings.bookingSummaryPayOsSafe,
                               style: AppTextStyles.arimo(
-                                fontSize: 13 * scale,
+                                fontSize: 12 * scale,
                                 color: AppColors.textSecondary,
                               ),
                             ),
@@ -264,15 +277,14 @@ class BookingStep4Summary extends StatelessWidget {
                       ),
                       Icon(
                         Icons.check_circle,
-                        size: 24 * scale,
                         color: AppColors.verified,
+                        size: 20 * scale,
                       ),
                     ],
                   ),
                 ),
               ),
-              SizedBox(height: 16 * scale),
-              // Price summary
+              SizedBox(height: 14 * scale),
               _SummarySection(
                 title: AppStrings.invoicePriceDetails,
                 child: Column(
@@ -288,52 +300,38 @@ class BookingStep4Summary extends StatelessWidget {
                       amount: 0,
                       scale: scale,
                     ),
-                    Divider(height: 24 * scale),
+                    Divider(height: 22 * scale),
                     _PriceRow(
                       label: AppStrings.bookingFinalAmount,
                       amount: totalPrice,
                       scale: scale,
                       isTotal: true,
                     ),
-                    SizedBox(height: 16 * scale),
+                    SizedBox(height: 12 * scale),
                     Container(
-                      padding: EdgeInsets.all(16 * scale),
+                      padding: EdgeInsets.all(12 * scale),
                       decoration: BoxDecoration(
                         color: AppColors.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12 * scale),
-                        border: Border.all(
-                          color: AppColors.primary,
-                          width: 1.5,
-                        ),
+                        borderRadius: BorderRadius.circular(10 * scale),
+                        border: Border.all(color: AppColors.primary),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                AppStrings.bookingDeposit,
-                                style: AppTextStyles.arimo(
-                                  fontSize: 14 * scale,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                              SizedBox(height: 4 * scale),
-                              Text(
-                                _formatPrice(depositAmount),
-                                style: AppTextStyles.tinos(
-                                  fontSize: 20 * scale,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                            ],
+                          Text(
+                            AppStrings.bookingDeposit,
+                            style: AppTextStyles.arimo(
+                              fontSize: 14 * scale,
+                              color: AppColors.textSecondary,
+                            ),
                           ),
-                          Icon(
-                            Icons.payment,
-                            size: 32 * scale,
-                            color: AppColors.primary,
+                          Text(
+                            _formatPrice(depositAmount),
+                            style: AppTextStyles.tinos(
+                              fontSize: 18 * scale,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary,
+                            ),
                           ),
                         ],
                       ),
@@ -341,10 +339,255 @@ class BookingStep4Summary extends StatelessWidget {
                   ],
                 ),
               ),
+              SizedBox(height: 8 * scale),
             ],
           ),
         );
       },
+    );
+  }
+}
+
+class _ServicePackageCard extends StatelessWidget {
+  final String packageName;
+  final String roomTypeName;
+  final String durationText;
+
+  const _ServicePackageCard({
+    required this.packageName,
+    required this.roomTypeName,
+    required this.durationText,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+
+    return Container(
+      padding: EdgeInsets.all(14 * scale),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(14 * scale),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8 * scale,
+            offset: Offset(0, 2 * scale),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            AppStrings.bookingSummaryServiceInfo,
+            style: AppTextStyles.arimo(
+              fontSize: 12 * scale,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          SizedBox(height: 10 * scale),
+          Text(
+            packageName,
+            style: AppTextStyles.tinos(
+              fontSize: 22 * scale,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          SizedBox(height: 12 * scale),
+          Row(
+            children: [
+              Icon(
+                Icons.timelapse,
+                size: 12 * scale,
+                color: AppColors.primary,
+              ),
+              SizedBox(width: 6 * scale),
+              Text(
+                durationText,
+                style: AppTextStyles.arimo(
+                  fontSize: 12 * scale,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              SizedBox(width: 8 * scale),
+              Flexible(
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 8 * scale,
+                    vertical: 5 * scale,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(10 * scale),
+                    border: Border.all(color: AppColors.borderLight),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.bed_outlined,
+                        size: 12 * scale,
+                        color: AppColors.primary,
+                      ),
+                      SizedBox(width: 4 * scale),
+                      Flexible(
+                        child: Text(
+                          roomTypeName,
+                          style: AppTextStyles.arimo(
+                            fontSize: 8 * scale,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textSecondary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DateInfoCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String dayLabel;
+  final String dateLabel;
+
+  const _DateInfoCard({
+    required this.icon,
+    required this.title,
+    required this.dayLabel,
+    required this.dateLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: 12 * scale,
+        vertical: 12 * scale,
+      ),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14 * scale),
+        border: Border.all(color: AppColors.primary, width: 1.2),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 34 * scale,
+            height: 34 * scale,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10 * scale),
+            ),
+            child: Icon(
+              icon,
+              size: 17 * scale,
+              color: AppColors.primary,
+            ),
+          ),
+          SizedBox(height: 10 * scale),
+          Text(
+            title,
+            style: AppTextStyles.arimo(
+              fontSize: 14 * scale,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 6 * scale),
+          Text(
+            dayLabel,
+            style: AppTextStyles.arimo(
+              fontSize: 16 * scale,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 2 * scale),
+          Text(
+            dateLabel,
+            style: AppTextStyles.arimo(
+              fontSize: 16 * scale,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SelectedRoomCard extends StatelessWidget {
+  final String roomName;
+  final String floorText;
+
+  const _SelectedRoomCard({
+    required this.roomName,
+    required this.floorText,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+
+    return Container(
+      padding: EdgeInsets.all(14 * scale),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(14 * scale),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8 * scale,
+            offset: Offset(0, 2 * scale),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            AppStrings.bookingSummarySelectedRoom,
+            style: AppTextStyles.arimo(
+              fontSize: 12 * scale,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          SizedBox(height: 10 * scale),
+          _InfoRow(
+            icon: Icons.meeting_room_outlined,
+            label: AppStrings.bookingSummaryRoomName,
+            value: roomName,
+          ),
+          SizedBox(height: 10 * scale),
+          _InfoRow(
+            icon: Icons.layers_outlined,
+            label: AppStrings.bookingFloor,
+            value: floorText,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -363,10 +606,10 @@ class _SummarySection extends StatelessWidget {
     final scale = AppResponsive.scaleFactor(context);
 
     return Container(
-      padding: EdgeInsets.all(16 * scale),
+      padding: EdgeInsets.all(14 * scale),
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(16 * scale),
+        borderRadius: BorderRadius.circular(14 * scale),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -382,11 +625,11 @@ class _SummarySection extends StatelessWidget {
             title,
             style: AppTextStyles.arimo(
               fontSize: 12 * scale,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
               color: AppColors.textSecondary,
-            ).copyWith(letterSpacing: 0.5),
+            ),
           ),
-          SizedBox(height: 12 * scale),
+          SizedBox(height: 10 * scale),
           child,
         ],
       ),
@@ -394,51 +637,119 @@ class _SummarySection extends StatelessWidget {
   }
 }
 
-class _DateRow extends StatelessWidget {
+class _InfoRow extends StatelessWidget {
+  final IconData icon;
   final String label;
-  final DateTime date;
-  final double scale;
+  final String value;
 
-  const _DateRow({
+  const _InfoRow({
+    required this.icon,
     required this.label,
-    required this.date,
-    required this.scale,
+    required this.value,
   });
-
-  String _formatDate(DateTime date) {
-    final days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
-    return '${days[date.weekday % 7]}, ${date.day}/${date.month}/${date.year}';
-  }
 
   @override
   Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Icon(icon, size: 18 * scale, color: AppColors.primary),
+        SizedBox(width: 8 * scale),
         Expanded(
-          child: Text(
-            label,
-            style: AppTextStyles.arimo(
-              fontSize: 14 * scale,
-              color: AppColors.textSecondary,
-            ),
-          ),
-        ),
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 12 * scale, vertical: 6 * scale),
-          decoration: BoxDecoration(
-            color: AppColors.background,
-            borderRadius: BorderRadius.circular(8 * scale),
-          ),
-          child: Text(
-            _formatDate(date),
-            style: AppTextStyles.arimo(
-              fontSize: 14 * scale,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: AppTextStyles.arimo(
+                  fontSize: 12 * scale,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              SizedBox(height: 2 * scale),
+              Text(
+                value,
+                style: AppTextStyles.arimo(
+                  fontSize: 14 * scale,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
           ),
         ),
       ],
+    );
+  }
+}
+
+class _SelectedMemberTile extends StatelessWidget {
+  final FamilyProfileEntity profile;
+  final String memberTypeLabel;
+  final String genderLabel;
+
+  const _SelectedMemberTile({
+    required this.profile,
+    required this.memberTypeLabel,
+    required this.genderLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+
+    return Container(
+      padding: EdgeInsets.all(10 * scale),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(10 * scale),
+        border: Border.all(color: AppColors.borderLight),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 18 * scale,
+            backgroundColor: AppColors.borderLight,
+            backgroundImage: (profile.avatarUrl != null &&
+                    profile.avatarUrl!.isNotEmpty)
+                ? NetworkImage(profile.avatarUrl!)
+                : null,
+            child: (profile.avatarUrl == null || profile.avatarUrl!.isEmpty)
+                ? Icon(
+                    Icons.person,
+                    size: 18 * scale,
+                    color: AppColors.primary,
+                  )
+                : null,
+          ),
+          SizedBox(width: 10 * scale),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  profile.fullName,
+                  style: AppTextStyles.arimo(
+                    fontSize: 14 * scale,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                SizedBox(height: 2 * scale),
+                Text(
+                  '$memberTypeLabel • $genderLabel',
+                  style: AppTextStyles.arimo(
+                    fontSize: 12 * scale,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -459,19 +770,16 @@ class _PriceRow extends StatelessWidget {
   String _formatPrice(double price) {
     final priceInt = price.toInt();
     final priceStr = priceInt.toString();
-    
-    // Format with thousand separators
     final buffer = StringBuffer();
-    final length = priceStr.length;
-    
-    for (int i = 0; i < length; i++) {
-      if (i > 0 && (length - i) % 3 == 0) {
+
+    for (int i = 0; i < priceStr.length; i++) {
+      if (i > 0 && (priceStr.length - i) % 3 == 0) {
         buffer.write('.');
       }
       buffer.write(priceStr[i]);
     }
-    
-    return buffer.toString() + AppStrings.currencyUnit;
+
+    return '${buffer.toString()}${AppStrings.currencyUnit}';
   }
 
   @override

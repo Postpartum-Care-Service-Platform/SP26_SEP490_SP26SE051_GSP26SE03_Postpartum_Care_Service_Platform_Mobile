@@ -107,7 +107,7 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
           _roomsLoadRequested = true;
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted) {
-              context.read<BookingBloc>().add(const BookingLoadRooms());
+              context.read<BookingBloc>().add(_createLoadRoomsEvent(context));
             }
           });
         }
@@ -129,6 +129,23 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
       default:
         return const SizedBox();
     }
+  }
+
+  BookingLoadRooms _createLoadRoomsEvent(BuildContext context) {
+    final bookingBloc = context.read<BookingBloc>();
+    final startDate = bookingBloc.selectedDate;
+    final selectedPackage = bookingBloc.selectedPackage;
+
+    if (startDate == null) {
+      return const BookingLoadRooms();
+    }
+
+    final durationDays = selectedPackage?.durationDays ?? 0;
+    final endDate = durationDays > 0
+        ? startDate.add(Duration(days: durationDays))
+        : startDate;
+
+    return BookingLoadRooms(startDate: startDate, endDate: endDate);
   }
 
   Widget _buildNavigationButtons(BuildContext context, BookingState state) {
@@ -221,7 +238,7 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
                 }
 
                 if (_currentStep == 3) {
-                  context.read<BookingBloc>().add(const BookingLoadRooms());
+                  context.read<BookingBloc>().add(_createLoadRoomsEvent(context));
                 }
               } else {
                 context.read<BookingBloc>().add(const BookingCreateBooking());
@@ -281,17 +298,17 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
   }
 
   bool _canProceed(BookingState state) {
+    final bookingBloc = context.read<BookingBloc>();
+
     switch (_currentStep) {
       case 0:
-        return state is BookingPackagesLoaded && state.selectedPackageId != null;
+        return bookingBloc.selectedPackageId != null;
       case 1:
-        return state is BookingFamilyProfilesLoaded &&
-            state.selectedFamilyProfileIds.isNotEmpty;
+        return bookingBloc.selectedFamilyProfileIds.isNotEmpty;
       case 2:
-        return state is BookingDateSelected || state is BookingSummaryReady;
+        return bookingBloc.selectedDate != null;
       case 3:
-        return (state is BookingRoomsLoaded && state.selectedRoomId != null) ||
-            (state is BookingSummaryReady);
+        return bookingBloc.selectedRoomId != null;
       case 4:
         return state is BookingSummaryReady;
       default:

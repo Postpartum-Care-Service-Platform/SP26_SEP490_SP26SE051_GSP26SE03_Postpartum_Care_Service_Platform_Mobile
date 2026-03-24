@@ -139,9 +139,17 @@ class RoomRepositoryImpl implements RoomRepository {
   }
 
   @override
-  Future<List<RoomEntity>> getRoomsByPackage(int packageId) async {
+  Future<List<RoomEntity>> getRoomsByPackage({
+    required int packageId,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
     try {
-      final models = await remoteDataSource.getRoomsByPackage(packageId);
+      final models = await remoteDataSource.getRoomsByPackage(
+        packageId: packageId,
+        startDate: startDate,
+        endDate: endDate,
+      );
       return models.map((model) => model.toEntity()).toList();
     } catch (e) {
       rethrow;

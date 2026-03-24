@@ -187,7 +187,7 @@ class BookingStepIndicator extends StatelessWidget {
       case 4:
         return AppStrings.bookingStep5;
       default:
-        return 'Bước ${index + 1}';
+        return AppStrings.bookingStepLabel.replaceAll('{step}', '${index + 1}');
     }
   }
 }
