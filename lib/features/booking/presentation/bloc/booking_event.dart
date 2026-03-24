@@ -23,6 +23,21 @@ class BookingSelectPackage extends BookingEvent {
   List<Object?> get props => [packageId];
 }
 
+/// Load family profiles for selection
+class BookingLoadFamilyProfiles extends BookingEvent {
+  const BookingLoadFamilyProfiles();
+}
+
+/// Select family profiles
+class BookingSelectFamilyProfiles extends BookingEvent {
+  final List<int> familyProfileIds;
+
+  const BookingSelectFamilyProfiles(this.familyProfileIds);
+
+  @override
+  List<Object?> get props => [familyProfileIds];
+}
+
 /// Load rooms for selection
 class BookingLoadRooms extends BookingEvent {
   const BookingLoadRooms();

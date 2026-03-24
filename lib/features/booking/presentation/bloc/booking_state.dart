@@ -4,6 +4,7 @@ import '../../domain/entities/payment_link_entity.dart';
 import '../../domain/entities/payment_status_entity.dart';
 import '../../../package/domain/entities/package_entity.dart';
 import '../../../employee/domain/entities/room_entity.dart';
+import '../../../family_profile/domain/entities/family_profile_entity.dart';
 
 /// Booking States
 abstract class BookingState extends Equatable {
@@ -37,18 +38,18 @@ class BookingPackagesLoaded extends BookingState {
   List<Object?> get props => [packages, selectedPackageId];
 }
 
-/// Step 2: Rooms loaded
-class BookingRoomsLoaded extends BookingState {
-  final List<RoomEntity> rooms;
-  final int? selectedRoomId;
+/// Step 2: Family profiles loaded
+class BookingFamilyProfilesLoaded extends BookingState {
+  final List<FamilyProfileEntity> profiles;
+  final List<int> selectedFamilyProfileIds;
 
-  const BookingRoomsLoaded({
-    required this.rooms,
-    this.selectedRoomId,
+  const BookingFamilyProfilesLoaded({
+    required this.profiles,
+    required this.selectedFamilyProfileIds,
   });
 
   @override
-  List<Object?> get props => [rooms, selectedRoomId];
+  List<Object?> get props => [profiles, selectedFamilyProfileIds];
 }
 
 /// Step 3: Date selected
@@ -62,11 +63,26 @@ class BookingDateSelected extends BookingState {
   List<Object?> get props => [selectedDate, package];
 }
 
+/// Step 4: Rooms loaded
+class BookingRoomsLoaded extends BookingState {
+  final List<RoomEntity> rooms;
+  final int? selectedRoomId;
+
+  const BookingRoomsLoaded({
+    required this.rooms,
+    this.selectedRoomId,
+  });
+
+  @override
+  List<Object?> get props => [rooms, selectedRoomId];
+}
+
 /// Step 4: Summary ready
 class BookingSummaryReady extends BookingState {
   final int packageId;
   final int roomId;
   final DateTime startDate;
+  final List<int> familyProfileIds;
   final PackageEntity package;
   final RoomEntity room;
 
@@ -74,6 +90,7 @@ class BookingSummaryReady extends BookingState {
     required this.packageId,
     required this.roomId,
     required this.startDate,
+    required this.familyProfileIds,
     required this.package,
     required this.room,
   });
@@ -83,6 +100,7 @@ class BookingSummaryReady extends BookingState {
         packageId,
         roomId,
         startDate,
+        familyProfileIds,
         package,
         room,
       ];

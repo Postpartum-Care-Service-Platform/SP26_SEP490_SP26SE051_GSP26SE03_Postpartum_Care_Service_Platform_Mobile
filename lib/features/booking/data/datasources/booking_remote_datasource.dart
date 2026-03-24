@@ -11,6 +11,7 @@ abstract class BookingRemoteDataSource {
     required int packageId,
     required int roomId,
     required DateTime startDate,
+    required List<int> familyProfileIds,
   });
 
   /// Staff creates booking for a specific customer
@@ -68,6 +69,7 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
     required int packageId,
     required int roomId,
     required DateTime startDate,
+    required List<int> familyProfileIds,
   }) async {
     try {
       final response = await dio.post(
@@ -76,6 +78,7 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
           'packageId': packageId,
           'roomId': roomId,
           'startDate': startDate.toIso8601String().split('T')[0],
+          'familyProfileIds': familyProfileIds,
         },
       );
 

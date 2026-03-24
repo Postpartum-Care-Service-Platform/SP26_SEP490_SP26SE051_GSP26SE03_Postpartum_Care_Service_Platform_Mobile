@@ -9,8 +9,10 @@ import '../../domain/usecases/check_payment_status_usecase.dart';
 import '../../domain/usecases/create_offline_payment_usecase.dart';
 import '../../../package/domain/usecases/get_packages_usecase.dart';
 import '../../../package/domain/entities/package_entity.dart';
-import '../../../employee/domain/usecases/get_available_rooms_by_date_range.dart';
+import '../../../employee/domain/usecases/get_rooms_by_package.dart';
 import '../../../employee/domain/entities/room_entity.dart';
+import '../../../family_profile/domain/entities/family_profile_entity.dart';
+import '../../../family_profile/domain/usecases/get_family_profiles_usecase.dart';
 import 'booking_event.dart';
 import 'booking_state.dart';
 
@@ -24,18 +26,23 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   final CreatePaymentLinkUsecase createPaymentLinkUsecase;
   final CheckPaymentStatusUsecase checkPaymentStatusUsecase;
   final GetPackagesUsecase getPackagesUsecase;
-  final GetAvailableRoomsByDateRange getAvailableRoomsByDateRange;
+  final GetFamilyProfilesUsecase getFamilyProfilesUsecase;
+  final GetRoomsByPackage getRoomsByPackage;
   final CreateOfflinePaymentUsecase createOfflinePaymentUsecase;
 
   // Current selection state
   int? _selectedPackageId;
+  List<int> _selectedFamilyProfileIds = [];
   int? _selectedRoomId;
   DateTime? _selectedDate;
   List<PackageEntity>? _packages;
+  List<FamilyProfileEntity>? _familyProfiles;
   List<RoomEntity>? _rooms;
 
   // Read-only accessors for UI to restore selections when navigating between steps
   DateTime? get selectedDate => _selectedDate;
+  List<int> get selectedFamilyProfileIds => List.unmodifiable(_selectedFamilyProfileIds);
+  List<FamilyProfileEntity>? get familyProfiles => _familyProfiles;
   PackageEntity? get selectedPackage {
     if (_selectedPackageId == null || _packages == null) return null;
     try {
@@ -56,11 +63,14 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     required this.createPaymentLinkUsecase,
     required this.checkPaymentStatusUsecase,
     required this.getPackagesUsecase,
-    required this.getAvailableRoomsByDateRange,
+    required this.getFamilyProfilesUsecase,
+    required this.getRoomsByPackage,
     required this.createOfflinePaymentUsecase,
   }) : super(const BookingInitial()) {
     on<BookingLoadPackages>(_onLoadPackages);
     on<BookingSelectPackage>(_onSelectPackage);
+    on<BookingLoadFamilyProfiles>(_onLoadFamilyProfiles);
+    on<BookingSelectFamilyProfiles>(_onSelectFamilyProfiles);
     on<BookingLoadRooms>(_onLoadRooms);
     on<BookingSelectRoom>(_onSelectRoom);
     on<BookingSelectDate>(_onSelectDate);
@@ -79,7 +89,6 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     BookingLoadPackages event,
     Emitter<BookingState> emit,
   ) async {
-    // Prevent duplicate API calls if already loading or loaded
     if (state is BookingLoading || state is BookingPackagesLoaded) {
       return;
     }
@@ -104,6 +113,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     Emitter<BookingState> emit,
   ) async {
     _selectedPackageId = event.packageId;
+    _selectedRoomId = null;
+    _rooms = null;
+
     final currentState = state;
     if (currentState is BookingPackagesLoaded) {
       emit(
@@ -112,66 +124,68 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
           selectedPackageId: _selectedPackageId,
         ),
       );
+      return;
     }
 
-    // If all selections are made, create summary state
-    if (_selectedPackageId != null &&
-        _selectedRoomId != null &&
-        _selectedDate != null) {
-      try {
-        final package = _packages?.firstWhere(
-          (p) => p.id == _selectedPackageId,
-        );
-        final room = _rooms?.firstWhere((r) => r.id == _selectedRoomId);
+    _emitSummaryIfReady(emit);
+  }
 
-        if (package != null && room != null) {
-          emit(
-            BookingSummaryReady(
-              packageId: _selectedPackageId!,
-              roomId: _selectedRoomId!,
-              startDate: _selectedDate!,
-              package: package,
-              room: room,
-            ),
-          );
-        }
-      } catch (e) {
-        // Package or room not found, ignore
+  Future<void> _onLoadFamilyProfiles(
+    BookingLoadFamilyProfiles event,
+    Emitter<BookingState> emit,
+  ) async {
+    emit(const BookingLoading());
+    try {
+      final profiles = await getFamilyProfilesUsecase();
+      _familyProfiles = profiles;
+
+      if (_selectedFamilyProfileIds.isEmpty && profiles.isNotEmpty) {
+        _selectedFamilyProfileIds = [profiles.first.id];
       }
+
+      emit(
+        BookingFamilyProfilesLoaded(
+          profiles: profiles,
+          selectedFamilyProfileIds: _selectedFamilyProfileIds,
+        ),
+      );
+    } catch (e) {
+      emit(BookingError(e.toString()));
     }
+  }
+
+  Future<void> _onSelectFamilyProfiles(
+    BookingSelectFamilyProfiles event,
+    Emitter<BookingState> emit,
+  ) async {
+    _selectedFamilyProfileIds = event.familyProfileIds;
+
+    final currentState = state;
+    if (currentState is BookingFamilyProfilesLoaded) {
+      emit(
+        BookingFamilyProfilesLoaded(
+          profiles: currentState.profiles,
+          selectedFamilyProfileIds: _selectedFamilyProfileIds,
+        ),
+      );
+      return;
+    }
+
+    _emitSummaryIfReady(emit);
   }
 
   Future<void> _onLoadRooms(
     BookingLoadRooms event,
     Emitter<BookingState> emit,
   ) async {
-    // Require package and date to be selected before loading available rooms
-    if (_selectedPackageId == null || _selectedDate == null) {
-      emit(const BookingError('Vui lòng chọn gói và ngày trước khi chọn phòng'));
+    if (_selectedPackageId == null) {
+      emit(const BookingError('Vui lòng chọn gói trước khi chọn phòng'));
       return;
     }
-
-    // Find selected package to get duration
-    final package = _packages?.firstWhere(
-      (p) => p.id == _selectedPackageId,
-      orElse: () => throw Exception('Không tìm thấy gói đã chọn'),
-    );
-
-    final durationDays = package?.durationDays;
-    if (durationDays == null) {
-      emit(const BookingError('Gói chưa có thời lượng ngày hợp lệ'));
-      return;
-    }
-
-    final startDate = _selectedDate!;
-    final endDate = startDate.add(Duration(days: durationDays));
 
     emit(const BookingLoading());
     try {
-      final rooms = await getAvailableRoomsByDateRange(
-        startDate: startDate,
-        endDate: endDate,
-      );
+      final rooms = await getRoomsByPackage(_selectedPackageId!);
       _rooms = rooms;
       emit(BookingRoomsLoaded(
         rooms: rooms,
@@ -195,33 +209,10 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
           selectedRoomId: _selectedRoomId,
         ),
       );
+      return;
     }
 
-    // If all selections are made, create summary state
-    if (_selectedPackageId != null &&
-        _selectedRoomId != null &&
-        _selectedDate != null) {
-      try {
-        final package = _packages?.firstWhere(
-          (p) => p.id == _selectedPackageId,
-        );
-        final room = _rooms?.firstWhere((r) => r.id == _selectedRoomId);
-
-        if (package != null && room != null) {
-          emit(
-            BookingSummaryReady(
-              packageId: _selectedPackageId!,
-              roomId: _selectedRoomId!,
-              startDate: _selectedDate!,
-              package: package,
-              room: room,
-            ),
-          );
-        }
-      } catch (e) {
-        // Package or room not found, ignore
-      }
-    }
+    _emitSummaryIfReady(emit);
   }
 
   Future<void> _onSelectDate(
@@ -238,32 +229,6 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       }
     }
     emit(BookingDateSelected(event.date, package: package));
-    
-    // If all selections are made, create summary state
-    if (_selectedPackageId != null &&
-        _selectedRoomId != null &&
-        _selectedDate != null) {
-      try {
-        final package = _packages?.firstWhere(
-          (p) => p.id == _selectedPackageId,
-        );
-        final room = _rooms?.firstWhere((r) => r.id == _selectedRoomId);
-
-        if (package != null && room != null) {
-          emit(
-            BookingSummaryReady(
-              packageId: _selectedPackageId!,
-              roomId: _selectedRoomId!,
-              startDate: _selectedDate!,
-              package: package,
-              room: room,
-            ),
-          );
-        }
-      } catch (e) {
-        // Package or room not found, ignore
-      }
-    }
   }
 
   Future<void> _onCreateBooking(
@@ -272,7 +237,8 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   ) async {
     if (_selectedPackageId == null ||
         _selectedRoomId == null ||
-        _selectedDate == null) {
+        _selectedDate == null ||
+        _selectedFamilyProfileIds.isEmpty) {
       emit(const BookingError('Vui lòng chọn đầy đủ thông tin'));
       return;
     }
@@ -283,6 +249,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         packageId: _selectedPackageId!,
         roomId: _selectedRoomId!,
         startDate: _selectedDate!,
+        familyProfileIds: _selectedFamilyProfileIds,
       );
       emit(BookingCreated(booking));
     } catch (e) {
@@ -324,7 +291,6 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     int? bookingId = event.bookingId;
 
     if (bookingId == null) {
-      // Support both BookingCreated and BookingLoaded states
       if (currentState is BookingCreated) {
         bookingId = currentState.booking.id;
       } else if (currentState is BookingLoaded) {
@@ -425,10 +391,41 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     Emitter<BookingState> emit,
   ) async {
     _selectedPackageId = null;
+    _selectedFamilyProfileIds = [];
     _selectedRoomId = null;
     _selectedDate = null;
     _packages = null;
+    _familyProfiles = null;
     _rooms = null;
     emit(const BookingInitial());
+  }
+
+  void _emitSummaryIfReady(Emitter<BookingState> emit) {
+    if (_selectedPackageId == null ||
+        _selectedRoomId == null ||
+        _selectedDate == null ||
+        _selectedFamilyProfileIds.isEmpty) {
+      return;
+    }
+
+    try {
+      final package = _packages?.firstWhere((p) => p.id == _selectedPackageId);
+      final room = _rooms?.firstWhere((r) => r.id == _selectedRoomId);
+
+      if (package != null && room != null) {
+        emit(
+          BookingSummaryReady(
+            packageId: _selectedPackageId!,
+            roomId: _selectedRoomId!,
+            startDate: _selectedDate!,
+            familyProfileIds: _selectedFamilyProfileIds,
+            package: package,
+            room: room,
+          ),
+        );
+      }
+    } catch (_) {
+      // Ignore if package/room not found
+    }
   }
 }

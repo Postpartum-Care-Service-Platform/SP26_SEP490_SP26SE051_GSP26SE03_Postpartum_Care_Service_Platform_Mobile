@@ -23,4 +23,7 @@ abstract class RoomRepository {
     required DateTime startDate,
     required DateTime endDate,
   });
+
+  /// Get rooms by package ID
+  Future<List<RoomEntity>> getRoomsByPackage(int packageId);
 }

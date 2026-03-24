@@ -9,6 +9,8 @@ class PackageEntity extends Equatable {
   final int? packageTypeId;
   final String? packageTypeName;
   final String? imageUrl;
+  final int? roomTypeId;
+  final String? roomTypeName;
   final int? durationDays;
   final double basePrice;
   final bool isActive;
@@ -25,6 +27,8 @@ class PackageEntity extends Equatable {
     this.packageTypeId,
     this.packageTypeName,
     this.imageUrl,
+    this.roomTypeId,
+    this.roomTypeName,
     this.durationDays,
     required this.basePrice,
     required this.isActive,
@@ -43,6 +47,8 @@ class PackageEntity extends Equatable {
         packageTypeId,
         packageTypeName,
         imageUrl,
+        roomTypeId,
+        roomTypeName,
         durationDays,
         basePrice,
         isActive,

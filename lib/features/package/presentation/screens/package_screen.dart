@@ -201,10 +201,10 @@ class _PackageScreenState extends State<PackageScreen> {
     return GridView.builder(
       padding: EdgeInsets.all(16 * scale),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
+        crossAxisCount: 1,
         crossAxisSpacing: 16 * scale,
         mainAxisSpacing: 16 * scale,
-        childAspectRatio: 0.75,
+        childAspectRatio: 2.2,
       ),
       itemCount: packages.length,
       itemBuilder: (context, index) {

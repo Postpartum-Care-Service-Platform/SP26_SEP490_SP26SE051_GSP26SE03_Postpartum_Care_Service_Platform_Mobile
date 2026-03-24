@@ -9,6 +9,7 @@ abstract class BookingRepository {
     required int packageId,
     required int roomId,
     required DateTime startDate,
+    required List<int> familyProfileIds,
   });
 
   /// Staff creates booking for a specific customer

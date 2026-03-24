@@ -10,6 +10,8 @@ class PackageModel extends Equatable {
   final int? packageTypeId;
   final String? packageTypeName;
   final String? imageUrl;
+  final int? roomTypeId;
+  final String? roomTypeName;
   final int? durationDays;
   final double basePrice;
   final bool isActive;
@@ -26,6 +28,8 @@ class PackageModel extends Equatable {
     this.packageTypeId,
     this.packageTypeName,
     this.imageUrl,
+    this.roomTypeId,
+    this.roomTypeName,
     this.durationDays,
     required this.basePrice,
     required this.isActive,
@@ -44,6 +48,8 @@ class PackageModel extends Equatable {
       packageTypeId: json['packageTypeId'] as int?,
       packageTypeName: json['packageTypeName'] as String?,
       imageUrl: json['imageUrl'] as String?,
+      roomTypeId: json['roomTypeId'] as int?,
+      roomTypeName: json['roomTypeName'] as String?,
       durationDays: json['durationDays'] as int?,
       basePrice: (json['basePrice'] as num).toDouble(),
       isActive: json['isActive'] as bool,
@@ -67,6 +73,8 @@ class PackageModel extends Equatable {
       'packageTypeId': packageTypeId,
       'packageTypeName': packageTypeName,
       'imageUrl': imageUrl,
+      'roomTypeId': roomTypeId,
+      'roomTypeName': roomTypeName,
       'durationDays': durationDays,
       'basePrice': basePrice,
       'isActive': isActive,
@@ -86,6 +94,8 @@ class PackageModel extends Equatable {
       packageTypeId: packageTypeId,
       packageTypeName: packageTypeName,
       imageUrl: imageUrl,
+      roomTypeId: roomTypeId,
+      roomTypeName: roomTypeName,
       durationDays: durationDays,
       basePrice: basePrice,
       isActive: isActive,
@@ -105,6 +115,8 @@ class PackageModel extends Equatable {
         packageTypeId,
         packageTypeName,
         imageUrl,
+        roomTypeId,
+        roomTypeName,
         durationDays,
         basePrice,
         isActive,

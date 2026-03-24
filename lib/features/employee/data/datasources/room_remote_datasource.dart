@@ -74,6 +74,20 @@ class RoomRemoteDataSource {
     }
   }
 
+  /// Get rooms by package ID
+  Future<List<RoomModel>> getRoomsByPackage(int packageId) async {
+    try {
+      final response = await _dio.get(ApiEndpoints.roomsByPackage(packageId));
+
+      final List<dynamic> data = response.data as List<dynamic>;
+      return data
+          .map((json) => RoomModel.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   /// Handle Dio errors and convert to readable messages
   String _handleError(DioException error) {
     if (error.response != null) {
