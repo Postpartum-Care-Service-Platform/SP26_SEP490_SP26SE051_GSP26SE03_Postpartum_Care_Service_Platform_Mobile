@@ -177,20 +177,41 @@ class _HomeServiceBookingScreenState extends State<HomeServiceBookingScreen> {
           children: [
             SizedBox(
               width: 52 * scale,
-              child: GestureDetector(
-                onTap: () => _handleBackAction(blocContext),
-                child: Container(
-                  width: 30 * scale,
-                  height: 30 * scale,
-                  decoration: const BoxDecoration(
-                    color: AppColors.background,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    size: 20 * scale,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  icon: Icon(
+                    Icons.arrow_back_rounded,
+                    size: 24 * scale,
                     color: AppColors.textPrimary,
                   ),
+                  padding: EdgeInsets.all(8 * scale),
+                  constraints: BoxConstraints(
+                    minWidth: 40 * scale,
+                    minHeight: 40 * scale,
+                  ),
+                  style: ButtonStyle(
+                    shape: WidgetStateProperty.all(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12 * scale),
+                      ),
+                    ),
+                    backgroundColor: WidgetStateProperty.resolveWith((states) {
+                      if (states.contains(WidgetState.pressed)) {
+                        return AppColors.textPrimary.withValues(alpha: 0.10);
+                      }
+                      return Colors.transparent;
+                    }),
+                    overlayColor: WidgetStateProperty.resolveWith((states) {
+                      if (states.contains(WidgetState.pressed)) {
+                        return AppColors.textPrimary.withValues(alpha: 0.06);
+                      }
+                      return Colors.transparent;
+                    }),
+                    splashFactory: InkRipple.splashFactory,
+                  ),
+                  enableFeedback: true,
+                  onPressed: () => _handleBackAction(blocContext),
                 ),
               ),
             ),
@@ -198,7 +219,7 @@ class _HomeServiceBookingScreenState extends State<HomeServiceBookingScreen> {
               child: Text(
                 AppStrings.homeServiceBookingTitle,
                 style: AppTextStyles.tinos(
-                  fontSize: 22 * scale,
+                  fontSize: 28 * scale,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,
                 ),

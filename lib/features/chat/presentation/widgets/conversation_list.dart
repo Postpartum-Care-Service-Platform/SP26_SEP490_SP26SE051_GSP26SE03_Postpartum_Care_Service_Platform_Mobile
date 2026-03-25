@@ -234,7 +234,7 @@ class ConversationList extends StatelessWidget {
                       ),
                       child: Icon(
                         Icons.search_off_rounded,
-                        size: 48 * scale,
+                        size: 44 * scale,
                         color: AppColors.primary,
                       ),
                     ),
@@ -243,7 +243,7 @@ class ConversationList extends StatelessWidget {
                       AppStrings.chatSearchNoResults,
                       textAlign: TextAlign.center,
                       style: AppTextStyles.tinos(
-                        fontSize: 18 * scale,
+                        fontSize: 22 * scale,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary,
                       ),
@@ -257,12 +257,12 @@ class ConversationList extends StatelessWidget {
                         color: AppColors.textSecondary,
                       ),
                     ),
-                    SizedBox(height: 24 * scale),
+                    SizedBox(height: 12 * scale),
                     if (onCreate != null)
                       AppWidgets.primaryButton(
                         text: AppStrings.chatNewConversation,
                         onPressed: onCreate!,
-                        height: 44 * scale,
+                        height: 48 * scale,
                       ),
                   ],
                 ),

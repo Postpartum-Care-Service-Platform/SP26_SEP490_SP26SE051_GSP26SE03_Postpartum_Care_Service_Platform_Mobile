@@ -42,7 +42,7 @@ class _PackageScreenState extends State<PackageScreen> {
       appBar: AppAppBar(
         title: AppStrings.promotions,
         centerTitle: true,
-        titleFontSize: 20 * scale,
+        titleFontSize: 22 * scale,
         titleFontWeight: FontWeight.w700,
         showBackButton: widget.showBackButton,
       ),

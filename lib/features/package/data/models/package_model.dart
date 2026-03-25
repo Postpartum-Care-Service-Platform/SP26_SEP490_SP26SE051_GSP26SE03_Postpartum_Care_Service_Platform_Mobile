@@ -19,6 +19,12 @@ class PackageModel extends Equatable {
   final String? createdByName;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final bool hasRoomAvailabilityWarning;
+  final DateTime? unavailableFrom;
+  final DateTime? unavailableTo;
+  final DateTime? firstAvailableDate;
+  final int? totalRooms;
+  final int? availableRooms;
   final List<CarePlanModel>? carePlanDetails;
 
   const PackageModel({
@@ -37,6 +43,12 @@ class PackageModel extends Equatable {
     this.createdByName,
     required this.createdAt,
     required this.updatedAt,
+    this.hasRoomAvailabilityWarning = false,
+    this.unavailableFrom,
+    this.unavailableTo,
+    this.firstAvailableDate,
+    this.totalRooms,
+    this.availableRooms,
     this.carePlanDetails,
   });
 
@@ -57,6 +69,18 @@ class PackageModel extends Equatable {
       createdByName: json['createdByName'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
+      hasRoomAvailabilityWarning: json['hasRoomAvailabilityWarning'] as bool? ?? false,
+      unavailableFrom: json['unavailableFrom'] != null
+          ? DateTime.parse(json['unavailableFrom'] as String)
+          : null,
+      unavailableTo: json['unavailableTo'] != null
+          ? DateTime.parse(json['unavailableTo'] as String)
+          : null,
+      firstAvailableDate: json['firstAvailableDate'] != null
+          ? DateTime.parse(json['firstAvailableDate'] as String)
+          : null,
+      totalRooms: json['totalRooms'] as int?,
+      availableRooms: json['availableRooms'] as int?,
       carePlanDetails: json['carePlanDetails'] != null
           ? (json['carePlanDetails'] as List<dynamic>)
               .map((item) => CarePlanModel.fromJson(item as Map<String, dynamic>))
@@ -82,6 +106,12 @@ class PackageModel extends Equatable {
       'createdByName': createdByName,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      'hasRoomAvailabilityWarning': hasRoomAvailabilityWarning,
+      'unavailableFrom': unavailableFrom?.toIso8601String(),
+      'unavailableTo': unavailableTo?.toIso8601String(),
+      'firstAvailableDate': firstAvailableDate?.toIso8601String(),
+      'totalRooms': totalRooms,
+      'availableRooms': availableRooms,
       'carePlanDetails': carePlanDetails?.map((e) => e.toJson()).toList(),
     };
   }
@@ -103,6 +133,12 @@ class PackageModel extends Equatable {
       createdByName: createdByName,
       createdAt: createdAt,
       updatedAt: updatedAt,
+      hasRoomAvailabilityWarning: hasRoomAvailabilityWarning,
+      unavailableFrom: unavailableFrom,
+      unavailableTo: unavailableTo,
+      firstAvailableDate: firstAvailableDate,
+      totalRooms: totalRooms,
+      availableRooms: availableRooms,
       carePlanDetails: carePlanDetails?.map((e) => e.toEntity()).toList(),
     );
   }
@@ -124,6 +160,12 @@ class PackageModel extends Equatable {
         createdByName,
         createdAt,
         updatedAt,
+        hasRoomAvailabilityWarning,
+        unavailableFrom,
+        unavailableTo,
+        firstAvailableDate,
+        totalRooms,
+        availableRooms,
         carePlanDetails,
       ];
 }

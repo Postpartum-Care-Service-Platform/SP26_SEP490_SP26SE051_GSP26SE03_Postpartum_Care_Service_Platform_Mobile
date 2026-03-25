@@ -24,8 +24,8 @@ class BookingStepIndicator extends StatelessWidget {
     final circleSize = 40.0 * scale;
     final circleRadius = circleSize / 2; // 20 * scale
     final lineHeight = 2.0 * scale;
-    final paddingTop = 16.0 * scale;
-    final paddingBottom = 12.0 * scale;
+    final paddingTop = 0 * scale;
+    final paddingBottom = 4 * scale;
     
     return Container(
       padding: EdgeInsets.only(

@@ -64,8 +64,10 @@ class _ConversationScreenState extends State<ConversationListScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12 * scale),
-                  borderSide:
-                      const BorderSide(color: AppColors.primary, width: 2),
+                  borderSide: const BorderSide(
+                    color: AppColors.primary,
+                    width: 2,
+                  ),
                 ),
                 filled: true,
                 fillColor: AppColors.white,
@@ -82,7 +84,8 @@ class _ConversationScreenState extends State<ConversationListScreen> {
   }
 
   void _openConversation(BuildContext context, int conversationId) {
-    final chatBloc = context.read<ChatBloc>()..add(ChatConversationSelected(conversationId));
+    final chatBloc = context.read<ChatBloc>()
+      ..add(ChatConversationSelected(conversationId));
     AppRouter.push(
       context,
       AppRoutes.conversationDetail,
@@ -103,10 +106,11 @@ class _ConversationScreenState extends State<ConversationListScreen> {
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
     final isStaff = _isStaff(context);
-    
+
     return BlocProvider(
-      create: (_) => InjectionContainer.chatBloc
-        ..add(const ChatStarted(autoSelectFirstConversation: false)),
+      create: (_) =>
+          InjectionContainer.chatBloc
+            ..add(const ChatStarted(autoSelectFirstConversation: false)),
       child: Builder(
         builder: (contextWithBloc) {
           return Scaffold(
@@ -116,32 +120,26 @@ class _ConversationScreenState extends State<ConversationListScreen> {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [
-                    AppColors.background,
-                    AppColors.white,
-                  ],
+                  colors: [AppColors.background, AppColors.white],
                 ),
               ),
               child: SafeArea(
                 child: Padding(
-                  padding: AppResponsive.pagePadding(contextWithBloc),
+                  padding: EdgeInsets.fromLTRB(
+                    20 * scale,
+                    10 * scale,
+                    20 * scale,
+                    24 * scale,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         AppStrings.chatTitle,
-                        style: AppTextStyles.arimo(
-                          fontSize: 22 * scale,
+                        style: AppTextStyles.tinos(
+                          fontSize: 28 * scale,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textPrimary,
-                        ),
-                      ),
-                      SizedBox(height: 4 * scale),
-                      Text(
-                        AppStrings.chatSubtitle,
-                        style: AppTextStyles.arimo(
-                          fontSize: 13 * scale,
-                          color: AppColors.textSecondary,
                         ),
                       ),
                       SizedBox(height: 12 * scale),
@@ -149,8 +147,8 @@ class _ConversationScreenState extends State<ConversationListScreen> {
                         controller: _searchController,
                         onChanged: (query) {
                           contextWithBloc.read<ChatBloc>().add(
-                                ChatSearchQueryChanged(query),
-                              );
+                            ChatSearchQueryChanged(query),
+                          );
                         },
                       ),
                       SizedBox(height: 16 * scale),
@@ -158,7 +156,9 @@ class _ConversationScreenState extends State<ConversationListScreen> {
                         child: ConversationList(
                           onCreate: isStaff
                               ? null
-                              : () => _showCreateConversationDialog(contextWithBloc),
+                              : () => _showCreateConversationDialog(
+                                  contextWithBloc,
+                                ),
                           onConversationTap: (id) =>
                               _openConversation(contextWithBloc, id),
                         ),
@@ -173,7 +173,8 @@ class _ConversationScreenState extends State<ConversationListScreen> {
                 : AppWidgets.primaryFabExtendedIconOnly(
                     context: contextWithBloc,
                     icon: Icons.add_comment_rounded,
-                    onPressed: () => _showCreateConversationDialog(contextWithBloc),
+                    onPressed: () =>
+                        _showCreateConversationDialog(contextWithBloc),
                   ),
           );
         },
@@ -186,10 +187,7 @@ class _SearchBar extends StatelessWidget {
   final TextEditingController controller;
   final ValueChanged<String>? onChanged;
 
-  const _SearchBar({
-    required this.controller,
-    this.onChanged,
-  });
+  const _SearchBar({required this.controller, this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -237,11 +235,12 @@ class _SearchBar extends StatelessWidget {
           ),
           hintText: AppStrings.chatSearchHint,
           border: InputBorder.none,
-          contentPadding:
-              EdgeInsets.symmetric(horizontal: 12 * scale, vertical: 14 * scale),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 12 * scale,
+            vertical: 14 * scale,
+          ),
         ),
       ),
     );
   }
 }
-

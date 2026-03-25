@@ -371,6 +371,7 @@ class AppStrings {
   // Appointment Screen
   static const String appointmentTitle = 'Lịch hẹn';
   static const String noAppointments = 'Chưa có lịch hẹn nào';
+  static const String appointmentCreateFirst = 'Tạo lịch hẹn đầu tiên của bạn';
   static const String createAppointment = 'Đặt lịch hẹn';
   static const String bookAppointment = 'Đặt lịch';
   static const String editAppointment = 'Chỉnh sửa lịch hẹn';

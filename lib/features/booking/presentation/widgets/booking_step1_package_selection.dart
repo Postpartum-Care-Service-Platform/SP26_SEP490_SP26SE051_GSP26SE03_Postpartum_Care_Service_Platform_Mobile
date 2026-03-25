@@ -135,38 +135,46 @@ class BookingStep1PackageSelection extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final package = packageState.centerPackages[index];
                     final isSelected = selectedPackageId == package.id;
+                    final isUnavailable = (package.availableRooms ?? 0) <= 0 ||
+                        package.hasRoomAvailabilityWarning;
 
                     return SizedBox(
                       height: 220 * scale,
                       child: GestureDetector(
-                      onTap: () {
-                        onPackageSelected(package.id);
-                      },
+                      onTap: isUnavailable
+                          ? null
+                          : () {
+                              onPackageSelected(package.id);
+                            },
                         child: AnimatedScale(
                           duration: const Duration(milliseconds: 180),
                           curve: Curves.easeOut,
-                          scale: isSelected ? 1.01 : 1.0,
+                          scale: isSelected && !isUnavailable ? 1.01 : 1.0,
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(16 * scale),
                           border: Border.all(
-                            color: isSelected
-                                ? AppColors.primary
-                                : AppColors.borderLight,
-                                width: isSelected ? 2.2 : 1,
+                            color: isUnavailable
+                                ? AppColors.textSecondary.withValues(alpha: 0.35)
+                                : isSelected
+                                    ? AppColors.primary
+                                    : AppColors.borderLight,
+                            width: isSelected && !isUnavailable ? 2.2 : 1,
                           ),
-                          boxShadow: isSelected
+                          boxShadow: isSelected && !isUnavailable
                               ? [
                                   BoxShadow(
-                                        color: AppColors.primary.withValues(alpha: 0.28),
-                                        blurRadius: 12 * scale,
-                                        spreadRadius: 1 * scale,
+                                    color: AppColors.primary.withValues(alpha: 0.28),
+                                    blurRadius: 12 * scale,
+                                    spreadRadius: 1 * scale,
                                     offset: Offset(0, 4 * scale),
                                   ),
                                 ]
                               : [
                                   BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.05),
+                                    color: Colors.black.withValues(
+                                      alpha: isUnavailable ? 0.02 : 0.05,
+                                    ),
                                     blurRadius: 4 * scale,
                                     offset: Offset(0, 2 * scale),
                                   ),
@@ -177,12 +185,15 @@ class BookingStep1PackageSelection extends StatelessWidget {
                                 Positioned.fill(
                         child: PackageCard(
                           package: package,
-                          onTap: () {
-                            onPackageSelected(package.id);
-                          },
+                          isUnavailable: isUnavailable,
+                          onTap: isUnavailable
+                              ? null
+                              : () {
+                                  onPackageSelected(package.id);
+                                },
                                   ),
                                 ),
-                                if (isSelected)
+                                if (isSelected && !isUnavailable)
                                   Positioned(
                                     right: 10 * scale,
                                     bottom: 10 * scale,

@@ -310,7 +310,10 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
       case 3:
         return bookingBloc.selectedRoomId != null;
       case 4:
-        return state is BookingSummaryReady;
+        return bookingBloc.selectedPackageId != null &&
+            bookingBloc.selectedFamilyProfileIds.isNotEmpty &&
+            bookingBloc.selectedDate != null &&
+            bookingBloc.selectedRoomId != null;
       default:
         return false;
     }
@@ -323,35 +326,56 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
       child: Container(
         padding: EdgeInsets.symmetric(
           horizontal: 20 * scale,
-          vertical: 12 * scale,
+          vertical: 8 * scale,
         ),
         child: Row(
           children: [
             SizedBox(
               width: 52 * scale,
-              child: GestureDetector(
-                onTap: () {
-                  if (_currentStep > 0) {
-                    setState(() {
-                      _currentStep--;
-                    });
-                    return;
-                  }
-
-                  widget.onBackToLocationSelection();
-                },
-                child: Container(
-                  width: 30 * scale,
-                  height: 30 * scale,
-                  decoration: BoxDecoration(
-                    color: AppColors.background,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    size: 20 * scale,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  icon: Icon(
+                    Icons.arrow_back_rounded,
+                    size: 24 * scale,
                     color: AppColors.textPrimary,
                   ),
+                  padding: EdgeInsets.all(8 * scale),
+                  constraints: BoxConstraints(
+                    minWidth: 40 * scale,
+                    minHeight: 40 * scale,
+                  ),
+                  style: ButtonStyle(
+                    shape: WidgetStateProperty.all(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12 * scale),
+                      ),
+                    ),
+                    backgroundColor: WidgetStateProperty.resolveWith((states) {
+                      if (states.contains(WidgetState.pressed)) {
+                        return AppColors.textPrimary.withValues(alpha: 0.10);
+                      }
+                      return Colors.transparent;
+                    }),
+                    overlayColor: WidgetStateProperty.resolveWith((states) {
+                      if (states.contains(WidgetState.pressed)) {
+                        return AppColors.textPrimary.withValues(alpha: 0.06);
+                      }
+                      return Colors.transparent;
+                    }),
+                    splashFactory: InkRipple.splashFactory,
+                  ),
+                  enableFeedback: true,
+                  onPressed: () {
+                    if (_currentStep > 0) {
+                      setState(() {
+                        _currentStep--;
+                      });
+                      return;
+                    }
+
+                    widget.onBackToLocationSelection();
+                  },
                 ),
               ),
             ),
@@ -359,8 +383,8 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
               child: Text(
                 AppStrings.bookingTitle,
                 style: AppTextStyles.tinos(
-                  fontSize: 22 * scale,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 28 * scale,
+                  fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
                 ),
                 textAlign: TextAlign.center,
