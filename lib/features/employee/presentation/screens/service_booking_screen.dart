@@ -10,6 +10,11 @@ import '../../../../core/utils/app_text_styles.dart';
 import '../../data/datasources/account_remote_datasource.dart';
 import '../../data/models/account_model.dart';
 import '../../domain/entities/amenity_service_entity.dart';
+import '../../../services/domain/entities/family_schedule_entity.dart';
+import '../../../services/domain/entities/staff_schedule_entity.dart';
+import '../../../services/presentation/bloc/staff_schedule/staff_schedule_bloc.dart';
+import '../../../services/presentation/bloc/staff_schedule/staff_schedule_event.dart';
+import '../../../services/presentation/bloc/staff_schedule/staff_schedule_state.dart';
 import '../bloc/amenity_service/amenity_service_bloc.dart';
 import '../bloc/amenity_service/amenity_service_event.dart';
 import '../bloc/amenity_service/amenity_service_state.dart';
@@ -34,19 +39,30 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
 
   AccountModel? _selectedCustomer;
   DateTime? _selectedDate;
+  DateTime? _selectedDateRangeEnd;
   TimeOfDay? _selectedTime;
 
   List<AccountModel> _customers = [];
   List<AccountModel> _filteredCustomers = [];
   List<AmenityServiceEntity> _selectedServices = [];
+  List<StaffScheduleEntity> _staffSchedules = [];
+  List<FamilyScheduleEntity> _availableFamilySchedules = [];
 
   bool _isLoadingCustomers = false;
+  bool _isLoadingStaffSchedules = false;
 
   @override
   void initState() {
     super.initState();
     _loadCustomers();
     _searchController.addListener(_filterCustomers);
+
+    final now = DateTime.now();
+    final startDate = DateTime(now.year, now.month, now.day);
+    final endDate = startDate.add(const Duration(days: 7));
+    _selectedDate = startDate;
+    _selectedDateRangeEnd = endDate;
+    _loadStaffSchedulesForRange(startDate, endDate);
   }
 
   @override
@@ -54,6 +70,47 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
     _searchController.dispose();
     _notesController.dispose();
     super.dispose();
+  }
+
+  void _loadStaffSchedulesForRange(DateTime from, DateTime to) {
+    final formattedFrom = _formatDateOnly(from);
+    final formattedTo = _formatDateOnly(to);
+    context.read<StaffScheduleBloc>().add(
+      LoadStaffSchedulesByDateRange(from: formattedFrom, to: formattedTo),
+    );
+  }
+
+  String _formatDateOnly(DateTime value) {
+    final month = value.month.toString().padLeft(2, '0');
+    final day = value.day.toString().padLeft(2, '0');
+    return '${value.year}-$month-$day';
+  }
+
+  TimeOfDay _buildScheduleTimeOfDay(String time) {
+    final parts = time.split(':');
+    final hour = int.tryParse(parts.isNotEmpty ? parts[0] : '0') ?? 0;
+    final minute = int.tryParse(parts.length > 1 ? parts[1] : '0') ?? 0;
+    return TimeOfDay(hour: hour, minute: minute);
+  }
+
+  DateTime _buildScheduleDateTime(DateTime date, String time) {
+    final scheduleTime = _buildScheduleTimeOfDay(time);
+    return DateTime(
+      date.year,
+      date.month,
+      date.day,
+      scheduleTime.hour,
+      scheduleTime.minute,
+    );
+  }
+
+  bool _isTimeWithinSchedule(FamilyScheduleEntity schedule, TimeOfDay time) {
+    final start = _buildScheduleTimeOfDay(schedule.startTime);
+    final end = _buildScheduleTimeOfDay(schedule.endTime);
+    final selectedMinutes = time.hour * 60 + time.minute;
+    final startMinutes = start.hour * 60 + start.minute;
+    final endMinutes = end.hour * 60 + end.minute;
+    return selectedMinutes >= startMinutes && selectedMinutes <= endMinutes;
   }
 
   Future<void> _loadCustomers() async {
@@ -82,10 +139,21 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
   void _filterCustomers() {
     final query = _searchController.text.toLowerCase();
     setState(() {
+      final baseList = _selectedDate == null
+          ? _customers
+          : _availableFamilySchedules.isNotEmpty
+          ? _customers.where((customer) {
+              final match = _availableFamilySchedules.any(
+                (schedule) => schedule.customerId == customer.id,
+              );
+              return match;
+            }).toList()
+          : <AccountModel>[];
+
       if (query.isEmpty) {
-        _filteredCustomers = _customers;
+        _filteredCustomers = baseList;
       } else {
-        _filteredCustomers = _customers.where((customer) {
+        _filteredCustomers = baseList.where((customer) {
           return customer.displayName.toLowerCase().contains(query) ||
               customer.email.toLowerCase().contains(query) ||
               (customer.phone?.toLowerCase().contains(query) ?? false);
@@ -98,21 +166,52 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
     final now = DateTime.now();
     final picked = await showDatePicker(
       context: context,
-      initialDate: now,
+      initialDate: _selectedDate ?? now,
       firstDate: now,
       lastDate: DateTime(now.year + 1),
     );
     if (picked != null) {
-      setState(() => _selectedDate = picked);
+      final startDate = DateTime(picked.year, picked.month, picked.day);
+      final endDate = startDate.add(const Duration(days: 7));
+      setState(() {
+        _selectedDate = startDate;
+        _selectedDateRangeEnd = endDate;
+        _selectedTime = null;
+        _selectedCustomer = null;
+        _availableFamilySchedules = [];
+        _staffSchedules = [];
+      });
+      _loadStaffSchedulesForRange(startDate, endDate);
     }
   }
 
   Future<void> _selectTime() async {
+    if (_selectedCustomer == null || _availableFamilySchedules.isEmpty) {
+      return;
+    }
+
+    final initialTime =
+        _selectedTime ??
+        _buildScheduleTimeOfDay(_availableFamilySchedules.first.startTime);
+
     final picked = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay.now(),
+      initialTime: initialTime,
     );
     if (picked != null) {
+      final isValid = _availableFamilySchedules.any(
+        (schedule) => _isTimeWithinSchedule(schedule, picked),
+      );
+      if (!isValid) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Giờ chọn không nằm trong lịch phân công'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
       setState(() => _selectedTime = picked);
     }
   }
@@ -120,7 +219,13 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
   void _selectCustomer(AccountModel customer) {
     setState(() {
       _selectedCustomer = customer;
+      _selectedTime = null;
       _searchController.text = customer.displayName;
+      _availableFamilySchedules = _staffSchedules
+          .map((schedule) => schedule.familySchedule)
+          .whereType<FamilyScheduleEntity>()
+          .where((schedule) => schedule.customerId == customer.id)
+          .toList();
     });
     Navigator.pop(context);
   }
@@ -133,6 +238,19 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
         _selectedServices.add(service);
       }
     });
+  }
+
+  void _applyAvailableSchedules(List<StaffScheduleEntity> schedules) {
+    final availableSchedules = schedules
+        .map((schedule) => schedule.familySchedule)
+        .whereType<FamilyScheduleEntity>()
+        .toList();
+
+    setState(() {
+      _staffSchedules = schedules;
+      _availableFamilySchedules = availableSchedules;
+    });
+    _filterCustomers();
   }
 
   void _submit() {
@@ -166,6 +284,21 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
       return;
     }
 
+    if (_availableFamilySchedules.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Không có lịch phân công phù hợp'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final matchedSchedule = _availableFamilySchedules.firstWhere(
+      (schedule) => _isTimeWithinSchedule(schedule, _selectedTime!),
+      orElse: () => _availableFamilySchedules.first,
+    );
+
     // Combine date and time
     final startTime = DateTime(
       _selectedDate!.year,
@@ -175,8 +308,10 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
       _selectedTime!.minute,
     );
 
-    // End time: start time + 1 hour (default duration)
-    final endTime = startTime.add(const Duration(hours: 1));
+    final endTime = _buildScheduleDateTime(
+      _selectedDate!,
+      matchedSchedule.endTime,
+    );
 
     // Get service IDs
     final serviceIds = _selectedServices.map((s) => s.id).toList();
@@ -207,6 +342,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                 ..add(const LoadActiveAmenityServices()),
         ),
         BlocProvider(create: (context) => InjectionContainer.amenityTicketBloc),
+        BlocProvider(create: (context) => InjectionContainer.staffScheduleBloc),
       ],
       child: EmployeeScaffold(
         body: SafeArea(
@@ -217,32 +353,64 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                 subtitle: 'Đặt dịch vụ tiện ích cho khách hàng',
               ),
               Expanded(
-                child: BlocListener<AmenityTicketBloc, AmenityTicketState>(
-                  listener: (context, state) {
-                    if (state is ServiceBookingCreated) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(state.message),
-                          backgroundColor: AppColors.primary,
-                        ),
-                      );
-                      // Reset form
-                      setState(() {
-                        _selectedCustomer = null;
-                        _selectedServices = [];
-                        _selectedDate = null;
-                        _selectedTime = null;
-                        _notesController.clear();
-                      });
-                    } else if (state is AmenityTicketError) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(state.message),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
-                  },
+                child: MultiBlocListener(
+                  listeners: [
+                    BlocListener<StaffScheduleBloc, StaffScheduleState>(
+                      listener: (context, state) {
+                        if (state is StaffScheduleLoading) {
+                          setState(() => _isLoadingStaffSchedules = true);
+                        } else {
+                          setState(() => _isLoadingStaffSchedules = false);
+                        }
+
+                        if (state is StaffScheduleLoaded) {
+                          final schedules = state.schedules
+                              .where((item) => item.familySchedule != null)
+                              .toList();
+                          _applyAvailableSchedules(schedules);
+                        } else if (state is StaffScheduleEmpty) {
+                          _applyAvailableSchedules([]);
+                        } else if (state is StaffScheduleError) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(state.message),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                    BlocListener<AmenityTicketBloc, AmenityTicketState>(
+                      listener: (context, state) {
+                        if (state is ServiceBookingCreated) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(state.message),
+                              backgroundColor: AppColors.primary,
+                            ),
+                          );
+                          // Reset form
+                          setState(() {
+                            _selectedCustomer = null;
+                            _selectedServices = [];
+                            _selectedDate = null;
+                            _selectedDateRangeEnd = null;
+                            _selectedTime = null;
+                            _notesController.clear();
+                            _availableFamilySchedules = [];
+                            _staffSchedules = [];
+                          });
+                        } else if (state is AmenityTicketError) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(state.message),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ],
                   child: SingleChildScrollView(
                     padding: padding,
                     child: Column(
@@ -512,7 +680,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
 
   Widget _buildCustomerSelector() {
     return InkWell(
-      onTap: () => _showCustomerSearchDialog(),
+      onTap: _selectedDate == null ? null : () => _showCustomerSearchDialog(),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -536,7 +704,9 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
             Expanded(
               child: _selectedCustomer == null
                   ? Text(
-                      'Chọn khách hàng',
+                      _selectedDate == null
+                          ? 'Chọn ngày trước'
+                          : 'Chọn khách hàng',
                       style: AppTextStyles.arimo(
                         color: AppColors.textSecondary,
                       ),
@@ -751,8 +921,8 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                _selectedDate != null
-                    ? DateFormat('dd/MM/yyyy', 'vi').format(_selectedDate!)
+                _selectedDate != null && _selectedDateRangeEnd != null
+                    ? '${DateFormat('dd/MM/yyyy', 'vi').format(_selectedDate!)} - ${DateFormat('dd/MM/yyyy', 'vi').format(_selectedDateRangeEnd!)}'
                     : 'Chọn ngày',
                 style: AppTextStyles.arimo(
                   color: _selectedDate != null
@@ -761,6 +931,12 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                 ),
               ),
             ),
+            if (_isLoadingStaffSchedules)
+              const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
           ],
         ),
       ),
@@ -769,7 +945,9 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
 
   Widget _buildTimeSelector() {
     return InkWell(
-      onTap: _selectTime,
+      onTap: _selectedCustomer == null || _availableFamilySchedules.isEmpty
+          ? null
+          : _selectTime,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -794,6 +972,8 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
               child: Text(
                 _selectedTime != null
                     ? _selectedTime!.format(context)
+                    : _selectedCustomer == null
+                    ? 'Chọn khách hàng trước'
                     : 'Chọn giờ',
                 style: AppTextStyles.arimo(
                   color: _selectedTime != null
@@ -897,8 +1077,17 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                 ),
               ),
               Expanded(
-                child: _isLoadingCustomers
+                child: _isLoadingCustomers || _isLoadingStaffSchedules
                     ? const Center(child: CircularProgressIndicator())
+                    : _selectedDate == null
+                    ? Center(
+                        child: Text(
+                          'Vui lòng chọn ngày trước',
+                          style: AppTextStyles.arimo(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      )
                     : _filteredCustomers.isEmpty
                     ? Center(
                         child: Text(
