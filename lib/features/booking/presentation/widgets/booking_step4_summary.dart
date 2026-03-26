@@ -8,7 +8,7 @@ import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../booking/presentation/bloc/booking_bloc.dart';
 import '../../../booking/presentation/bloc/booking_state.dart';
-import '../../../employee/domain/entities/room_entity.dart';
+import '../../../../../features/employee/room/domain/entities/room_entity.dart';
 import '../../../family_profile/domain/entities/family_profile_entity.dart';
 import '../../../package/domain/entities/package_entity.dart';
 

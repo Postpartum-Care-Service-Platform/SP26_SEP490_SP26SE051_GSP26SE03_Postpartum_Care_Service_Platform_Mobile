@@ -23,26 +23,26 @@ import '../../features/supportAndPolicy/presentation/screens/contact_screen.dart
 import '../../features/supportAndPolicy/presentation/screens/about_screen.dart';
 import '../../features/supportAndPolicy/presentation/screens/terms_screen.dart';
 import '../../features/supportAndPolicy/presentation/screens/privacy_screen.dart';
-import '../../features/employee/presentation/screens/employee_portal_menu.dart';
-import '../../features/employee/presentation/screens/tasks_screen_new.dart';
-import '../../features/employee/presentation/screens/employee_rooms_screen.dart';
-import '../../features/employee/presentation/screens/check_in_out_screen.dart';
-import '../../features/employee/presentation/screens/requests_screen.dart';
-import '../../features/employee/presentation/screens/employee_meal_plan_screen.dart';
-import '../../features/employee/presentation/screens/employee_chat_screen.dart';
-import '../../features/employee/presentation/screens/service_booking_screen.dart';
-import '../../features/employee/presentation/screens/employee_assigned_families_screen.dart';
-import '../../features/employee/presentation/screens/employee_create_customer_screen.dart';
-import '../../features/employee/presentation/screens/employee_package_booking_screen.dart';
-import '../../features/employee/presentation/screens/staff_booking_list_screen.dart';
+import '../../features/employee/shell/presentation/screens/employee_portal_menu.dart';
+import '../../features/employee/appointment/presentation/screens/tasks_screen_new.dart';
+import '../../features/employee/appointment/presentation/screens/employee_assigned_families_screen.dart';
+import '../../features/employee/room/presentation/screens/employee_rooms_screen.dart';
+import '../../features/employee/operations/presentation/screens/check_in_out_screen.dart';
+import '../../features/employee/operations/presentation/screens/requests_screen.dart';
+import '../../features/employee/customer_profile/presentation/screens/employee_meal_plan_screen.dart';
+import '../../features/employee/shell/presentation/screens/employee_chat_screen.dart';
+import '../../features/employee/amenity_ticket/presentation/screens/service_booking_screen.dart';
+import '../../features/employee/customer_profile/presentation/screens/employee_create_customer_screen.dart';
+import '../../features/employee/booking/presentation/screens/employee_package_booking_screen.dart';
+import '../../features/employee/booking/presentation/screens/staff_booking_list_screen.dart';
 import '../../features/transaction/presentation/screens/staff_transaction_list_screen.dart';
-import '../../features/employee/presentation/screens/staff_contract_list_screen.dart';
-import '../../features/employee/presentation/screens/staff_contract_preview_screen.dart';
-import '../../features/employee/presentation/screens/staff_member_type_detail_screen.dart';
-import '../../features/employee/presentation/screens/staff_amenity_ticket_list_screen.dart';
-import '../../features/employee/presentation/screens/employee_appointment_list_screen.dart';
-import '../../features/employee/presentation/screens/employee_customer_family_profiles_screen.dart';
-import '../../features/employee/data/models/account_model.dart';
+import '../../features/employee/contract/presentation/screens/staff_contract_list_screen.dart';
+import '../../features/employee/contract/presentation/screens/staff_contract_preview_screen.dart';
+import '../../features/employee/contract/presentation/screens/staff_member_type_detail_screen.dart';
+import '../../features/employee/amenity_ticket/presentation/screens/staff_amenity_ticket_list_screen.dart';
+import '../../features/employee/appointment/presentation/screens/employee_appointment_list_screen.dart';
+import '../../features/employee/customer_profile/presentation/screens/employee_customer_family_profiles_screen.dart';
+import '../../features/employee/account/data/models/account_model.dart';
 import '../../features/chat/presentation/screens/conversation_list_screen.dart';
 import '../../features/chat/presentation/screens/conversation_detail_screen.dart';
 import '../../features/chat/presentation/screens/chat_shell_screen.dart';
@@ -76,16 +76,16 @@ class AppRouter {
       // Auth Routes
       case AppRoutes.splash:
         return MaterialPageRoute(builder: (_) => const SplashScreen());
-      
+
       case AppRoutes.login:
         return MaterialPageRoute(builder: (_) => const LoginScreen());
-      
+
       case AppRoutes.signUp:
         return MaterialPageRoute(builder: (_) => const SignUpScreen());
-      
+
       case AppRoutes.resetPassword:
         return MaterialPageRoute(builder: (_) => const ResetPasswordScreen());
-      
+
       case AppRoutes.otpVerification:
         if (args is Map<String, dynamic>) {
           return MaterialPageRoute(
@@ -94,7 +94,7 @@ class AppRouter {
           );
         }
         return null;
-      
+
       case AppRoutes.resetOtpVerification:
         if (args is Map<String, dynamic>) {
           return MaterialPageRoute(
@@ -103,7 +103,7 @@ class AppRouter {
           );
         }
         return null;
-      
+
       case AppRoutes.newPassword:
         if (args is Map<String, dynamic>) {
           return MaterialPageRoute(
@@ -114,7 +114,7 @@ class AppRouter {
           );
         }
         return null;
-      
+
       case AppRoutes.roleSelection:
         return MaterialPageRoute(builder: (_) => const RoleSelectionScreen());
 
@@ -144,7 +144,7 @@ class AppRouter {
           );
         }
         return null;
-      
+
       case AppRoutes.familyProfile:
         if (args is Map<String, dynamic>) {
           final authBloc = args['authBloc'] as AuthBloc?;
@@ -171,7 +171,7 @@ class AppRouter {
             child: const FamilyProfileScreen(),
           ),
         );
-      
+
       case AppRoutes.notifications:
         return MaterialPageRoute(builder: (_) => const NotificationScreen());
 
@@ -184,7 +184,7 @@ class AppRouter {
             child: const BookingHistoryScreen(),
           ),
         );
-      
+
       case AppRoutes.payment:
         if (args is Map<String, dynamic>) {
           return MaterialPageRoute(
@@ -198,7 +198,7 @@ class AppRouter {
           );
         }
         return null;
-      
+
       case AppRoutes.invoice:
         if (args is Map<String, dynamic>) {
           return MaterialPageRoute(
@@ -233,19 +233,19 @@ class AppRouter {
         return MaterialPageRoute(
           builder: (_) => const SupportAndPolicyScreen(),
         );
-      
+
       case AppRoutes.help:
         return MaterialPageRoute(builder: (_) => const HelpScreen());
-      
+
       case AppRoutes.contact:
         return MaterialPageRoute(builder: (_) => const ContactScreen());
-      
+
       case AppRoutes.about:
         return MaterialPageRoute(builder: (_) => const AboutScreen());
-      
+
       case AppRoutes.terms:
         return MaterialPageRoute(builder: (_) => const TermsScreen());
-      
+
       case AppRoutes.privacy:
         return MaterialPageRoute(builder: (_) => const PrivacyScreen());
 
@@ -304,7 +304,8 @@ class AppRouter {
         if (settings.arguments is int) {
           final memberTypeId = settings.arguments as int;
           return MaterialPageRoute(
-            builder: (_) => StaffMemberTypeDetailScreen(memberTypeId: memberTypeId),
+            builder: (_) =>
+                StaffMemberTypeDetailScreen(memberTypeId: memberTypeId),
           );
         }
         return null;
@@ -322,7 +323,8 @@ class AppRouter {
           final args = settings.arguments as Map<String, dynamic>;
           final customer = args['customer'] as AccountModel?;
           return MaterialPageRoute(
-            builder: (_) => StaffAmenityTicketListScreen(selectedCustomer: customer),
+            builder: (_) =>
+                StaffAmenityTicketListScreen(selectedCustomer: customer),
           );
         }
         return MaterialPageRoute(
@@ -368,11 +370,11 @@ class AppRouter {
           builder: (_) => BlocProvider(
             create: (_) =>
                 InjectionContainer.chatBloc
-              ..add(const ChatStarted(autoSelectFirstConversation: false)),
+                  ..add(const ChatStarted(autoSelectFirstConversation: false)),
             child: const ConversationListScreen(),
           ),
         );
-      
+
       case AppRoutes.conversationDetail:
         if (args is Map<String, dynamic>) {
           final chatBloc = args['chatBloc'] as ChatBloc?;
@@ -386,7 +388,7 @@ class AppRouter {
           }
         }
         return null;
-      
+
       case AppRoutes.chatShell:
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
@@ -416,7 +418,7 @@ class AppRouter {
           builder: (_) => BlocProvider(
             create: (_) =>
                 InjectionContainer.familyScheduleBloc
-              ..add(const FamilyScheduleLoadRequested()),
+                  ..add(const FamilyScheduleLoadRequested()),
             child: const FamilyScheduleScreen(),
           ),
         );

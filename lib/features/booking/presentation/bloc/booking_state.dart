@@ -3,7 +3,7 @@ import '../../domain/entities/booking_entity.dart';
 import '../../domain/entities/payment_link_entity.dart';
 import '../../domain/entities/payment_status_entity.dart';
 import '../../../package/domain/entities/package_entity.dart';
-import '../../../employee/domain/entities/room_entity.dart';
+import '../../../../../features/employee/room/domain/entities/room_entity.dart';
 import '../../../family_profile/domain/entities/family_profile_entity.dart';
 
 /// Booking States
