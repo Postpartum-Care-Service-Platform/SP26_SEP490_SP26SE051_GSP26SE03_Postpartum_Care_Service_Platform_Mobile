@@ -107,7 +107,8 @@ import '../../features/booking/domain/usecases/cancel_booking_usecase.dart';
 import '../../features/booking/domain/usecases/get_booking_by_id_usecase.dart';
 import '../../features/booking/domain/usecases/get_bookings_usecase.dart';
 import '../../features/booking/domain/usecases/create_payment_link_usecase.dart';
-import '../../features/booking/domain/usecases/check_payment_status_usecase.dart' as booking;
+import '../../features/booking/domain/usecases/check_payment_status_usecase.dart'
+    as booking;
 import '../../features/booking/domain/usecases/create_booking_for_customer_usecase.dart';
 import '../../features/booking/domain/usecases/create_offline_payment_usecase.dart';
 import '../../features/booking/presentation/bloc/booking_bloc.dart';
@@ -129,11 +130,16 @@ import '../../features/services/domain/usecases/update_menu_records_usecase.dart
 import '../../features/services/domain/usecases/delete_menu_record_usecase.dart';
 import '../../features/services/presentation/bloc/menu_bloc.dart';
 import '../../features/services/data/datasources/family_schedule_remote_datasource.dart';
+import '../../features/services/data/datasources/staff_schedule_remote_datasource.dart';
 import '../../features/services/data/repositories/family_schedule_repository_impl.dart';
+import '../../features/services/data/repositories/staff_schedule_repository_impl.dart';
 import '../../features/services/domain/repositories/family_schedule_repository.dart';
+import '../../features/services/domain/repositories/staff_schedule_repository.dart';
 import '../../features/services/domain/usecases/get_my_schedules_usecase.dart';
 import '../../features/services/domain/usecases/get_my_schedules_by_date_usecase.dart';
+import '../../features/services/domain/usecases/get_my_staff_schedules_by_date_range_usecase.dart';
 import '../../features/services/presentation/bloc/family_schedule_bloc.dart';
+import '../../features/services/presentation/bloc/staff_schedule/staff_schedule_bloc.dart';
 import '../../features/services/data/datasources/feedback_remote_datasource.dart';
 import '../../features/services/data/repositories/feedback_repository_impl.dart';
 import '../../features/services/domain/repositories/feedback_repository.dart';
@@ -155,7 +161,8 @@ import '../../features/home_service/domain/usecases/get_home_activities_usecase.
 import '../../features/home_service/domain/usecases/get_free_home_staff_usecase.dart';
 import '../../features/home_service/domain/usecases/book_home_service_usecase.dart';
 import '../../features/home_service/domain/usecases/create_home_service_payment_link_usecase.dart';
-import '../../features/home_service/domain/usecases/check_payment_status_usecase.dart' as home_service;
+import '../../features/home_service/domain/usecases/check_payment_status_usecase.dart'
+    as home_service;
 import '../../features/home_service/presentation/bloc/home_service_bloc.dart';
 import '../apis/api_client.dart';
 
@@ -217,6 +224,9 @@ class InjectionContainer {
 
   static FamilyScheduleRemoteDataSource get _familyScheduleRemoteDataSource =>
       FamilyScheduleRemoteDataSourceImpl(dio: ApiClient.dio);
+
+  static StaffScheduleRemoteDataSource get _staffScheduleRemoteDataSource =>
+      StaffScheduleRemoteDataSourceImpl(dio: ApiClient.dio);
 
   static FeedbackRemoteDataSource get _feedbackRemoteDataSource =>
       FeedbackRemoteDataSourceImpl(dio: ApiClient.dio);
@@ -284,6 +294,11 @@ class InjectionContainer {
         remoteDataSource: _familyScheduleRemoteDataSource,
       );
 
+  static StaffScheduleRepository get staffScheduleRepository =>
+      StaffScheduleRepositoryImpl(
+        remoteDataSource: _staffScheduleRemoteDataSource,
+      );
+
   static FeedbackRepository get feedbackRepository =>
       FeedbackRepositoryImpl(_feedbackRemoteDataSource);
 
@@ -340,7 +355,7 @@ class InjectionContainer {
       GetUnreadCountUsecase(notificationRepository);
 
   static GetPackagesUsecase get _getPackagesUsecase =>
-      GetPackagesUsecase(packageRepository);  
+      GetPackagesUsecase(packageRepository);
 
   static GetCarePlanDetailsUsecase get _getCarePlanDetailsUsecase =>
       GetCarePlanDetailsUsecase(carePlanRepository);
@@ -459,6 +474,9 @@ class InjectionContainer {
       GetMySchedulesUsecase(familyScheduleRepository);
   static GetMySchedulesByDateUsecase get _getMySchedulesByDateUsecase =>
       GetMySchedulesByDateUsecase(familyScheduleRepository);
+  static GetMyStaffSchedulesByDateRangeUsecase
+  get _getMyStaffSchedulesByDateRangeUsecase =>
+      GetMyStaffSchedulesByDateRangeUsecase(staffScheduleRepository);
 
   static GetFeedbackTypesUsecase get _getFeedbackTypesUsecase =>
       GetFeedbackTypesUsecase(feedbackRepository);
@@ -480,11 +498,13 @@ class InjectionContainer {
       GetHomeActivitiesUsecase(homeServiceRepository);
   static GetFreeHomeStaffUsecase get _getFreeHomeStaffUsecase =>
       GetFreeHomeStaffUsecase(homeServiceRepository);
-  static BookHomeServiceUsecase get _bookHomeServiceUsecase =>
+  static BookHomeServiceUsecase get _getBookHomeServiceUsecase =>
       BookHomeServiceUsecase(homeServiceRepository);
-  static CreateHomeServicePaymentLinkUsecase get _createHomeServicePaymentLinkUsecase =>
+  static CreateHomeServicePaymentLinkUsecase
+  get _createHomeServicePaymentLinkUsecase =>
       CreateHomeServicePaymentLinkUsecase(homeServiceRepository);
-  static home_service.CheckPaymentStatusUsecase get _checkHomeServicePaymentStatusUsecase =>
+  static home_service.CheckPaymentStatusUsecase
+  get _checkHomeServicePaymentStatusUsecase =>
       home_service.CheckPaymentStatusUsecase(homeServiceRepository);
 
   // ==================== Blocs ====================
@@ -608,6 +628,10 @@ class InjectionContainer {
     getMySchedulesByDateUsecase: _getMySchedulesByDateUsecase,
   );
 
+  static StaffScheduleBloc get staffScheduleBloc => StaffScheduleBloc(
+    getMyStaffSchedulesByDateRange: _getMyStaffSchedulesByDateRangeUsecase,
+  );
+
   static FeedbackBloc get feedbackBloc => FeedbackBloc(
     getFeedbackTypesUsecase: _getFeedbackTypesUsecase,
     getMyFeedbacksUsecase: _getMyFeedbacksUsecase,
@@ -621,12 +645,12 @@ class InjectionContainer {
   );
 
   static HomeServiceBloc get homeServiceBloc => HomeServiceBloc(
-        getHomeActivitiesUsecase: _getHomeActivitiesUsecase,
-        getFreeHomeStaffUsecase: _getFreeHomeStaffUsecase,
-        bookHomeServiceUsecase: _bookHomeServiceUsecase,
-        createPaymentLinkUsecase: _createHomeServicePaymentLinkUsecase,
-        checkPaymentStatusUsecase: _checkHomeServicePaymentStatusUsecase,
-      );
+    getHomeActivitiesUsecase: _getHomeActivitiesUsecase,
+    getFreeHomeStaffUsecase: _getFreeHomeStaffUsecase,
+    bookHomeServiceUsecase: _getBookHomeServiceUsecase,
+    createPaymentLinkUsecase: _createHomeServicePaymentLinkUsecase,
+    checkPaymentStatusUsecase: _checkHomeServicePaymentStatusUsecase,
+  );
 
   // ==================== Reset ====================
 

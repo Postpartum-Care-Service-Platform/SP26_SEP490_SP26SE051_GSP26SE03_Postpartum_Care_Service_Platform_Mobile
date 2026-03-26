@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'family_schedule_entity.dart';
 
 /// Staff Schedule Entity - Domain layer
 class StaffScheduleEntity extends Equatable {
@@ -9,6 +10,7 @@ class StaffScheduleEntity extends Equatable {
   final String? managerName;
   final String? staffAvatar;
   final int? familyScheduleId;
+  final FamilyScheduleEntity? familySchedule;
   final bool isChecked;
   final DateTime? checkedAt;
 
@@ -20,6 +22,7 @@ class StaffScheduleEntity extends Equatable {
     this.managerName,
     this.staffAvatar,
     this.familyScheduleId,
+    this.familySchedule,
     required this.isChecked,
     this.checkedAt,
   });
@@ -33,6 +36,7 @@ class StaffScheduleEntity extends Equatable {
         managerName,
         staffAvatar,
         familyScheduleId,
+        familySchedule,
         isChecked,
         checkedAt,
       ];
