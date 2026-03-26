@@ -67,7 +67,7 @@ class AppStrings {
   static const String quickActionSupport = 'Hỗ trợ';
   static const String quickActionReports = 'Báo cáo';
   static const String upcomingSchedule = 'Lịch trình sắp tới';
-  static const String promotions = 'Ưu đãi & Gói dịch vụ';
+  static const String promotions = 'Gói dịch vụ của chúng tôi';
   static const String viewAll = 'Xem tất cả';
 
   // Home Screen - Experience sections

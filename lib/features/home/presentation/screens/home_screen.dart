@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../../../core/routing/app_router.dart';
+import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
-import '../../../../core/di/injection_container.dart';
 import '../../../../core/widgets/app_loading.dart';
 import '../../../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../../../features/auth/presentation/bloc/auth_state.dart';
@@ -12,11 +15,9 @@ import '../../../../features/package/presentation/bloc/package_bloc.dart';
 import '../../../../features/package/presentation/bloc/package_event.dart';
 import '../../../../features/package/presentation/bloc/package_state.dart';
 import '../../../../features/package/presentation/widgets/package_carousel.dart';
-import '../../../../core/routing/app_router.dart';
-import '../../../../core/routing/app_routes.dart';
+import '../widgets/home_experience_sections.dart';
 import '../widgets/home_header.dart';
 import '../widgets/section_header.dart';
-import '../widgets/home_experience_sections.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -32,26 +33,8 @@ class _HomeScreenState extends State<HomeScreen> {
       create: (context) =>
           InjectionContainer.packageBloc..add(const PackageLoadRequested()),
       child: BlocBuilder<AuthBloc, AuthState>(
-        builder: (context, authState) {
+        builder: (context, _) {
           final scale = AppResponsive.scaleFactor(context);
-          String? username;
-          String? avatarUrl;
-          bool isEmailVerified = false;
-          bool isLoading = true;
-
-          if (authState is AuthCurrentAccountLoaded) {
-            username = authState.account.displayName;
-            avatarUrl = authState.account.avatarUrl;
-            isEmailVerified = authState.account.isEmailVerified;
-            isLoading = false;
-          } else if (authState is AuthLoading) {
-            isLoading = true;
-          } else if (authState is AuthError) {
-            username = 'User'; // Fallback to default
-            isLoading = false;
-          } else {
-            isLoading = true;
-          }
 
           return SafeArea(
             bottom: false,
@@ -60,38 +43,25 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Top inset is already handled by SafeArea.
                   SizedBox(height: 8 * scale),
-                  HomeHeader(
-                    userName: username,
-                    avatarUrl: avatarUrl,
-                    isEmailVerified: isEmailVerified,
-                    isLoading: isLoading,
-                  ),
+                  const HomeHeader(),
                   SizedBox(height: 24 * scale),
 
-                  // Quick Actions Section
-                  // 1) Welcome section
                   const HomeWelcomeSection(),
                   SizedBox(height: 28 * scale),
 
-                  // 2) Service / facility / cuisine gallery
                   const HomeServiceGallerySection(),
                   SizedBox(height: 28 * scale),
 
-                  // 3) Hero banner
                   const HomeExperienceBanner(),
                   SizedBox(height: 28 * scale),
 
-                  // 4) Testimonial banner with slide
                   const HomeTestimonialBanner(),
                   SizedBox(height: 28 * scale),
 
-                  // 5) Continuous feedback image slider
                   const HomeLoveWallSection(),
                   SizedBox(height: 32 * scale),
 
-                  // Promotions Section
                   Builder(
                     builder: (homeContext) => SectionHeader(
                       title: AppStrings.promotions,
@@ -163,7 +133,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           );
                         }
 
-                        // Show packages in carousel slides
                         return PackageCarousel(
                           packages: state.centerPackages,
                           onViewAll: () {
