@@ -6,7 +6,7 @@ import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_toast.dart';
 import '../../../booking/data/datasources/booking_remote_datasource.dart';
-import '../../../employee/presentation/widgets/employee_scaffold.dart';
+import '../../../../../features/employee/shell/presentation/widgets/employee_scaffold.dart';
 import '../../../services/data/datasources/family_schedule_remote_datasource.dart';
 import '../../data/datasources/transaction_remote_datasource.dart';
 import '../../data/models/transaction_with_customer_model.dart';
@@ -26,11 +26,10 @@ class _StaffTransactionListScreenState
   final _familyScheduleDataSource = FamilyScheduleRemoteDataSourceImpl(
     dio: ApiClient.dio,
   );
-  late Future<List<TransactionWithCustomerModel>> _future =
-      _loadTransactions();
+  late Future<List<TransactionWithCustomerModel>> _future = _loadTransactions();
   String _typeFilter = 'all'; // all, Deposit, Remaining, Full
   String _statusFilter = 'all'; // all, Pending, Paid, Failed
-  
+
   // Search and filter
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -43,9 +42,7 @@ class _StaffTransactionListScreenState
 
   Future<List<TransactionWithCustomerModel>> _loadTransactions() async {
     final all = await _dataSource.getAllTransactions();
-    all.sort(
-      (a, b) => b.transactionDate.compareTo(a.transactionDate),
-    );
+    all.sort((a, b) => b.transactionDate.compareTo(a.transactionDate));
     return all;
   }
 
@@ -168,10 +165,7 @@ class _StaffTransactionListScreenState
       AppToast.showSuccess(context, message: message);
     } catch (e) {
       if (!mounted) return;
-      AppToast.showError(
-        context,
-        message: 'Không thể tạo lịch sinh hoạt: $e',
-      );
+      AppToast.showError(context, message: 'Không thể tạo lịch sinh hoạt: $e');
     }
   }
 
@@ -202,7 +196,7 @@ class _StaffTransactionListScreenState
         final customerEmail = (t.customerEmail ?? '').toLowerCase();
         final transactionId = t.id.toLowerCase();
         final bookingId = t.bookingId?.toString().toLowerCase() ?? '';
-        
+
         return customerName.contains(query) ||
             customerEmail.contains(query) ||
             transactionId.contains(query) ||
@@ -218,8 +212,12 @@ class _StaffTransactionListScreenState
           t.transactionDate.month,
           t.transactionDate.day,
         );
-        return transactionDate.isAfter(_dateFrom!.subtract(const Duration(days: 1))) ||
-            transactionDate.isAtSameMomentAs(DateTime(_dateFrom!.year, _dateFrom!.month, _dateFrom!.day));
+        return transactionDate.isAfter(
+              _dateFrom!.subtract(const Duration(days: 1)),
+            ) ||
+            transactionDate.isAtSameMomentAs(
+              DateTime(_dateFrom!.year, _dateFrom!.month, _dateFrom!.day),
+            );
       }).toList();
     }
 
@@ -230,15 +228,20 @@ class _StaffTransactionListScreenState
           t.transactionDate.month,
           t.transactionDate.day,
         );
-        return transactionDate.isBefore(_dateTo!.add(const Duration(days: 1))) ||
-            transactionDate.isAtSameMomentAs(DateTime(_dateTo!.year, _dateTo!.month, _dateTo!.day));
+        return transactionDate.isBefore(
+              _dateTo!.add(const Duration(days: 1)),
+            ) ||
+            transactionDate.isAtSameMomentAs(
+              DateTime(_dateTo!.year, _dateTo!.month, _dateTo!.day),
+            );
       }).toList();
     }
 
     // Payment method filter
     if (_paymentMethodFilter != null && _paymentMethodFilter!.isNotEmpty) {
       filtered = filtered.where((t) {
-        return (t.paymentMethod ?? '').toLowerCase() == _paymentMethodFilter!.toLowerCase();
+        return (t.paymentMethod ?? '').toLowerCase() ==
+            _paymentMethodFilter!.toLowerCase();
       }).toList();
     }
 
@@ -275,7 +278,8 @@ class _StaffTransactionListScreenState
     if (_searchQuery.isNotEmpty) count++;
     if (_dateFrom != null) count++;
     if (_dateTo != null) count++;
-    if (_paymentMethodFilter != null && _paymentMethodFilter!.isNotEmpty) count++;
+    if (_paymentMethodFilter != null && _paymentMethodFilter!.isNotEmpty)
+      count++;
     if (_amountFrom != null) count++;
     if (_amountTo != null) count++;
     return count;
@@ -438,7 +442,9 @@ class _StaffTransactionListScreenState
               : null,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12 * scale),
-            borderSide: BorderSide(color: AppColors.textSecondary.withValues(alpha: 0.3)),
+            borderSide: BorderSide(
+              color: AppColors.textSecondary.withValues(alpha: 0.3),
+            ),
           ),
           filled: true,
           fillColor: AppColors.white,
@@ -457,7 +463,6 @@ class _StaffTransactionListScreenState
   }
 
   Widget _buildAdvancedFilters(double scale) {
-
     return Container(
       margin: EdgeInsets.fromLTRB(16 * scale, 0, 16 * scale, 8 * scale),
       padding: EdgeInsets.all(16 * scale),
@@ -642,7 +647,10 @@ class _StaffTransactionListScreenState
             items: const [
               DropdownMenuItem(value: null, child: Text('Tất cả')),
               DropdownMenuItem(value: 'PayOS', child: Text('PayOS (Online)')),
-              DropdownMenuItem(value: 'Offline', child: Text('Offline (Tiền mặt)')),
+              DropdownMenuItem(
+                value: 'Offline',
+                child: Text('Offline (Tiền mặt)'),
+              ),
             ],
             onChanged: (value) {
               setState(() {
@@ -683,7 +691,9 @@ class _StaffTransactionListScreenState
                   ),
                   onChanged: (value) {
                     setState(() {
-                      _amountFrom = value.isEmpty ? null : double.tryParse(value);
+                      _amountFrom = value.isEmpty
+                          ? null
+                          : double.tryParse(value);
                     });
                   },
                 ),
@@ -724,7 +734,12 @@ class _StaffTransactionListScreenState
 
   Widget _buildFilterBar(double scale) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(16 * scale, 8 * scale, 16 * scale, 4 * scale),
+      padding: EdgeInsets.fromLTRB(
+        16 * scale,
+        8 * scale,
+        16 * scale,
+        4 * scale,
+      ),
       child: Row(
         children: [
           Expanded(
@@ -744,7 +759,10 @@ class _StaffTransactionListScreenState
                     isExpanded: true,
                     items: const [
                       DropdownMenuItem(value: 'all', child: Text('Tất cả')),
-                      DropdownMenuItem(value: 'deposit', child: Text('Đặt cọc')),
+                      DropdownMenuItem(
+                        value: 'deposit',
+                        child: Text('Đặt cọc'),
+                      ),
                       DropdownMenuItem(
                         value: 'remaining',
                         child: Text('Thanh toán còn lại'),
@@ -781,9 +799,18 @@ class _StaffTransactionListScreenState
                     isExpanded: true,
                     items: const [
                       DropdownMenuItem(value: 'all', child: Text('Tất cả')),
-                      DropdownMenuItem(value: 'pending', child: Text('Chờ xử lý')),
-                      DropdownMenuItem(value: 'paid', child: Text('Đã thanh toán')),
-                      DropdownMenuItem(value: 'failed', child: Text('Thất bại')),
+                      DropdownMenuItem(
+                        value: 'pending',
+                        child: Text('Chờ xử lý'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'paid',
+                        child: Text('Đã thanh toán'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'failed',
+                        child: Text('Thất bại'),
+                      ),
                     ],
                     onChanged: (value) {
                       if (value == null) return;
@@ -858,13 +885,13 @@ class _TransactionItem extends StatelessWidget {
     final scale = AppResponsive.scaleFactor(context);
     final statusColor = _statusColor(transaction.status);
 
-    final customerName =
-        transaction.customerUsername?.isNotEmpty == true
-            ? transaction.customerUsername!
-            : (transaction.customerEmail ?? 'Khách hàng');
+    final customerName = transaction.customerUsername?.isNotEmpty == true
+        ? transaction.customerUsername!
+        : (transaction.customerEmail ?? 'Khách hàng');
 
     final date = transaction.transactionDate;
-    final dateLabel = '${date.day}/${date.month}/${date.year} '
+    final dateLabel =
+        '${date.day}/${date.month}/${date.year} '
         '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
 
     return Container(
@@ -1011,4 +1038,3 @@ class _TransactionItem extends StatelessWidget {
     );
   }
 }
-

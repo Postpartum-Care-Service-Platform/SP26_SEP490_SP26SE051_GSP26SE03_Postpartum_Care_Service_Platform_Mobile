@@ -5,10 +5,10 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_loading.dart';
-import '../../../employee/domain/entities/room_entity.dart';
-import '../../../booking/presentation/bloc/booking_bloc.dart';
-import '../../../booking/presentation/bloc/booking_event.dart';
-import '../../../booking/presentation/bloc/booking_state.dart';
+import '../../../../../features/employee/room/domain/entities/room_entity.dart';
+import '../../../../../features/booking/presentation/bloc/booking_bloc.dart';
+import '../../../../../features/booking/presentation/bloc/booking_event.dart';
+import '../../../../../features/booking/presentation/bloc/booking_state.dart';
 
 class BookingStep2RoomSelection extends StatefulWidget {
   final Function(int) onRoomSelected;

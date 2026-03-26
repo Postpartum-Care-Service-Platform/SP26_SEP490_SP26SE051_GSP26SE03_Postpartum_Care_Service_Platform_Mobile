@@ -50,39 +50,38 @@ import '../../features/appointment/domain/usecases/update_appointment_usecase.da
 import '../../features/appointment/domain/usecases/cancel_appointment_usecase.dart';
 import '../../features/appointment/domain/usecases/get_appointment_types_usecase.dart';
 import '../../features/appointment/presentation/bloc/appointment_bloc.dart';
-import '../../features/employee/data/datasources/appointment_employee_remote_datasource.dart';
-import '../../features/employee/data/repositories/appointment_employee_repository_impl.dart';
-import '../../features/employee/domain/repositories/appointment_employee_repository.dart';
-import '../../features/employee/domain/usecases/get_my_assigned_appointments.dart';
-import '../../features/employee/domain/usecases/get_all_appointments.dart';
-import '../../features/employee/domain/usecases/get_appointment_by_id.dart';
-import '../../features/employee/domain/usecases/confirm_appointment.dart';
-import '../../features/employee/domain/usecases/complete_appointment.dart';
-import '../../features/employee/domain/usecases/cancel_appointment.dart';
-import '../../features/employee/domain/usecases/create_appointment_for_customer.dart';
-import '../../features/employee/presentation/bloc/appointment/appointment_bloc.dart'
+import '../../features/employee/appointment/data/datasources/appointment_employee_remote_datasource.dart';
+import '../../features/employee/appointment/data/repositories/appointment_employee_repository_impl.dart';
+import '../../features/employee/appointment/domain/repositories/appointment_employee_repository.dart';
+import '../../features/employee/appointment/domain/usecases/get_my_assigned_appointments.dart';
+import '../../features/employee/appointment/domain/usecases/get_all_appointments.dart';
+import '../../features/employee/appointment/domain/usecases/get_appointment_by_id.dart';
+import '../../features/employee/appointment/domain/usecases/confirm_appointment.dart';
+import '../../features/employee/appointment/domain/usecases/complete_appointment.dart';
+import '../../features/employee/appointment/domain/usecases/cancel_appointment.dart';
+import '../../features/employee/appointment/domain/usecases/create_appointment_for_customer.dart';
+import '../../features/employee/appointment/presentation/bloc/appointment/appointment_bloc.dart'
     as employee_appointment;
-import '../../features/employee/data/datasources/room_remote_datasource.dart';
-import '../../features/employee/data/repositories/room_repository_impl.dart';
-import '../../features/employee/domain/repositories/room_repository.dart';
-import '../../features/employee/domain/usecases/get_all_rooms.dart';
-import '../../features/employee/domain/usecases/get_room_by_id.dart';
-import '../../features/employee/domain/usecases/get_available_rooms.dart';
-import '../../features/employee/domain/usecases/get_available_rooms_by_date_range.dart';
-import '../../features/employee/domain/usecases/get_rooms_by_package.dart';
-import '../../features/employee/presentation/bloc/room/room_bloc.dart';
-import '../../features/employee/data/datasources/amenity_service_remote_datasource.dart';
-import '../../features/employee/data/repositories/amenity_service_repository_impl.dart';
-import '../../features/employee/domain/repositories/amenity_service_repository.dart';
-import '../../features/employee/domain/usecases/get_all_amenity_services.dart';
-import '../../features/employee/domain/usecases/get_amenity_service_by_id.dart';
-import '../../features/employee/domain/usecases/get_active_amenity_services.dart';
-import '../../features/employee/presentation/bloc/amenity_service/amenity_service_bloc.dart';
-import '../../features/employee/data/datasources/amenity_ticket_remote_datasource.dart';
-import '../../features/employee/data/repositories/amenity_ticket_repository_impl.dart';
-import '../../features/employee/domain/repositories/amenity_ticket_repository.dart';
-import '../../features/employee/domain/usecases/create_service_booking.dart';
-import '../../features/employee/presentation/bloc/amenity_ticket/amenity_ticket_bloc.dart';
+import '../../features/employee/room/data/datasources/room_remote_datasource.dart';
+import '../../features/employee/room/data/repositories/room_repository_impl.dart';
+import '../../features/employee/room/domain/repositories/room_repository.dart';
+import '../../features/employee/room/domain/usecases/get_all_rooms.dart';
+import '../../features/employee/room/domain/usecases/get_room_by_id.dart';
+import '../../features/employee/room/domain/usecases/get_available_rooms.dart';
+import '../../features/employee/room/domain/usecases/get_rooms_by_package.dart';
+import '../../features/employee/room/presentation/bloc/room/room_bloc.dart';
+import '../../features/employee/amenity_service/data/datasources/amenity_service_remote_datasource.dart';
+import '../../features/employee/amenity_service/data/repositories/amenity_service_repository_impl.dart';
+import '../../features/employee/amenity_service/domain/repositories/amenity_service_repository.dart';
+import '../../features/employee/amenity_service/domain/usecases/get_all_amenity_services.dart';
+import '../../features/employee/amenity_service/domain/usecases/get_amenity_service_by_id.dart';
+import '../../features/employee/amenity_service/domain/usecases/get_active_amenity_services.dart';
+import '../../features/employee/amenity_service/presentation/bloc/amenity_service/amenity_service_bloc.dart';
+import '../../features/employee/amenity_ticket/data/datasources/amenity_ticket_remote_datasource.dart';
+import '../../features/employee/amenity_ticket/data/repositories/amenity_ticket_repository_impl.dart';
+import '../../features/employee/amenity_ticket/domain/repositories/amenity_ticket_repository.dart';
+import '../../features/employee/amenity_ticket/domain/usecases/create_service_booking.dart';
+import '../../features/employee/amenity_ticket/presentation/bloc/amenity_ticket/amenity_ticket_bloc.dart';
 import '../../features/chat/data/datasources/chat_remote_datasource.dart';
 import '../../features/chat/data/repositories/chat_repository_impl.dart';
 import '../../features/chat/domain/repositories/chat_repository.dart';
@@ -381,8 +380,6 @@ class InjectionContainer {
   static GetRoomById get _getRoomById => GetRoomById(roomRepository);
   static GetAvailableRooms get _getAvailableRooms =>
       GetAvailableRooms(roomRepository);
-  static GetAvailableRoomsByDateRange get _getAvailableRoomsByDateRange =>
-      GetAvailableRoomsByDateRange(roomRepository);
   static GetRoomsByPackage get _getRoomsByPackage =>
       GetRoomsByPackage(roomRepository);
   
