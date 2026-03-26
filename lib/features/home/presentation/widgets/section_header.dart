@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/utils/app_text_styles.dart';
+import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/constants/app_colors.dart';
 
 class SectionHeader extends StatelessWidget {
@@ -16,6 +17,7 @@ class SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -23,8 +25,8 @@ class SectionHeader extends StatelessWidget {
         Text(
           title,
           style: AppTextStyles.tinos(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+            fontSize: 20 * scale,
+            fontWeight: FontWeight.w700,
           ),
         ),
         if (actionText != null && onActionPressed != null)
@@ -36,10 +38,10 @@ class SectionHeader extends StatelessWidget {
             ),
             child: Text(
               actionText!,
-              style: AppTextStyles.arimo(
-                fontSize: 14,
+              style: AppTextStyles.tinos(
+                fontSize: 14 * scale,
                 color: AppColors.primary,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),

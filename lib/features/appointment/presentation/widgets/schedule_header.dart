@@ -18,9 +18,9 @@ class ScheduleHeader extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.fromLTRB(
         20 * scale,
-        16 * scale,
+        10 * scale,
         20 * scale,
-        24 * scale,
+        10 * scale,
       ),
       child: Row(
         children: [

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/avatar_widget.dart';
@@ -99,10 +100,20 @@ class AccountSummaryCard extends StatelessWidget {
                     ),
                     if (account.isEmailVerified) ...[
                       SizedBox(width: 8 * scale),
-                      Icon(
-                        Icons.verified,
-                        size: 20 * scale,
-                        color: AppColors.white,
+                      Tooltip(
+                        message: AppStrings.emailVerified,
+                        triggerMode: TooltipTriggerMode.tap,
+                        waitDuration: Duration.zero,
+                        showDuration: const Duration(seconds: 2),
+                        preferBelow: false,
+                        child: Transform.translate(
+                          offset: Offset(0, -3 * scale),
+                          child: Icon(
+                            Icons.verified,
+                            size: 20 * scale,
+                            color: AppColors.white,
+                          ),
+                        ),
                       ),
                     ],
                   ],

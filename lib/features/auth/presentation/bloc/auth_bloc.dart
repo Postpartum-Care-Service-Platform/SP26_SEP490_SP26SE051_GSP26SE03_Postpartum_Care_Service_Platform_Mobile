@@ -534,7 +534,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         id: owner.id,
         memberTypeId: owner.memberTypeId,
         memberTypeName: memberType.name,
-        customerId: owner.customerId,
+        accountId: owner.accountId,
         fullName: owner.fullName,
         dateOfBirth: owner.dateOfBirth,
         gender: owner.gender,

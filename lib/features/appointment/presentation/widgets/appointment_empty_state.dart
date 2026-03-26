@@ -26,23 +26,23 @@ class AppointmentEmptyState extends StatelessWidget {
               ),
               child: Icon(
                 Icons.calendar_today_outlined,
-                size: 64 * scale,
+                size: 44 * scale,
                 color: AppColors.primary,
               ),
             ),
             SizedBox(height: 24 * scale),
             Text(
               AppStrings.noAppointments,
-              style: AppTextStyles.arimo(
-                fontSize: 18 * scale,
-                fontWeight: FontWeight.w600,
+              style: AppTextStyles.tinos(
+                fontSize: 22 * scale,
+                fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
               ),
               textAlign: TextAlign.center,
             ),
             SizedBox(height: 8 * scale),
             Text(
-              'Tạo lịch hẹn đầu tiên của bạn',
+              AppStrings.appointmentCreateFirst,
               style: AppTextStyles.arimo(
                 fontSize: 14 * scale,
                 color: AppColors.textSecondary,

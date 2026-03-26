@@ -23,4 +23,11 @@ abstract class RoomRepository {
     required DateTime startDate,
     required DateTime endDate,
   });
+
+  /// Get rooms by package ID and booking date range
+  Future<List<RoomEntity>> getRoomsByPackage({
+    required int packageId,
+    required DateTime startDate,
+    required DateTime endDate,
+  });
 }

@@ -97,9 +97,9 @@ class ApiEndpoints {
   static const String packages = '/Packages/center';
   static const String packageTypes = '/PackageType';
 
-  // Care Plan endpoints
+  // Package Activities (thay cho Care Plan cũ)
   static String getCarePlanDetailsByPackage(int packageId) =>
-      '/care-plan-details/by-package/$packageId';
+      '/package-activities/by-package/$packageId';
 
   // Booking endpoints
   static const String createBooking = '/Booking';
@@ -183,6 +183,9 @@ class ApiEndpoints {
 
   /// Get room booking periods
   static const String roomBookingPeriods = '/Room/booking-periods';
+
+  /// Get rooms by package ID
+  static String roomsByPackage(int packageId) => '/Room/by-package/$packageId';
 
   // ==========================================
   // Employee - AmenityService endpoints

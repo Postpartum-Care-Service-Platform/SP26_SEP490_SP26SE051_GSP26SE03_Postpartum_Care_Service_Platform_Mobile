@@ -2,7 +2,10 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../features/auth/presentation/bloc/auth_bloc.dart';
+import '../../features/auth/presentation/bloc/auth_state.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_strings.dart';
 import '../constants/app_assets.dart';
@@ -76,21 +79,41 @@ class AppBottomNavigationBar extends StatelessWidget {
     final unselectedColor = AppColors.third;
     final barHeight = 80 * scale;
 
-    return SafeArea(
-      top: false,
-      bottom: false,
-      child: Padding(
-        padding: EdgeInsets.only(bottom: bottomInset == 0 ? 8 * scale : 0),
-        child: SizedBox(
-          height: barHeight,
-          child: _PillBottomNav(
-            currentTab: currentTab,
-            selectedColor: selectedColor,
-            unselectedColor: unselectedColor,
-            onTabSelected: onTabSelected,
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, authState) {
+        String profileLabel = AppStrings.bottomNavProfile;
+        String? profileAvatarUrl;
+
+        if (authState is AuthCurrentAccountLoaded) {
+          final fullName = authState.account.displayName.trim();
+          final parts = fullName
+              .split(RegExp(r'\s+'))
+              .where((e) => e.isNotEmpty)
+              .toList();
+          profileLabel = parts.isNotEmpty ? parts.last : fullName;
+          profileAvatarUrl =
+              authState.account.ownerProfile?.avatarUrl ?? authState.account.avatarUrl;
+        }
+
+        return SafeArea(
+          top: false,
+          bottom: false,
+          child: Padding(
+            padding: EdgeInsets.only(bottom: bottomInset == 0 ? 8 * scale : 0),
+            child: SizedBox(
+              height: barHeight,
+              child: _PillBottomNav(
+                currentTab: currentTab,
+                selectedColor: selectedColor,
+                unselectedColor: unselectedColor,
+                onTabSelected: onTabSelected,
+                profileLabel: profileLabel,
+                profileAvatarUrl: profileAvatarUrl,
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -100,12 +123,16 @@ class _PillBottomNav extends StatefulWidget {
   final Color selectedColor;
   final Color unselectedColor;
   final ValueChanged<AppBottomTab> onTabSelected;
+  final String profileLabel;
+  final String? profileAvatarUrl;
 
   const _PillBottomNav({
     required this.currentTab,
     required this.selectedColor,
     required this.unselectedColor,
     required this.onTabSelected,
+    required this.profileLabel,
+    this.profileAvatarUrl,
   });
 
   @override
@@ -296,8 +323,15 @@ class _PillBottomNavState extends State<_PillBottomNav>
                         Expanded(
                           child: _NavIconButton(
                             icon: tab.icon,
-                            svgIcon: tab.svgIcon,
-                            label: tab.label,
+                            svgIcon: tab == AppBottomTab.profile
+                                ? null
+                                : tab.svgIcon,
+                            avatarUrl: tab == AppBottomTab.profile
+                                ? widget.profileAvatarUrl
+                                : null,
+                            label: tab == AppBottomTab.profile
+                                ? widget.profileLabel
+                                : tab.label,
                             isSelected: tab == widget.currentTab,
                             selectedColor: AppColors.white,
                             unselectedColor: widget.unselectedColor,
@@ -320,6 +354,7 @@ class _PillBottomNavState extends State<_PillBottomNav>
 class _NavIconButton extends StatefulWidget {
   final IconData? icon;
   final String? svgIcon;
+  final String? avatarUrl;
   final String label;
   final bool isSelected;
   final Color selectedColor;
@@ -330,6 +365,7 @@ class _NavIconButton extends StatefulWidget {
   const _NavIconButton({
     this.icon,
     this.svgIcon,
+    this.avatarUrl,
     required this.label,
     required this.isSelected,
     required this.selectedColor,
@@ -425,21 +461,28 @@ class _NavIconButtonState extends State<_NavIconButton>
               curve: Curves.easeOut,
               child: ScaleTransition(
                 scale: _scaleAnimation,
-                child: widget.svgIcon != null
-                    ? SvgPicture.asset(
-                        widget.svgIcon!,
-                        width: widget.isSelected ? selectedIconSize : iconSize,
-                        height: widget.isSelected ? selectedIconSize : iconSize,
-                        colorFilter: ColorFilter.mode(
-                          iconColor,
-                          BlendMode.srcIn,
-                        ),
-                      )
-                    : Icon(
-                        widget.icon,
+                child: widget.avatarUrl != null ||
+                        (widget.svgIcon == null && widget.icon == null)
+                    ? _ProfileAvatarIcon(
+                        avatarUrl: widget.avatarUrl,
                         size: widget.isSelected ? selectedIconSize : iconSize,
-                        color: iconColor,
-                      ),
+                        borderColor: iconColor,
+                      )
+                    : widget.svgIcon != null
+                        ? SvgPicture.asset(
+                            widget.svgIcon!,
+                            width: widget.isSelected ? selectedIconSize : iconSize,
+                            height: widget.isSelected ? selectedIconSize : iconSize,
+                            colorFilter: ColorFilter.mode(
+                              iconColor,
+                              BlendMode.srcIn,
+                            ),
+                          )
+                        : Icon(
+                            widget.icon,
+                            size: widget.isSelected ? selectedIconSize : iconSize,
+                            color: iconColor,
+                          ),
               ),
             ),
             SizedBox(height: spacing),
@@ -461,6 +504,47 @@ class _NavIconButtonState extends State<_NavIconButton>
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ProfileAvatarIcon extends StatelessWidget {
+  final String? avatarUrl;
+  final double size;
+  final Color borderColor;
+
+  const _ProfileAvatarIcon({
+    required this.avatarUrl,
+    required this.size,
+    required this.borderColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: borderColor.withValues(alpha: 0.35), width: 1),
+      ),
+      child: ClipOval(
+        child: avatarUrl != null && avatarUrl!.isNotEmpty
+            ? Image.network(
+                avatarUrl!,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Icon(
+                  Icons.person_outline_rounded,
+                  size: size * 0.75,
+                  color: borderColor,
+                ),
+              )
+            : Icon(
+                Icons.person_outline_rounded,
+                size: size * 0.75,
+                color: borderColor,
+              ),
       ),
     );
   }

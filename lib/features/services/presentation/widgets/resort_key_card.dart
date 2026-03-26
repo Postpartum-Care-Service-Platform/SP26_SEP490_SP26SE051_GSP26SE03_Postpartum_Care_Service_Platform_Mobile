@@ -523,9 +523,9 @@ class _ResortKeyCardState extends State<ResortKeyCard>
                       _InfoTile(
                         icon: Icons.confirmation_number_outlined,
                         label: AppStrings.servicesRoomNumber,
-                        value: (nowPackage.roomName ?? '—').trim().isEmpty
-                            ? '—'
-                            : nowPackage.roomName!.trim(),
+                        value: (nowPackage.roomName ?? '').trim().isNotEmpty
+                            ? (nowPackage.roomName ?? '').trim()
+                            : '—',
                         scale: scale,
                       ),
                       SizedBox(height: 10 * scale),

@@ -5,7 +5,7 @@ import '../../domain/entities/family_profile_entity.dart';
 class FamilyProfileModel extends Equatable {
   final int id;
   final int? memberTypeId;
-  final String customerId;
+  final String accountId;
   final String fullName;
   final DateTime? dateOfBirth;
   final String? gender;
@@ -19,7 +19,7 @@ class FamilyProfileModel extends Equatable {
   const FamilyProfileModel({
     required this.id,
     this.memberTypeId,
-    required this.customerId,
+    required this.accountId,
     required this.fullName,
     this.dateOfBirth,
     this.gender,
@@ -35,7 +35,7 @@ class FamilyProfileModel extends Equatable {
       FamilyProfileModel(
         id: json['id'] as int,
         memberTypeId: json['memberTypeId'] as int?,
-        customerId: json['customerId'] as String,
+        accountId: json['accountId'] as String,
         fullName: json['fullName'] as String,
         dateOfBirth: json['dateOfBirth'] != null
             ? DateTime.parse(json['dateOfBirth'] as String)
@@ -52,7 +52,7 @@ class FamilyProfileModel extends Equatable {
   Map<String, dynamic> toJson() => {
         'id': id,
         'memberTypeId': memberTypeId,
-        'customerId': customerId,
+        'accountId': accountId,
         'fullName': fullName,
         'dateOfBirth': dateOfBirth?.toIso8601String(),
         'gender': gender,
@@ -67,7 +67,7 @@ class FamilyProfileModel extends Equatable {
   FamilyProfileEntity toEntity() => FamilyProfileEntity(
         id: id,
         memberTypeId: memberTypeId,
-        customerId: customerId,
+        accountId: accountId,
         fullName: fullName,
         dateOfBirth: dateOfBirth,
         gender: gender,
@@ -83,7 +83,7 @@ class FamilyProfileModel extends Equatable {
   List<Object?> get props => [
         id,
         memberTypeId,
-        customerId,
+        accountId,
         fullName,
         dateOfBirth,
         gender,

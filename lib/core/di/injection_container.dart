@@ -69,6 +69,7 @@ import '../../features/employee/domain/usecases/get_all_rooms.dart';
 import '../../features/employee/domain/usecases/get_room_by_id.dart';
 import '../../features/employee/domain/usecases/get_available_rooms.dart';
 import '../../features/employee/domain/usecases/get_available_rooms_by_date_range.dart';
+import '../../features/employee/domain/usecases/get_rooms_by_package.dart';
 import '../../features/employee/presentation/bloc/room/room_bloc.dart';
 import '../../features/employee/data/datasources/amenity_service_remote_datasource.dart';
 import '../../features/employee/data/repositories/amenity_service_repository_impl.dart';
@@ -382,7 +383,9 @@ class InjectionContainer {
       GetAvailableRooms(roomRepository);
   static GetAvailableRoomsByDateRange get _getAvailableRoomsByDateRange =>
       GetAvailableRoomsByDateRange(roomRepository);
-
+  static GetRoomsByPackage get _getRoomsByPackage =>
+      GetRoomsByPackage(roomRepository);
+  
   // Employee - AmenityService UseCases
   static GetAllAmenityServices get _getAllAmenityServices =>
       GetAllAmenityServices(amenityServiceRepository);
@@ -592,17 +595,18 @@ class InjectionContainer {
   );
 
   static BookingBloc get bookingBloc => BookingBloc(
-    createBookingUsecase: _createBookingUsecase,
-    cancelBookingUsecase: _cancelBookingUsecase,
-    createBookingForCustomerUsecase: _createBookingForCustomerUsecase,
-    getBookingByIdUsecase: _getBookingByIdUsecase,
-    getBookingsUsecase: _getBookingsUsecase,
-    createPaymentLinkUsecase: _createPaymentLinkUsecase,
-    checkPaymentStatusUsecase: _checkPaymentStatusUsecase,
-    getPackagesUsecase: _getPackagesUsecase,
-    getAvailableRoomsByDateRange: _getAvailableRoomsByDateRange,
-    createOfflinePaymentUsecase: _createOfflinePaymentUsecase,
-  );
+        createBookingUsecase: _createBookingUsecase,
+        cancelBookingUsecase: _cancelBookingUsecase,
+        createBookingForCustomerUsecase: _createBookingForCustomerUsecase,
+        getBookingByIdUsecase: _getBookingByIdUsecase,
+        getBookingsUsecase: _getBookingsUsecase,
+        createPaymentLinkUsecase: _createPaymentLinkUsecase,
+        checkPaymentStatusUsecase: _checkPaymentStatusUsecase,
+        getPackagesUsecase: _getPackagesUsecase,
+        getFamilyProfilesUsecase: _getFamilyProfilesUsecase,
+        getRoomsByPackage: _getRoomsByPackage,
+        createOfflinePaymentUsecase: _createOfflinePaymentUsecase,
+      );
 
   static ContractBloc get contractBloc => ContractBloc(
     getContractByBookingIdUsecase: _getContractByBookingIdUsecase,

@@ -52,6 +52,7 @@ class _FamilyProfileFormDrawerState extends State<FamilyProfileFormDrawer> {
   File? _selectedAvatar;
   String? _avatarUrl;
   late bool _isEditing;
+  bool _isNormalizingPhone = false;
 
   @override
   void initState() {
@@ -60,7 +61,8 @@ class _FamilyProfileFormDrawerState extends State<FamilyProfileFormDrawer> {
     if (widget.member != null) {
       _fullNameController.text = widget.member!.fullName;
       _addressController.text = widget.member!.address ?? '';
-      _phoneNumberController.text = widget.member!.phoneNumber ?? '';
+      _phoneNumberController.text =
+          _normalizePhoneForEditing(widget.member!.phoneNumber ?? '');
       final memberTypeId = widget.member!.memberTypeId;
       final hasMemberType = widget.memberTypes
           .any((type) => type.id == memberTypeId && type.isActive);
@@ -77,15 +79,63 @@ class _FamilyProfileFormDrawerState extends State<FamilyProfileFormDrawer> {
         _selectedGender = null;
       }
       _avatarUrl = widget.member!.avatarUrl;
+    } else {
+      _phoneNumberController.text = '+84';
     }
+    _phoneNumberController.addListener(_normalizePhoneInput);
   }
 
   @override
   void dispose() {
+    _phoneNumberController.removeListener(_normalizePhoneInput);
     _fullNameController.dispose();
     _addressController.dispose();
     _phoneNumberController.dispose();
     super.dispose();
+  }
+
+  String _normalizePhoneForEditing(String raw) {
+    final text = raw.trim();
+    if (text.isEmpty) return '+84';
+
+    String remainder;
+    if (text.startsWith('+84')) {
+      remainder = text.substring(3);
+    } else if (text.startsWith('84')) {
+      remainder = text.substring(2);
+    } else if (text.startsWith('0')) {
+      remainder = text.substring(1);
+    } else {
+      remainder = text;
+    }
+
+    remainder = remainder.replaceAll(RegExp(r'[^0-9]'), '');
+    return '+84$remainder';
+  }
+
+  void _normalizePhoneInput() {
+    if (_isNormalizingPhone) return;
+    final normalized = _normalizePhoneForEditing(_phoneNumberController.text);
+    if (normalized == _phoneNumberController.text) return;
+
+    _isNormalizingPhone = true;
+    _phoneNumberController.value = TextEditingValue(
+      text: normalized,
+      selection: TextSelection.collapsed(offset: normalized.length),
+    );
+    _isNormalizingPhone = false;
+  }
+
+  String? _phoneNumberForSubmit() {
+    final normalized = _normalizePhoneForEditing(_phoneNumberController.text);
+    final digits = normalized.substring(3);
+    if (digits.isEmpty) return null;
+
+    final withoutLeadingZero = digits.startsWith('0')
+        ? digits.substring(1)
+        : digits;
+    if (withoutLeadingZero.isEmpty) return null;
+    return '+84$withoutLeadingZero';
   }
 
   Future<bool> _ensureGalleryPermission() async {
@@ -234,6 +284,15 @@ class _FamilyProfileFormDrawerState extends State<FamilyProfileFormDrawer> {
   void _handleSave() {
     if (!_isEditing) return;
     if (_formKey.currentState!.validate()) {
+      File? avatarToSave = _selectedAvatar;
+      if (avatarToSave != null && !avatarToSave.existsSync()) {
+        avatarToSave = null;
+        AppToast.showWarning(
+          context,
+          message: 'Ảnh đã chọn không còn tồn tại. Hệ thống sẽ lưu không kèm ảnh.',
+        );
+      }
+
       widget.onSave(
         fullName: _fullNameController.text.trim(),
         memberTypeId: _selectedMemberTypeId,
@@ -242,10 +301,8 @@ class _FamilyProfileFormDrawerState extends State<FamilyProfileFormDrawer> {
         address: _addressController.text.trim().isEmpty
             ? null
             : _addressController.text.trim(),
-        phoneNumber: _phoneNumberController.text.trim().isEmpty
-            ? null
-            : _phoneNumberController.text.trim(),
-        avatar: _selectedAvatar,
+        phoneNumber: _phoneNumberForSubmit(),
+        avatar: avatarToSave,
       );
     }
   }
@@ -493,15 +550,17 @@ class _FamilyProfileFormDrawerState extends State<FamilyProfileFormDrawer> {
               // Phone Number
               AppWidgets.textInput(
                 label: AppStrings.phoneNumber,
-                placeholder: AppStrings.phoneNumberPlaceholder,
+                placeholder: '+84xxxxxxxxx',
                 controller: _phoneNumberController,
                 enabled: _isEditing,
                 validator: (value) {
-                  if (value != null && value.trim().isNotEmpty) {
-                    final phoneRegex = RegExp(r'^[0-9]{10,11}$');
-                    if (!phoneRegex.hasMatch(value.trim())) {
-                      return AppStrings.invalidPhoneNumber;
-                    }
+                  final normalized = _normalizePhoneForEditing(value ?? '');
+                  final digits = normalized.substring(3);
+                  if (digits.isEmpty) return null;
+
+                  final phoneRegex = RegExp(r'^[0-9]{9,10}$');
+                  if (!phoneRegex.hasMatch(digits)) {
+                    return AppStrings.invalidPhoneNumber;
                   }
                   return null;
                 },
@@ -516,22 +575,47 @@ class _FamilyProfileFormDrawerState extends State<FamilyProfileFormDrawer> {
   }
 
   bool _isAllowedMemberTypeForUser(MemberTypeModel type) {
-    // User-facing requirement: chỉ hiển thị Mẹ / Con / Giám hộ
-    final raw = type.name.trim().toLowerCase();
-    // Handle some common variations without bringing in extra deps.
-    final normalized = raw.replaceAll(RegExp(r'\s+'), ' ');
-    return normalized == 'mẹ' ||
-        normalized == 'me' ||
-        normalized == 'con' ||
-        normalized == 'giám hộ' ||
-        normalized == 'giam ho';
+    // Requirement: Đối với customer thì chỉ hiển thị:
+    // Head of Family, Mom, Baby
+    final roleName = (type.roleName ?? '').trim().toLowerCase();
+    if (roleName.isNotEmpty && roleName != 'customer') return false;
+
+    final rawName = type.name.trim().toLowerCase();
+    final normalized = rawName.replaceAll(RegExp(r'\s+'), ' ');
+
+    const allowed = <String>{
+      'head of family',
+      'mom',
+      'baby',
+    };
+    return allowed.contains(normalized);
   }
 
   Widget _buildMemberTypeRadios(double scale) {
     final items = widget.memberTypes
         .where((type) => type.isActive)
         .where(_isAllowedMemberTypeForUser)
-        .toList();
+        .toList()
+      ..sort((a, b) {
+        // Stable, friendly order: Head of Family -> Mom -> Baby
+        int rank(MemberTypeModel t) {
+          final name = t.name.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+          switch (name) {
+            case 'head of family':
+              return 0;
+            case 'mom':
+              return 1;
+            case 'baby':
+              return 2;
+            default:
+              return 99;
+          }
+        }
+
+        final byRank = rank(a).compareTo(rank(b));
+        if (byRank != 0) return byRank;
+        return a.name.compareTo(b.name);
+      });
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

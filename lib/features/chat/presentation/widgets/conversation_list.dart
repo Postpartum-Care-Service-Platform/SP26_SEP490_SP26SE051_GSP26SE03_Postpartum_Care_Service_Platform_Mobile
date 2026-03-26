@@ -27,15 +27,8 @@ class ConversationList extends StatelessWidget {
     this.onConversationTap,
   });
 
-  DateTime _lastActivityTime(ChatConversation conversation) {
-    var latest = conversation.createdAt;
-    for (final message in conversation.messages) {
-      if (message.createdAt.isAfter(latest)) {
-        latest = message.createdAt;
-      }
-    }
-    return latest;
-  }
+  /// Requirement: thời gian hiển thị trên UI lấy từ `conversation.createdAt`.
+  DateTime _conversationTime(ChatConversation conversation) => conversation.createdAt;
 
   ChatMessage? _latestMessage(ChatConversation conversation) {
     if (conversation.messages.isEmpty) return null;
@@ -185,7 +178,7 @@ class ConversationList extends StatelessWidget {
                       ),
                       child: Icon(
                         Icons.chat_bubble_outline_rounded,
-                        size: 64 * scale,
+                        size: 44 * scale,
                         color: AppColors.primary,
                       ),
                     ),
@@ -193,8 +186,8 @@ class ConversationList extends StatelessWidget {
                     Text(
                       AppStrings.chatNoConversation,
                       textAlign: TextAlign.center,
-                      style: AppTextStyles.arimo(
-                        fontSize: 18 * scale,
+                      style: AppTextStyles.tinos(
+                        fontSize: 22 * scale,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
                       ),
@@ -241,7 +234,7 @@ class ConversationList extends StatelessWidget {
                       ),
                       child: Icon(
                         Icons.search_off_rounded,
-                        size: 48 * scale,
+                        size: 44 * scale,
                         color: AppColors.primary,
                       ),
                     ),
@@ -250,7 +243,7 @@ class ConversationList extends StatelessWidget {
                       AppStrings.chatSearchNoResults,
                       textAlign: TextAlign.center,
                       style: AppTextStyles.tinos(
-                        fontSize: 18 * scale,
+                        fontSize: 22 * scale,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary,
                       ),
@@ -264,12 +257,12 @@ class ConversationList extends StatelessWidget {
                         color: AppColors.textSecondary,
                       ),
                     ),
-                    SizedBox(height: 24 * scale),
+                    SizedBox(height: 12 * scale),
                     if (onCreate != null)
                       AppWidgets.primaryButton(
                         text: AppStrings.chatNewConversation,
                         onPressed: onCreate!,
-                        height: 44 * scale,
+                        height: 48 * scale,
                       ),
                   ],
                 ),
@@ -318,6 +311,11 @@ class ConversationList extends StatelessWidget {
                           conversation.id == state.selectedConversation?.id;
                       final lastMessage = _latestMessage(conversation);
                       final previewText = _buildPreviewText(lastMessage);
+                      final title = conversation.customerInfo != null
+                          ? _getCustomerName(conversation.customerInfo!)
+                          : conversation.name;
+                      final timeText =
+                          formatChatTime(_conversationTime(conversation));
                       return Material(
                         color: isSelected
                             ? AppColors.primary.withValues(alpha: 0.08)
@@ -367,69 +365,24 @@ class ConversationList extends StatelessWidget {
                                       Row(
                                         children: [
                                           Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                // Hiển thị customer name nếu có (cho staff)
-                                                if (conversation.customerInfo !=
-                                                    null)
-                                                  Text(
-                                                    _getCustomerName(
-                                                      conversation
-                                                          .customerInfo!,
-                                                    ),
-                                                    style: AppTextStyles.arimo(
-                                                      fontSize: 15 * scale,
-                                                      fontWeight:
-                                                          FontWeight.w700,
-                                                      color:
-                                                          AppColors.textPrimary,
-                                                    ),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  )
-                                                else
-                                                  Text(
-                                                    conversation.name,
-                                                    style: AppTextStyles.arimo(
-                                                      fontSize: 15 * scale,
-                                                      fontWeight:
-                                                          FontWeight.w700,
-                                                      color:
-                                                          AppColors.textPrimary,
-                                                    ),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
-                                                // Hiển thị thời gian hoạt động cuối cùng
-                                                if (conversation.customerInfo !=
-                                                    null)
-                                                  Text(
-                                                    formatChatTime(
-                                                      _lastActivityTime(
-                                                        conversation,
-                                                      ),
-                                                    ),
-                                                    style: AppTextStyles.arimo(
-                                                      fontSize: 11 * scale,
-                                                      color: AppColors
-                                                          .textSecondary,
-                                                    ),
-                                                  ),
-                                              ],
+                                            child: Text(
+                                              title,
+                                              style: AppTextStyles.arimo(
+                                                fontSize: 15 * scale,
+                                                fontWeight: FontWeight.w700,
+                                                color: AppColors.textPrimary,
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
-                                          if (conversation.customerInfo == null)
-                                            Text(
-                                              formatChatTime(
-                                                _lastActivityTime(conversation),
-                                              ),
-                                              style: AppTextStyles.arimo(
-                                                fontSize: 11 * scale,
-                                                color: AppColors.textSecondary,
-                                              ),
+                                          SizedBox(width: 10 * scale),
+                                          Text(
+                                            timeText,
+                                            style: AppTextStyles.arimo(
+                                              fontSize: 11 * scale,
+                                              color: AppColors.textSecondary,
                                             ),
+                                          ),
                                         ],
                                       ),
                                       SizedBox(height: 4 * scale),

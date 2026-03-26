@@ -50,6 +50,32 @@ class AppAppBar extends StatelessWidget implements PreferredSizeWidget {
           color: AppColors.textPrimary,
           size: 24 * scale,
         ),
+        padding: EdgeInsets.all(8 * scale),
+        constraints: BoxConstraints(
+          minWidth: 40 * scale,
+          minHeight: 40 * scale,
+        ),
+        style: ButtonStyle(
+          shape: WidgetStateProperty.all(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12 * scale),
+            ),
+          ),
+          backgroundColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.pressed)) {
+              return AppColors.textPrimary.withValues(alpha: 0.10);
+            }
+            return Colors.transparent;
+          }),
+          overlayColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.pressed)) {
+              return AppColors.textPrimary.withValues(alpha: 0.06);
+            }
+            return Colors.transparent;
+          }),
+          splashFactory: InkRipple.splashFactory,
+        ),
+        enableFeedback: true,
         onPressed: onBackPressed ?? () => Navigator.of(context).pop(),
       );
     }

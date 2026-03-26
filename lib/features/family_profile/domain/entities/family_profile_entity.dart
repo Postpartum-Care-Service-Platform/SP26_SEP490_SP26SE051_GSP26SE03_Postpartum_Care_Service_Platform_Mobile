@@ -4,7 +4,7 @@ import 'package:equatable/equatable.dart';
 class FamilyProfileEntity extends Equatable {
   final int id;
   final int? memberTypeId;
-  final String customerId;
+  final String accountId;
   final String fullName;
   final DateTime? dateOfBirth;
   final String? gender;
@@ -18,7 +18,7 @@ class FamilyProfileEntity extends Equatable {
   const FamilyProfileEntity({
     required this.id,
     this.memberTypeId,
-    required this.customerId,
+    required this.accountId,
     required this.fullName,
     this.dateOfBirth,
     this.gender,
@@ -34,7 +34,7 @@ class FamilyProfileEntity extends Equatable {
   List<Object?> get props => [
         id,
         memberTypeId,
-        customerId,
+        accountId,
         fullName,
         dateOfBirth,
         gender,

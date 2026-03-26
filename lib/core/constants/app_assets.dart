@@ -31,6 +31,7 @@ class AppAssets {
   static const String pencilFeedback = 'assets/images/pencil_feedback.svg';
   static const String payosLogo = 'assets/images/payos_logo.svg';
   static const String keycard = 'assets/images/keycard.svg';
+  static const String theJoyfulNestBrand = 'assets/images/thejoyfulnest.svg';
   static const String walkInService = 'assets/images/Walk-in_Service.jpg';
   static const String homeCareService = 'assets/images/Home-care_Service.jpg';
 

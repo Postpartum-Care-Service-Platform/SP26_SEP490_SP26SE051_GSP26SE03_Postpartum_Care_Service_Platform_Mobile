@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../package/domain/entities/package_entity.dart';
@@ -157,21 +158,29 @@ class _CustomCalendar extends StatefulWidget {
 
 class _CustomCalendarState extends State<_CustomCalendar> {
   late DateTime _currentMonth;
-  final List<String> _weekDays = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+  final List<String> _weekDays = [
+    AppStrings.weekDaySunday,
+    AppStrings.weekDayMonday,
+    AppStrings.weekDayTuesday,
+    AppStrings.weekDayWednesday,
+    AppStrings.weekDayThursday,
+    AppStrings.weekDayFriday,
+    AppStrings.weekDaySaturday,
+  ];
   final List<String> _monthNames = [
-      'Tháng 1',
-      'Tháng 2',
-      'Tháng 3',
-      'Tháng 4',
-      'Tháng 5',
-      'Tháng 6',
-      'Tháng 7',
-      'Tháng 8',
-      'Tháng 9',
-      'Tháng 10',
-      'Tháng 11',
-      'Tháng 12'
-    ];
+    AppStrings.month1,
+    AppStrings.month2,
+    AppStrings.month3,
+    AppStrings.month4,
+    AppStrings.month5,
+    AppStrings.month6,
+    AppStrings.month7,
+    AppStrings.month8,
+    AppStrings.month9,
+    AppStrings.month10,
+    AppStrings.month11,
+    AppStrings.month12,
+  ];
 
   @override
   void initState() {

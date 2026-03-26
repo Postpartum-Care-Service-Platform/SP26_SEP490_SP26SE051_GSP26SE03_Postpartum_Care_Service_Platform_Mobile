@@ -15,12 +15,14 @@ class BookingRepositoryImpl implements BookingRepository {
     required int packageId,
     required int roomId,
     required DateTime startDate,
+    required List<int> familyProfileIds,
   }) async {
     try {
       final model = await remoteDataSource.createBooking(
         packageId: packageId,
         roomId: roomId,
         startDate: startDate,
+        familyProfileIds: familyProfileIds,
       );
       return model.toEntity();
     } catch (e) {

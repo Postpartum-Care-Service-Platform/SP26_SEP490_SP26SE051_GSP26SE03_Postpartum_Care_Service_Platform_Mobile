@@ -27,17 +27,18 @@ class ProfileHeader extends StatelessWidget {
     final scale = AppResponsive.scaleFactor(context);
     
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 24 * scale, vertical: 32 * scale),
+      padding: EdgeInsets.symmetric(horizontal: 24 * scale, vertical: 10 * scale),
       child: Column(
         children: [
           Text(
             AppStrings.welcomeBack,
-            style: AppTextStyles.arimo(
-              fontSize: 16 * scale,
-              color: AppColors.textSecondary,
+            style: AppTextStyles.tinos(
+              fontSize: 20 * scale,
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w700,
             ),
           ),
-          SizedBox(height: 16 * scale),
+          SizedBox(height: 10 * scale),
           if (isLoading)
             _buildSkeleton(context, scale)
           else
@@ -52,7 +53,7 @@ class ProfileHeader extends StatelessWidget {
                   isVerified: isEmailVerified,
                   borderWidth: 3,
                 ),
-                SizedBox(height: 16 * scale),
+                SizedBox(height: 10 * scale),
                 // Username with verified badge
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -71,16 +72,25 @@ class ProfileHeader extends StatelessWidget {
                     ),
                     if (isEmailVerified) ...[
                       SizedBox(width: 8 * scale),
-                      Icon(
-                        Icons.verified,
-                        size: 24 * scale,
-                        color: AppColors.primary,
+                      Tooltip(
+                        message: AppStrings.emailVerified,
+                        triggerMode: TooltipTriggerMode.tap,
+                        waitDuration: Duration.zero,
+                        showDuration: const Duration(seconds: 2),
+                        preferBelow: false,
+                        child: Transform.translate(
+                          offset: Offset(0, -3 * scale),
+                          child: Icon(
+                            Icons.verified,
+                            size: 24 * scale,
+                            color: AppColors.primary,
+                          ),
+                        ),
                       ),
                     ],
                   ],
                 ),
                 if (userEmail != null) ...[
-                  SizedBox(height: 8 * scale),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -89,13 +99,14 @@ class ProfileHeader extends StatelessWidget {
                         size: 16 * scale,
                         color: AppColors.textSecondary,
                       ),
-                      SizedBox(width: 6 * scale),
+                      SizedBox(width: 4 * scale),
                       Flexible(
                         child: Text(
                           userEmail!,
                           style: AppTextStyles.arimo(
                             fontSize: 14 * scale,
                             color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w700,
                           ),
                           textAlign: TextAlign.center,
                           overflow: TextOverflow.ellipsis,

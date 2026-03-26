@@ -146,9 +146,14 @@ class FamilyProfileRemoteDataSourceImpl
       // Convert to FormData for multipart/form-data
       for (final entry in formData.entries) {
         if (entry.value is File) {
+          final file = entry.value as File;
+          // File picked from cache may be cleaned up before submit.
+          if (!await file.exists()) {
+            continue;
+          }
           formDataMap[entry.key] = await MultipartFile.fromFile(
-            (entry.value as File).path,
-            filename: (entry.value as File).path.split('/').last,
+            file.path,
+            filename: file.path.split('/').last,
           );
         } else {
           formDataMap[entry.key] = entry.value;
@@ -186,9 +191,14 @@ class FamilyProfileRemoteDataSourceImpl
       // Convert to FormData for multipart/form-data
       for (final entry in formData.entries) {
         if (entry.value is File) {
+          final file = entry.value as File;
+          // File picked from cache may be cleaned up before submit.
+          if (!await file.exists()) {
+            continue;
+          }
           formDataMap[entry.key] = await MultipartFile.fromFile(
-            (entry.value as File).path,
-            filename: (entry.value as File).path.split('/').last,
+            file.path,
+            filename: file.path.split('/').last,
           );
         } else {
           formDataMap[entry.key] = entry.value;

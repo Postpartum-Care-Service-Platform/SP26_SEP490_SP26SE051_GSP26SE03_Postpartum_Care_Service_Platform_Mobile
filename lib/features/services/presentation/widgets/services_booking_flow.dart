@@ -9,6 +9,7 @@ import '../../../booking/presentation/bloc/booking_event.dart';
 import '../../../booking/presentation/bloc/booking_state.dart';
 import '../../../booking/presentation/widgets/booking_step_indicator.dart';
 import '../../../booking/presentation/widgets/booking_step1_package_selection.dart';
+import '../../../booking/presentation/widgets/booking_step2_family_profile_selection.dart';
 import '../../../booking/presentation/widgets/booking_step2_room_selection.dart';
 import '../../../booking/presentation/widgets/booking_step3_date_selection.dart';
 import '../../../booking/presentation/widgets/booking_step4_summary.dart';
@@ -35,6 +36,7 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
   int _currentStep = 0;
   double? _cachedEstimatedPrice;
   bool _packagesLoadRequested = false;
+  bool _profilesLoadRequested = false;
   bool _roomsLoadRequested = false;
 
   @override
@@ -46,7 +48,7 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
             _buildCustomHeader(context),
             BookingStepIndicator(
               currentStep: _currentStep,
-              totalSteps: 4,
+              totalSteps: 5,
             ),
             Expanded(
               child: _buildStepContent(context, bookingState),
@@ -61,8 +63,8 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
   Widget _buildStepContent(BuildContext context, BookingState state) {
     switch (_currentStep) {
       case 0:
-        if (state is! BookingPackagesLoaded && 
-            state is! BookingSummaryReady && 
+        if (state is! BookingPackagesLoaded &&
+            state is! BookingSummaryReady &&
             !_packagesLoadRequested) {
           _packagesLoadRequested = true;
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -77,23 +79,35 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
           },
         );
       case 1:
-        // Step 2 in indicator: select date (check-in)
-        // Packages are already loaded from step 0
+        if (state is! BookingFamilyProfilesLoaded && !_profilesLoadRequested) {
+          _profilesLoadRequested = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) {
+              context.read<BookingBloc>().add(const BookingLoadFamilyProfiles());
+            }
+          });
+        }
+        return BookingStep2FamilyProfileSelection(
+          onSelectionChanged: (selectedIds) {
+            context
+                .read<BookingBloc>()
+                .add(BookingSelectFamilyProfiles(selectedIds));
+          },
+        );
+      case 2:
         return BookingStep3DateSelection(
           onDateSelected: (date) {
             context.read<BookingBloc>().add(BookingSelectDate(date));
           },
         );
-      case 2:
-        // Step 3 in indicator: select room based on selected date & package
-        // Only load rooms if not already loaded
+      case 3:
         if (state is! BookingRoomsLoaded &&
             state is! BookingSummaryReady &&
             !_roomsLoadRequested) {
           _roomsLoadRequested = true;
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted) {
-              context.read<BookingBloc>().add(const BookingLoadRooms());
+              context.read<BookingBloc>().add(_createLoadRoomsEvent(context));
             }
           });
         }
@@ -102,7 +116,7 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
             context.read<BookingBloc>().add(BookingSelectRoom(roomId));
           },
         );
-      case 3:
+      case 4:
         return BookingStep4Summary(
           onConfirm: () {
             if (widget.onConfirmOverride != null) {
@@ -117,6 +131,23 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
     }
   }
 
+  BookingLoadRooms _createLoadRoomsEvent(BuildContext context) {
+    final bookingBloc = context.read<BookingBloc>();
+    final startDate = bookingBloc.selectedDate;
+    final selectedPackage = bookingBloc.selectedPackage;
+
+    if (startDate == null) {
+      return const BookingLoadRooms();
+    }
+
+    final durationDays = selectedPackage?.durationDays ?? 0;
+    final endDate = durationDays > 0
+        ? startDate.add(Duration(days: durationDays))
+        : startDate;
+
+    return BookingLoadRooms(startDate: startDate, endDate: endDate);
+  }
+
   Widget _buildNavigationButtons(BuildContext context, BookingState state) {
     final scale = AppResponsive.scaleFactor(context);
     final estimatedPrice = _getEstimatedPrice(state);
@@ -124,7 +155,8 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
     return SafeArea(
       top: false,
       child: Container(
-        padding: EdgeInsets.fromLTRB(4 * scale, 2 * scale, 4 * scale, 2 * scale),
+        padding:
+            EdgeInsets.fromLTRB(4 * scale, 2 * scale, 4 * scale, 2 * scale),
         decoration: BoxDecoration(
           color: AppColors.background,
           boxShadow: [
@@ -188,18 +220,27 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
     return ElevatedButton(
       onPressed: _canProceed(state)
           ? () {
-              if (_currentStep < 3) {
+              if (_currentStep < 4) {
                 setState(() {
                   _currentStep++;
-                  // Reset flags when changing steps
-                  if (_currentStep == 2) {
+                  if (_currentStep == 1) {
+                    _profilesLoadRequested = false;
+                  }
+                  if (_currentStep == 3) {
                     _roomsLoadRequested = false;
                   }
                 });
-                if (_currentStep == 2) {
-                  context.read<BookingBloc>().add(const BookingLoadRooms());
+
+                if (_currentStep == 1) {
+                  context
+                      .read<BookingBloc>()
+                      .add(const BookingLoadFamilyProfiles());
                 }
-              } else if (_currentStep == 3) {
+
+                if (_currentStep == 3) {
+                  context.read<BookingBloc>().add(_createLoadRoomsEvent(context));
+                }
+              } else {
                 context.read<BookingBloc>().add(const BookingCreateBooking());
               }
             }
@@ -217,13 +258,11 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
         elevation: _canProceed(state) ? 2 : 0,
       ),
       child: Text(
-        _currentStep == 3 ? AppStrings.bookingConfirm : AppStrings.bookingNext,
+        _currentStep == 4 ? AppStrings.bookingConfirm : AppStrings.bookingNext,
         style: AppTextStyles.arimo(
           fontSize: 16 * scale,
           fontWeight: FontWeight.w600,
-          color: _canProceed(state)
-              ? AppColors.white
-              : AppColors.textSecondary,
+          color: _canProceed(state) ? AppColors.white : AppColors.textSecondary,
         ),
       ),
     );
@@ -259,18 +298,22 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
   }
 
   bool _canProceed(BookingState state) {
+    final bookingBloc = context.read<BookingBloc>();
+
     switch (_currentStep) {
       case 0:
-        return state is BookingPackagesLoaded && state.selectedPackageId != null;
+        return bookingBloc.selectedPackageId != null;
       case 1:
-        // Require date selected to proceed to room selection
-        return state is BookingDateSelected || state is BookingSummaryReady;
+        return bookingBloc.selectedFamilyProfileIds.isNotEmpty;
       case 2:
-        // Require room selected (or summary already ready) to confirm
-        return (state is BookingRoomsLoaded && state.selectedRoomId != null) ||
-            (state is BookingSummaryReady);
+        return bookingBloc.selectedDate != null;
       case 3:
-        return state is BookingSummaryReady;
+        return bookingBloc.selectedRoomId != null;
+      case 4:
+        return bookingBloc.selectedPackageId != null &&
+            bookingBloc.selectedFamilyProfileIds.isNotEmpty &&
+            bookingBloc.selectedDate != null &&
+            bookingBloc.selectedRoomId != null;
       default:
         return false;
     }
@@ -283,52 +326,56 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
       child: Container(
         padding: EdgeInsets.symmetric(
           horizontal: 20 * scale,
-          vertical: 12 * scale,
+          vertical: 8 * scale,
         ),
         child: Row(
           children: [
             SizedBox(
               width: 52 * scale,
-              child: GestureDetector(
-                onTap: () {
-                  if (_currentStep > 0) {
-                    setState(() {
-                      _currentStep--;
-                      // Reset flags when going back
-                      if (_currentStep == 0) {
-                        _packagesLoadRequested = false;
-                      } else if (_currentStep == 2) {
-                        _roomsLoadRequested = false;
-                      }
-                    });
-
-                    // Khi quay từ bước Phòng (2) về bước Ngày (1),
-                    // emit lại BookingDateSelected để nút "Tiếp theo" không bị khóa.
-                    if (_currentStep == 1) {
-                      final bloc = context.read<BookingBloc>();
-                      final selectedDate = bloc.selectedDate;
-                      if (selectedDate != null) {
-                        bloc.add(BookingSelectDate(selectedDate));
-                      }
-                    }
-                    return;
-                  }
-
-                  // Step 1 → quay về màn chọn loại dịch vụ
-                  widget.onBackToLocationSelection();
-                },
-                child: Container(
-                  width: 30 * scale,
-                  height: 30 * scale,
-                  decoration: BoxDecoration(
-                    color: AppColors.background,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    size: 20 * scale,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  icon: Icon(
+                    Icons.arrow_back_rounded,
+                    size: 24 * scale,
                     color: AppColors.textPrimary,
                   ),
+                  padding: EdgeInsets.all(8 * scale),
+                  constraints: BoxConstraints(
+                    minWidth: 40 * scale,
+                    minHeight: 40 * scale,
+                  ),
+                  style: ButtonStyle(
+                    shape: WidgetStateProperty.all(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12 * scale),
+                      ),
+                    ),
+                    backgroundColor: WidgetStateProperty.resolveWith((states) {
+                      if (states.contains(WidgetState.pressed)) {
+                        return AppColors.textPrimary.withValues(alpha: 0.10);
+                      }
+                      return Colors.transparent;
+                    }),
+                    overlayColor: WidgetStateProperty.resolveWith((states) {
+                      if (states.contains(WidgetState.pressed)) {
+                        return AppColors.textPrimary.withValues(alpha: 0.06);
+                      }
+                      return Colors.transparent;
+                    }),
+                    splashFactory: InkRipple.splashFactory,
+                  ),
+                  enableFeedback: true,
+                  onPressed: () {
+                    if (_currentStep > 0) {
+                      setState(() {
+                        _currentStep--;
+                      });
+                      return;
+                    }
+
+                    widget.onBackToLocationSelection();
+                  },
                 ),
               ),
             ),
@@ -336,8 +383,8 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
               child: Text(
                 AppStrings.bookingTitle,
                 style: AppTextStyles.tinos(
-                  fontSize: 22 * scale,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 28 * scale,
+                  fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
                 ),
                 textAlign: TextAlign.center,

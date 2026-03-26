@@ -11,11 +11,13 @@ class CreateBookingUsecase {
     required int packageId,
     required int roomId,
     required DateTime startDate,
+    required List<int> familyProfileIds,
   }) async {
     return await repository.createBooking(
       packageId: packageId,
       roomId: roomId,
       startDate: startDate,
+      familyProfileIds: familyProfileIds,
     );
   }
 }
