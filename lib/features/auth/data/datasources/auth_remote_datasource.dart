@@ -366,22 +366,52 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<CurrentAccountModel> getCurrentAccount() async {
+    Future<Response<dynamic>> requestOnce() {
+      return dio.get(
+        ApiEndpoints.getCurrentAccount,
+        options: Options(
+          receiveTimeout: const Duration(seconds: 90),
+          sendTimeout: const Duration(seconds: 90),
+        ),
+      );
+    }
+
     try {
-      final response = await dio.get(ApiEndpoints.getCurrentAccount);
+      final response = await requestOnce();
 
       return CurrentAccountModel.fromJson(
         response.data as Map<String, dynamic>,
       );
     } on DioException catch (e) {
+      final isTimeout =
+          e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout;
+
+      if (isTimeout) {
+        try {
+          final retryResponse = await requestOnce();
+          return CurrentAccountModel.fromJson(
+            retryResponse.data as Map<String, dynamic>,
+          );
+        } on DioException catch (retryError) {
+          if (retryError.response != null) {
+            final retryResponseData = retryError.response?.data;
+            final retryErrorMessage = _parseErrorMessage(retryResponseData);
+            throw Exception(retryErrorMessage);
+          }
+          throw Exception('Kết nối tới máy chủ chậm. Vui lòng thử lại sau ít phút.');
+        }
+      }
+
       if (e.response != null) {
         final responseData = e.response?.data;
         final errorMessage = _parseErrorMessage(responseData);
         throw Exception(errorMessage);
       } else {
-        throw Exception('Network error: ${e.message}');
+        throw Exception('Lỗi kết nối mạng: ${e.message}');
       }
     } catch (e) {
-      throw Exception('Unexpected error: $e');
+      throw Exception('Lỗi không mong muốn: $e');
     }
   }
 

@@ -133,7 +133,7 @@ class ApiEndpoints {
   // Backend hiện dùng cùng endpoint upload-signed (body JSON chứa fileUrl + signedDate)
   static String uploadSignedContractFile(int id) => '/Contract/$id/upload-signed';
   static String updateContractContent(int id) => '/Contract/$id/update-content';
-  static const String getNoScheduleContracts = '/Contract/no-schedule';
+  static const String getNoScheduleContracts = '/Contract/no-staff-schedule';
 
   // ==========================================
   // Employee - Appointment endpoints

@@ -14,13 +14,44 @@ class AppointmentEmployeeRemoteDataSource {
   /// Get appointments assigned to current staff
   Future<List<AppointmentModel>> getMyAssignedAppointments() async {
     try {
-      final response = await _dio.get(ApiEndpoints.myAssignedAppointments);
-      
+      final response = await _dio.get(
+        ApiEndpoints.myAssignedAppointments,
+        options: Options(
+          receiveTimeout: const Duration(seconds: 90),
+          sendTimeout: const Duration(seconds: 90),
+        ),
+      );
+
       final List<dynamic> data = response.data as List<dynamic>;
       return data
           .map((json) => AppointmentModel.fromJson(json as Map<String, dynamic>))
           .toList();
     } on DioException catch (e) {
+      final isTimeout =
+          e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout;
+
+      if (isTimeout) {
+        try {
+          final retryResponse = await _dio.get(
+            ApiEndpoints.myAssignedAppointments,
+            options: Options(
+              receiveTimeout: const Duration(seconds: 90),
+              sendTimeout: const Duration(seconds: 90),
+            ),
+          );
+
+          final List<dynamic> retryData = retryResponse.data as List<dynamic>;
+          return retryData
+              .map(
+                (json) => AppointmentModel.fromJson(json as Map<String, dynamic>),
+              )
+              .toList();
+        } on DioException catch (retryError) {
+          throw _handleError(retryError);
+        }
+      }
+
       throw _handleError(e);
     }
   }
@@ -144,7 +175,7 @@ class AppointmentEmployeeRemoteDataSource {
       }
     } else if (error.type == DioExceptionType.connectionTimeout ||
         error.type == DioExceptionType.receiveTimeout) {
-      return 'Kết nối timeout. Vui lòng thử lại.';
+      return 'Kết nối tới máy chủ chậm. Vui lòng thử lại sau ít phút.';
     } else if (error.type == DioExceptionType.connectionError) {
       return 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.';
     }

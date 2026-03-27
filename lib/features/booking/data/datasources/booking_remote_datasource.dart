@@ -62,6 +62,9 @@ abstract class BookingRemoteDataSource {
 class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
   final Dio dio;
 
+  // Fast-fix cache cho danh sách booking toàn hệ thống.
+  static List<BookingModel>? _allBookingsCache;
+
   BookingRemoteDataSourceImpl({Dio? dio}) : dio = dio ?? ApiClient.dio;
 
   @override
@@ -145,14 +148,53 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
 
   @override
   Future<List<BookingModel>> getAllBookings() async {
+    Future<Response<dynamic>> requestOnce() {
+      return dio.get(
+        ApiEndpoints.getAllBookings,
+        options: Options(
+          receiveTimeout: const Duration(seconds: 90),
+          sendTimeout: const Duration(seconds: 90),
+        ),
+      );
+    }
+
     try {
-      final response = await dio.get(ApiEndpoints.getAllBookings);
+      final response = await requestOnce();
 
       final List<dynamic> data = response.data as List<dynamic>;
-      return data
+      final bookings = data
           .map((json) => BookingModel.fromJson(json as Map<String, dynamic>))
           .toList();
+
+      _allBookingsCache = bookings;
+      return bookings;
     } on DioException catch (e) {
+      final isTimeout =
+          e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout;
+
+      if (isTimeout) {
+        try {
+          final retryResponse = await requestOnce();
+          final List<dynamic> retryData = retryResponse.data as List<dynamic>;
+          final retryBookings = retryData
+              .map((json) => BookingModel.fromJson(json as Map<String, dynamic>))
+              .toList();
+
+          _allBookingsCache = retryBookings;
+          return retryBookings;
+        } on DioException {
+          if (_allBookingsCache != null) {
+            return _allBookingsCache!;
+          }
+          throw Exception('Kết nối tới máy chủ chậm. Vui lòng thử lại sau ít phút.');
+        }
+      }
+
+      if (_allBookingsCache != null) {
+        return _allBookingsCache!;
+      }
+
       throw _handleError(e);
     }
   }

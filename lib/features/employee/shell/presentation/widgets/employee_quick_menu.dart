@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -270,7 +272,7 @@ class _EmployeeQuickMenuSectionState extends State<EmployeeQuickMenuSection>
                 style: AppTextStyles.arimo(
                   fontSize: 12 * scale,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
+                  color: const Color(0xFFF59E0B),
                 ),
               ),
               SizedBox(width: 4 * scale),
@@ -326,6 +328,236 @@ class _EmployeeQuickMenuCollapsedRow extends StatelessWidget {
   }
 }
 
+class _QuickMenuGroup {
+  final String title;
+  final Color color;
+  final List<EmployeeQuickMenuItem> items;
+
+  const _QuickMenuGroup({
+    required this.title,
+    required this.color,
+    required this.items,
+  });
+}
+
+List<_QuickMenuGroup> _buildQuickMenuGroups(List<EmployeeQuickMenuItem> items) {
+  final tabs = <EmployeeQuickMenuItem>[];
+  final operations = <EmployeeQuickMenuItem>[];
+  final customerCare = <EmployeeQuickMenuItem>[];
+  final finance = <EmployeeQuickMenuItem>[];
+  final personal = <EmployeeQuickMenuItem>[];
+
+  for (final item in items) {
+    if (item.type == EmployeeQuickMenuItemType.bottomTab) {
+      tabs.add(item);
+      continue;
+    }
+
+    switch (item.extraAction) {
+      case EmployeeQuickMenuExtraAction.checkInOut:
+      case EmployeeQuickMenuExtraAction.tasks:
+      case EmployeeQuickMenuExtraAction.appointments:
+      case EmployeeQuickMenuExtraAction.room:
+      case EmployeeQuickMenuExtraAction.requests:
+        operations.add(item);
+        break;
+      case EmployeeQuickMenuExtraAction.amenityService:
+      case EmployeeQuickMenuExtraAction.amenityTicket:
+      case EmployeeQuickMenuExtraAction.mealPlan:
+      case EmployeeQuickMenuExtraAction.familyProfile:
+      case EmployeeQuickMenuExtraAction.createCustomer:
+      case EmployeeQuickMenuExtraAction.customerProfileQuickTest:
+        customerCare.add(item);
+        break;
+      case EmployeeQuickMenuExtraAction.transactions:
+      case EmployeeQuickMenuExtraAction.contracts:
+        finance.add(item);
+        break;
+      case EmployeeQuickMenuExtraAction.staffProfile:
+        personal.add(item);
+        break;
+      case null:
+        break;
+    }
+  }
+
+  return [
+    _QuickMenuGroup(
+      title: 'Tabs chính',
+      color: const Color(0xFFF59E0B),
+      items: tabs,
+    ),
+    _QuickMenuGroup(
+      title: 'Nghiệp vụ vận hành',
+      color: const Color(0xFF16A34A),
+      items: operations,
+    ),
+    _QuickMenuGroup(
+      title: 'Chăm sóc khách hàng',
+      color: const Color(0xFF2563EB),
+      items: customerCare,
+    ),
+    _QuickMenuGroup(
+      title: 'Tài chính & hợp đồng',
+      color: const Color(0xFFEAB308),
+      items: finance,
+    ),
+    _QuickMenuGroup(
+      title: 'Cá nhân',
+      color: const Color(0xFF7C3AED),
+      items: personal,
+    ),
+  ].where((group) => group.items.isNotEmpty).toList();
+}
+
+class _QuickMenuGroupSection extends StatefulWidget {
+  final _QuickMenuGroup group;
+  final bool initiallyExpanded;
+  final ValueChanged<EmployeeQuickMenuItem> onItemTap;
+  final AppBottomTab currentTab;
+
+  const _QuickMenuGroupSection({
+    required this.group,
+    required this.initiallyExpanded,
+    required this.onItemTap,
+    required this.currentTab,
+  });
+
+  @override
+  State<_QuickMenuGroupSection> createState() => _QuickMenuGroupSectionState();
+}
+
+class _QuickMenuGroupSectionState extends State<_QuickMenuGroupSection> {
+  late bool _isExpanded;
+
+  @override
+  void initState() {
+    super.initState();
+    _isExpanded = widget.initiallyExpanded;
+  }
+
+  void _toggleExpanded() {
+    setState(() {
+      _isExpanded = !_isExpanded;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+    final group = widget.group;
+    final width = MediaQuery.of(context).size.width;
+    final horizontalPadding = 32.0 * scale;
+    final spacing = 8.0 * scale;
+    final targetTileWidth = 78.0 * scale;
+
+    final usableWidth = math.max(0.0, width - horizontalPadding);
+    final crossAxisCount = math.max(
+      3,
+      math.min(
+        4,
+        ((usableWidth + spacing) / (targetTileWidth + spacing)).floor(),
+      ),
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: _toggleExpanded,
+          borderRadius: BorderRadius.circular(12 * scale),
+          child: Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: 10 * scale,
+              vertical: 10 * scale,
+            ),
+            decoration: BoxDecoration(
+              color: group.color.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12 * scale),
+              border: Border.all(color: group.color.withValues(alpha: 0.22)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 8 * scale,
+                  height: 8 * scale,
+                  decoration: BoxDecoration(
+                    color: group.color,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                SizedBox(width: 8 * scale),
+                Expanded(
+                  child: Text(
+                    group.title,
+                    style: AppTextStyles.arimo(
+                      fontSize: 13.5 * scale,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF1F2937),
+                    ),
+                  ),
+                ),
+                Text(
+                  '${group.items.length}',
+                  style: AppTextStyles.arimo(
+                    fontSize: 12 * scale,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF4B5563),
+                  ),
+                ),
+                SizedBox(width: 6 * scale),
+                AnimatedRotation(
+                  turns: _isExpanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 200),
+                  child: Icon(
+                    Icons.expand_more,
+                    color: group.color,
+                    size: 20 * scale,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        AnimatedCrossFade(
+          firstChild: const SizedBox.shrink(),
+          secondChild: Padding(
+            padding: EdgeInsets.only(top: 10 * scale),
+            child: GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                crossAxisSpacing: spacing,
+                mainAxisSpacing: 12.0 * scale,
+                mainAxisExtent: 90.0 * scale,
+              ),
+              itemCount: group.items.length,
+              itemBuilder: (context, index) {
+                final item = group.items[index];
+                final isActive =
+                    item.type == EmployeeQuickMenuItemType.bottomTab &&
+                    item.bottomTab == widget.currentTab;
+
+                return _EmployeeQuickMenuIconTile(
+                  item: item,
+                  onTap: () => widget.onItemTap(item),
+                  isActive: isActive,
+                  groupColor: group.color,
+                );
+              },
+            ),
+          ),
+          crossFadeState: _isExpanded
+              ? CrossFadeState.showSecond
+              : CrossFadeState.showFirst,
+          duration: const Duration(milliseconds: 220),
+        ),
+      ],
+    );
+  }
+}
+
 class _EmployeeQuickMenuExpandedGrid extends StatelessWidget {
   final List<EmployeeQuickMenuItem> items;
   final ValueChanged<EmployeeQuickMenuItem> onItemTap;
@@ -340,30 +572,21 @@ class _EmployeeQuickMenuExpandedGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scale = AppResponsive.scaleFactor(context);
+    final groupedItems = _buildQuickMenuGroups(items);
 
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: items.length,
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4,
-        crossAxisSpacing: 8.0 * scale,
-        mainAxisSpacing: 12.0 * scale,
-        mainAxisExtent: 82.0 * scale,
-      ),
-      itemBuilder: (context, index) {
-        final item = items[index];
-        final isActive =
-            item.type == EmployeeQuickMenuItemType.bottomTab &&
-            item.bottomTab == currentTab;
-
-        return _EmployeeQuickMenuIconTile(
-          item: item,
-          onTap: () => onItemTap(item),
-          isActive: isActive,
-        );
-      },
+    return Column(
+      children: [
+        for (final entry in groupedItems.asMap().entries)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _QuickMenuGroupSection(
+              group: entry.value,
+              initiallyExpanded: entry.key == 0,
+              onItemTap: onItemTap,
+              currentTab: currentTab,
+            ),
+          ),
+      ],
     );
   }
 }
@@ -372,30 +595,25 @@ class _EmployeeQuickMenuIconTile extends StatelessWidget {
   final EmployeeQuickMenuItem item;
   final VoidCallback onTap;
   final bool isActive;
+  final Color? groupColor;
 
   const _EmployeeQuickMenuIconTile({
     required this.item,
     required this.onTap,
     required this.isActive,
+    this.groupColor,
   });
 
   @override
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
 
-    final Color bgColor;
-    final Color iconColor;
-    final Color textColor;
-
-    if (isActive) {
-      bgColor = AppColors.primary.withValues(alpha: 0.1);
-      iconColor = AppColors.primary;
-      textColor = AppColors.textPrimary;
-    } else {
-      bgColor = AppColors.background;
-      iconColor = AppColors.third;
-      textColor = AppColors.textSecondary;
-    }
+    final baseColor = groupColor ?? AppColors.primary;
+    final iconColor = isActive ? baseColor : baseColor.withValues(alpha: 0.75);
+    final bgColor = isActive
+        ? baseColor.withValues(alpha: 0.14)
+        : baseColor.withValues(alpha: 0.08);
+    final textColor = isActive ? baseColor : const Color(0xFF374151);
 
     return InkWell(
       onTap: onTap,
@@ -413,8 +631,8 @@ class _EmployeeQuickMenuIconTile extends StatelessWidget {
             alignment: Alignment.center,
             child: SvgPicture.asset(
               item.iconAsset,
-              width: 26.0 * scale,
-              height: 26.0 * scale,
+              width: 24.0 * scale,
+              height: 24.0 * scale,
               colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
             ),
           ),
@@ -426,9 +644,9 @@ class _EmployeeQuickMenuIconTile extends StatelessWidget {
             textAlign: TextAlign.center,
             style: AppTextStyles.arimo(
               fontSize: 11.0 * scale,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
               color: textColor,
-            ),
+            ).copyWith(height: 1.2),
           ),
         ],
       ),
@@ -447,11 +665,17 @@ class EmployeeQuickMenuPresets {
         iconAsset: AppAssets.calendar,
         tab: AppBottomTab.appointment,
       ),
-      EmployeeQuickMenuItem.bottom(
-        id: 'services',
-        label: 'Dịch vụ',
-        iconAsset: AppAssets.appIconThird,
-        tab: AppBottomTab.services,
+      EmployeeQuickMenuItem.extra(
+        id: 'check_in_out',
+        label: 'Check-in/out',
+        iconAsset: AppAssets.calendarBold,
+        action: EmployeeQuickMenuExtraAction.checkInOut,
+      ),
+      EmployeeQuickMenuItem.extra(
+        id: 'tasks',
+        label: 'Công việc',
+        iconAsset: AppAssets.menuFirst,
+        action: EmployeeQuickMenuExtraAction.tasks,
       ),
       EmployeeQuickMenuItem.bottom(
         id: 'chat',
@@ -459,18 +683,12 @@ class EmployeeQuickMenuPresets {
         iconAsset: AppAssets.chatMessage,
         tab: AppBottomTab.chat,
       ),
-      EmployeeQuickMenuItem.extra(
-        id: 'staff_profile',
-        label: 'Tài khoản',
-        iconAsset: AppAssets.profile,
-        action: EmployeeQuickMenuExtraAction.staffProfile,
-      ),
     ];
   }
 
   static List<EmployeeQuickMenuItem> allItems() {
     return [
-      // Các tab bottom navigation
+      // Tabs chính
       EmployeeQuickMenuItem.bottom(
         id: 'schedule',
         label: 'Lịch làm việc',
@@ -489,20 +707,52 @@ class EmployeeQuickMenuPresets {
         iconAsset: AppAssets.chatMessage,
         tab: AppBottomTab.chat,
       ),
+
+      // Nhóm vận hành ưu tiên cao
       EmployeeQuickMenuItem.extra(
-        id: 'staff_profile',
-        label: 'Tài khoản',
-        iconAsset: AppAssets.profile,
-        action: EmployeeQuickMenuExtraAction.staffProfile,
+        id: 'check_in_out',
+        label: 'Check-in/out',
+        iconAsset: AppAssets.calendarBold,
+        action: EmployeeQuickMenuExtraAction.checkInOut,
       ),
+      EmployeeQuickMenuItem.extra(
+        id: 'tasks',
+        label: 'Công việc',
+        iconAsset: AppAssets.menuFirst,
+        action: EmployeeQuickMenuExtraAction.tasks,
+      ),
+      EmployeeQuickMenuItem.extra(
+        id: 'appointments',
+        label: 'Lịch hẹn',
+        iconAsset: AppAssets.calendar,
+        action: EmployeeQuickMenuExtraAction.appointments,
+      ),
+      EmployeeQuickMenuItem.extra(
+        id: 'room',
+        label: 'Phòng ở',
+        iconAsset: AppAssets.family,
+        action: EmployeeQuickMenuExtraAction.room,
+      ),
+      EmployeeQuickMenuItem.extra(
+        id: 'requests',
+        label: 'Yêu cầu',
+        iconAsset: AppAssets.menuThird,
+        action: EmployeeQuickMenuExtraAction.requests,
+      ),
+
+      // Nhóm chăm sóc khách hàng
       EmployeeQuickMenuItem.extra(
         id: 'create_customer',
         label: 'Tạo KH',
         iconAsset: AppAssets.profile,
         action: EmployeeQuickMenuExtraAction.createCustomer,
       ),
-
-      // Một số action extra mẫu dành cho nhân viên
+      EmployeeQuickMenuItem.extra(
+        id: 'family_profile',
+        label: 'Gia đình',
+        iconAsset: AppAssets.family,
+        action: EmployeeQuickMenuExtraAction.familyProfile,
+      ),
       EmployeeQuickMenuItem.extra(
         id: 'amenity_service',
         label: 'Tiện ích',
@@ -516,41 +766,19 @@ class EmployeeQuickMenuPresets {
         action: EmployeeQuickMenuExtraAction.amenityTicket,
       ),
       EmployeeQuickMenuItem.extra(
-        id: 'room',
-        label: 'Phòng ở',
-        iconAsset: AppAssets.family,
-        action: EmployeeQuickMenuExtraAction.room,
-      ),
-      EmployeeQuickMenuItem.extra(
-        id: 'family_profile',
-        label: 'Gia đình',
-        iconAsset: AppAssets.family,
-        action: EmployeeQuickMenuExtraAction.familyProfile,
-      ),
-      EmployeeQuickMenuItem.extra(
-        id: 'tasks',
-        label: 'Công việc',
-        iconAsset: AppAssets.menuFirst,
-        action: EmployeeQuickMenuExtraAction.tasks,
-      ),
-      EmployeeQuickMenuItem.extra(
-        id: 'check_in_out',
-        label: 'Check-in/out',
-        iconAsset: AppAssets.calendarBold,
-        action: EmployeeQuickMenuExtraAction.checkInOut,
-      ),
-      EmployeeQuickMenuItem.extra(
         id: 'meal_plan',
         label: 'Suất ăn',
         iconAsset: AppAssets.menuSecond,
         action: EmployeeQuickMenuExtraAction.mealPlan,
       ),
       EmployeeQuickMenuItem.extra(
-        id: 'requests',
-        label: 'Yêu cầu',
-        iconAsset: AppAssets.menuThird,
-        action: EmployeeQuickMenuExtraAction.requests,
+        id: 'customer_profile_quick_test',
+        label: 'Test Profile KH',
+        iconAsset: AppAssets.family,
+        action: EmployeeQuickMenuExtraAction.customerProfileQuickTest,
       ),
+
+      // Nhóm tài chính
       EmployeeQuickMenuItem.extra(
         id: 'transactions',
         label: 'Giao dịch',
@@ -563,17 +791,13 @@ class EmployeeQuickMenuPresets {
         iconAsset: AppAssets.menuThird,
         action: EmployeeQuickMenuExtraAction.contracts,
       ),
+
+      // Nhóm cá nhân
       EmployeeQuickMenuItem.extra(
-        id: 'appointments',
-        label: 'Lịch hẹn',
-        iconAsset: AppAssets.calendar,
-        action: EmployeeQuickMenuExtraAction.appointments,
-      ),
-      EmployeeQuickMenuItem.extra(
-        id: 'customer_profile_quick_test',
-        label: 'Test Profile KH',
-        iconAsset: AppAssets.family,
-        action: EmployeeQuickMenuExtraAction.customerProfileQuickTest,
+        id: 'staff_profile',
+        label: 'Tài khoản',
+        iconAsset: AppAssets.profile,
+        action: EmployeeQuickMenuExtraAction.staffProfile,
       ),
     ];
   }

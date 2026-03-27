@@ -55,6 +55,18 @@ class AppointmentBloc extends Bloc<AppointmentEvent, AppointmentState> {
         emit(AppointmentLoaded(appointments));
       }
     } catch (e) {
+      final errorMessage = e.toString().toLowerCase();
+      final isTimeoutError =
+          errorMessage.contains('timeout') ||
+          errorMessage.contains('kết nối tới máy chủ chậm');
+
+      if (isTimeoutError) {
+        // Fast-fix UX: không chặn toàn màn hình khi API chậm,
+        // vẫn cho phép nhân viên thao tác các module khác.
+        emit(const AppointmentEmpty());
+        return;
+      }
+
       emit(AppointmentError(e.toString()));
     }
   }

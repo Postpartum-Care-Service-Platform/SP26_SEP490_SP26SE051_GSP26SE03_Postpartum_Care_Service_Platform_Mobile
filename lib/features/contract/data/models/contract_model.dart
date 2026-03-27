@@ -11,6 +11,7 @@ class ContractModel extends ContractEntity {
     required super.effectiveFrom,
     required super.effectiveTo,
     super.signedDate,
+    super.sentAt,
     super.fileUrl,
     super.checkinDate,
     super.checkoutDate,
@@ -29,6 +30,9 @@ class ContractModel extends ContractEntity {
       effectiveTo: DateTime.parse(json['effectiveTo'] as String),
       signedDate: json['signedDate'] != null
           ? DateTime.parse(json['signedDate'] as String)
+          : null,
+      sentAt: json['sentAt'] != null
+          ? DateTime.parse(json['sentAt'] as String)
           : null,
       fileUrl: json['fileUrl'] as String?,
       checkinDate: json['checkinDate'] != null
@@ -54,6 +58,7 @@ class ContractModel extends ContractEntity {
       'effectiveFrom': effectiveFrom.toIso8601String(),
       'effectiveTo': effectiveTo.toIso8601String(),
       'signedDate': signedDate?.toIso8601String(),
+      'sentAt': sentAt?.toIso8601String(),
       'fileUrl': fileUrl,
       'checkinDate': checkinDate?.toIso8601String(),
       'checkoutDate': checkoutDate?.toIso8601String(),
@@ -74,6 +79,7 @@ class ContractModel extends ContractEntity {
       effectiveFrom: effectiveFrom,
       effectiveTo: effectiveTo,
       signedDate: signedDate,
+      sentAt: sentAt,
       fileUrl: fileUrl,
       checkinDate: checkinDate,
       checkoutDate: checkoutDate,

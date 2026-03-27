@@ -10,6 +10,7 @@ class ContractEntity extends Equatable {
   final DateTime effectiveFrom;
   final DateTime effectiveTo;
   final DateTime? signedDate;
+  final DateTime? sentAt;
   final String? fileUrl;
   final DateTime? checkinDate;
   final DateTime? checkoutDate;
@@ -25,6 +26,7 @@ class ContractEntity extends Equatable {
     required this.effectiveFrom,
     required this.effectiveTo,
     this.signedDate,
+    this.sentAt,
     this.fileUrl,
     this.checkinDate,
     this.checkoutDate,
@@ -42,6 +44,7 @@ class ContractEntity extends Equatable {
         effectiveFrom,
         effectiveTo,
         signedDate,
+        sentAt,
         fileUrl,
         checkinDate,
         checkoutDate,

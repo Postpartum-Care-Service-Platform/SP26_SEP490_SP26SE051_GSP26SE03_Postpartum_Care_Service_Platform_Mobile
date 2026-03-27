@@ -24,18 +24,59 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
 
   @override
   Future<List<NotificationModel>> getNotifications() async {
-    final response = await _dio.get(ApiEndpoints.notificationsMe);
-    final data = response.data;
-
-    if (data is List) {
-      final notifications = data
-          .map((item) => NotificationModel.fromJson(item as Map<String, dynamic>))
-          .toList();
-      _cachedNotifications = notifications;
-      return notifications;
+    Future<Response<dynamic>> requestOnce() {
+      return _dio.get(
+        ApiEndpoints.notificationsMe,
+        options: Options(
+          receiveTimeout: const Duration(seconds: 90),
+          sendTimeout: const Duration(seconds: 90),
+        ),
+      );
     }
 
-    throw Exception('Phản hồi thông báo không hợp lệ');
+    try {
+      final response = await requestOnce();
+      final data = response.data;
+
+      if (data is List) {
+        final notifications = data
+            .map((item) => NotificationModel.fromJson(item as Map<String, dynamic>))
+            .toList();
+        _cachedNotifications = notifications;
+        return notifications;
+      }
+
+      throw Exception('Phản hồi thông báo không hợp lệ');
+    } on DioException catch (e) {
+      final isTimeout =
+          e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout;
+
+      if (isTimeout) {
+        try {
+          final retryResponse = await requestOnce();
+          final retryData = retryResponse.data;
+          if (retryData is List) {
+            final retryNotifications = retryData
+                .map((item) => NotificationModel.fromJson(item as Map<String, dynamic>))
+                .toList();
+            _cachedNotifications = retryNotifications;
+            return retryNotifications;
+          }
+        } on DioException {
+          if (_cachedNotifications.isNotEmpty) {
+            return _cachedNotifications;
+          }
+          throw Exception('Kết nối tới máy chủ chậm. Vui lòng thử lại sau ít phút.');
+        }
+      }
+
+      if (_cachedNotifications.isNotEmpty) {
+        return _cachedNotifications;
+      }
+
+      throw Exception('Không thể tải thông báo: ${e.message}');
+    }
   }
 
   @override
