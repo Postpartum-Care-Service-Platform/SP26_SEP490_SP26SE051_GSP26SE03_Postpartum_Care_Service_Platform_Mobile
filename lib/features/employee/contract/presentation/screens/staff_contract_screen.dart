@@ -11,7 +11,9 @@ import '../../../../../core/utils/app_responsive.dart';
 import '../../../../../core/utils/app_text_styles.dart';
 import '../../../../../core/widgets/app_app_bar.dart';
 import '../../../../../core/widgets/app_toast.dart';
+import '../../../../../features/booking/data/datasources/booking_remote_datasource.dart';
 import '../../../../../features/booking/data/models/booking_model.dart';
+import '../../../../../features/booking/data/models/customer_model.dart';
 import '../../../../../features/contract/data/datasources/contract_remote_datasource.dart';
 import '../../../../../features/contract/data/models/contract_model.dart';
 import '../../../../../features/employee/contract/presentation/screens/staff_contract_preview_screen.dart';
@@ -34,8 +36,11 @@ class StaffContractScreen extends StatefulWidget {
 
 class _StaffContractScreenState extends State<StaffContractScreen> {
   final _remote = ContractRemoteDataSourceImpl(dio: ApiClient.dio);
+  final _bookingRemote = BookingRemoteDataSourceImpl();
 
   ContractModel? _contract;
+  /// Customer fetched from /api/Booking/{id} when contract.customer is null
+  CustomerModel? _bookingCustomer;
   bool _isLoading = false;
   bool _isSending = false;
   String? _error;
@@ -79,6 +84,8 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
           _contract = created;
         });
       }
+      // Nếu contract.customer == null, fetch booking để lấy thông tin khách hàng
+      await _fetchBookingCustomerIfNeeded();
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -90,6 +97,28 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
           _isLoading = false;
         });
       }
+    }
+  }
+
+  /// Nếu hợp đồng không có customer, gọi /api/Booking/{bookingId} để lấy thông tin khách.
+  Future<void> _fetchBookingCustomerIfNeeded() async {
+    final contract = _contract;
+    if (contract == null) return;
+    // Đã có customer từ contract — không cần fetch thêm
+    if (contract.customer != null) return;
+
+    final bookingId = contract.bookingId;
+
+    try {
+      final booking = await _bookingRemote.getBookingById(bookingId);
+      if (!mounted) return;
+      if (booking.customer != null) {
+        setState(() {
+          _bookingCustomer = booking.customer;
+        });
+      }
+    } catch (_) {
+      // Không làm gián đoạn UI nếu fetch booking thất bại
     }
   }
 
@@ -105,6 +134,8 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
         return const Color(0xFF2563EB); // Blue
       case 'signed':
         return const Color(0xFF16A34A); // Green
+      case 'printed':
+        return const Color(0xFF2563EB); // Blue
       case 'cancelled':
         return const Color(0xFFDC2626); // Red
       default:
@@ -120,6 +151,8 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
         return 'Đã gửi';
       case 'signed':
         return 'Đã ký';
+      case 'printed':
+        return 'Đã in';
       case 'cancelled':
         return 'Đã hủy';
       default:
@@ -365,15 +398,43 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
     }
   }
 
-  void _handleUploadSignedPressed({required bool canUploadSigned}) {
-    if (!canUploadSigned) {
-      AppToast.showError(
-        context,
-        message: 'Vui lòng bấm "Gửi khách" trước khi upload hợp đồng đã ký.',
-      );
-      return;
-    }
+  void _handleUploadSignedPressed() {
     _showUploadSignedSheet();
+  }
+
+  void _handleAssignCustomer() {
+    // TODO: implement navigate to customer picker / assignment screen
+    AppToast.showError(
+      context,
+      message: 'Chức năng gắn khách hàng chưa được tích hợp',
+    );
+  }
+
+  bool _isPdfUrl(String? url) {
+    if (url == null || url.trim().isEmpty) {
+      return false;
+    }
+    return RegExp(r'\.pdf(\?|$)', caseSensitive: false).hasMatch(url);
+  }
+
+  bool _isImageUrl(String? url) {
+    if (url == null || url.trim().isEmpty) {
+      return false;
+    }
+    return RegExp(
+      r'\.(png|jpe?g|gif|webp|bmp)(\?|$)',
+      caseSensitive: false,
+    ).hasMatch(url);
+  }
+
+  String _fileTypeLabel(String? url) {
+    if (_isPdfUrl(url)) {
+      return 'PDF';
+    }
+    if (_isImageUrl(url)) {
+      return 'Ảnh';
+    }
+    return 'Khác';
   }
 
   Future<void> _showUploadSignedSheet() async {
@@ -1004,8 +1065,8 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
     }
 
     final contract = _contract;
-    final canUploadSigned =
-        contract != null && contract.status.toLowerCase() == 'sent';
+    final hasSignedFile = contract?.fileUrl?.trim().isNotEmpty == true;
+    final canSendContract = hasSignedFile && !_isSending;
     if (contract == null) {
       return Center(
         child: Text(
@@ -1061,7 +1122,7 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                             style: AppTextStyles.tinos(
                               fontSize: 22 * scale,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.primary,
+                              color: const Color(0xFF1D4ED8),
                             ),
                           ),
                         ],
@@ -1178,15 +1239,8 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                 SizedBox(height: 16 * scale),
                 Divider(height: 1, color: AppColors.borderLight),
                 SizedBox(height: 16 * scale),
-                _InfoRow(
-                  icon: Icons.person_outline_rounded,
-                  label: 'Khách hàng',
-                  value:
-                      contract.customer?.username ??
-                      contract.customer?.email ??
-                      'N/A',
-                  scale: scale,
-                ),
+                // Customer row with clear null fallback
+                _buildCustomerRow(contract, scale),
               ],
             ),
           ),
@@ -1227,7 +1281,33 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                   ],
                 ),
                 SizedBox(height: 20 * scale),
-                // Primary actions
+                // Row 1: Chỉnh sửa + Xem HTML — workflow step 1
+                Row(
+                  children: [
+                    Expanded(
+                      child: _ActionButton(
+                        icon: Icons.edit_note_rounded,
+                        label: 'Chỉnh sửa',
+                        color: const Color(0xFF7C3AED),
+                        onPressed: _showEditContentSheet,
+                        scale: scale,
+                      ),
+                    ),
+                    SizedBox(width: 12 * scale),
+                    Expanded(
+                      child: _ActionButton(
+                        icon: Icons.visibility_rounded,
+                        label: 'Xem HTML',
+                        color: const Color(0xFF0284C7),
+                        onPressed: _openPreview,
+                        scale: scale,
+                        isOutlined: true,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 12 * scale),
+                // Row 2: Xuất PDF + Upload file đã ký — workflow step 2
                 Row(
                   children: [
                     Expanded(
@@ -1237,66 +1317,61 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                         color: AppColors.primary,
                         onPressed: _isLoading ? null : _downloadPdf,
                         scale: scale,
+                        isOutlined: true,
                       ),
                     ),
                     SizedBox(width: 12 * scale),
                     Expanded(
                       child: _ActionButton(
-                        icon: Icons.send_rounded,
-                        label: _isSending ? 'Đang gửi...' : 'Gửi khách',
-                        color: const Color(0xFF2563EB),
-                        onPressed: _isSending ? null : _sendContract,
+                        icon: Icons.cloud_upload_rounded,
+                        label: 'Upload file đã ký',
+                        color: const Color(0xFF0EA5E9),
+                        onPressed: _handleUploadSignedPressed,
                         scale: scale,
-                        isOutlined: true,
                       ),
                     ),
                   ],
                 ),
                 SizedBox(height: 12 * scale),
+                // Gửi khách — only enabled after a signed file has been uploaded
                 _ActionButton(
-                  icon: Icons.visibility_rounded,
-                  label: 'Xem nội dung hợp đồng (HTML)',
-                  color: const Color(0xFF0284C7),
-                  onPressed: _openPreview,
+                  icon: Icons.send_rounded,
+                  label: _isSending ? 'Đang gửi...' : 'Gửi khách',
+                  color: const Color(0xFF2563EB),
+                  onPressed: (hasSignedFile && !_isSending) ? _sendContract : null,
                   scale: scale,
                   isOutlined: true,
                   isFullWidth: true,
                 ),
-                SizedBox(height: 12 * scale),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _ActionButton(
-                        icon: Icons.cloud_upload_rounded,
-                        label: canUploadSigned
-                            ? 'Upload đã ký'
-                            : 'Upload đã ký (chờ gửi khách)',
-                        color: const Color(0xFF0EA5E9),
-                        onPressed: () =>
-                            _handleUploadSignedPressed(canUploadSigned: canUploadSigned),
-                        scale: scale,
-                        isOutlined: true,
+                if (!hasSignedFile) ...[
+                  SizedBox(height: 6 * scale),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        size: 13 * scale,
+                        color: AppColors.textSecondary,
                       ),
-                    ),
-                    SizedBox(width: 12 * scale),
-                    Expanded(
-                      child: _ActionButton(
-                        icon: Icons.edit_note_rounded,
-                        label: 'Chỉnh sửa',
-                        color: const Color(0xFF7C3AED),
-                        onPressed: _showEditContentSheet,
-                        scale: scale,
-                        isOutlined: true,
+                      SizedBox(width: 4 * scale),
+                      Text(
+                        'Upload file đã ký trước khi gửi khách',
+                        style: AppTextStyles.arimo(
+                          fontSize: 11 * scale,
+                          color: AppColors.textSecondary,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
                 if (contract.fileUrl != null &&
                     contract.fileUrl!.trim().isNotEmpty) ...[
                   SizedBox(height: 12 * scale),
                   _ActionButton(
-                    icon: Icons.image_rounded,
-                    label: 'Xem hợp đồng hoàn thiện (hình ảnh)',
+                    icon: _isPdfUrl(contract.fileUrl)
+                        ? Icons.picture_as_pdf_rounded
+                        : Icons.image_rounded,
+                    label:
+                        'Xem file đã ký (${_fileTypeLabel(contract.fileUrl)})',
                     color: const Color(0xFF059669),
                     onPressed: _openSignedContractImage,
                     scale: scale,
@@ -1307,7 +1382,136 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
               ],
             ),
           ),
-          SizedBox(height: 20 * scale),
+          SizedBox(height: 32 * scale),
+        ],
+      ),
+    );
+  }
+
+  /// Customer row with clear null fallback + booking-level customer lookup
+  Widget _buildCustomerRow(ContractModel contract, double scale) {
+    // Ưu tiên customer từ contract, fallback sang customer được fetch từ booking
+    final customerName = contract.customer?.username ?? _bookingCustomer?.username;
+    final customerEmail = contract.customer?.email ?? _bookingCustomer?.email;
+    final customerPhone = contract.customer?.phone ?? _bookingCustomer?.phone;
+    final hasCustomer =
+        (customerName?.trim().isNotEmpty == true) ||
+        (customerEmail?.trim().isNotEmpty == true);
+    final displayName = customerName?.trim().isNotEmpty == true
+        ? customerName!
+        : (customerEmail?.trim().isNotEmpty == true
+            ? customerEmail!
+            : null);
+
+    return Container(
+      padding: EdgeInsets.all(12 * scale),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: EdgeInsets.all(8 * scale),
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              borderRadius: BorderRadius.circular(8 * scale),
+            ),
+            child: hasCustomer
+                ? Icon(
+                    Icons.person_outline_rounded,
+                    size: 18 * scale,
+                    color: AppColors.textSecondary,
+                  )
+                : Icon(
+                    Icons.person_off_outlined,
+                    size: 18 * scale,
+                    color: AppColors.textSecondary,
+                  ),
+          ),
+          SizedBox(width: 12 * scale),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Khách hàng',
+                  style: AppTextStyles.arimo(
+                    fontSize: 12 * scale,
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                SizedBox(height: 4 * scale),
+                if (hasCustomer) ...[
+                  Text(
+                    displayName!,
+                    style: AppTextStyles.arimo(
+                      fontSize: 15 * scale,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  if (customerEmail != null &&
+                      customerEmail.trim().isNotEmpty &&
+                      customerName?.trim().isNotEmpty == true) ...[
+                    SizedBox(height: 2 * scale),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.email_outlined,
+                          size: 12 * scale,
+                          color: AppColors.textSecondary,
+                        ),
+                        SizedBox(width: 4 * scale),
+                        Expanded(
+                          child: Text(
+                            customerEmail,
+                            style: AppTextStyles.arimo(
+                              fontSize: 12 * scale,
+                              color: AppColors.textSecondary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  if (customerPhone != null &&
+                      customerPhone.trim().isNotEmpty) ...[
+                    SizedBox(height: 2 * scale),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.phone_outlined,
+                          size: 12 * scale,
+                          color: AppColors.textSecondary,
+                        ),
+                        SizedBox(width: 4 * scale),
+                        Text(
+                          customerPhone,
+                          style: AppTextStyles.arimo(
+                            fontSize: 12 * scale,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ] else ...[
+                  Row(
+                    children: [
+                      Text(
+                        'Chưa có khách hàng',
+                        style: AppTextStyles.arimo(
+                          fontSize: 14 * scale,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
         ],
       ),
     );

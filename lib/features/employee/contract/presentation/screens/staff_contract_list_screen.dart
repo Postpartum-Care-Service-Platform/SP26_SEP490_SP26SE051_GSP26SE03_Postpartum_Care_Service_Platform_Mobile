@@ -387,6 +387,7 @@ class _StaffContractListScreenState extends State<StaffContractListScreen> {
               DropdownMenuItem(value: 'draft', child: Text('Nháp')),
               DropdownMenuItem(value: 'sent', child: Text('Đã gửi')),
               DropdownMenuItem(value: 'signed', child: Text('Đã ký')),
+              DropdownMenuItem(value: 'printed', child: Text('Đã in')),
               DropdownMenuItem(value: 'cancelled', child: Text('Đã hủy')),
             ],
             onChanged: (value) {
@@ -762,6 +763,8 @@ class _ContractItem extends StatelessWidget {
         return Colors.blue;
       case 'signed':
         return AppColors.verified;
+      case 'printed':
+        return const Color(0xFF2563EB);
       case 'cancelled':
         return Colors.red;
       default:
@@ -777,6 +780,8 @@ class _ContractItem extends StatelessWidget {
         return 'Đã gửi';
       case 'signed':
         return 'Đã ký';
+      case 'printed':
+        return 'Đã in';
       case 'cancelled':
         return 'Đã hủy';
       default:
@@ -788,12 +793,14 @@ class _ContractItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
     final statusColor = _statusColor(contract.status);
-    final customerName =
-        contract.customer?.username ?? 
-        contract.customer?.email ??
-        'Khách hàng';
+    final customerName = contract.customer?.username;
     final customerEmail = contract.customer?.email;
     final customerPhone = contract.customer?.phone;
+    final displayName = customerName?.isNotEmpty == true
+        ? customerName!
+        : (customerEmail?.isNotEmpty == true ? customerEmail! : 'Chưa có khách hàng');
+    final hasCustomer =
+        customerName?.isNotEmpty == true || customerEmail?.isNotEmpty == true;
 
     return InkWell(
       onTap: onTap,
@@ -839,8 +846,8 @@ class _ContractItem extends StatelessWidget {
                   contract.contractCode,
                   style: AppTextStyles.arimo(
                     fontSize: 12 * scale,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF2563EB),
                   ),
                 ),
               ],
@@ -850,17 +857,23 @@ class _ContractItem extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 20 * scale,
-                  backgroundColor: AppColors.primary,
-                  child: Text(
-                    customerName.isNotEmpty 
-                        ? customerName[0].toUpperCase() 
-                        : 'K',
-                    style: TextStyle(
-                      color: AppColors.white,
-                      fontSize: 16 * scale,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  backgroundColor: hasCustomer
+                      ? AppColors.primary
+                      : AppColors.textSecondary.withValues(alpha: 0.18),
+                  child: hasCustomer
+                      ? Text(
+                          displayName[0].toUpperCase(),
+                          style: TextStyle(
+                            color: AppColors.white,
+                            fontSize: 16 * scale,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        )
+                      : Icon(
+                          Icons.help_outline_rounded,
+                          color: AppColors.textSecondary,
+                          size: 20 * scale,
+                        ),
                 ),
                 SizedBox(width: 12 * scale),
                 Expanded(
@@ -868,11 +881,13 @@ class _ContractItem extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        customerName,
+                        displayName,
                         style: AppTextStyles.arimo(
                           fontSize: 15 * scale,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
+                          color: hasCustomer
+                              ? AppColors.textPrimary
+                              : AppColors.textSecondary,
                         ),
                       ),
                       if (customerEmail != null) ...[

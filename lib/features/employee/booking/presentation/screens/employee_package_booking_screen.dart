@@ -94,54 +94,169 @@ class _EmployeePackageBookingScreenState
 
   Future<void> _showCustomerSearchDialog() async {
     final scale = AppResponsive.scaleFactor(context);
-    await showDialog(
+    await showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) {
-        return AlertDialog(
-          title: Text(
-            'Chọn khách hàng',
-            style: AppTextStyles.arimo(
-              fontSize: 16 * scale,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+        return SafeArea(
+          child: Container(
+            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.82),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(22 * scale)),
             ),
-          ),
-          content: SizedBox(
-            width: double.maxFinite,
             child: Column(
-              mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(
-                  controller: _searchController,
-                  decoration: const InputDecoration(
-                    hintText: 'Tìm theo tên, email, SĐT',
+                SizedBox(height: 10 * scale),
+                Container(
+                  width: 44 * scale,
+                  height: 5 * scale,
+                  decoration: BoxDecoration(
+                    color: AppColors.borderLight,
+                    borderRadius: BorderRadius.circular(99),
                   ),
                 ),
-                const SizedBox(height: 12),
-                if (_isLoadingCustomers)
-                  const Center(
-                    child: CircularProgressIndicator(color: AppColors.primary),
-                  )
-                else
-                  Expanded(
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: _filteredCustomers.length,
-                      itemBuilder: (context, index) {
-                        final c = _filteredCustomers[index];
-                        return ListTile(
-                          title: Text(c.displayName),
-                          subtitle: Text(
-                            [
-                              c.email,
-                              if (c.phone != null && c.phone!.isNotEmpty) c.phone!,
-                            ].join(' • '),
-                          ),
-                          onTap: () => _selectCustomer(c),
-                        );
-                      },
+                Padding(
+                  padding: EdgeInsets.fromLTRB(16 * scale, 14 * scale, 16 * scale, 8 * scale),
+                  child: Row(
+                    children: [
+                      Text(
+                        'Chọn khách hàng',
+                        style: AppTextStyles.arimo(
+                          fontSize: 17 * scale,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close_rounded),
+                        color: AppColors.textSecondary,
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(16 * scale, 0, 16 * scale, 12 * scale),
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Tìm theo tên, email, SĐT',
+                      prefixIcon: const Icon(Icons.search_rounded),
+                      suffixIcon: _searchController.text.isNotEmpty
+                          ? IconButton(
+                              onPressed: () {
+                                _searchController.clear();
+                              },
+                              icon: const Icon(Icons.close_rounded),
+                            )
+                          : null,
+                      filled: true,
+                      fillColor: const Color(0xFFF8F7F5),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14 * scale),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 14 * scale,
+                        vertical: 12 * scale,
+                      ),
                     ),
                   ),
+                ),
+                Expanded(
+                  child: _isLoadingCustomers
+                      ? const Center(
+                          child: CircularProgressIndicator(color: AppColors.primary),
+                        )
+                      : _filteredCustomers.isEmpty
+                          ? Center(
+                              child: Text(
+                                'Không tìm thấy khách hàng phù hợp',
+                                style: AppTextStyles.arimo(
+                                  fontSize: 13 * scale,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            )
+                          : ListView.separated(
+                              padding: EdgeInsets.fromLTRB(12 * scale, 0, 12 * scale, 16 * scale),
+                              itemCount: _filteredCustomers.length,
+                              separatorBuilder: (_, __) => SizedBox(height: 6 * scale),
+                              itemBuilder: (context, index) {
+                                final c = _filteredCustomers[index];
+                                final isSelected = _selectedCustomer?.id == c.id;
+                                return Material(
+                                  color: isSelected
+                                      ? AppColors.primary.withValues(alpha: 0.08)
+                                      : const Color(0xFFFAFAFA),
+                                  borderRadius: BorderRadius.circular(12 * scale),
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(12 * scale),
+                                    onTap: () => _selectCustomer(c),
+                                    child: Padding(
+                                      padding: EdgeInsets.all(12 * scale),
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            width: 36 * scale,
+                                            height: 36 * scale,
+                                            decoration: BoxDecoration(
+                                              color: AppColors.primary.withValues(alpha: 0.14),
+                                              borderRadius: BorderRadius.circular(10 * scale),
+                                            ),
+                                            child: const Icon(
+                                              Icons.person_rounded,
+                                              color: AppColors.primary,
+                                              size: 20,
+                                            ),
+                                          ),
+                                          SizedBox(width: 10 * scale),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  c.displayName,
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: AppTextStyles.arimo(
+                                                    fontSize: 14 * scale,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: AppColors.textPrimary,
+                                                  ),
+                                                ),
+                                                SizedBox(height: 2 * scale),
+                                                Text(
+                                                  [
+                                                    c.email,
+                                                    if (c.phone != null && c.phone!.isNotEmpty) c.phone!,
+                                                  ].join(' • '),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: AppTextStyles.arimo(
+                                                    fontSize: 12 * scale,
+                                                    color: AppColors.textSecondary,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          if (isSelected)
+                                            const Icon(
+                                              Icons.check_circle_rounded,
+                                              color: AppColors.primary,
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                ),
               ],
             ),
           ),

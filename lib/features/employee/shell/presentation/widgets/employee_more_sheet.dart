@@ -22,6 +22,7 @@ class EmployeeMoreSheet {
     final extraItems = allItems
         .where((item) => item.type == EmployeeQuickMenuItemType.extra)
         .toList();
+    final groupedItems = _buildGroupedItems(extraItems);
 
     showModalBottomSheet(
       context: context,
@@ -30,7 +31,7 @@ class EmployeeMoreSheet {
       builder: (bottomSheetContext) {
         final bottomInset = MediaQuery.of(bottomSheetContext).padding.bottom;
         final screenHeight = MediaQuery.of(bottomSheetContext).size.height;
-        final maxHeight = screenHeight * 0.85;
+        final maxHeight = screenHeight * 0.82;
 
         return Container(
           height: maxHeight,
@@ -149,34 +150,30 @@ class EmployeeMoreSheet {
                   ),
                 ),
 
-                // Grid items với animation
+                // Grid items theo nhóm nghiệp vụ
                 Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: GridView.builder(
-                      padding: EdgeInsets.only(
-                        bottom: bottomInset > 0 ? bottomInset + 8 : 16,
-                      ),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                            mainAxisExtent: 125,
-                          ),
-                      itemCount: extraItems.length,
-                      itemBuilder: (context, index) {
-                        final item = extraItems[index];
-                        return _ModernSheetItem(
-                          item: item,
-                          index: index,
-                          onTap: () {
+                  child: ListView.builder(
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      0,
+                      16,
+                      bottomInset > 0 ? bottomInset + 8 : 16,
+                    ),
+                    itemCount: groupedItems.length,
+                    itemBuilder: (context, groupIndex) {
+                      final group = groupedItems[groupIndex];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 18),
+                        child: _GroupSection(
+                          group: group,
+                          initiallyExpanded: groupIndex == 0,
+                          onItemTap: (item) {
                             Navigator.of(bottomSheetContext).pop();
                             _handleAction(context, item.extraAction!, authBloc);
                           },
-                        );
-                      },
-                    ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ],
@@ -321,14 +318,214 @@ class EmployeeMoreSheet {
   }
 }
 
+class _MenuGroup {
+  final String title;
+  final Color color;
+  final List<EmployeeQuickMenuItem> items;
+
+  const _MenuGroup({
+    required this.title,
+    required this.color,
+    required this.items,
+  });
+}
+
+List<_MenuGroup> _buildGroupedItems(List<EmployeeQuickMenuItem> items) {
+  final operations = <EmployeeQuickMenuItem>[];
+  final customerCare = <EmployeeQuickMenuItem>[];
+  final finance = <EmployeeQuickMenuItem>[];
+  final personal = <EmployeeQuickMenuItem>[];
+
+  for (final item in items) {
+    switch (item.extraAction) {
+      case EmployeeQuickMenuExtraAction.checkInOut:
+      case EmployeeQuickMenuExtraAction.tasks:
+      case EmployeeQuickMenuExtraAction.appointments:
+      case EmployeeQuickMenuExtraAction.room:
+      case EmployeeQuickMenuExtraAction.requests:
+        operations.add(item);
+        break;
+      case EmployeeQuickMenuExtraAction.amenityService:
+      case EmployeeQuickMenuExtraAction.amenityTicket:
+      case EmployeeQuickMenuExtraAction.mealPlan:
+      case EmployeeQuickMenuExtraAction.familyProfile:
+      case EmployeeQuickMenuExtraAction.createCustomer:
+      case EmployeeQuickMenuExtraAction.customerProfileQuickTest:
+        customerCare.add(item);
+        break;
+      case EmployeeQuickMenuExtraAction.transactions:
+      case EmployeeQuickMenuExtraAction.contracts:
+        finance.add(item);
+        break;
+      case EmployeeQuickMenuExtraAction.staffProfile:
+        personal.add(item);
+        break;
+      case null:
+        break;
+    }
+  }
+
+  return [
+    _MenuGroup(
+      title: 'Nghiệp vụ vận hành',
+      color: const Color(0xFF16A34A),
+      items: operations,
+    ),
+    _MenuGroup(
+      title: 'Chăm sóc khách hàng',
+      color: const Color(0xFF2563EB),
+      items: customerCare,
+    ),
+    _MenuGroup(
+      title: 'Tài chính & hợp đồng',
+      color: const Color(0xFFEAB308),
+      items: finance,
+    ),
+    _MenuGroup(
+      title: 'Cá nhân',
+      color: const Color(0xFF7C3AED),
+      items: personal,
+    ),
+  ].where((group) => group.items.isNotEmpty).toList();
+}
+
+class _GroupSection extends StatefulWidget {
+  final _MenuGroup group;
+  final bool initiallyExpanded;
+  final ValueChanged<EmployeeQuickMenuItem> onItemTap;
+
+  const _GroupSection({
+    required this.group,
+    required this.initiallyExpanded,
+    required this.onItemTap,
+  });
+
+  @override
+  State<_GroupSection> createState() => _GroupSectionState();
+}
+
+class _GroupSectionState extends State<_GroupSection> {
+  late bool _isExpanded;
+
+  @override
+  void initState() {
+    super.initState();
+    _isExpanded = widget.initiallyExpanded;
+  }
+
+  void _toggleExpanded() {
+    setState(() {
+      _isExpanded = !_isExpanded;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final group = widget.group;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: _toggleExpanded,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            decoration: BoxDecoration(
+              color: group.color.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: group.color.withValues(alpha: 0.22)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: group.color,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    group.title,
+                    style: AppTextStyles.arimo(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF1F2937),
+                    ),
+                  ),
+                ),
+                Text(
+                  '${group.items.length}',
+                  style: AppTextStyles.arimo(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF4B5563),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                AnimatedRotation(
+                  turns: _isExpanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 200),
+                  child: Icon(
+                    Icons.expand_more,
+                    color: group.color,
+                    size: 20,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        AnimatedCrossFade(
+          firstChild: const SizedBox.shrink(),
+          secondChild: Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                mainAxisExtent: 124,
+              ),
+              itemCount: group.items.length,
+              itemBuilder: (context, index) {
+                final item = group.items[index];
+                final isPriority =
+                    item.extraAction == EmployeeQuickMenuExtraAction.checkInOut ||
+                    item.extraAction == EmployeeQuickMenuExtraAction.tasks;
+                return _ModernSheetItem(
+                  item: item,
+                  groupColor: group.color,
+                  isPriority: isPriority,
+                  onTap: () => widget.onItemTap(item),
+                );
+              },
+            ),
+          ),
+          crossFadeState:
+              _isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+          duration: const Duration(milliseconds: 220),
+        ),
+      ],
+    );
+  }
+}
+
 class _ModernSheetItem extends StatefulWidget {
   final EmployeeQuickMenuItem item;
-  final int index;
+  final Color groupColor;
+  final bool isPriority;
   final VoidCallback onTap;
 
   const _ModernSheetItem({
     required this.item,
-    required this.index,
+    required this.groupColor,
+    required this.isPriority,
     required this.onTap,
   });
 
@@ -375,8 +572,10 @@ class _ModernSheetItemState extends State<_ModernSheetItem>
 
   @override
   Widget build(BuildContext context) {
-    // Màu đồng bộ cho mỗi item
-    final itemColor = _getItemColor(widget.index);
+    final itemColor = widget.groupColor;
+    final borderColor = widget.isPriority
+        ? itemColor.withValues(alpha: 0.45)
+        : AppColors.textSecondary.withValues(alpha: 0.12);
 
     return GestureDetector(
       onTapDown: _handleTapDown,
@@ -388,10 +587,7 @@ class _ModernSheetItemState extends State<_ModernSheetItem>
           decoration: BoxDecoration(
             color: AppColors.white,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: AppColors.textSecondary.withValues(alpha: 0.1),
-              width: 1,
-            ),
+            border: Border.all(color: borderColor, width: widget.isPriority ? 1.4 : 1),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.05),
@@ -407,30 +603,30 @@ class _ModernSheetItemState extends State<_ModernSheetItem>
               onTap: widget.onTap,
               borderRadius: BorderRadius.circular(20),
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 14,
+                padding: EdgeInsets.symmetric(
+                  horizontal: widget.isPriority ? 12 : 10,
+                  vertical: widget.isPriority ? 12 : 10,
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      width: 56,
-                      height: 56,
+                      width: widget.isPriority ? 54 : 48,
+                      height: widget.isPriority ? 54 : 48,
                       decoration: BoxDecoration(
-                        color: itemColor.withValues(alpha: 0.1),
+                        color: itemColor.withValues(alpha: widget.isPriority ? 0.16 : 0.1),
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: itemColor.withValues(alpha: 0.3),
-                          width: 2,
+                          color: itemColor.withValues(alpha: widget.isPriority ? 0.5 : 0.3),
+                          width: widget.isPriority ? 2.2 : 2,
                         ),
                       ),
                       child: Center(
                         child: SvgPicture.asset(
                           widget.item.iconAsset,
-                          width: 26,
-                          height: 26,
+                          width: widget.isPriority ? 24 : 22,
+                          height: widget.isPriority ? 24 : 22,
                           colorFilter: ColorFilter.mode(
                             itemColor,
                             BlendMode.srcIn,
@@ -438,7 +634,7 @@ class _ModernSheetItemState extends State<_ModernSheetItem>
                         ),
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
                     Flexible(
                       child: Text(
                         widget.item.label,
@@ -446,9 +642,9 @@ class _ModernSheetItemState extends State<_ModernSheetItem>
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
                         style: AppTextStyles.arimo(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
+                          fontSize: widget.isPriority ? 11.5 : 11,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF374151),
                         ),
                       ),
                     ),
@@ -460,27 +656,5 @@ class _ModernSheetItemState extends State<_ModernSheetItem>
         ),
       ),
     );
-  }
-
-  Color _getItemColor(int index) {
-    final colors = [
-      const Color(0xFF6366F1), // Indigo
-      const Color(0xFFEC4899), // Pink
-      const Color(0xFF10B981), // Green
-      const Color(0xFFF59E0B), // Amber
-      const Color(0xFF3B82F6), // Blue
-      const Color(0xFF8B5CF6), // Purple
-      const Color(0xFFEF4444), // Red
-      const Color(0xFF14B8A6), // Teal
-      const Color(0xFFF97316), // Orange
-      const Color(0xFF6366F1), // Indigo
-      const Color(0xFFEC4899), // Pink
-      const Color(0xFF10B981), // Emerald
-      const Color(0xFFF59E0B), // Yellow
-      const Color(0xFF3B82F6), // Sky Blue
-      const Color(0xFF8B5CF6), // Violet
-    ];
-
-    return colors[index % colors.length];
   }
 }

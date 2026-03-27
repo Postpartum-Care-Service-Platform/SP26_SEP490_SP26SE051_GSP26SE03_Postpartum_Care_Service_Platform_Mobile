@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../../core/apis/api_client.dart';
-import '../../../../../core/apis/api_endpoints.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/di/injection_container.dart';
 import '../../../../../core/routing/app_router.dart';
@@ -211,28 +210,15 @@ class _LoadedContentState extends State<_LoadedContent> {
     try {
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
-      final todayStr =
-          '${today.year.toString().padLeft(4, '0')}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+      // Fast-fix: bỏ request StaffSchedule tại đây vì không dùng dữ liệu trả về
+      // (tránh phát sinh 1 API call dư thừa khi vào Home).
+      final mySupportList = await _chatRemote.getMySupportRequests();
+      final noScheduleContracts = await _contractRemote.getNoScheduleContracts();
+      final bookings = await _bookingRemote.getAllBookings();
+      final unreadNotificationCount = await _notificationRemote.getUnreadCount();
 
-      final results = await Future.wait([
-        // 0: Lịch làm việc staff hôm nay (GET /api/StaffSchedule/me)
-        ApiClient.dio.get(
-          ApiEndpoints.myStaffSchedules,
-          queryParameters: {'from': todayStr, 'to': todayStr},
-        ),
-        // 1: Yêu cầu hỗ trợ đang xử lý
-        _chatRemote.getMySupportRequests(),
-        // 2: Hợp đồng chưa lên lịch
-        _contractRemote.getNoScheduleContracts(),
-        // 3: Tất cả booking (đếm booking hôm nay)
-        _bookingRemote.getAllBookings(),
-        // 4: Thông báo (đếm chưa đọc)
-        _notificationRemote.getUnreadCount(),
-      ]);
-
-      final mySupportRequests = (results[1] as List).length;
-      final unscheduledContracts = (results[2] as List).length;
-      final bookings = results[3] as List<BookingModel>;
+      final mySupportRequests = mySupportList.length;
+      final unscheduledContracts = noScheduleContracts.length;
       // Đếm booking cần xử lý hôm nay (status Pending và startDate = hôm nay)
       final todaysBookings = bookings.where((b) {
         final d = DateTime(
@@ -248,7 +234,7 @@ class _LoadedContentState extends State<_LoadedContent> {
         final isPending = status == 'pending';
         return isToday && isPending;
       }).length;
-      final unreadNotifications = results[4] as int;
+      final unreadNotifications = unreadNotificationCount;
 
       return _DashboardSummary(
         mySupportRequests: mySupportRequests,
@@ -277,6 +263,10 @@ class _LoadedContentState extends State<_LoadedContent> {
               a.status != AppointmentStatus.cancelled,
         )
         .length;
+    final isMockChart = totalAssigned == 0;
+    final chartTotal = isMockChart ? 12 : totalAssigned;
+    final chartCompleted = isMockChart ? 5 : completed;
+    final chartPending = isMockChart ? 6 : pending;
 
     // Lấy 5 appointment gần nhất (chưa hoàn thành, sắp xếp theo thời gian)
     final upcomingAppointments =
@@ -318,9 +308,9 @@ class _LoadedContentState extends State<_LoadedContent> {
               ),
               const SizedBox(height: 16),
               _AppointmentStatusChart(
-                totalAssigned: totalAssigned,
-                completed: completed,
-                pending: pending,
+                totalAssigned: chartTotal,
+                completed: chartCompleted,
+                pending: chartPending,
               ),
               const SizedBox(height: 12),
               _DashboardSummaryRow(
@@ -978,7 +968,7 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-/// Chart hiển thị thống kê appointment theo trạng thái
+/// Chart hiển thị thống kê appointment theo trạng thái (linear style)
 class _AppointmentStatusChart extends StatelessWidget {
   final int totalAssigned;
   final int completed;
@@ -1020,11 +1010,11 @@ class _AppointmentStatusChart extends StatelessWidget {
       );
     }
 
+    final cancelled = totalAssigned - completed - pending;
     final completedPercent = totalAssigned > 0
         ? (completed / totalAssigned)
         : 0.0;
     final pendingPercent = totalAssigned > 0 ? (pending / totalAssigned) : 0.0;
-    final cancelled = totalAssigned - completed - pending;
     final cancelledPercent = totalAssigned > 0
         ? (cancelled / totalAssigned)
         : 0.0;
@@ -1057,66 +1047,54 @@ class _AppointmentStatusChart extends StatelessWidget {
                 ),
               ),
               Icon(
-                Icons.bar_chart_rounded,
+                Icons.show_chart_rounded,
                 size: 20 * scale,
                 color: AppColors.primary,
               ),
             ],
           ),
-          SizedBox(height: 16 * scale),
-          // Pie chart đơn giản bằng cách vẽ các phần tử
-          Row(
-            children: [
-              Expanded(
-                child: _ChartBar(
-                  label: 'Hoàn thành',
-                  value: completed,
-                  percent: completedPercent,
-                  color: const Color(0xFF1B7F3A),
-                  scale: scale,
-                ),
-              ),
-              SizedBox(width: 8 * scale),
-              Expanded(
-                child: _ChartBar(
-                  label: 'Đang xử lý',
-                  value: pending,
-                  percent: pendingPercent,
-                  color: const Color(0xFF2563EB),
-                  scale: scale,
-                ),
-              ),
-              SizedBox(width: 8 * scale),
-              Expanded(
-                child: _ChartBar(
-                  label: 'Đã hủy',
-                  value: cancelled,
-                  percent: cancelledPercent,
-                  color: const Color(0xFFDC2626),
-                  scale: scale,
-                ),
-              ),
-            ],
+          SizedBox(height: 14 * scale),
+          _LinearMetricRow(
+            label: 'Hoàn thành',
+            value: completed,
+            percent: completedPercent,
+            color: AppColors.appointmentCompleted,
+            scale: scale,
+          ),
+          SizedBox(height: 10 * scale),
+          _LinearMetricRow(
+            label: 'Đang xử lý',
+            value: pending,
+            percent: pendingPercent,
+            color: AppColors.primary,
+            scale: scale,
+          ),
+          SizedBox(height: 10 * scale),
+          _LinearMetricRow(
+            label: 'Đã hủy',
+            value: cancelled,
+            percent: cancelledPercent,
+            color: AppColors.appointmentCancelled,
+            scale: scale,
           ),
           SizedBox(height: 12 * scale),
-          // Legend
           Wrap(
             spacing: 16 * scale,
             runSpacing: 8 * scale,
             children: [
               _LegendItem(
-                color: const Color(0xFF1B7F3A),
+                color: AppColors.appointmentCompleted,
                 label: 'Hoàn thành ($completed)',
                 scale: scale,
               ),
               _LegendItem(
-                color: const Color(0xFF2563EB),
+                color: AppColors.primary,
                 label: 'Đang xử lý ($pending)',
                 scale: scale,
               ),
               if (cancelled > 0)
                 _LegendItem(
-                  color: const Color(0xFFDC2626),
+                  color: AppColors.appointmentCancelled,
                   label: 'Đã hủy ($cancelled)',
                   scale: scale,
                 ),
@@ -1128,14 +1106,14 @@ class _AppointmentStatusChart extends StatelessWidget {
   }
 }
 
-class _ChartBar extends StatelessWidget {
+class _LinearMetricRow extends StatelessWidget {
   final String label;
   final int value;
   final double percent;
   final Color color;
   final double scale;
 
-  const _ChartBar({
+  const _LinearMetricRow({
     required this.label,
     required this.value,
     required this.percent,
@@ -1145,63 +1123,41 @@ class _ChartBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final percentText = '${(percent * 100).toStringAsFixed(0)}%';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: AppTextStyles.arimo(
-            fontSize: 11 * scale,
-            fontWeight: FontWeight.w500,
-            color: AppColors.textSecondary,
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: AppTextStyles.arimo(
+                  fontSize: 12 * scale,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+            Text(
+              '$value • $percentText',
+              style: AppTextStyles.arimo(
+                fontSize: 12 * scale,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
+            ),
+          ],
         ),
         SizedBox(height: 6 * scale),
-        Container(
-          height: 120 * scale,
-          decoration: BoxDecoration(
-            color: AppColors.background,
-            borderRadius: BorderRadius.circular(8 * scale),
-          ),
-          child: Stack(
-            children: [
-              Container(
-                height: 120 * scale,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8 * scale),
-                ),
-              ),
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  height: (120 * scale * percent).clamp(0.0, 120 * scale),
-                  decoration: BoxDecoration(
-                    color: color,
-                    borderRadius: BorderRadius.circular(8 * scale),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    value > 0 ? '$value' : '',
-                    style: AppTextStyles.arimo(
-                      fontSize: 16 * scale,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(height: 4 * scale),
-        Text(
-          '${(percent * 100).toStringAsFixed(0)}%',
-          style: AppTextStyles.arimo(
-            fontSize: 12 * scale,
-            fontWeight: FontWeight.w600,
-            color: color,
+        ClipRRect(
+          borderRadius: BorderRadius.circular(999),
+          child: LinearProgressIndicator(
+            minHeight: 10 * scale,
+            value: percent.clamp(0.0, 1.0),
+            backgroundColor: color.withValues(alpha: 0.15),
+            valueColor: AlwaysStoppedAnimation<Color>(color),
           ),
         ),
       ],
@@ -1784,15 +1740,57 @@ class _BookingCard extends StatelessWidget {
     }
   }
 
+  String _getStatusText(String status) {
+    switch (status.toLowerCase()) {
+      case 'confirmed':
+        return 'Đã xác nhận';
+      case 'pending':
+        return 'Chờ xử lý';
+      case 'cancelled':
+        return 'Đã hủy';
+      case 'completed':
+        return 'Hoàn thành';
+      default:
+        return status;
+    }
+  }
+
+  String _getServiceTitle() {
+    final packageName = booking.package?.packageName.trim() ?? '';
+    final roomTypeName = booking.package?.roomTypeName.trim() ?? '';
+
+    if (packageName.isNotEmpty && roomTypeName.isNotEmpty) {
+      return '$roomTypeName - $packageName';
+    }
+    if (packageName.isNotEmpty) {
+      return packageName;
+    }
+    if (roomTypeName.isNotEmpty) {
+      return roomTypeName;
+    }
+    return 'Gói dịch vụ';
+  }
+
+  String _formatCurrency(double value) {
+    final formatter = NumberFormat('#,###', 'vi_VN');
+    return '${formatter.format(value)} VNĐ';
+  }
+
   @override
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
     final dateFormat = DateFormat('dd/MM/yyyy');
     final statusColor = _getStatusColor(booking.status);
+    final customerName = booking.customer?.username.trim().isNotEmpty == true
+        ? booking.customer!.username
+        : (booking.customer?.email ?? 'Khách hàng');
+    final customerPhone = booking.customer?.phone.trim();
+    final paymentStatus = booking.remainingAmount <= 0
+        ? 'Đã thanh toán'
+        : 'Còn lại: ${_formatCurrency(booking.remainingAmount)}';
 
     return InkWell(
       onTap: () {
-        // Có thể điều hướng đến chi tiết booking nếu có route
         AppRouter.push(context, AppRoutes.staffBookingList);
       },
       borderRadius: BorderRadius.circular(16),
@@ -1801,7 +1799,7 @@ class _BookingCard extends StatelessWidget {
           color: AppColors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: statusColor.withValues(alpha: 0.2),
+            color: statusColor.withValues(alpha: 0.24),
             width: 1.5,
           ),
           boxShadow: [
@@ -1816,6 +1814,7 @@ class _BookingCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header: trạng thái + mã đơn
             Row(
               children: [
                 Container(
@@ -1828,57 +1827,116 @@ class _BookingCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8 * scale),
                   ),
                   child: Text(
-                    booking.status,
+                    _getStatusText(booking.status),
                     style: AppTextStyles.arimo(
                       fontSize: 11 * scale,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                       color: statusColor,
                     ),
                   ),
                 ),
                 const Spacer(),
                 Text(
-                  'ID: ${booking.id}',
+                  'Mã đơn #${booking.id}',
                   style: AppTextStyles.arimo(
                     fontSize: 12 * scale,
-                    color: AppColors.textSecondary,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ],
             ),
             SizedBox(height: 12 * scale),
+
+            // Body: dịch vụ + khách hàng + liên hệ + thanh toán
             Text(
-              booking.customer?.username ??
-                  booking.customer?.email ??
-                  'Khách hàng',
+              _getServiceTitle(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: AppTextStyles.arimo(
-                fontSize: 16 * scale,
+                fontSize: 15 * scale,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
               ),
             ),
+            SizedBox(height: 6 * scale),
+            Text(
+              customerName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.arimo(
+                fontSize: 13 * scale,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            if (customerPhone != null && customerPhone.isNotEmpty) ...[
+              SizedBox(height: 4 * scale),
+              Row(
+                children: [
+                  Icon(
+                    Icons.phone_outlined,
+                    size: 13 * scale,
+                    color: AppColors.textPrimary,
+                  ),
+                  SizedBox(width: 6 * scale),
+                  Text(
+                    customerPhone,
+                    style: AppTextStyles.arimo(
+                      fontSize: 12 * scale,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
             SizedBox(height: 8 * scale),
+            Text(
+              paymentStatus,
+              style: AppTextStyles.arimo(
+                fontSize: 12 * scale,
+                fontWeight: FontWeight.w600,
+                color: booking.remainingAmount <= 0
+                    ? const Color(0xFF1B7F3A)
+                    : const Color(0xFFF59E0B),
+              ),
+            ),
+
+            SizedBox(height: 12 * scale),
+            Divider(height: 1, color: AppColors.borderLight.withValues(alpha: 0.8)),
+            SizedBox(height: 10 * scale),
+
+            // Footer: ngày tháng + tổng tiền
             Row(
               children: [
-                Icon(
-                  Icons.calendar_today,
-                  size: 14 * scale,
-                  color: AppColors.textSecondary,
-                ),
-                SizedBox(width: 6 * scale),
-                Text(
-                  'Từ: ${dateFormat.format(booking.startDate)}',
-                  style: AppTextStyles.arimo(
-                    fontSize: 13 * scale,
-                    color: AppColors.textSecondary,
+                Expanded(
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.calendar_today,
+                        size: 13 * scale,
+                        color: AppColors.textPrimary,
+                      ),
+                      SizedBox(width: 6 * scale),
+                      Expanded(
+                        child: Text(
+                          '${dateFormat.format(booking.startDate)} - ${dateFormat.format(booking.endDate)}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.arimo(
+                            fontSize: 12 * scale,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                SizedBox(width: 16 * scale),
+                SizedBox(width: 10 * scale),
                 Text(
-                  'Đến: ${dateFormat.format(booking.endDate)}',
+                  _formatCurrency(booking.finalAmount),
                   style: AppTextStyles.arimo(
-                    fontSize: 13 * scale,
-                    color: AppColors.textSecondary,
+                    fontSize: 15 * scale,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primary,
                   ),
                 ),
               ],

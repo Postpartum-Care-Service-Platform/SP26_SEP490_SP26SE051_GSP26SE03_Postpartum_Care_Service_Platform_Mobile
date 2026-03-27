@@ -208,8 +208,18 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
 
   @override
   Future<List<SupportRequestModel>> getMySupportRequests() async {
+    Future<Response<dynamic>> requestOnce() {
+      return _dio.get(
+        ApiEndpoints.chatSupportRequestsMy,
+        options: Options(
+          receiveTimeout: const Duration(seconds: 90),
+          sendTimeout: const Duration(seconds: 90),
+        ),
+      );
+    }
+
     try {
-      final response = await _dio.get(ApiEndpoints.chatSupportRequestsMy);
+      final response = await requestOnce();
       final data = response.data;
       if (data is List) {
         return data
@@ -218,6 +228,28 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
       }
       throw Exception('Phản hồi danh sách yêu cầu hỗ trợ của tôi không hợp lệ');
     } on DioException catch (e) {
+      final isTimeout =
+          e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout;
+
+      if (isTimeout) {
+        try {
+          final retryResponse = await requestOnce();
+          final retryData = retryResponse.data;
+          if (retryData is List) {
+            return retryData
+                .map(
+                  (item) => SupportRequestModel.fromJson(
+                    item as Map<String, dynamic>,
+                  ),
+                )
+                .toList();
+          }
+        } on DioException {
+          throw Exception('Kết nối tới máy chủ chậm. Vui lòng thử lại sau ít phút.');
+        }
+      }
+
       throw Exception('Không thể tải yêu cầu hỗ trợ của tôi: ${e.message}');
     }
   }
