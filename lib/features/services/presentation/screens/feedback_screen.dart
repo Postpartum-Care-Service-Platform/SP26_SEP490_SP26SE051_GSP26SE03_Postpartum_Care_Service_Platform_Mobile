@@ -5,11 +5,11 @@ import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
+import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_app_bar.dart';
 import '../../../../core/widgets/app_loading.dart';
 import '../../../../core/widgets/app_toast.dart';
 import '../../../../core/widgets/app_widgets.dart';
-import '../../domain/entities/feedback_type_entity.dart';
 import '../bloc/feedback_bloc.dart';
 import '../bloc/feedback_event.dart';
 import '../bloc/feedback_state.dart';
@@ -46,8 +46,9 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       context.read<FeedbackBloc>().add(const FeedbackTypesLoadRequested());
       // Wait a bit then show sheet
       Future.delayed(const Duration(milliseconds: 500), () {
+        if (!mounted) return;
         final newState = context.read<FeedbackBloc>().state;
-        if (newState is FeedbackTypesLoaded && mounted) {
+        if (newState is FeedbackTypesLoaded) {
           CreateFeedbackSheet.show(context, newState.types);
         }
       });
@@ -90,7 +91,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
 
             if (state is MyFeedbacksLoaded) {
               if (state.feedbacks.isEmpty) {
-                return _buildEmptyState(context, scale, state.types);
+                return _buildEmptyState(context, scale);
               }
 
               return RefreshIndicator(
@@ -175,58 +176,46 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   Widget _buildEmptyState(
     BuildContext context,
     double scale,
-    List<dynamic> feedbackTypes,
   ) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.feedback_outlined,
-            size: 80 * scale,
-            color: AppColors.textSecondary.withValues(alpha: 0.5),
-          ),
-          SizedBox(height: 16 * scale),
-          Text(
-            'Chưa có feedback nào',
-            style: TextStyle(
-              fontSize: 18 * scale,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
+      child: Padding(
+        padding: EdgeInsets.all(40 * scale),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: EdgeInsets.all(24 * scale),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.rate_review_outlined,
+                size: 44 * scale,
+                color: AppColors.primary,
+              ),
             ),
-          ),
-          SizedBox(height: 8 * scale),
-          Text(
-            'Hãy chia sẻ trải nghiệm của bạn',
-            style: TextStyle(
-              fontSize: 14 * scale,
-              color: AppColors.textSecondary,
+            SizedBox(height: 24 * scale),
+            Text(
+              AppStrings.feedbackNoFeedback,
+              style: AppTextStyles.tinos(
+                fontSize: 22 * scale,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+              textAlign: TextAlign.center,
             ),
-          ),
-          SizedBox(height: 32 * scale),
-          AppWidgets.primaryButton(
-            text: 'Viết feedback đầu tiên',
-            onPressed: () {
-              if (feedbackTypes.isNotEmpty) {
-                CreateFeedbackSheet.show(
-                  context,
-                  feedbackTypes.cast<FeedbackTypeEntity>(),
-                );
-              } else {
-                context.read<FeedbackBloc>().add(
-                      const FeedbackTypesLoadRequested(),
-                    );
-                Future.delayed(const Duration(milliseconds: 500), () {
-                  final state = context.read<FeedbackBloc>().state;
-                  if (state is FeedbackTypesLoaded && mounted) {
-                    CreateFeedbackSheet.show(context, state.types);
-                  }
-                });
-              }
-            },
-            width: 200,
-          ),
-        ],
+            SizedBox(height: 8 * scale),
+            Text(
+              AppStrings.feedbackShareExperience,
+              style: AppTextStyles.arimo(
+                fontSize: 14 * scale,
+                color: AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }

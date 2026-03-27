@@ -97,6 +97,8 @@ class _ResortKeyCardState extends State<ResortKeyCard>
         return AppStrings.statusPending;
       case 'Confirmed':
         return AppStrings.bookingStatusConfirmed;
+      case 'InProgress':
+        return AppStrings.bookingStatusInProgress;
       case 'Cancelled':
         return AppStrings.statusCancelled;
       case 'Completed':

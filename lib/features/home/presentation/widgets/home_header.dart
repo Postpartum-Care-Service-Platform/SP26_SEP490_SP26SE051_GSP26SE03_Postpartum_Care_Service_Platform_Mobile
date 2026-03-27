@@ -17,8 +17,8 @@ class HomeHeader extends StatelessWidget {
       children: [
         SvgPicture.asset(
           AppAssets.theJoyfulNestBrand,
-          width: 132 * scale,
-          height: 40 * scale,
+          width: 122 * scale,
+          height: 30 * scale,
           fit: BoxFit.contain,
           colorFilter: const ColorFilter.mode(AppColors.primary, BlendMode.srcIn),
         ),

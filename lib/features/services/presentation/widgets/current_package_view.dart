@@ -125,7 +125,7 @@ class CurrentPackageView extends StatelessWidget {
             ],
             ResortKeyCard(nowPackage: nowPackage),
             SizedBox(height: 16 * scale),
-            if (nowPackage.serviceIsActive) ...[
+            if (nowPackage.isServiceUnlocked) ...[
               _AccountQuickInfo(account: account),
               SizedBox(height: 16 * scale),
               _InProgressSection(nowPackage: nowPackage),
@@ -260,8 +260,8 @@ class CurrentPackageView extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context, double scale) {
-    // Ẩn "Đặt gói dịch vụ" khi dịch vụ đã được kích hoạt
-    if (nowPackage.serviceIsActive) {
+    // Ẩn "Đặt gói dịch vụ" khi dịch vụ đã được mở (active hoặc InProgress)
+    if (nowPackage.isServiceUnlocked) {
       return const SizedBox.shrink();
     }
 

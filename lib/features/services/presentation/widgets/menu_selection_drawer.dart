@@ -46,11 +46,10 @@ class _MenuSelectionDrawerState extends State<MenuSelectionDrawer> {
     _tempSelections.addAll(widget.unsavedSelections);
   }
 
-  /// Sort menu types in order: Sáng, Phụ (Sáng), Trưa, Phụ (Chiều), Tối
+  /// Sort menu types in order: Sáng, Phụ (Sáng), Trưa, Chiều, Phụ (Chiều), Phụ (Tối)
   List<MenuTypeEntity> _getSortedMenuTypes() {
     final sorted = List<MenuTypeEntity>.from(widget.menuTypes);
     sorted.sort((a, b) {
-      // Define order: Sáng (1), Phụ (Sáng) (4), Trưa (2), Phụ (Chiều) (5), Tối (3)
       final orderA = _getMenuTypeOrder(a.name);
       final orderB = _getMenuTypeOrder(b.name);
       return orderA.compareTo(orderB);
@@ -65,10 +64,12 @@ class _MenuSelectionDrawerState extends State<MenuSelectionDrawer> {
       return 2; // Phụ (Sáng)
     } else if (name.contains('Trưa')) {
       return 3; // Trưa
+    } else if (name.contains('Chiều') && !name.contains('Phụ')) {
+      return 4; // Chiều
     } else if (name.contains('Phụ') && name.contains('Chiều')) {
-      return 4; // Phụ (Chiều)
-    } else if (name.contains('Tối')) {
-      return 5; // Tối
+      return 5; // Phụ (Chiều)
+    } else if (name.contains('Phụ') && name.contains('Tối')) {
+      return 6; // Phụ (Tối)
     }
     return 99; // Unknown, put at end
   }

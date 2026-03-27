@@ -45,22 +45,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   SizedBox(height: 8 * scale),
                   const HomeHeader(),
-                  SizedBox(height: 24 * scale),
+                  SizedBox(height: 10 * scale),
+                  _ArtDivider(scale: scale),
+                  SizedBox(height: 18 * scale),
 
                   const HomeWelcomeSection(),
                   SizedBox(height: 28 * scale),
-
-                  const HomeServiceGallerySection(),
-                  SizedBox(height: 28 * scale),
-
-                  const HomeExperienceBanner(),
-                  SizedBox(height: 28 * scale),
-
-                  const HomeTestimonialBanner(),
-                  SizedBox(height: 28 * scale),
-
-                  const HomeLoveWallSection(),
-                  SizedBox(height: 32 * scale),
 
                   Builder(
                     builder: (homeContext) => SectionHeader(
@@ -146,6 +136,18 @@ class _HomeScreenState extends State<HomeScreen> {
                       return const SizedBox.shrink();
                     },
                   ),
+                  SizedBox(height: 28 * scale),
+                  const HomeTestimonialBanner(),
+
+                  SizedBox(height: 28 * scale),
+
+                  const HomeLoveWallSection(),
+                  SizedBox(height: 28 * scale),
+                  const HomeExperienceBanner(),
+
+                  SizedBox(height: 32 * scale),
+
+                  const HomeServiceGallerySection(),
                   const SizedBox(height: 24),
                 ],
               ),
@@ -154,5 +156,127 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       ),
     );
+  }
+}
+
+class _ArtDivider extends StatelessWidget {
+  final double scale;
+
+  const _ArtDivider({required this.scale});
+
+  @override
+  Widget build(BuildContext context) {
+    final stroke = 1.2 * scale;
+    final waveHeight = 16 * scale;
+    final iconSize = 15 * scale;
+
+    return SizedBox(
+      height: 30 * scale,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: SizedBox(
+              height: waveHeight,
+              child: CustomPaint(
+                painter: _SideWavePainter(
+                  color: AppColors.primary.withValues(alpha: 0.5),
+                  strokeWidth: stroke,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(width: 10 * scale),
+          Container(
+            width: 26 * scale,
+            height: 26 * scale,
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.35),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.08),
+                  blurRadius: 8 * scale,
+                  offset: Offset(0, 2 * scale),
+                ),
+              ],
+            ),
+            child: Icon(
+              Icons.spa_outlined,
+              size: iconSize,
+              color: AppColors.primary.withValues(alpha: 0.92),
+            ),
+          ),
+          SizedBox(width: 10 * scale),
+          Expanded(
+            child: Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.identity()..rotateY(3.141592653589793),
+              child: SizedBox(
+                height: waveHeight,
+                child: CustomPaint(
+                  painter: _SideWavePainter(
+                    color: AppColors.primary.withValues(alpha: 0.5),
+                    strokeWidth: stroke,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SideWavePainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+
+  const _SideWavePainter({
+    required this.color,
+    required this.strokeWidth,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round
+      ..isAntiAlias = true;
+
+    final centerY = size.height / 2;
+
+    final path = Path()
+      ..moveTo(0, centerY)
+      ..cubicTo(
+        size.width * 0.18,
+        centerY - size.height * 0.60,
+        size.width * 0.38,
+        centerY + size.height * 0.65,
+        size.width * 0.56,
+        centerY,
+      )
+      ..cubicTo(
+        size.width * 0.74,
+        centerY - size.height * 0.65,
+        size.width * 0.88,
+        centerY + size.height * 0.45,
+        size.width,
+        centerY,
+      );
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _SideWavePainter oldDelegate) {
+    return oldDelegate.color != color || oldDelegate.strokeWidth != strokeWidth;
   }
 }

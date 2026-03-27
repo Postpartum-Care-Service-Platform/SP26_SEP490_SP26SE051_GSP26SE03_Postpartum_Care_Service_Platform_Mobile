@@ -18,6 +18,95 @@ class FeedbackCard extends StatelessWidget {
     this.feedbackType,
   });
 
+  List<TextSpan> _buildContentSpans(String content, double scale) {
+    final spans = <TextSpan>[];
+    final boldPattern = RegExp(r'\*\*(.+?)\*\*', dotAll: true);
+
+    int currentIndex = 0;
+    for (final match in boldPattern.allMatches(content)) {
+      if (match.start > currentIndex) {
+        spans.add(TextSpan(text: content.substring(currentIndex, match.start)));
+      }
+
+      final boldText = match.group(1);
+      if (boldText != null && boldText.isNotEmpty) {
+        spans.add(
+          TextSpan(
+            text: boldText,
+            style: AppTextStyles.arimo(
+              fontSize: 14 * scale,
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        );
+      }
+
+      currentIndex = match.end;
+    }
+
+    if (currentIndex < content.length) {
+      spans.add(TextSpan(text: content.substring(currentIndex)));
+    }
+
+    if (spans.isEmpty) {
+      spans.add(TextSpan(text: content));
+    }
+
+    return spans;
+  }
+
+  void _openImageViewer(BuildContext context, int initialIndex) {
+    final pageController = PageController(initialPage: initialIndex);
+
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.92),
+      builder: (dialogContext) {
+        return Dialog.fullscreen(
+          backgroundColor: Colors.black.withValues(alpha: 0.96),
+          child: SafeArea(
+            child: Stack(
+              children: [
+                PageView.builder(
+                  controller: pageController,
+                  itemCount: feedback.images.length,
+                  itemBuilder: (context, index) {
+                    return InteractiveViewer(
+                      minScale: 0.8,
+                      maxScale: 4.0,
+                      child: Center(
+                        child: Image.network(
+                          feedback.images[index],
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) => Icon(
+                            Icons.broken_image_outlined,
+                            color: AppColors.white,
+                            size: 52,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: IconButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(),
+                    icon: const Icon(Icons.close_rounded),
+                    color: AppColors.white,
+                    tooltip: 'Đóng',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
@@ -96,15 +185,15 @@ class FeedbackCard extends StatelessWidget {
             ),
           ),
           SizedBox(height: 12 * scale),
-          // Content - with line breaks support
-          Text(
-            feedback.content,
-            style: AppTextStyles.arimo(
-              fontSize: 14 * scale,
-              color: AppColors.textPrimary,
-            ).copyWith(height: 1.6),
-            maxLines: null,
-            softWrap: true,
+          // Content - supports line breaks and markdown-style bold: **text**
+          RichText(
+            text: TextSpan(
+              style: AppTextStyles.arimo(
+                fontSize: 14 * scale,
+                color: AppColors.textPrimary,
+              ).copyWith(height: 1.6),
+              children: _buildContentSpans(feedback.content, scale),
+            ),
           ),
           // Images
           if (feedback.hasImages) ...[
@@ -115,43 +204,46 @@ class FeedbackCard extends StatelessWidget {
                 scrollDirection: Axis.horizontal,
                 itemCount: feedback.images.length,
                 itemBuilder: (context, index) {
-                  return Container(
-                    width: 120 * scale,
-                    height: 120 * scale,
-                    margin: EdgeInsets.only(right: 8 * scale),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12 * scale),
-                      border: Border.all(
-                        color: AppColors.borderLight,
-                        width: 1,
+                  return GestureDetector(
+                    onTap: () => _openImageViewer(context, index),
+                    child: Container(
+                      width: 120 * scale,
+                      height: 120 * scale,
+                      margin: EdgeInsets.only(right: 8 * scale),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12 * scale),
+                        border: Border.all(
+                          color: AppColors.borderLight,
+                          width: 1,
+                        ),
                       ),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12 * scale),
-                      child: Image.network(
-                        feedback.images[index],
-                        fit: BoxFit.cover,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Container(
-                            color: AppColors.background,
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                color: AppColors.primary,
-                                strokeWidth: 2,
-                                value: loadingProgress.expectedTotalBytes != null
-                                    ? loadingProgress.cumulativeBytesLoaded /
-                                        loadingProgress.expectedTotalBytes!
-                                    : null,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12 * scale),
+                        child: Image.network(
+                          feedback.images[index],
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
+                              color: AppColors.background,
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  color: AppColors.primary,
+                                  strokeWidth: 2,
+                                  value: loadingProgress.expectedTotalBytes != null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                          loadingProgress.expectedTotalBytes!
+                                      : null,
+                                ),
                               ),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            color: AppColors.background,
+                            child: Icon(
+                              Icons.error_outline,
+                              color: AppColors.textSecondary,
                             ),
-                          );
-                        },
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          color: AppColors.background,
-                          child: Icon(
-                            Icons.error_outline,
-                            color: AppColors.textSecondary,
                           ),
                         ),
                       ),

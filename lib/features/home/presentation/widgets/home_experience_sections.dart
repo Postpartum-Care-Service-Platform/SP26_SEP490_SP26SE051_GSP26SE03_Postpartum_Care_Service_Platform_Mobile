@@ -46,10 +46,9 @@ class HomeWelcomeSection extends StatelessWidget {
             color: AppColors.textPrimary,
           ).copyWith(
             height: 1.5,
-            fontStyle: FontStyle.italic,
           ),
         ),
-        SizedBox(height: 28 * scale),
+        SizedBox(height: 22 * scale),
         Center(
           child: SvgPicture.asset(
             AppAssets.appIconFourth,
