@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/di/injection_container.dart';
@@ -168,10 +170,10 @@ class _ArtDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     final stroke = 1.2 * scale;
     final waveHeight = 16 * scale;
-    final iconSize = 15 * scale;
+    final iconSize = 26 * scale;
 
     return SizedBox(
-      height: 30 * scale,
+      height: 40 * scale,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -187,29 +189,11 @@ class _ArtDivider extends StatelessWidget {
             ),
           ),
           SizedBox(width: 10 * scale),
-          Container(
-            width: 26 * scale,
-            height: 26 * scale,
-            decoration: BoxDecoration(
-              color: AppColors.background,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: AppColors.primary.withValues(alpha: 0.35),
-                width: 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.08),
-                  blurRadius: 8 * scale,
-                  offset: Offset(0, 2 * scale),
-                ),
-              ],
-            ),
-            child: Icon(
-              Icons.spa_outlined,
-              size: iconSize,
-              color: AppColors.primary.withValues(alpha: 0.92),
-            ),
+          SvgPicture.asset(
+            AppAssets.appIconFourth,
+            width: iconSize,
+            height: iconSize,
+            fit: BoxFit.contain,
           ),
           SizedBox(width: 10 * scale),
           Expanded(

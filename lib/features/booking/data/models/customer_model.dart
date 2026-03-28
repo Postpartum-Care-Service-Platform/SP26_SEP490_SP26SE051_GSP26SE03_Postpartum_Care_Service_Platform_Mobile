@@ -16,10 +16,10 @@ class CustomerModel {
 
   factory CustomerModel.fromJson(Map<String, dynamic> json) {
     return CustomerModel(
-      id: json['id'] as String,
-      email: json['email'] as String,
-      username: json['username'] as String,
-      phone: json['phone'] as String,
+      id: (json['id'] as String?) ?? '',
+      email: (json['email'] as String?) ?? '',
+      username: (json['username'] as String?) ?? '',
+      phone: (json['phone'] as String?) ?? '',
     );
   }
 

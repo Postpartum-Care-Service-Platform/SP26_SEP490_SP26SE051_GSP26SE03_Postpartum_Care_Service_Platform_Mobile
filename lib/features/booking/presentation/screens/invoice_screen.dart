@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:url_launcher/url_launcher.dart';
+
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
@@ -179,7 +179,10 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                           _PaneScaffold(
                             scale: scale,
                             child: booking.customer != null
-                                ? CustomerInfoCard(customer: booking.customer!)
+                                ? CustomerInfoCard(
+                                    customer: booking.customer!,
+                                    targetBookings: booking.targetBookings,
+                                  )
                                 : _PaneEmpty(
                                     label: AppStrings.noCustomerInformation,
                                     scale: scale,
@@ -376,10 +379,13 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
   }
 
   Future<void> _openContract(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
+    if (!mounted) return;
+
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => _ContractImageViewerScreen(imageUrl: url),
+      ),
+    );
   }
 
   void _navigateBack() {
@@ -505,6 +511,75 @@ class _PaneEmpty extends StatelessWidget {
           style: AppTextStyles.arimo(
             fontSize: 13 * scale,
             color: AppColors.textSecondary,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ContractImageViewerScreen extends StatelessWidget {
+  final String imageUrl;
+
+  const _ContractImageViewerScreen({required this.imageUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: Text(
+          'Hợp đồng',
+          style: AppTextStyles.tinos(
+            fontSize: 20 * scale,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
+        ),
+      ),
+      body: Center(
+        child: InteractiveViewer(
+          minScale: 0.8,
+          maxScale: 5,
+          child: Image.network(
+            imageUrl,
+            fit: BoxFit.contain,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return const Center(
+                child: CircularProgressIndicator(
+                  color: AppColors.primary,
+                ),
+              );
+            },
+            errorBuilder: (context, error, stackTrace) {
+              return Padding(
+                padding: EdgeInsets.symmetric(horizontal: 24 * scale),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.broken_image_outlined,
+                      color: Colors.white70,
+                      size: 44 * scale,
+                    ),
+                    SizedBox(height: 12 * scale),
+                    Text(
+                      'Không thể hiển thị hợp đồng dưới dạng ảnh.',
+                      textAlign: TextAlign.center,
+                      style: AppTextStyles.arimo(
+                        fontSize: 14 * scale,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
         ),
       ),

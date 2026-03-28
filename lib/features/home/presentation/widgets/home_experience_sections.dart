@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -46,13 +45,6 @@ class HomeWelcomeSection extends StatelessWidget {
             color: AppColors.textPrimary,
           ).copyWith(
             height: 1.5,
-          ),
-        ),
-        SizedBox(height: 22 * scale),
-        Center(
-          child: SvgPicture.asset(
-            AppAssets.appIconFourth,
-            height: 40 * scale,
           ),
         ),
       ],

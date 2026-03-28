@@ -4,6 +4,7 @@ import 'package_info_entity.dart';
 import 'room_info_entity.dart';
 import 'contract_entity.dart';
 import 'transaction_entity.dart';
+import 'target_booking_entity.dart';
 
 /// Booking Entity - Domain layer
 class BookingEntity extends Equatable {
@@ -23,6 +24,7 @@ class BookingEntity extends Equatable {
   final RoomInfoEntity? room;
   final ContractEntity? contract;
   final List<TransactionEntity> transactions;
+  final List<TargetBookingEntity> targetBookings;
 
   const BookingEntity({
     required this.id,
@@ -41,6 +43,7 @@ class BookingEntity extends Equatable {
     this.room,
     this.contract,
     this.transactions = const [],
+    this.targetBookings = const [],
   });
 
   @override
@@ -61,5 +64,6 @@ class BookingEntity extends Equatable {
         room,
         contract,
         transactions,
+        targetBookings,
       ];
 }

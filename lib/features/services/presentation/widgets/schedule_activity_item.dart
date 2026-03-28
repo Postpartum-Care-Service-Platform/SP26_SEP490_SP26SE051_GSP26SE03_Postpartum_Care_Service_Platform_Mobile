@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_assets.dart';
-import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../domain/entities/family_schedule_entity.dart';
@@ -183,41 +182,6 @@ class ScheduleActivityItem extends StatelessWidget {
                         : null,
                   ),
                 ),
-                // Status indicator - below activity name (only for Missed and Cancelled)
-                if (isMissed || isCancelled) ...[
-                  SizedBox(height: 8 * scale),
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 8 * scale,
-                      vertical: 4 * scale,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isMissed
-                          ? AppColors.scheduleMissed.withValues(alpha: 0.15)
-                          : AppColors.scheduleCancelled.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(6 * scale),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          isMissed ? Icons.cancel : Icons.block,
-                          size: 12 * scale,
-                          color: isMissed ? AppColors.scheduleMissed : AppColors.scheduleCancelled,
-                        ),
-                        SizedBox(width: 4 * scale),
-                        Text(
-                          isMissed ? AppStrings.scheduleMissed : AppStrings.scheduleCancelled,
-                          style: AppTextStyles.tinos(
-                            fontSize: 10 * scale,
-                            fontWeight: FontWeight.w600,
-                            color: isMissed ? AppColors.scheduleMissed : AppColors.scheduleCancelled,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
                 // Note (if exists)
                 if (schedule.note != null && schedule.note!.isNotEmpty) ...[
                   SizedBox(height: 8 * scale),

@@ -4,6 +4,7 @@ import 'package_info_model.dart';
 import 'room_info_model.dart';
 import 'contract_model.dart';
 import 'transaction_model.dart';
+import 'target_booking_model.dart';
 
 /// Booking Model - Data layer
 class BookingModel {
@@ -23,6 +24,7 @@ class BookingModel {
   final RoomInfoModel? room;
   final ContractModel? contract;
   final List<TransactionModel> transactions;
+  final List<TargetBookingModel> targetBookings;
 
   BookingModel({
     required this.id,
@@ -41,6 +43,7 @@ class BookingModel {
     this.room,
     this.contract,
     this.transactions = const [],
+    this.targetBookings = const [],
   });
 
   factory BookingModel.fromJson(Map<String, dynamic> json) {
@@ -49,6 +52,12 @@ class BookingModel {
             .map((e) => TransactionModel.fromJson(e as Map<String, dynamic>))
             .toList()
         : <TransactionModel>[];
+
+    final targetBookings = json['targetBookings'] != null
+        ? (json['targetBookings'] as List<dynamic>)
+            .map((e) => TargetBookingModel.fromJson(e as Map<String, dynamic>))
+            .toList()
+        : <TargetBookingModel>[];
 
     final finalAmount = ((json['finalAmount'] as num?) ?? 0).toDouble();
 
@@ -61,7 +70,7 @@ class BookingModel {
         (finalAmount - paidAmount).clamp(0, double.infinity).toDouble();
 
     return BookingModel(
-      id: json['id'] as int,
+      id: (json['id'] as num?)?.toInt() ?? 0,
       startDate: DateTime.parse(json['startDate'] as String),
       endDate: DateTime.parse(json['endDate'] as String),
       totalPrice: ((json['totalPrice'] as num?) ?? 0).toDouble(),
@@ -85,6 +94,7 @@ class BookingModel {
           ? ContractModel.fromJson(json['contract'] as Map<String, dynamic>)
           : null,
       transactions: transactions,
+      targetBookings: targetBookings,
     );
   }
 
@@ -106,6 +116,7 @@ class BookingModel {
       'room': room?.toJson(),
       'contract': contract?.toJson(),
       'transactions': transactions.map((e) => e.toJson()).toList(),
+      'targetBookings': targetBookings.map((e) => e.toJson()).toList(),
     };
   }
 
@@ -127,6 +138,7 @@ class BookingModel {
       room: room?.toEntity(),
       contract: contract?.toEntity(),
       transactions: transactions.map((e) => e.toEntity()).toList(),
+      targetBookings: targetBookings.map((e) => e.toEntity()).toList(),
     );
   }
 }

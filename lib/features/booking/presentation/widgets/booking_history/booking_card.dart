@@ -95,6 +95,8 @@ class BookingCard extends StatelessWidget {
                           packageName: booking.package?.packageName,
                           roomName: booking.room?.name,
                           roomFloor: booking.room?.floor,
+                          durationDays: booking.package?.durationDays,
+                          roomTypeName: booking.package?.roomTypeName,
                         ),
 
                       SizedBox(height: 20 * scale),
@@ -502,34 +504,48 @@ class _PackageRoomRow extends StatelessWidget {
   final String? packageName;
   final String? roomName;
   final int? roomFloor;
+  final int? durationDays;
+  final String? roomTypeName;
 
   const _PackageRoomRow({
     this.packageName,
     this.roomName,
     this.roomFloor,
+    this.durationDays,
+    this.roomTypeName,
   });
 
   @override
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
 
+    final roomValue = [
+      if ((roomName ?? '').trim().isNotEmpty) roomName!.trim(),
+      if (roomFloor != null) 'Tầng $roomFloor',
+      if ((roomTypeName ?? '').trim().isNotEmpty) roomTypeName!.trim(),
+    ].join(' • ');
+
+    final packageValue = [
+      if ((packageName ?? '').trim().isNotEmpty) packageName!.trim(),
+    ].join(' • ');
+
     return Row(
       children: [
-        if (packageName != null) ...[
+        if ((packageName ?? '').trim().isNotEmpty) ...[
           Expanded(
             child: _InfoSection(
               label: 'Gói dịch vụ',
-              value: packageName!,
+              value: packageValue,
               icon: Icons.bed_rounded,
             ),
           ),
-          if (roomName != null) SizedBox(width: 12 * scale),
+          if (roomValue.isNotEmpty) SizedBox(width: 12 * scale),
         ],
-        if (roomName != null)
+        if (roomValue.isNotEmpty)
           Expanded(
             child: _InfoSection(
               label: 'Phòng',
-              value: '$roomName${roomFloor != null ? ' - Tầng $roomFloor' : ''}',
+              value: roomValue,
               icon: Icons.business_rounded,
             ),
           ),
@@ -537,6 +553,7 @@ class _PackageRoomRow extends StatelessWidget {
     );
   }
 }
+
 
 class _PriceSection extends StatelessWidget {
   final double finalAmount;

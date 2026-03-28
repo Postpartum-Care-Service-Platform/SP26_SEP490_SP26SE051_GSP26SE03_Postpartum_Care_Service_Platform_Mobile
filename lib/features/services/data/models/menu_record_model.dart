@@ -4,7 +4,7 @@ import '../../domain/entities/menu_record_entity.dart';
 class MenuRecordModel extends MenuRecordEntity {
   const MenuRecordModel({
     required super.id,
-    required super.accountId,
+    super.accountId,
     required super.menuId,
     required super.name,
     required super.date,
@@ -16,9 +16,9 @@ class MenuRecordModel extends MenuRecordEntity {
   factory MenuRecordModel.fromJson(Map<String, dynamic> json) {
     return MenuRecordModel(
       id: json['id'] as int,
-      accountId: json['accountId'] as String,
+      accountId: json['accountId'] as String?,
       menuId: json['menuId'] as int,
-      name: json['name'] as String,
+      name: (json['name'] as String?) ?? '',
       date: DateTime.parse(json['date'] as String),
       isActive: json['isActive'] as bool? ?? true,
       createdAt: DateTime.parse(json['createdAt'] as String),

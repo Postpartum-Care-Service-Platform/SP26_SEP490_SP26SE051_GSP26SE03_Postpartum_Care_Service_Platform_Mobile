@@ -4,14 +4,17 @@ import '../../../../../core/constants/app_strings.dart';
 import '../../../../../core/utils/app_responsive.dart';
 import '../../../../../core/utils/app_text_styles.dart';
 import '../../../domain/entities/customer_entity.dart';
+import '../../../domain/entities/target_booking_entity.dart';
 import 'invoice_info_row.dart';
 
 class CustomerInfoCard extends StatelessWidget {
   final CustomerEntity customer;
+  final List<TargetBookingEntity> targetBookings;
 
   const CustomerInfoCard({
     super.key,
     required this.customer,
+    this.targetBookings = const [],
   });
 
   @override
@@ -64,6 +67,67 @@ class CustomerInfoCard extends StatelessWidget {
             label: AppStrings.invoicePhone,
             value: customer.phone,
           ),
+          if (targetBookings.isNotEmpty) ...[
+            SizedBox(height: 16 * scale),
+            Text(
+              'Đối tượng được phục vụ',
+              style: AppTextStyles.arimo(
+                fontSize: 13 * scale,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            SizedBox(height: 10 * scale),
+            ...targetBookings.map(
+              (target) => Padding(
+                padding: EdgeInsets.only(bottom: 8 * scale),
+                child: Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12 * scale,
+                    vertical: 10 * scale,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(10 * scale),
+                    border: Border.all(
+                      color: AppColors.borderLight,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.person_outline_rounded,
+                        size: 18 * scale,
+                        color: AppColors.primary,
+                      ),
+                      SizedBox(width: 8 * scale),
+                      Expanded(
+                        child: Text(
+                          target.fullName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.arimo(
+                            fontSize: 14 * scale,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      if ((target.relationship ?? '').trim().isNotEmpty)
+                        Text(
+                          target.relationship!,
+                          style: AppTextStyles.arimo(
+                            fontSize: 12 * scale,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
