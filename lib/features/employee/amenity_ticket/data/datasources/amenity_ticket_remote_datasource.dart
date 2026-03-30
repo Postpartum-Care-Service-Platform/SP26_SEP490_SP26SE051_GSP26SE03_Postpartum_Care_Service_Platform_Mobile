@@ -110,7 +110,7 @@ class AmenityTicketRemoteDataSource {
 
       switch (statusCode) {
         case 400:
-          return 'Dữ liệu không hợp lệ: $message';
+          return message; // Directly return the backend message for 400 errors like 'Trùng khung giờ'
         case 401:
           return 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.';
         case 403:

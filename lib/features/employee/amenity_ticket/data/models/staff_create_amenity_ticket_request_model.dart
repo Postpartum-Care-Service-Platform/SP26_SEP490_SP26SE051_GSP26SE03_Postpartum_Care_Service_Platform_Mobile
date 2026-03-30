@@ -3,12 +3,14 @@
 class StaffCreateAmenityTicketRequestModel {
   final int amenityServiceId;
   final String customerId; // Guid as String
-  final DateTime startTime;
-  final DateTime endTime;
+  final String date; // "yyyy-MM-dd"
+  final String startTime; // "HH:mm"
+  final String endTime; // "HH:mm"
 
   StaffCreateAmenityTicketRequestModel({
     required this.amenityServiceId,
     required this.customerId,
+    required this.date,
     required this.startTime,
     required this.endTime,
   });
@@ -18,8 +20,9 @@ class StaffCreateAmenityTicketRequestModel {
     return {
       'amenityServiceId': amenityServiceId,
       'customerId': customerId,
-      'startTime': startTime.toIso8601String(),
-      'endTime': endTime.toIso8601String(),
+      'date': date,
+      'startTime': startTime,
+      'endTime': endTime,
     };
   }
 }

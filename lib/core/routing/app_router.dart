@@ -61,6 +61,7 @@ import '../../features/booking/presentation/bloc/booking_bloc.dart';
 import '../../features/booking/presentation/bloc/booking_event.dart';
 import '../../features/chat/presentation/bloc/chat_bloc.dart';
 import '../../features/chat/presentation/bloc/chat_event.dart';
+import '../../features/employee/amenity_service/presentation/bloc/amenity_service/amenity_service_event.dart';
 import 'app_routes.dart';
 
 /// App Router - Centralized navigation management
@@ -255,7 +256,20 @@ class AppRouter {
 
       // Employee Routes - Quick Menu
       case AppRoutes.employeeAmenities:
-        return MaterialPageRoute(builder: (_) => const ServiceBookingScreen());
+        return MaterialPageRoute(
+          builder: (_) => MultiBlocProvider(
+            providers: [
+              BlocProvider(
+                create: (_) =>
+                    InjectionContainer.amenityServiceBloc
+                      ..add(const LoadActiveAmenityServices()),
+              ),
+              BlocProvider(create: (_) => InjectionContainer.amenityTicketBloc),
+              BlocProvider(create: (_) => InjectionContainer.staffScheduleBloc),
+            ],
+            child: const ServiceBookingScreen(),
+          ),
+        );
 
       case AppRoutes.employeeRooms:
         return MaterialPageRoute(builder: (_) => const EmployeeRoomsScreen());
@@ -316,7 +330,20 @@ class AppRouter {
         );
 
       case AppRoutes.serviceBooking:
-        return MaterialPageRoute(builder: (_) => const ServiceBookingScreen());
+        return MaterialPageRoute(
+          builder: (_) => MultiBlocProvider(
+            providers: [
+              BlocProvider(
+                create: (_) =>
+                    InjectionContainer.amenityServiceBloc
+                      ..add(const LoadActiveAmenityServices()),
+              ),
+              BlocProvider(create: (_) => InjectionContainer.amenityTicketBloc),
+              BlocProvider(create: (_) => InjectionContainer.staffScheduleBloc),
+            ],
+            child: const ServiceBookingScreen(),
+          ),
+        );
 
       case AppRoutes.staffAmenityTicketList:
         if (settings.arguments is Map<String, dynamic>) {

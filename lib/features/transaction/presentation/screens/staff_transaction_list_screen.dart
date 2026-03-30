@@ -278,8 +278,9 @@ class _StaffTransactionListScreenState
     if (_searchQuery.isNotEmpty) count++;
     if (_dateFrom != null) count++;
     if (_dateTo != null) count++;
-    if (_paymentMethodFilter != null && _paymentMethodFilter!.isNotEmpty)
+    if (_paymentMethodFilter != null && _paymentMethodFilter!.isNotEmpty) {
       count++;
+    }
     if (_amountFrom != null) count++;
     if (_amountTo != null) count++;
     return count;

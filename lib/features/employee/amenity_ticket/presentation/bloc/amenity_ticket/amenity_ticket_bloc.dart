@@ -34,15 +34,15 @@ class AmenityTicketBloc extends Bloc<AmenityTicketEvent, AmenityTicketState> {
     emit(const AmenityTicketLoading());
 
     try {
-      final tickets = await createServiceBooking(
+      final ticket = await createServiceBooking(
         customerId: event.customerId,
-        serviceIds: event.serviceIds,
+        amenityServiceId: event.amenityServiceId,
+        date: event.date,
         startTime: event.startTime,
         endTime: event.endTime,
-        notes: event.notes,
       );
       
-      emit(ServiceBookingCreated(tickets: tickets));
+      emit(ServiceBookingCreated(ticket: ticket));
     } catch (e) {
       emit(AmenityTicketError(e.toString()));
     }

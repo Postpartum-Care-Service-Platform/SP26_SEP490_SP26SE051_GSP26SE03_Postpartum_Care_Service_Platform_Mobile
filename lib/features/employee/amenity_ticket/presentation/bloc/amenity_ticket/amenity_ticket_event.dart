@@ -11,21 +11,21 @@ abstract class AmenityTicketEvent extends Equatable {
 /// Event to create service booking
 class CreateServiceBookingEvent extends AmenityTicketEvent {
   final String customerId;
-  final List<int> serviceIds;
-  final DateTime startTime;
-  final DateTime endTime;
-  final String? notes;
+  final int amenityServiceId;
+  final String date;
+  final String startTime;
+  final String endTime;
 
   const CreateServiceBookingEvent({
     required this.customerId,
-    required this.serviceIds,
+    required this.amenityServiceId,
+    required this.date,
     required this.startTime,
     required this.endTime,
-    this.notes,
   });
 
   @override
-  List<Object?> get props => [customerId, serviceIds, startTime, endTime, notes];
+  List<Object?> get props => [customerId, amenityServiceId, date, startTime, endTime];
 }
 
 /// Event to load tickets by customer

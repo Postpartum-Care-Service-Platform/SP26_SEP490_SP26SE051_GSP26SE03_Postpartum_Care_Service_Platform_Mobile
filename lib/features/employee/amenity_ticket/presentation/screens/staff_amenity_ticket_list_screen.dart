@@ -8,7 +8,6 @@ import '../../../../../core/di/injection_container.dart';
 import '../../../../../core/utils/app_responsive.dart';
 import '../../../../../core/utils/app_text_styles.dart';
 import '../../../../../features/employee/account/data/models/account_model.dart';
-import '../../../../../features/employee/account/data/datasources/account_remote_datasource.dart';
 import '../../../../../features/employee/amenity_ticket/domain/entities/amenity_ticket_entity.dart';
 import '../../domain/entities/amenity_ticket_status.dart';
 import '../../../../../features/employee/amenity_ticket/presentation/bloc/amenity_ticket/amenity_ticket_bloc.dart';
@@ -16,6 +15,7 @@ import '../../../../../features/employee/amenity_ticket/presentation/bloc/amenit
 import '../../../../../features/employee/amenity_ticket/presentation/bloc/amenity_ticket/amenity_ticket_state.dart';
 import '../../../../../features/employee/shell/presentation/widgets/employee_header_bar.dart';
 import '../../../../../features/employee/shell/presentation/widgets/employee_scaffold.dart';  
+import '../../../../../features/services/data/datasources/staff_schedule_remote_datasource.dart';
 
 /// Màn hình danh sách ticket tiện ích cho staff
 /// Cho phép staff xem, cập nhật, hủy ticket
@@ -45,21 +45,53 @@ class _StaffAmenityTicketListScreenState
     }
   }
 
+  String _formatDateOnly(DateTime value) {
+    final month = value.month.toString().padLeft(2, '0');
+    final day = value.day.toString().padLeft(2, '0');
+    return '${value.year}-$month-$day';
+  }
+
   Future<void> _loadCustomers() async {
     setState(() => _isLoadingCustomers = true);
     try {
-      final dataSource = AccountRemoteDataSource();
-      final customers = await dataSource.getCustomers();
+      // Get customers from staff schedules as requested
+      final now = DateTime.now();
+      final from = _formatDateOnly(now);
+      // "2 ngày" includes today and tomorrow
+      final to = _formatDateOnly(now.add(const Duration(days: 1)));
+      
+      final dataSource = StaffScheduleRemoteDataSourceImpl();
+      final schedules = await dataSource.getMySchedulesByDateRange(from: from, to: to);
+      
+      final Map<String, AccountModel> customerMap = {};
+      final nowTime = DateTime.now();
+
+      for (final schedule in schedules) {
+        if (schedule.familySchedule != null) {
+          final s = schedule.familySchedule!;
+          customerMap[s.customerId] = AccountModel(
+            id: s.customerId,
+            email: '', 
+            username: s.customerName ?? 'Khách hàng',
+            isActive: true,
+            createdAt: nowTime,
+            updatedAt: nowTime,
+            roleName: 'Customer',
+            isEmailVerified: true,
+          );
+        }
+      }
+
       setState(() {
-        _customers = customers;
+        _customers = customerMap.values.toList();
         _isLoadingCustomers = false;
       });
     } catch (e) {
-      setState(() => _isLoadingCustomers = false);
       if (mounted) {
+        setState(() => _isLoadingCustomers = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Lỗi tải danh sách khách hàng: $e'),
+            content: Text('Lỗi tải danh sách khách hàng từ lịch phân công: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -82,34 +114,127 @@ class _StaffAmenityTicketListScreenState
     _loadTickets();
   }
 
-  void _showCustomerSelector() {
-    showDialog(
+  void _showCustomerSelectionBottomSheet() {
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Chọn khách hàng'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: _isLoadingCustomers
-              ? const Center(child: CircularProgressIndicator())
-              : _customers.isEmpty
-              ? const Text('Không có khách hàng')
-              : ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: _customers.length,
-                  itemBuilder: (context, index) {
-                    final customer = _customers[index];
-                    return ListTile(
-                      title: Text(customer.displayName),
-                      subtitle: Text(customer.email),
-                      onTap: () {
-                        _selectCustomer(customer);
-                        Navigator.pop(context);
-                      },
-                    );
-                  },
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.6,
+          decoration: const BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              // Handle
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.borderLight,
+                  borderRadius: BorderRadius.circular(2),
                 ),
-        ),
-      ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 12, 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Chọn khách hàng',
+                        style: AppTextStyles.arimo(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: _isLoadingCustomers
+                    ? const Center(child: CircularProgressIndicator())
+                    : _customers.isEmpty
+                        ? Center(
+                            child: Text(
+                              'Không có khách hàng',
+                              style: AppTextStyles.arimo(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: _customers.length,
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            itemBuilder: (context, index) {
+                              final customer = _customers[index];
+                              final isSelected =
+                                  _selectedCustomer?.id == customer.id;
+
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? AppColors.primary.withValues(alpha: 0.05)
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: ListTile(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  leading: CircleAvatar(
+                                    backgroundColor: AppColors.primary
+                                        .withValues(alpha: 0.1),
+                                    child: Text(
+                                      customer.displayName[0].toUpperCase(),
+                                      style: AppTextStyles.arimo(
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  ),
+                                  title: Text(
+                                    customer.displayName,
+                                    style: AppTextStyles.arimo(
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  subtitle: Text(
+                                    customer.email,
+                                    style: AppTextStyles.arimo(
+                                      fontSize: 12,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                  trailing: isSelected
+                                      ? const Icon(
+                                          Icons.check_circle,
+                                          color: AppColors.primary,
+                                        )
+                                      : null,
+                                  onTap: () {
+                                    _selectCustomer(customer);
+                                    Navigator.pop(context);
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -131,7 +256,7 @@ class _StaffAmenityTicketListScreenState
               Container(
                 padding: padding,
                 child: InkWell(
-                  onTap: _showCustomerSelector,
+                  onTap: _showCustomerSelectionBottomSheet,
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(

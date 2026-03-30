@@ -5,17 +5,17 @@ import '../entities/amenity_ticket_entity.dart';
 abstract class AmenityTicketRepository {
   /// Create amenity ticket booking
   /// [customerId] - Customer's user ID
-  /// [serviceIds] - List of amenity service IDs to book
-  /// [startTime] - Booking start time
-  /// [endTime] - Booking end time
-  /// [notes] - Optional notes
-  /// Returns list of created tickets
-  Future<List<AmenityTicketEntity>> createBooking({
+  /// [amenityServiceId] - Amenity service ID
+  /// [date] - Booking date (yyyy-MM-dd)
+  /// [startTime] - Booking start time (HH:mm)
+  /// [endTime] - Booking end time (HH:mm)
+  /// Returns created ticket
+  Future<AmenityTicketEntity> createBooking({
     required String customerId,
-    required List<int> serviceIds,
-    required DateTime startTime,
-    required DateTime endTime,
-    String? notes,
+    required int amenityServiceId,
+    required String date,
+    required String startTime,
+    required String endTime,
   });
 
   /// Get tickets by customer ID

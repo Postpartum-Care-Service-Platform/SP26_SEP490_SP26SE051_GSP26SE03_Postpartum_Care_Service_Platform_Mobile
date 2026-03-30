@@ -9,24 +9,24 @@ class CreateServiceBooking {
 
   /// Execute the use case
   /// [customerId] - Customer's user ID
-  /// [serviceIds] - List of amenity service IDs
-  /// [startTime] - Booking start time
-  /// [endTime] - Booking end time
-  /// [notes] - Optional notes
-  /// Returns list of created tickets
-  Future<List<AmenityTicketEntity>> call({
+  /// [amenityServiceId] - Amenity service ID
+  /// [date] - Booking date (yyyy-MM-dd)
+  /// [startTime] - Booking start time (HH:mm)
+  /// [endTime] - Booking end time (HH:mm)
+  /// Returns created ticket
+  Future<AmenityTicketEntity> call({
     required String customerId,
-    required List<int> serviceIds,
-    required DateTime startTime,
-    required DateTime endTime,
-    String? notes,
+    required int amenityServiceId,
+    required String date,
+    required String startTime,
+    required String endTime,
   }) async {
     return await repository.createBooking(
       customerId: customerId,
-      serviceIds: serviceIds,
+      amenityServiceId: amenityServiceId,
+      date: date,
       startTime: startTime,
       endTime: endTime,
-      notes: notes,
     );
   }
 }

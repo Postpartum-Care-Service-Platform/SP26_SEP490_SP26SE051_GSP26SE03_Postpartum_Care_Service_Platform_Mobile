@@ -27,13 +27,27 @@ class AmenityTicketModel {
 
   /// Convert from JSON
   factory AmenityTicketModel.fromJson(Map<String, dynamic> json) {
+    final dateStr = json['date'] as String? ?? DateTime.now().toIso8601String().split('T')[0];
+    
+    DateTime parseTime(String? timeStr) {
+      if (timeStr == null) return DateTime.now();
+      try {
+        // If it's a full ISO string, parse it directly
+        if (timeStr.contains('-')) return DateTime.parse(timeStr);
+        // If it's a time-only string, combine with date
+        return DateTime.parse('${dateStr}T$timeStr');
+      } catch (e) {
+        return DateTime.now();
+      }
+    }
+
     return AmenityTicketModel(
       id: json['id'] as int,
       amenityServiceId: json['amenityServiceId'] as int,
       customerId: json['customerId'] as String,
-      startTime: DateTime.parse(json['startTime'] as String),
-      endTime: DateTime.parse(json['endTime'] as String),
-      status: json['status'] as String,
+      startTime: parseTime(json['startTime'] as String?),
+      endTime: parseTime(json['endTime'] as String?),
+      status: json['status'] as String? ?? 'Booked',
       amenityService: json['amenityService'] != null
           ? AmenityServiceModel.fromJson(json['amenityService'] as Map<String, dynamic>)
           : null,
