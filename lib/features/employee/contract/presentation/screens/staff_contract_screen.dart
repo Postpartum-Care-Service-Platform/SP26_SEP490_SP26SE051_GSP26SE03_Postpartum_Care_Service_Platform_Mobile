@@ -402,13 +402,6 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
     _showUploadSignedSheet();
   }
 
-  void _handleAssignCustomer() {
-    // TODO: implement navigate to customer picker / assignment screen
-    AppToast.showError(
-      context,
-      message: 'Chức năng gắn khách hàng chưa được tích hợp',
-    );
-  }
 
   bool _isPdfUrl(String? url) {
     if (url == null || url.trim().isEmpty) {
@@ -806,12 +799,13 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
     final contract = _contract;
     if (contract == null) return;
 
-    final customerNameController = TextEditingController(
-      text: contract.customer?.username ?? '',
-    );
-    final customerPhoneController = TextEditingController(
-      text: contract.customer?.phone ?? '',
-    );
+    final currentCustomerName =
+        (contract.customer?.username ?? _bookingCustomer?.username ?? '').trim();
+    final currentCustomerPhone =
+        (contract.customer?.phone ?? _bookingCustomer?.phone ?? '').trim();
+
+    final customerNameController = TextEditingController();
+    final customerPhoneController = TextEditingController();
     final customerAddressController = TextEditingController();
     final totalController = TextEditingController();
     final discountController = TextEditingController();
@@ -822,51 +816,305 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
     DateTime? checkinDate = contract.checkinDate;
     DateTime? checkoutDate = contract.checkoutDate;
 
+    final originalEffectiveFrom = contract.effectiveFrom;
+    final originalEffectiveTo = contract.effectiveTo;
+    final originalCheckinDate = contract.checkinDate;
+    final originalCheckoutDate = contract.checkoutDate;
+
+    bool finalAmountManualOverride = false;
+
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) {
         final scale = AppResponsive.scaleFactor(ctx);
+
+        InputDecoration buildFieldDecoration({
+          required String label,
+          required String hint,
+          String? helper,
+          Widget? suffix,
+        }) {
+          return InputDecoration(
+            labelText: label,
+            hintText: hint,
+            helperText: helper,
+            suffixIcon: suffix,
+            alignLabelWithHint: true,
+            filled: true,
+            fillColor: const Color(0xFFF8FAFC),
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 14 * scale,
+              vertical: 14 * scale,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12 * scale),
+              borderSide: BorderSide(
+                color: AppColors.borderLight,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12 * scale),
+              borderSide: BorderSide(
+                color: AppColors.borderLight,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12 * scale),
+              borderSide: BorderSide(
+                color: AppColors.primary,
+                width: 1.5,
+              ),
+            ),
+          );
+        }
+
         return Padding(
           padding: EdgeInsets.only(
             left: 16 * scale,
             right: 16 * scale,
-            top: 16 * scale,
+            top: 12 * scale,
             bottom: MediaQuery.of(ctx).viewInsets.bottom + 16 * scale,
           ),
           child: StatefulBuilder(
             builder: (context, setModalState) {
-              Widget dateRow(
-                String label,
-                DateTime? value,
-                ValueChanged<DateTime?> onChanged,
-              ) {
-                return Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        '$label: ${value != null ? _formatDate(value) : '-'}',
-                        style: AppTextStyles.arimo(fontSize: 13 * scale),
+              double? parseMoney(String text) {
+                if (text.trim().isEmpty) return null;
+                final raw = text.replaceAll('.', '').replaceAll(',', '').trim();
+                return double.tryParse(raw);
+              }
+
+              String formatMoney(double value) {
+                final rounded = value.round();
+                final text = rounded.toString();
+                final buffer = StringBuffer();
+                for (int i = 0; i < text.length; i++) {
+                  final reverseIndex = text.length - i;
+                  buffer.write(text[i]);
+                  if (reverseIndex > 1 && reverseIndex % 3 == 1) {
+                    buffer.write('.');
+                  }
+                }
+                return buffer.toString();
+              }
+
+              void recomputeFinalAmount() {
+                if (finalAmountManualOverride) return;
+                final total = parseMoney(totalController.text);
+                final discount = parseMoney(discountController.text) ?? 0;
+                if (total == null) {
+                  finalController.clear();
+                  return;
+                }
+                final amount =
+                    (total - discount).clamp(0, double.infinity).toDouble();
+                finalController.text = formatMoney(amount);
+              }
+
+              Widget sectionTitle(String text, IconData icon) {
+                return Padding(
+                  padding: EdgeInsets.only(bottom: 10 * scale, top: 2 * scale),
+                  child: Row(
+                    children: [
+                      Icon(icon, size: 17 * scale, color: AppColors.primary),
+                      SizedBox(width: 6 * scale),
+                      Text(
+                        text,
+                        style: AppTextStyles.arimo(
+                          fontSize: 14 * scale,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
                       ),
-                    ),
-                    TextButton(
-                      onPressed: () async {
-                        final initial = value ?? DateTime.now();
-                        final picked = await showDatePicker(
-                          context: context,
-                          initialDate: initial,
-                          firstDate: DateTime(2020),
-                          lastDate: DateTime(2100),
-                        );
-                        setModalState(() => onChanged(picked));
-                      },
-                      child: const Text('Chọn'),
-                    ),
-                  ],
+                    ],
+                  ),
                 );
+              }
+
+              Widget datePickerTile({
+                required String label,
+                required DateTime? value,
+                required ValueChanged<DateTime> onChanged,
+              }) {
+                return InkWell(
+                  borderRadius: BorderRadius.circular(12 * scale),
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: value ?? DateTime.now(),
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2100),
+                    );
+                    if (picked != null) {
+                      setModalState(() => onChanged(picked));
+                    }
+                  },
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 14 * scale,
+                      vertical: 12 * scale,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(12 * scale),
+                      border: Border.all(color: AppColors.borderLight),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today_rounded,
+                          size: 16 * scale,
+                          color: AppColors.textSecondary,
+                        ),
+                        SizedBox(width: 8 * scale),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                label,
+                                style: AppTextStyles.arimo(
+                                  fontSize: 11 * scale,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                              SizedBox(height: 3 * scale),
+                              Text(
+                                value != null ? _formatDate(value) : 'Chọn ngày',
+                                style: AppTextStyles.arimo(
+                                  fontSize: 13 * scale,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          color: AppColors.textSecondary,
+                          size: 18 * scale,
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              Future<void> handleSubmit() async {
+                final changedItems = <String>[];
+
+                final customerName = customerNameController.text.trim();
+                final customerPhone = customerPhoneController.text.trim();
+                final customerAddress = customerAddressController.text.trim();
+                final totalPrice = parseMoney(totalController.text);
+                final discountAmount = parseMoney(discountController.text);
+                final finalAmount = parseMoney(finalController.text);
+
+                if (customerName.isNotEmpty) changedItems.add('Tên khách hàng');
+                if (customerPhone.isNotEmpty) changedItems.add('Số điện thoại');
+                if (customerAddress.isNotEmpty) changedItems.add('Địa chỉ');
+                if (effectiveFrom != originalEffectiveFrom) {
+                  changedItems.add('Hiệu lực từ');
+                }
+                if (effectiveTo != originalEffectiveTo) {
+                  changedItems.add('Hiệu lực đến');
+                }
+                if (checkinDate != originalCheckinDate) changedItems.add('Check-in');
+                if (checkoutDate != originalCheckoutDate) {
+                  changedItems.add('Check-out');
+                }
+                if (totalPrice != null) changedItems.add('Tổng tiền');
+                if (discountAmount != null) changedItems.add('Giảm giá');
+                if (finalAmount != null) changedItems.add('Thành tiền');
+
+                if (changedItems.isEmpty) {
+                  AppToast.showError(
+                    this.context,
+                    message: 'Bạn chưa nhập thay đổi nào để lưu',
+                  );
+                  return;
+                }
+
+                if (!mounted) return;
+                final confirmed = await showDialog<bool>(
+                  context: this.context,
+                  builder: (dialogCtx) {
+                    return AlertDialog(
+                      title: const Text('Xác nhận cập nhật'),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Bạn sắp ghi đè các thông tin:'),
+                          const SizedBox(height: 8),
+                          ...changedItems.map(
+                            (item) => Padding(
+                              padding: const EdgeInsets.only(bottom: 4),
+                              child: Text('• $item'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(dialogCtx).pop(false),
+                          child: const Text('Hủy'),
+                        ),
+                        ElevatedButton(
+                          onPressed: () => Navigator.of(dialogCtx).pop(true),
+                          child: const Text('Xác nhận lưu'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+
+                if (confirmed != true) return;
+
+                if (!ctx.mounted) return;
+                Navigator.of(ctx).pop();
+                try {
+                  final updated = await _remote.updateContent(
+                    contract.id,
+                    customerName: customerName.isEmpty ? null : customerName,
+                    customerPhone: customerPhone.isEmpty ? null : customerPhone,
+                    customerAddress:
+                        customerAddress.isEmpty ? null : customerAddress,
+                    effectiveFrom: effectiveFrom != originalEffectiveFrom
+                        ? effectiveFrom
+                        : null,
+                    effectiveTo:
+                        effectiveTo != originalEffectiveTo ? effectiveTo : null,
+                    checkinDate: checkinDate != originalCheckinDate
+                        ? checkinDate
+                        : null,
+                    checkoutDate: checkoutDate != originalCheckoutDate
+                        ? checkoutDate
+                        : null,
+                    totalPrice: totalPrice,
+                    discountAmount: discountAmount,
+                    finalAmount: finalAmount,
+                  );
+
+                  if (!mounted) return;
+                  AppToast.showSuccess(
+                    this.context,
+                    message: 'Cập nhật hợp đồng thành công',
+                  );
+                  setState(() {
+                    _contract = updated;
+                  });
+                } catch (e) {
+                  if (!mounted) return;
+                  AppToast.showError(
+                    this.context,
+                    message: 'Không thể cập nhật hợp đồng: $e',
+                  );
+                }
               }
 
               return SingleChildScrollView(
@@ -874,129 +1122,207 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Center(
+                      child: Container(
+                        width: 40 * scale,
+                        height: 4 * scale,
+                        margin: EdgeInsets.only(bottom: 12 * scale),
+                        decoration: BoxDecoration(
+                          color: AppColors.borderLight,
+                          borderRadius: BorderRadius.circular(2 * scale),
+                        ),
+                      ),
+                    ),
                     Text(
                       'Chỉnh sửa nội dung hợp đồng',
                       style: AppTextStyles.arimo(
-                        fontSize: 16 * scale,
+                        fontSize: 17 * scale,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    SizedBox(height: 12 * scale),
-                    TextField(
-                      controller: customerNameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Tên khách hàng (để trống nếu giữ nguyên)',
+                    SizedBox(height: 6 * scale),
+                    Text(
+                      'Lưu ý: Chỉ điền các thông tin cần thay đổi, các ô để trống sẽ giữ nguyên nội dung cũ.',
+                      style: AppTextStyles.arimo(
+                        fontSize: 12 * scale,
+                        color: AppColors.textSecondary,
                       ),
                     ),
-                    SizedBox(height: 8 * scale),
+                    SizedBox(height: 16 * scale),
+
+                    sectionTitle('Thông tin khách hàng', Icons.person_outline_rounded),
+                    TextField(
+                      controller: customerNameController,
+                      decoration: buildFieldDecoration(
+                        label: 'Tên khách hàng',
+                        hint: 'Để trống nếu giữ nguyên',
+                        helper: currentCustomerName.isNotEmpty
+                            ? 'Hiện tại: $currentCustomerName'
+                            : null,
+                      ),
+                    ),
+                    SizedBox(height: 10 * scale),
                     TextField(
                       controller: customerPhoneController,
                       keyboardType: TextInputType.phone,
-                      decoration: const InputDecoration(
-                        labelText: 'Số điện thoại (để trống nếu giữ nguyên)',
+                      decoration: buildFieldDecoration(
+                        label: 'Số điện thoại',
+                        hint: 'Để trống nếu giữ nguyên',
+                        helper: currentCustomerPhone.isNotEmpty
+                            ? 'Hiện tại: $currentCustomerPhone'
+                            : null,
                       ),
                     ),
-                    SizedBox(height: 8 * scale),
+                    SizedBox(height: 10 * scale),
                     TextField(
                       controller: customerAddressController,
-                      decoration: const InputDecoration(
-                        labelText: 'Địa chỉ (để trống nếu giữ nguyên)',
+                      decoration: buildFieldDecoration(
+                        label: 'Địa chỉ',
+                        hint: 'Để trống nếu giữ nguyên',
                       ),
                     ),
-                    SizedBox(height: 12 * scale),
-                    dateRow('Hiệu lực từ', effectiveFrom, (v) {
-                      effectiveFrom = v;
-                    }),
-                    dateRow('Hiệu lực đến', effectiveTo, (v) {
-                      effectiveTo = v;
-                    }),
-                    dateRow('Check-in', checkinDate, (v) {
-                      checkinDate = v;
-                    }),
-                    dateRow('Check-out', checkoutDate, (v) {
-                      checkoutDate = v;
-                    }),
-                    SizedBox(height: 12 * scale),
+
+                    SizedBox(height: 14 * scale),
+                    sectionTitle('Thời gian', Icons.schedule_rounded),
+                    datePickerTile(
+                      label: 'Hiệu lực từ',
+                      value: effectiveFrom,
+                      onChanged: (v) => effectiveFrom = v,
+                    ),
+                    SizedBox(height: 8 * scale),
+                    datePickerTile(
+                      label: 'Hiệu lực đến',
+                      value: effectiveTo,
+                      onChanged: (v) => effectiveTo = v,
+                    ),
+                    SizedBox(height: 8 * scale),
+                    datePickerTile(
+                      label: 'Check-in',
+                      value: checkinDate,
+                      onChanged: (v) => checkinDate = v,
+                    ),
+                    SizedBox(height: 8 * scale),
+                    datePickerTile(
+                      label: 'Check-out',
+                      value: checkoutDate,
+                      onChanged: (v) => checkoutDate = v,
+                    ),
+
+                    SizedBox(height: 14 * scale),
+                    sectionTitle('Chi phí', Icons.payments_outlined),
                     TextField(
                       controller: totalController,
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
-                      decoration: const InputDecoration(
-                        labelText: 'Tổng tiền (VNĐ, để trống nếu giữ nguyên)',
+                      onChanged: (_) {
+                        recomputeFinalAmount();
+                        setModalState(() {});
+                      },
+                      decoration: buildFieldDecoration(
+                        label: 'Tổng tiền',
+                        hint: 'Nhập số tiền (để trống nếu giữ nguyên)',
+                        suffix: Padding(
+                          padding: EdgeInsets.only(right: 10 * scale),
+                          child: Center(
+                            widthFactor: 1,
+                            child: Text(
+                              'VNĐ',
+                              style: AppTextStyles.arimo(
+                                fontSize: 11 * scale,
+                                color: AppColors.textSecondary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                    SizedBox(height: 8 * scale),
+                    SizedBox(height: 10 * scale),
                     TextField(
                       controller: discountController,
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
-                      decoration: const InputDecoration(
-                        labelText: 'Giảm giá (VNĐ, để trống nếu giữ nguyên)',
+                      onChanged: (_) {
+                        recomputeFinalAmount();
+                        setModalState(() {});
+                      },
+                      decoration: buildFieldDecoration(
+                        label: 'Giảm giá',
+                        hint: 'Nhập số tiền giảm (để trống nếu giữ nguyên)',
+                        suffix: Padding(
+                          padding: EdgeInsets.only(right: 10 * scale),
+                          child: Center(
+                            widthFactor: 1,
+                            child: Text(
+                              'VNĐ',
+                              style: AppTextStyles.arimo(
+                                fontSize: 11 * scale,
+                                color: AppColors.textSecondary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                    SizedBox(height: 8 * scale),
+                    SizedBox(height: 10 * scale),
                     TextField(
                       controller: finalController,
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
-                      decoration: const InputDecoration(
-                        labelText: 'Thành tiền (VNĐ, để trống nếu giữ nguyên)',
+                      onChanged: (_) {
+                        finalAmountManualOverride =
+                            finalController.text.trim().isNotEmpty;
+                        setModalState(() {});
+                      },
+                      decoration: buildFieldDecoration(
+                        label: 'Thành tiền',
+                        hint:
+                            'Tự động tính từ Tổng tiền - Giảm giá (có thể sửa tay)',
+                        helper: finalAmountManualOverride
+                            ? 'Đang dùng giá trị nhập tay'
+                            : 'Đang tự động tính',
+                        suffix: Padding(
+                          padding: EdgeInsets.only(right: 10 * scale),
+                          child: Center(
+                            widthFactor: 1,
+                            child: Text(
+                              'VNĐ',
+                              style: AppTextStyles.arimo(
+                                fontSize: 11 * scale,
+                                color: AppColors.textSecondary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                    SizedBox(height: 16 * scale),
+
+                    SizedBox(height: 18 * scale),
                     SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          double? parse(String text) {
-                            if (text.trim().isEmpty) return null;
-                            return double.tryParse(
-                              text.trim().replaceAll(',', ''),
-                            );
-                          }
-
-                          final navigator = Navigator.of(ctx);
-                          navigator.pop();
-                          try {
-                            final updated = await _remote.updateContent(
-                              contract.id,
-                              customerName: customerNameController.text,
-                              customerPhone: customerPhoneController.text,
-                              customerAddress: customerAddressController.text,
-                              effectiveFrom: effectiveFrom,
-                              effectiveTo: effectiveTo,
-                              checkinDate: checkinDate,
-                              checkoutDate: checkoutDate,
-                              totalPrice: parse(totalController.text),
-                              discountAmount: parse(discountController.text),
-                              finalAmount: parse(finalController.text),
-                            );
-                            if (mounted) {
-                              AppToast.showSuccess(
-                                this.context,
-                                message: 'Cập nhật hợp đồng thành công',
-                              );
-                              setState(() {
-                                _contract = updated;
-                              });
-                            }
-                          } catch (e) {
-                            if (mounted) {
-                              AppToast.showError(
-                                this.context,
-                                message: 'Không thể cập nhật hợp đồng: $e',
-                              );
-                            }
-                          }
-                        },
+                      child: ElevatedButton.icon(
+                        onPressed: handleSubmit,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           foregroundColor: AppColors.white,
+                          padding: EdgeInsets.symmetric(vertical: 14 * scale),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12 * scale),
+                          ),
                         ),
-                        child: const Text('Lưu thay đổi'),
+                        icon: Icon(Icons.save_rounded, size: 18 * scale),
+                        label: Text(
+                          'Lưu thay đổi',
+                          style: AppTextStyles.arimo(
+                            fontSize: 14 * scale,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -1066,7 +1392,6 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
 
     final contract = _contract;
     final hasSignedFile = contract?.fileUrl?.trim().isNotEmpty == true;
-    final canSendContract = hasSignedFile && !_isSending;
     if (contract == null) {
       return Center(
         child: Text(
@@ -1281,56 +1606,63 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                   ],
                 ),
                 SizedBox(height: 20 * scale),
-                // Row 1: Chỉnh sửa + Xem HTML — workflow step 1
-                Row(
-                  children: [
-                    Expanded(
-                      child: _ActionButton(
-                        icon: Icons.edit_note_rounded,
-                        label: 'Chỉnh sửa',
-                        color: const Color(0xFF7C3AED),
-                        onPressed: _showEditContentSheet,
-                        scale: scale,
-                      ),
-                    ),
-                    SizedBox(width: 12 * scale),
-                    Expanded(
-                      child: _ActionButton(
-                        icon: Icons.visibility_rounded,
-                        label: 'Xem HTML',
-                        color: const Color(0xFF0284C7),
-                        onPressed: _openPreview,
-                        scale: scale,
-                        isOutlined: true,
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12 * scale),
-                // Row 2: Xuất PDF + Upload file đã ký — workflow step 2
-                Row(
-                  children: [
-                    Expanded(
-                      child: _ActionButton(
-                        icon: Icons.picture_as_pdf_rounded,
-                        label: _isLoading ? 'Đang tải...' : 'Xuất PDF',
-                        color: AppColors.primary,
-                        onPressed: _isLoading ? null : _downloadPdf,
-                        scale: scale,
-                        isOutlined: true,
-                      ),
-                    ),
-                    SizedBox(width: 12 * scale),
-                    Expanded(
-                      child: _ActionButton(
-                        icon: Icons.cloud_upload_rounded,
-                        label: 'Upload file đã ký',
-                        color: const Color(0xFF0EA5E9),
-                        onPressed: _handleUploadSignedPressed,
-                        scale: scale,
-                      ),
-                    ),
-                  ],
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isNarrow = constraints.maxWidth < 360;
+                    final spacing = 12 * scale;
+                    final itemWidth = isNarrow
+                        ? constraints.maxWidth
+                        : (constraints.maxWidth - spacing) / 2;
+
+                    return Wrap(
+                      spacing: spacing,
+                      runSpacing: spacing,
+                      children: [
+                        SizedBox(
+                          width: itemWidth,
+                          child: _ActionButton(
+                            icon: Icons.edit_note_rounded,
+                            label: 'Chỉnh sửa',
+                            color: const Color(0xFF7C3AED),
+                            onPressed: _showEditContentSheet,
+                            scale: scale,
+                          ),
+                        ),
+                        SizedBox(
+                          width: itemWidth,
+                          child: _ActionButton(
+                            icon: Icons.visibility_rounded,
+                            label: 'Xem HTML',
+                            color: const Color(0xFF0284C7),
+                            onPressed: _openPreview,
+                            scale: scale,
+                            isOutlined: true,
+                          ),
+                        ),
+                        SizedBox(
+                          width: itemWidth,
+                          child: _ActionButton(
+                            icon: Icons.picture_as_pdf_rounded,
+                            label: _isLoading ? 'Đang tải...' : 'Xuất PDF',
+                            color: AppColors.primary,
+                            onPressed: _isLoading ? null : _downloadPdf,
+                            scale: scale,
+                            isOutlined: true,
+                          ),
+                        ),
+                        SizedBox(
+                          width: itemWidth,
+                          child: _ActionButton(
+                            icon: Icons.cloud_upload_rounded,
+                            label: 'Upload file đã ký',
+                            color: const Color(0xFF0EA5E9),
+                            onPressed: _handleUploadSignedPressed,
+                            scale: scale,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
                 SizedBox(height: 12 * scale),
                 // Gửi khách — only enabled after a signed file has been uploaded

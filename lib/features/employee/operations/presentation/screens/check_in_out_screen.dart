@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../../core/apis/api_client.dart';
 import '../../../../../core/apis/api_endpoints.dart';
@@ -17,78 +18,67 @@ class CheckInOutScreen extends StatefulWidget {
 
 class _CheckInOutScreenState extends State<CheckInOutScreen> {
   bool _loading = true;
-  bool _submitting = false;
   String? _error;
-  List<_StaffScheduleItem> _schedules = const [];
+  DateTime _focusedDate = DateTime.now();
+  List<_ScheduleSlot> _slots = const [];
 
   @override
   void initState() {
     super.initState();
-    _loadSchedules();
+    _loadMonthSchedules();
   }
 
-  Future<void> _loadSchedules() async {
+  Future<void> _loadMonthSchedules() async {
     setState(() {
       _loading = true;
       _error = null;
     });
 
     try {
-      final now = DateTime.now();
-      final from = now.subtract(const Duration(days: 7));
-      final to = now.add(const Duration(days: 7));
+      final firstDay = DateTime(_focusedDate.year, _focusedDate.month, 1);
+      final lastDay = DateTime(_focusedDate.year, _focusedDate.month + 1, 0);
+
+      final from = _dateOnly(firstDay);
+      final to = _dateOnly(lastDay);
 
       final response = await ApiClient.dio.get(
-        ApiEndpoints.myStaffSchedules,
-        queryParameters: {'from': _dateOnly(from), 'to': _dateOnly(to)},
+        ApiEndpoints.staffsNoScheduled(from, to),
       );
 
-      final data = response.data as List<dynamic>;
-      final schedules = data
-          .map((e) => _StaffScheduleItem.fromJson(e as Map<String, dynamic>))
-          .toList();
+      final data = (response.data as List<dynamic>? ?? const []);
+      final slots = data
+          .map((e) => _ScheduleSlot.fromJson(e as Map<String, dynamic>))
+          .where((e) => e.startAt != null)
+          .toList()
+        ..sort((a, b) => a.startAt!.compareTo(b.startAt!));
 
       if (!mounted) return;
       setState(() {
-        _schedules = schedules;
+        _slots = slots.isEmpty ? _buildDefaultSeed(firstDay) : slots;
         _loading = false;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        _error = 'Không tải được lịch: $e';
+        _slots = _buildDefaultSeed(DateTime(_focusedDate.year, _focusedDate.month, 1));
         _loading = false;
       });
     }
   }
 
-  Future<void> _check(_StaffScheduleItem item, {String? note}) async {
-    if (_submitting) return;
-
-    setState(() {
-      _submitting = true;
-    });
-
-    try {
-      await ApiClient.dio.patch(
-        ApiEndpoints.checkStaffSchedule,
-        data: {'staffScheduleId': item.id, 'note': note},
-      );
-
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Check thành công')));
-      await _loadSchedules();
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Check thất bại: $e')));
-      setState(() {
-        _submitting = false;
-      });
-    }
+  List<_ScheduleSlot> _buildDefaultSeed(DateTime baseDate) {
+    final anchor = DateTime(baseDate.year, baseDate.month, 10, 14, 0);
+    return [
+      _ScheduleSlot(
+        id: -1,
+        title: 'Lịch mẫu mặc định',
+        subtitle: 'Dữ liệu mẫu để staff dễ theo dõi',
+        startAt: anchor,
+        endAt: anchor.add(const Duration(hours: 2)),
+        isChecked: false,
+      ),
+    ];
   }
 
   String _dateOnly(DateTime value) {
@@ -97,14 +87,23 @@ class _CheckInOutScreenState extends State<CheckInOutScreen> {
     return '${value.year}-$month-$day';
   }
 
+  void _goToToday() {
+    setState(() {
+      _focusedDate = DateTime.now();
+    });
+    _loadMonthSchedules();
+  }
+
+  void _shiftWeek(int deltaWeek) {
+    setState(() {
+      _focusedDate = _focusedDate.add(Duration(days: 7 * deltaWeek));
+    });
+    _loadMonthSchedules();
+  }
+
   @override
   Widget build(BuildContext context) {
     final padding = AppResponsive.pagePadding(context);
-
-    final current = _schedules.where((e) => !e.isChecked).isNotEmpty
-        ? _schedules.firstWhere((e) => !e.isChecked)
-        : (_schedules.isNotEmpty ? _schedules.first : null);
-    final history = _schedules.where((e) => e.isChecked).toList();
 
     return EmployeeScaffold(
       body: SafeArea(
@@ -112,11 +111,11 @@ class _CheckInOutScreenState extends State<CheckInOutScreen> {
           children: [
             const EmployeeHeaderBar(
               title: 'Portal Nhân viên',
-              subtitle: 'Quản lý công việc',
+              subtitle: 'Lịch làm việc kiểu Outlook',
             ),
             Expanded(
               child: RefreshIndicator(
-                onRefresh: _loadSchedules,
+                onRefresh: _loadMonthSchedules,
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: padding,
@@ -124,39 +123,21 @@ class _CheckInOutScreenState extends State<CheckInOutScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const SizedBox(height: 12),
-                      const _HeaderCard(),
+                      _ScheduleToolbar(
+                        focusedDate: _focusedDate,
+                        onToday: _goToToday,
+                        onPreviousWeek: () => _shiftWeek(-1),
+                        onNextWeek: () => _shiftWeek(1),
+                      ),
                       const SizedBox(height: 12),
                       if (_loading)
                         const Center(child: CircularProgressIndicator())
                       else if (_error != null)
-                        _ErrorCard(error: _error!, onRetry: _loadSchedules)
-                      else if (current == null)
-                        const _EmptyCard(
-                          message: 'Không có lịch làm việc để check',
-                        )
+                        _ErrorCard(error: _error!)
                       else
-                        _CurrentShiftCard(
-                          item: current,
-                          submitting: _submitting,
-                          onCheck: (note) => _check(current, note: note),
-                        ),
-                      const SizedBox(height: 16),
-                      const _SectionTitle(
-                        icon: Icons.history,
-                        title: 'Lịch sử check',
-                      ),
-                      const SizedBox(height: 8),
-                      if (history.isEmpty)
-                        const _EmptyCard(message: 'Chưa có lịch sử check')
-                      else
-                        Column(
-                          children: [
-                            for (final item in history)
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: _HistoryCard(item: item),
-                              ),
-                          ],
+                        _OutlookWeekGrid(
+                          focusedDate: _focusedDate,
+                          allSlots: _slots,
                         ),
                       const SizedBox(height: 24),
                     ],
@@ -171,199 +152,337 @@ class _CheckInOutScreenState extends State<CheckInOutScreen> {
   }
 }
 
-class _StaffScheduleItem {
+class _ScheduleSlot {
   final int id;
+  final String title;
+  final String subtitle;
+  final DateTime? startAt;
+  final DateTime? endAt;
   final bool isChecked;
-  final DateTime? checkedAt;
-  final String familyName;
-  final String? shiftLabel;
 
-  const _StaffScheduleItem({
+  const _ScheduleSlot({
     required this.id,
+    required this.title,
+    required this.subtitle,
+    required this.startAt,
+    required this.endAt,
     required this.isChecked,
-    required this.checkedAt,
-    required this.familyName,
-    required this.shiftLabel,
   });
 
-  factory _StaffScheduleItem.fromJson(Map<String, dynamic> json) {
-    final familySchedule =
-        json['familyScheduleResponse'] as Map<String, dynamic>?;
-    return _StaffScheduleItem(
+  factory _ScheduleSlot.fromJson(Map<String, dynamic> json) {
+    final familySchedule = json['familyScheduleResponse'] as Map<String, dynamic>?;
+    final dateRaw = familySchedule?['date']?.toString() ??
+        familySchedule?['scheduleDate']?.toString() ??
+        familySchedule?['startDate']?.toString();
+    final sessionRaw =
+        (familySchedule?['session'] ?? familySchedule?['timeSlot'] ?? '').toString();
+
+    final parsedDate = DateTime.tryParse(dateRaw ?? '');
+    final startAt = _composeDateTime(parsedDate, sessionRaw, isEnd: false);
+    final endAt = _composeDateTime(parsedDate, sessionRaw, isEnd: true);
+
+    return _ScheduleSlot(
       id: (json['id'] as num?)?.toInt() ?? 0,
+      title: (familySchedule?['name'] ?? familySchedule?['title'] ?? 'Lịch làm việc').toString(),
+      subtitle: sessionRaw.isEmpty ? 'Ca làm việc' : sessionRaw,
+      startAt: startAt,
+      endAt: endAt,
       isChecked: json['isChecked'] as bool? ?? false,
-      checkedAt: DateTime.tryParse((json['checkedAt'] ?? '').toString()),
-      familyName: (familySchedule?['name'] ?? 'Ca làm việc').toString(),
-      shiftLabel: familySchedule?['session']?.toString(),
     );
+  }
+
+  static DateTime? _composeDateTime(DateTime? date, String session, {required bool isEnd}) {
+    if (date == null) return null;
+
+    final normalized = session.toLowerCase();
+    int startHour = 8;
+    int endHour = 10;
+
+    if (normalized.contains('sáng') || normalized.contains('morning')) {
+      startHour = 8;
+      endHour = 10;
+    } else if (normalized.contains('trưa') || normalized.contains('noon')) {
+      startHour = 11;
+      endHour = 13;
+    } else if (normalized.contains('chiều') || normalized.contains('afternoon')) {
+      startHour = 14;
+      endHour = 17;
+    } else if (normalized.contains('tối') || normalized.contains('evening')) {
+      startHour = 18;
+      endHour = 20;
+    }
+
+    final hour = isEnd ? endHour : startHour;
+    return DateTime(date.year, date.month, date.day, hour, 0);
   }
 }
 
-class _HeaderCard extends StatelessWidget {
-  const _HeaderCard();
+class _ScheduleToolbar extends StatelessWidget {
+  final DateTime focusedDate;
+  final VoidCallback onToday;
+  final VoidCallback onPreviousWeek;
+  final VoidCallback onNextWeek;
+
+  const _ScheduleToolbar({
+    required this.focusedDate,
+    required this.onToday,
+    required this.onPreviousWeek,
+    required this.onNextWeek,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+
     return Container(
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(16 * scale),
+        border: Border.all(color: AppColors.borderLight),
       ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: EdgeInsets.symmetric(horizontal: 10 * scale, vertical: 10 * scale),
+      child: Row(
         children: [
+          OutlinedButton.icon(
+            onPressed: onToday,
+            icon: const Icon(Icons.today),
+            label: const Text('Hôm nay'),
+          ),
+          IconButton(onPressed: onPreviousWeek, icon: const Icon(Icons.chevron_left)),
+          IconButton(onPressed: onNextWeek, icon: const Icon(Icons.chevron_right)),
+          const Spacer(),
           Text(
-            'Check-in / Check-out',
+            DateFormat('MM/yyyy').format(focusedDate),
             style: AppTextStyles.arimo(
-              fontSize: 20,
+              fontSize: 15 * scale,
               fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 6),
-          Text(
-            'Dùng API StaffSchedule/check',
+        ],
+      ),
+    );
+  }
+}
+
+class _OutlookWeekGrid extends StatelessWidget {
+  final DateTime focusedDate;
+  final List<_ScheduleSlot> allSlots;
+
+  const _OutlookWeekGrid({required this.focusedDate, required this.allSlots});
+
+  List<DateTime> _weekDays(DateTime anchor) {
+    final weekday = anchor.weekday;
+    final monday = anchor.subtract(Duration(days: weekday - 1));
+    return List.generate(7, (index) => monday.add(Duration(days: index)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+    final days = _weekDays(focusedDate);
+    final hours = List.generate(12, (index) => 8 + index);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(16 * scale),
+        border: Border.all(color: AppColors.borderLight),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: SizedBox(
+          width: 860 * scale,
+          child: Column(
+            children: [
+              _WeekHeader(days: days),
+              for (final hour in hours)
+                _HourRow(
+                  hour: hour,
+                  days: days,
+                  slots: allSlots,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WeekHeader extends StatelessWidget {
+  final List<DateTime> days;
+
+  const _WeekHeader({required this.days});
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+
+    return Row(
+      children: [
+        Container(
+          width: 72 * scale,
+          padding: EdgeInsets.all(8 * scale),
+          alignment: Alignment.center,
+          child: Text(
+            'Giờ',
             style: AppTextStyles.arimo(
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
+              fontSize: 12 * scale,
+              fontWeight: FontWeight.w700,
               color: AppColors.textSecondary,
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CurrentShiftCard extends StatefulWidget {
-  final _StaffScheduleItem item;
-  final bool submitting;
-  final ValueChanged<String?> onCheck;
-
-  const _CurrentShiftCard({
-    required this.item,
-    required this.submitting,
-    required this.onCheck,
-  });
-
-  @override
-  State<_CurrentShiftCard> createState() => _CurrentShiftCardState();
-}
-
-class _CurrentShiftCardState extends State<_CurrentShiftCard> {
-  final TextEditingController _noteController = TextEditingController();
-
-  @override
-  void dispose() {
-    _noteController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primary, width: 1.5),
-      ),
-      padding: const EdgeInsets.all(14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            widget.item.familyName,
-            style: AppTextStyles.arimo(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          if (widget.item.shiftLabel != null) ...[
-            const SizedBox(height: 6),
-            Text(
-              'Ca: ${widget.item.shiftLabel}',
-              style: AppTextStyles.arimo(
-                fontSize: 13,
-                color: AppColors.textSecondary,
+        ),
+        for (final day in days)
+          Container(
+            width: 112 * scale,
+            padding: EdgeInsets.symmetric(vertical: 8 * scale),
+            decoration: BoxDecoration(
+              border: Border(
+                left: BorderSide(color: AppColors.borderLight.withValues(alpha: 0.8)),
               ),
             ),
-          ],
-          const SizedBox(height: 12),
-          TextField(
-            controller: _noteController,
-            maxLines: 3,
-            decoration: InputDecoration(
-              hintText: 'Ghi chú check (tuỳ chọn)',
-              filled: true,
-              fillColor: AppColors.background,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: AppColors.borderLight),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: widget.submitting
-                  ? null
-                  : () => widget.onCheck(
-                      _noteController.text.trim().isEmpty
-                          ? null
-                          : _noteController.text.trim(),
-                    ),
-              child: Text(widget.submitting ? 'Đang gửi...' : 'Check ngay'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _HistoryCard extends StatelessWidget {
-  final _StaffScheduleItem item;
-
-  const _HistoryCard({required this.item});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      padding: const EdgeInsets.all(14),
-      child: Row(
-        children: [
-          const Icon(Icons.check_circle, color: Color(0xFF1B7F3A)),
-          const SizedBox(width: 10),
-          Expanded(
+            alignment: Alignment.center,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item.familyName,
+                  DateFormat('dd').format(day),
                   style: AppTextStyles.arimo(
-                    fontSize: 14,
+                    fontSize: 20 * scale,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+                    color: const Color(0xFF0B57D0),
                   ),
                 ),
-                const SizedBox(height: 4),
                 Text(
-                  item.checkedAt != null
-                      ? 'Checked lúc: ${item.checkedAt}'
-                      : 'Đã checked',
+                  DateFormat('EEE', 'vi_VN').format(day),
                   style: AppTextStyles.arimo(
-                    fontSize: 12,
+                    fontSize: 12 * scale,
                     color: AppColors.textSecondary,
                   ),
                 ),
               ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _HourRow extends StatelessWidget {
+  final int hour;
+  final List<DateTime> days;
+  final List<_ScheduleSlot> slots;
+
+  const _HourRow({required this.hour, required this.days, required this.slots});
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+
+    return SizedBox(
+      height: 86 * scale,
+      child: Row(
+        children: [
+          Container(
+            width: 72 * scale,
+            alignment: Alignment.topCenter,
+            padding: EdgeInsets.only(top: 8 * scale),
+            decoration: BoxDecoration(
+              border: Border(top: BorderSide(color: AppColors.borderLight)),
+            ),
+            child: Text(
+              '${hour.toString().padLeft(2, '0')}h',
+              style: AppTextStyles.arimo(
+                fontSize: 12 * scale,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
+          for (final day in days)
+            _HourCell(day: day, hour: hour, slots: slots),
+        ],
+      ),
+    );
+  }
+}
+
+class _HourCell extends StatelessWidget {
+  final DateTime day;
+  final int hour;
+  final List<_ScheduleSlot> slots;
+
+  const _HourCell({required this.day, required this.hour, required this.slots});
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+
+    final matched = slots.where((slot) {
+      final start = slot.startAt;
+      if (start == null) return false;
+      final sameDate = start.year == day.year && start.month == day.month && start.day == day.day;
+      return sameDate && start.hour == hour;
+    }).toList();
+
+    return Container(
+      width: 112 * scale,
+      padding: EdgeInsets.all(4 * scale),
+      decoration: BoxDecoration(
+        border: Border(
+          left: BorderSide(color: AppColors.borderLight.withValues(alpha: 0.8)),
+          top: BorderSide(color: AppColors.borderLight),
+        ),
+      ),
+      child: matched.isEmpty
+          ? const SizedBox.shrink()
+          : Column(
+              children: [
+                for (final item in matched) _ScheduleEventCard(item: item),
+              ],
+            ),
+    );
+  }
+}
+
+class _ScheduleEventCard extends StatelessWidget {
+  final _ScheduleSlot item;
+
+  const _ScheduleEventCard({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+
+    return Container(
+      margin: EdgeInsets.only(bottom: 4 * scale),
+      padding: EdgeInsets.all(6 * scale),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAF2FF),
+        borderRadius: BorderRadius.circular(8 * scale),
+        border: Border.all(color: const Color(0xFF8BB8FF)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            item.title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.arimo(
+              fontSize: 11 * scale,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF1E3A8A),
+            ),
+          ),
+          SizedBox(height: 2 * scale),
+          Text(
+            item.subtitle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.arimo(
+              fontSize: 10 * scale,
+              color: const Color(0xFF334155),
             ),
           ),
         ],
@@ -374,9 +493,8 @@ class _HistoryCard extends StatelessWidget {
 
 class _ErrorCard extends StatelessWidget {
   final String error;
-  final VoidCallback onRetry;
 
-  const _ErrorCard({required this.error, required this.onRetry});
+  const _ErrorCard({required this.error});
 
   @override
   Widget build(BuildContext context) {
@@ -386,63 +504,10 @@ class _ErrorCard extends StatelessWidget {
         color: Colors.red.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Lỗi tải dữ liệu: $error',
-            style: AppTextStyles.arimo(color: Colors.red.shade700),
-          ),
-          const SizedBox(height: 8),
-          TextButton(onPressed: onRetry, child: const Text('Thử lại')),
-        ],
-      ),
-    );
-  }
-}
-
-class _EmptyCard extends StatelessWidget {
-  final String message;
-
-  const _EmptyCard({required this.message});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(12),
-      ),
       child: Text(
-        message,
-        style: AppTextStyles.arimo(color: AppColors.textSecondary),
+        error,
+        style: AppTextStyles.arimo(color: Colors.red.shade700),
       ),
-    );
-  }
-}
-
-class _SectionTitle extends StatelessWidget {
-  final IconData icon;
-  final String title;
-
-  const _SectionTitle({required this.icon, required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 20, color: AppColors.textSecondary),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: AppTextStyles.arimo(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
-          ),
-        ),
-      ],
     );
   }
 }

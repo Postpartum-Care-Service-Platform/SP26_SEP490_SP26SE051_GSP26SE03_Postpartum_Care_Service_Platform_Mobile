@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
+import '../../../../../core/apis/api_client.dart';
+import '../../../../../core/apis/api_endpoints.dart';
 import '../../../../../core/constants/app_colors.dart';
-import '../../../../../core/di/injection_container.dart';
 import '../../../../../core/utils/app_responsive.dart';
 import '../../../../../core/utils/app_text_styles.dart';
 import '../../../../../core/widgets/app_app_bar.dart';
-import '../../../../../features/employee/appointment/domain/entities/appointment_entity.dart';
-import '../../../../../features/employee/shell/presentation/widgets/employee_scaffold.dart';
 import '../../../../../features/employee/customer_profile/presentation/screens/employee_customer_family_profiles_screen.dart';
+import '../../../../../features/employee/shell/presentation/widgets/employee_scaffold.dart';
 
 class EmployeeAssignedFamiliesScreen extends StatefulWidget {
   const EmployeeAssignedFamiliesScreen({super.key});
@@ -19,43 +20,423 @@ class EmployeeAssignedFamiliesScreen extends StatefulWidget {
 
 class _EmployeeAssignedFamiliesScreenState
     extends State<EmployeeAssignedFamiliesScreen> {
-  late final Future<List<_AssignedCustomer>> _futureCustomers =
-      _loadAssignedCustomers();
+  late DateTime _focusMonth;
+  late Future<List<_AssignedCustomer>> _futureCustomers;
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    _focusMonth = DateTime(now.year, now.month, 1);
+    _futureCustomers = _loadAssignedCustomers();
+  }
 
   Future<List<_AssignedCustomer>> _loadAssignedCustomers() async {
-    final appointments = await InjectionContainer.appointmentEmployeeRepository
-        .getMyAssignedAppointments();
+    final from = DateTime(_focusMonth.year, _focusMonth.month, 1);
+    final to = DateTime(_focusMonth.year, _focusMonth.month + 1, 0);
 
-    final byCustomer = <String, List<AppointmentEntity>>{};
-    for (final a in appointments) {
-      final id = a.customerId.trim();
-      if (id.isEmpty) continue;
-      byCustomer.putIfAbsent(id, () => []).add(a);
+    final response = await ApiClient.dio.get(
+      ApiEndpoints.myStaffSchedules,
+      queryParameters: {
+        'from': _dateOnly(from),
+        'to': _dateOnly(to),
+      },
+    );
+
+    final data = response.data as List<dynamic>? ?? const [];
+    final byCustomer = <String, List<Map<String, dynamic>>>{};
+
+    for (final item in data) {
+      final row = item as Map<String, dynamic>;
+      final family = row['familyScheduleResponse'] as Map<String, dynamic>?;
+      final customerId = (family?['customerId'] ?? '').toString().trim();
+      if (customerId.isEmpty) {
+        continue;
+      }
+      byCustomer.putIfAbsent(customerId, () => []).add(row);
     }
 
     final result = <_AssignedCustomer>[];
     for (final entry in byCustomer.entries) {
       final customerId = entry.key;
       final items = entry.value;
-      final info = items.first.customer;
-      final email = info?.email ?? '';
-      final displayName = (info?.username?.trim().isNotEmpty == true)
-          ? info!.username!.trim()
-          : (email.isNotEmpty ? email : customerId);
+      final first = items.first;
+      final family = first['familyScheduleResponse'] as Map<String, dynamic>?;
+
+      final displayName =
+          (family?['customerName'] ?? family?['name'] ?? customerId)
+              .toString();
+      final avatarUrl = (family?['customerAvatar'] ?? '').toString();
+      final roomName = (first['roomName'] ?? '').toString();
+
+      final activities = items
+          .map((row) {
+            final familyMap =
+                row['familyScheduleResponse'] as Map<String, dynamic>?;
+            return _AssignedActivity(
+              staffScheduleId: (row['id'] as num?)?.toInt() ?? 0,
+              startAt: _parseScheduleDateTime(
+                familyMap?['workDate']?.toString(),
+                familyMap?['startTime']?.toString(),
+              ),
+              endAt: _parseScheduleDateTime(
+                familyMap?['workDate']?.toString(),
+                familyMap?['endTime']?.toString(),
+              ),
+              activity: (familyMap?['activity'] ?? 'Hoạt động').toString(),
+              status: (familyMap?['status'] ?? 'Scheduled').toString(),
+              note: (familyMap?['note'] ?? '').toString(),
+            );
+          })
+          .toList()
+        ..sort((a, b) {
+          final aTime = a.startAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+          final bTime = b.startAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+          return aTime.compareTo(bTime);
+        });
 
       result.add(
         _AssignedCustomer(
           customerId: customerId,
           displayName: displayName,
-          email: email,
-          phone: info?.phone,
-          appointmentsCount: items.length,
+          avatarUrl: avatarUrl,
+          roomName: roomName,
+          assignmentsCount: items.length,
+          activities: activities,
         ),
       );
     }
 
     result.sort((a, b) => a.displayName.compareTo(b.displayName));
     return result;
+  }
+
+  String _dateOnly(DateTime value) {
+    final month = value.month.toString().padLeft(2, '0');
+    final day = value.day.toString().padLeft(2, '0');
+    return '${value.year}-$month-$day';
+  }
+
+  DateTime? _parseScheduleDateTime(String? date, String? time) {
+    if (date == null || date.isEmpty) {
+      return null;
+    }
+    final parsedDate = DateTime.tryParse(date);
+    if (parsedDate == null) {
+      return null;
+    }
+
+    final safeTime = (time ?? '').split('.').first;
+    if (safeTime.isEmpty) {
+      return DateTime(parsedDate.year, parsedDate.month, parsedDate.day);
+    }
+
+    final parts = safeTime.split(':');
+    final hour = parts.isNotEmpty ? int.tryParse(parts[0]) ?? 0 : 0;
+    final minute = parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0;
+    return DateTime(parsedDate.year, parsedDate.month, parsedDate.day, hour, minute);
+  }
+
+  void _changeMonth(int delta) {
+    setState(() {
+      _focusMonth = DateTime(_focusMonth.year, _focusMonth.month + delta, 1);
+      _futureCustomers = _loadAssignedCustomers();
+    });
+  }
+
+  void _goToCurrentMonth() {
+    final now = DateTime.now();
+    setState(() {
+      _focusMonth = DateTime(now.year, now.month, 1);
+      _futureCustomers = _loadAssignedCustomers();
+    });
+  }
+
+  Future<void> _showActivitiesTimelineBottomSheet(
+    _AssignedCustomer customer,
+  ) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        final scale = AppResponsive.scaleFactor(sheetContext);
+        final initialActivities = List<_AssignedActivity>.from(customer.activities);
+        var filter = _ActivityFilter.all;
+
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            final filteredActivities = _filterActivities(initialActivities, filter);
+            final calendarDays = _buildCalendarDays(filteredActivities);
+
+            return FractionallySizedBox(
+              heightFactor: 0.9,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(22 * scale),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    SizedBox(height: 10 * scale),
+                    Container(
+                      width: 46 * scale,
+                      height: 5 * scale,
+                      decoration: BoxDecoration(
+                        color: AppColors.borderLight,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        16 * scale,
+                        12 * scale,
+                        12 * scale,
+                        8 * scale,
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  customer.displayName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTextStyles.arimo(
+                                    fontSize: 16 * scale,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                SizedBox(height: 4 * scale),
+                                Text(
+                                  'Timeline hoạt động trong tháng • ${customer.assignmentsCount} lịch',
+                                  style: AppTextStyles.arimo(
+                                    fontSize: 12 * scale,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => Navigator.of(sheetContext).pop(),
+                            icon: const Icon(Icons.close_rounded),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16 * scale),
+                      child: _FilterTabs(
+                        current: filter,
+                        onChanged: (next) {
+                          setSheetState(() {
+                            filter = next;
+                          });
+                        },
+                      ),
+                    ),
+                    SizedBox(height: 12 * scale),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: EdgeInsets.fromLTRB(
+                          16 * scale,
+                          0,
+                          16 * scale,
+                          16 * scale,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _CalendarGrid(
+                              days: calendarDays,
+                              onCheckPressed: (activity) async {
+                                final note = await _askForNote(sheetContext);
+                                if (!sheetContext.mounted || note == null) {
+                                  return;
+                                }
+
+                                final success = await _checkSchedule(
+                                  activity.staffScheduleId,
+                                  note,
+                                );
+                                if (!success || !sheetContext.mounted || !mounted) {
+                                  return;
+                                }
+
+                                setSheetState(() {
+                                  final index = initialActivities.indexWhere(
+                                    (item) => item.staffScheduleId == activity.staffScheduleId,
+                                  );
+                                  if (index != -1) {
+                                    initialActivities[index] = initialActivities[index].copyWith(
+                                      status: 'Done',
+                                      note: note,
+                                    );
+                                  }
+                                });
+
+                                setState(() {
+                                  _futureCustomers = _loadAssignedCustomers();
+                                });
+                              },
+                            ),
+                            SizedBox(height: 12 * scale),
+                            OutlinedButton.icon(
+                              onPressed: () {
+                                Navigator.of(sheetContext).pop();
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => EmployeeCustomerFamilyProfilesScreen(
+                                      customerId: customer.customerId,
+                                      customerName: customer.displayName,
+                                    ),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.open_in_new_rounded),
+                              label: const Text('Mở hồ sơ gia đình'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<String?> _askForNote(BuildContext context) async {
+    final controller = TextEditingController();
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Xác nhận check'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(
+              labelText: 'Ghi chú',
+              hintText: 'Nhập ghi chú (tuỳ chọn)',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Huỷ'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Xác nhận'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) {
+      return null;
+    }
+
+    return controller.text.trim();
+  }
+
+  Future<bool> _checkSchedule(int staffScheduleId, String? note) async {
+    try {
+      final payload = {
+        'staffScheduleId': staffScheduleId,
+        'note': note ?? '',
+      };
+
+      await ApiClient.dio.patch(
+        ApiEndpoints.checkStaffSchedule,
+        data: payload,
+      );
+
+      if (!mounted) {
+        return false;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cập nhật lịch thành công.')),
+      );
+      return true;
+    } catch (e) {
+      if (!mounted) {
+        return false;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Cập nhật thất bại: $e')),
+      );
+      return false;
+    }
+  }
+
+  List<_AssignedActivity> _filterActivities(
+    List<_AssignedActivity> source,
+    _ActivityFilter filter,
+  ) {
+    if (filter == _ActivityFilter.all) {
+      return source;
+    }
+
+    return source.where((activity) {
+      final normalized = activity.status.toLowerCase();
+      switch (filter) {
+        case _ActivityFilter.scheduled:
+          return normalized == 'scheduled';
+        case _ActivityFilter.missed:
+          return normalized == 'missed';
+        case _ActivityFilter.completed:
+          return normalized == 'done' || normalized == 'completed';
+        case _ActivityFilter.all:
+          return true;
+      }
+    }).toList();
+  }
+
+  List<_CalendarDay> _buildCalendarDays(List<_AssignedActivity> activities) {
+    if (activities.isEmpty) {
+      final today = DateTime.now();
+      return List.generate(4, (index) {
+        final day = today.add(Duration(days: index));
+        return _CalendarDay(date: day, activities: const []);
+      });
+    }
+
+    final sorted = [...activities]
+      ..sort((a, b) {
+        final aTime = a.startAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final bTime = b.startAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return aTime.compareTo(bTime);
+      });
+
+    final anchor = sorted.first.startAt ?? DateTime.now();
+    return List.generate(4, (index) {
+      final day = DateTime(anchor.year, anchor.month, anchor.day + index);
+      final dayActivities = activities.where((activity) {
+        final start = activity.startAt;
+        if (start == null) {
+          return false;
+        }
+        return start.year == day.year &&
+            start.month == day.month &&
+            start.day == day.day;
+      }).toList();
+      return _CalendarDay(date: day, activities: dayActivities);
+    });
   }
 
   @override
@@ -69,14 +450,15 @@ class _EmployeeAssignedFamiliesScreenState
       body: FutureBuilder<List<_AssignedCustomer>>(
         future: _futureCustomers,
         builder: (context, snapshot) {
+          final customers = snapshot.data ?? const <_AssignedCustomer>[];
+
+          Widget content;
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
+            content = const Center(
               child: CircularProgressIndicator(color: AppColors.primary),
             );
-          }
-
-          if (snapshot.hasError) {
-            return Center(
+          } else if (snapshot.hasError) {
+            content = Center(
               child: Padding(
                 padding: EdgeInsets.all(24 * scale),
                 child: Text(
@@ -89,11 +471,8 @@ class _EmployeeAssignedFamiliesScreenState
                 ),
               ),
             );
-          }
-
-          final customers = snapshot.data ?? const [];
-          if (customers.isEmpty) {
-            return Center(
+          } else if (customers.isEmpty) {
+            content = Center(
               child: Padding(
                 padding: EdgeInsets.all(24 * scale),
                 child: Text(
@@ -106,33 +485,213 @@ class _EmployeeAssignedFamiliesScreenState
                 ),
               ),
             );
-          }
-
-          return ListView.separated(
-            padding: EdgeInsets.symmetric(
-              horizontal: 16 * scale,
-              vertical: 12 * scale,
-            ),
-            itemCount: customers.length,
-            separatorBuilder: (_, __) => SizedBox(height: 10 * scale),
-            itemBuilder: (context, index) {
-              final c = customers[index];
-              return _CustomerCard(
-                customer: c,
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => EmployeeCustomerFamilyProfilesScreen(
-                        customerId: c.customerId,
-                        customerName: c.displayName,
-                      ),
-                    ),
+          } else {
+            content = RefreshIndicator(
+              onRefresh: () async {
+                setState(() {
+                  _futureCustomers = _loadAssignedCustomers();
+                });
+                await _futureCustomers;
+              },
+              child: ListView.separated(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 16 * scale,
+                  vertical: 12 * scale,
+                ),
+                itemCount: customers.length,
+                separatorBuilder: (_, __) => SizedBox(height: 10 * scale),
+                itemBuilder: (context, index) {
+                  final c = customers[index];
+                  return _CustomerCard(
+                    customer: c,
+                    onTap: () => _showActivitiesTimelineBottomSheet(c),
                   );
                 },
-              );
-            },
+              ),
+            );
+          }
+
+          return Column(
+            children: [
+              _MonthToolbar(
+                focusMonth: _focusMonth,
+                totalFamilies: customers.length,
+                onPreviousMonth: () => _changeMonth(-1),
+                onNextMonth: () => _changeMonth(1),
+                onCurrentMonth: _goToCurrentMonth,
+              ),
+              Expanded(child: content),
+            ],
           );
         },
+      ),
+    );
+  }
+}
+
+enum _ActivityFilter { all, scheduled, missed, completed }
+
+class _FilterTabs extends StatelessWidget {
+  final _ActivityFilter current;
+  final ValueChanged<_ActivityFilter> onChanged;
+
+  const _FilterTabs({required this.current, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+
+    return Wrap(
+      spacing: 8 * scale,
+      runSpacing: 8 * scale,
+      children: [
+        _FilterChip(
+          label: 'Tất cả',
+          selected: current == _ActivityFilter.all,
+          onTap: () => onChanged(_ActivityFilter.all),
+        ),
+        _FilterChip(
+          label: 'Scheduled',
+          selected: current == _ActivityFilter.scheduled,
+          onTap: () => onChanged(_ActivityFilter.scheduled),
+        ),
+        _FilterChip(
+          label: 'Missed',
+          selected: current == _ActivityFilter.missed,
+          onTap: () => onChanged(_ActivityFilter.missed),
+        ),
+        _FilterChip(
+          label: 'Completed',
+          selected: current == _ActivityFilter.completed,
+          onTap: () => onChanged(_ActivityFilter.completed),
+        ),
+      ],
+    );
+  }
+}
+
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _FilterChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+    final bgColor = selected
+        ? AppColors.primary.withValues(alpha: 0.14)
+        : AppColors.borderLight.withValues(alpha: 0.35);
+    final textColor = selected ? AppColors.primary : AppColors.textSecondary;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: 12 * scale,
+          vertical: 6 * scale,
+        ),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: selected ? AppColors.primary : AppColors.borderLight,
+          ),
+        ),
+        child: Text(
+          label,
+          style: AppTextStyles.arimo(
+            fontSize: 12 * scale,
+            fontWeight: FontWeight.w600,
+            color: textColor,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MonthToolbar extends StatelessWidget {
+  final DateTime focusMonth;
+  final int totalFamilies;
+  final VoidCallback onPreviousMonth;
+  final VoidCallback onNextMonth;
+  final VoidCallback onCurrentMonth;
+
+  const _MonthToolbar({
+    required this.focusMonth,
+    required this.totalFamilies,
+    required this.onPreviousMonth,
+    required this.onNextMonth,
+    required this.onCurrentMonth,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+
+    return Container(
+      margin: EdgeInsets.fromLTRB(16 * scale, 12 * scale, 16 * scale, 0),
+      padding: EdgeInsets.symmetric(horizontal: 10 * scale, vertical: 10 * scale),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(14 * scale),
+        border: Border.all(color: AppColors.borderLight),
+      ),
+      child: Row(
+        children: [
+          OutlinedButton(
+            onPressed: onCurrentMonth,
+            child: const Text('Tháng này'),
+          ),
+          IconButton(
+            onPressed: onPreviousMonth,
+            icon: const Icon(Icons.chevron_left),
+          ),
+          IconButton(
+            onPressed: onNextMonth,
+            icon: const Icon(Icons.chevron_right),
+          ),
+          const Spacer(),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                DateFormat('MM/yyyy').format(focusMonth),
+                style: AppTextStyles.arimo(
+                  fontSize: 15 * scale,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              SizedBox(height: 4 * scale),
+              Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 10 * scale,
+                  vertical: 4 * scale,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  'Tổng gia đình: $totalFamilies',
+                  style: AppTextStyles.arimo(
+                    fontSize: 11 * scale,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -141,17 +700,362 @@ class _EmployeeAssignedFamiliesScreenState
 class _AssignedCustomer {
   final String customerId;
   final String displayName;
-  final String email;
-  final String? phone;
-  final int appointmentsCount;
+  final String avatarUrl;
+  final String roomName;
+  final int assignmentsCount;
+  final List<_AssignedActivity> activities;
 
   const _AssignedCustomer({
     required this.customerId,
     required this.displayName,
-    required this.email,
-    required this.phone,
-    required this.appointmentsCount,
+    required this.avatarUrl,
+    required this.roomName,
+    required this.assignmentsCount,
+    required this.activities,
   });
+}
+
+class _AssignedActivity {
+  final int staffScheduleId;
+  final DateTime? startAt;
+  final DateTime? endAt;
+  final String activity;
+  final String status;
+  final String note;
+
+  const _AssignedActivity({
+    required this.staffScheduleId,
+    required this.startAt,
+    required this.endAt,
+    required this.activity,
+    required this.status,
+    required this.note,
+  });
+
+  _AssignedActivity copyWith({
+    String? status,
+    String? note,
+  }) {
+    return _AssignedActivity(
+      staffScheduleId: staffScheduleId,
+      startAt: startAt,
+      endAt: endAt,
+      activity: activity,
+      status: status ?? this.status,
+      note: note ?? this.note,
+    );
+  }
+}
+
+class _CalendarDay {
+  final DateTime date;
+  final List<_AssignedActivity> activities;
+
+  const _CalendarDay({required this.date, required this.activities});
+}
+
+class _CalendarGrid extends StatelessWidget {
+  final List<_CalendarDay> days;
+  final ValueChanged<_AssignedActivity> onCheckPressed;
+
+  const _CalendarGrid({required this.days, required this.onCheckPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+    final labelWidth = 56 * scale;
+    final dayWidth = 132 * scale;
+    final dayGap = 8 * scale;
+
+    return Container(
+      padding: EdgeInsets.all(12 * scale),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(16 * scale),
+        border: Border.all(color: AppColors.borderLight),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final calculatedWidth =
+              labelWidth + (days.length * dayWidth) + ((days.length - 1) * dayGap);
+          final contentWidth =
+              calculatedWidth < constraints.maxWidth ? constraints.maxWidth : calculatedWidth;
+
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SizedBox(
+              width: contentWidth,
+              child: Column(
+                children: [
+                  _CalendarHeaderRow(
+                    days: days,
+                    labelWidth: labelWidth,
+                    dayWidth: dayWidth,
+                    dayGap: dayGap,
+                  ),
+                  SizedBox(height: 8 * scale),
+                  _CalendarSessionRow(
+                    label: 'Sáng',
+                    days: days,
+                    onCheckPressed: onCheckPressed,
+                    isMorning: true,
+                    labelWidth: labelWidth,
+                    dayWidth: dayWidth,
+                    dayGap: dayGap,
+                  ),
+                  SizedBox(height: 8 * scale),
+                  _CalendarSessionRow(
+                    label: 'Chiều',
+                    days: days,
+                    onCheckPressed: onCheckPressed,
+                    isMorning: false,
+                    labelWidth: labelWidth,
+                    dayWidth: dayWidth,
+                    dayGap: dayGap,
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _CalendarHeaderRow extends StatelessWidget {
+  final List<_CalendarDay> days;
+  final double labelWidth;
+  final double dayWidth;
+  final double dayGap;
+
+  const _CalendarHeaderRow({
+    required this.days,
+    required this.labelWidth,
+    required this.dayWidth,
+    required this.dayGap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+
+    return Row(
+      children: [
+        SizedBox(width: labelWidth),
+        for (final entry in days.asMap().entries) ...[
+          SizedBox(
+            width: dayWidth,
+            child: Column(
+              children: [
+                Text(
+                  DateFormat('EEE').format(entry.value.date),
+                  style: AppTextStyles.arimo(
+                    fontSize: 11 * scale,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                SizedBox(height: 2 * scale),
+                Text(
+                  DateFormat('dd/MM').format(entry.value.date),
+                  style: AppTextStyles.arimo(
+                    fontSize: 13 * scale,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (entry.key != days.length - 1) SizedBox(width: dayGap),
+        ],
+      ],
+    );
+  }
+}
+
+class _CalendarSessionRow extends StatelessWidget {
+  final String label;
+  final List<_CalendarDay> days;
+  final ValueChanged<_AssignedActivity> onCheckPressed;
+  final bool isMorning;
+  final double labelWidth;
+  final double dayWidth;
+  final double dayGap;
+
+  const _CalendarSessionRow({
+    required this.label,
+    required this.days,
+    required this.onCheckPressed,
+    required this.isMorning,
+    required this.labelWidth,
+    required this.dayWidth,
+    required this.dayGap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: labelWidth,
+          child: Text(
+            label,
+            style: AppTextStyles.arimo(
+              fontSize: 12 * scale,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+        for (final entry in days.asMap().entries) ...[
+          SizedBox(
+            width: dayWidth,
+            child: Container(
+              padding: EdgeInsets.all(6 * scale),
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.circular(12 * scale),
+                border: Border.all(color: AppColors.borderLight),
+              ),
+              child: Column(children: _buildSessionActivities(entry.value)),
+            ),
+          ),
+          if (entry.key != days.length - 1) SizedBox(width: dayGap),
+        ],
+      ],
+    );
+  }
+
+  List<Widget> _buildSessionActivities(_CalendarDay day) {
+    final activities = day.activities.where((activity) {
+      final start = activity.startAt;
+      if (start == null) {
+        return false;
+      }
+      if (isMorning) {
+        return start.hour < 12;
+      }
+      return start.hour >= 12;
+    }).toList();
+
+    if (activities.isEmpty) {
+      return [
+        Text(
+          'Trống',
+          style: AppTextStyles.arimo(
+            fontSize: 11,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ];
+    }
+
+    return activities
+        .map(
+          (activity) => _CalendarActivityCard(
+            activity: activity,
+            onCheckPressed: onCheckPressed,
+          ),
+        )
+        .toList();
+  }
+}
+
+class _CalendarActivityCard extends StatelessWidget {
+  final _AssignedActivity activity;
+  final ValueChanged<_AssignedActivity> onCheckPressed;
+
+  const _CalendarActivityCard({
+    required this.activity,
+    required this.onCheckPressed,
+  });
+
+  Color _statusColor() {
+    final normalized = activity.status.toLowerCase();
+    if (normalized == 'done' || normalized == 'completed') {
+      return const Color(0xFF16A34A);
+    }
+    if (normalized == 'missed') {
+      return const Color(0xFFDC2626);
+    }
+    if (normalized == 'cancelled') {
+      return const Color(0xFF9CA3AF);
+    }
+    return const Color(0xFF2563EB);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+    final statusColor = _statusColor();
+    final startLabel = activity.startAt != null
+        ? DateFormat('HH:mm').format(activity.startAt!)
+        : '--:--';
+    final endLabel = activity.endAt != null
+        ? DateFormat('HH:mm').format(activity.endAt!)
+        : '--:--';
+    final canCheck = !(activity.status.toLowerCase() == 'done' ||
+        activity.status.toLowerCase() == 'completed');
+
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.only(bottom: 6 * scale),
+      padding: EdgeInsets.all(8 * scale),
+      decoration: BoxDecoration(
+        color: statusColor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10 * scale),
+        border: Border.all(color: statusColor.withValues(alpha: 0.4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$startLabel - $endLabel',
+            style: AppTextStyles.arimo(
+              fontSize: 11 * scale,
+              fontWeight: FontWeight.w700,
+              color: statusColor,
+            ),
+          ),
+          SizedBox(height: 4 * scale),
+          Text(
+            activity.activity,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.arimo(
+              fontSize: 12 * scale,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          SizedBox(height: 6 * scale),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  activity.status,
+                  style: AppTextStyles.arimo(
+                    fontSize: 10 * scale,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+              if (canCheck)
+                TextButton(
+                  onPressed: () => onCheckPressed(activity),
+                  child: const Text('Check'),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _CustomerCard extends StatelessWidget {
@@ -159,6 +1063,21 @@ class _CustomerCard extends StatelessWidget {
   final VoidCallback onTap;
 
   const _CustomerCard({required this.customer, required this.onTap});
+
+  String _buildActivitiesPreview(List<_AssignedActivity> activities) {
+    final previews = activities.take(2).map((activity) {
+      final time = activity.startAt != null
+          ? DateFormat('dd/MM HH:mm').format(activity.startAt!)
+          : '--:--';
+      return '$time • ${activity.activity}';
+    }).toList();
+
+    if (activities.length > 2) {
+      previews.add('+${activities.length - 2} hoạt động nữa');
+    }
+
+    return previews.join('  |  ');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -180,12 +1099,23 @@ class _CustomerCard extends StatelessWidget {
                   color: AppColors.primary.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(14 * scale),
                 ),
+                clipBehavior: Clip.antiAlias,
                 alignment: Alignment.center,
-                child: Icon(
-                  Icons.family_restroom_rounded,
-                  color: AppColors.primary,
-                  size: 22 * scale,
-                ),
+                child: customer.avatarUrl.isNotEmpty
+                    ? Image.network(
+                        customer.avatarUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Icon(
+                          Icons.family_restroom_rounded,
+                          color: AppColors.primary,
+                          size: 22 * scale,
+                        ),
+                      )
+                    : Icon(
+                        Icons.family_restroom_rounded,
+                        color: AppColors.primary,
+                        size: 22 * scale,
+                      ),
               ),
               SizedBox(width: 12 * scale),
               Expanded(
@@ -204,9 +1134,9 @@ class _CustomerCard extends StatelessWidget {
                     ),
                     SizedBox(height: 4 * scale),
                     Text(
-                      customer.phone?.isNotEmpty == true
-                          ? '${customer.email} • ${customer.phone}'
-                          : customer.email,
+                      customer.roomName.isNotEmpty
+                          ? customer.roomName
+                          : 'Chưa có thông tin phòng',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.arimo(
@@ -216,13 +1146,25 @@ class _CustomerCard extends StatelessWidget {
                     ),
                     SizedBox(height: 6 * scale),
                     Text(
-                      'Lịch hẹn được giao: ${customer.appointmentsCount}',
+                      'Lịch được phân công: ${customer.assignmentsCount}',
                       style: AppTextStyles.arimo(
                         fontSize: 12 * scale,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                         color: AppColors.primary,
                       ),
                     ),
+                    if (customer.activities.isNotEmpty) ...[
+                      SizedBox(height: 6 * scale),
+                      Text(
+                        _buildActivitiesPreview(customer.activities),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.arimo(
+                          fontSize: 11 * scale,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

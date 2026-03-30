@@ -160,6 +160,8 @@ class ApiEndpoints {
   // ==========================================
 
   static const String myStaffSchedules = '/StaffSchedule/me';
+  static String staffsNoScheduled(String from, String to) =>
+      '/StaffSchedule/staffs/no-scheduled/$from/$to';
   static const String checkStaffSchedule = '/StaffSchedule/check';
   static const String swapStaffSchedule = '/StaffSchedule/swap-schedule';
   static const String mySwapRequests = '/StaffSchedule/my-swap-requests';

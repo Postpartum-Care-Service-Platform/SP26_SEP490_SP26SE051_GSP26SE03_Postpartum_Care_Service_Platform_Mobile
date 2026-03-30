@@ -213,9 +213,11 @@ class _LoadedContentState extends State<_LoadedContent> {
       // Fast-fix: bỏ request StaffSchedule tại đây vì không dùng dữ liệu trả về
       // (tránh phát sinh 1 API call dư thừa khi vào Home).
       final mySupportList = await _chatRemote.getMySupportRequests();
-      final noScheduleContracts = await _contractRemote.getNoScheduleContracts();
+      final noScheduleContracts = await _contractRemote
+          .getNoScheduleContracts();
       final bookings = await _bookingRemote.getAllBookings();
-      final unreadNotificationCount = await _notificationRemote.getUnreadCount();
+      final unreadNotificationCount = await _notificationRemote
+          .getUnreadCount();
 
       final mySupportRequests = mySupportList.length;
       final unscheduledContracts = noScheduleContracts.length;
@@ -401,16 +403,6 @@ class _LoadedContentState extends State<_LoadedContent> {
                             child: const EmployeeProfileScreen(),
                           ),
                         ),
-                      );
-                      break;
-                    case EmployeeQuickMenuExtraAction.customerProfileQuickTest:
-                      AppRouter.push(
-                        context,
-                        AppRoutes.employeeCustomerFamilyProfile,
-                        arguments: const {
-                          'customerId': 'TEST',
-                          'customerName': 'Test Profile',
-                        },
                       );
                       break;
                   }
@@ -1901,7 +1893,10 @@ class _BookingCard extends StatelessWidget {
             ),
 
             SizedBox(height: 12 * scale),
-            Divider(height: 1, color: AppColors.borderLight.withValues(alpha: 0.8)),
+            Divider(
+              height: 1,
+              color: AppColors.borderLight.withValues(alpha: 0.8),
+            ),
             SizedBox(height: 10 * scale),
 
             // Footer: ngày tháng + tổng tiền
