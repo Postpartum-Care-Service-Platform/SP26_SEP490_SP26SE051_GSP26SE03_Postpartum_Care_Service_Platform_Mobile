@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../../core/constants/app_colors.dart';
-import '../../../../../core/di/injection_container.dart';
 import '../../../../../core/utils/app_responsive.dart';
 import '../../../../../core/utils/app_text_styles.dart';
 import '../../../../../features/employee/account/data/datasources/account_remote_datasource.dart';
@@ -16,13 +15,12 @@ import '../../../../../features/services/presentation/bloc/staff_schedule/staff_
 import '../../../../../features/services/presentation/bloc/staff_schedule/staff_schedule_event.dart';
 import '../../../../../features/services/presentation/bloc/staff_schedule/staff_schedule_state.dart';
 import '../../../../../features/employee/amenity_service/presentation/bloc/amenity_service/amenity_service_bloc.dart';
-import '../../../../../features/employee/amenity_service/presentation/bloc/amenity_service/amenity_service_event.dart';
 import '../../../../../features/employee/amenity_service/presentation/bloc/amenity_service/amenity_service_state.dart';
 import '../../../../../features/employee/amenity_ticket/presentation/bloc/amenity_ticket/amenity_ticket_bloc.dart';
 import '../../../../../features/employee/amenity_ticket/presentation/bloc/amenity_ticket/amenity_ticket_event.dart';
 import '../../../../../features/employee/amenity_ticket/presentation/bloc/amenity_ticket/amenity_ticket_state.dart';
 import '../../../../../features/employee/shell/presentation/widgets/employee_header_bar.dart';  
-import '../../../../../features/employee/shell/presentation/widgets/employee_scaffold.dart';  
+import '../../../../../features/employee/shell/presentation/widgets/employee_scaffold.dart';
 
 /// Service Booking Screen
 /// Allows staff to book amenity services for customers
@@ -44,7 +42,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
 
   List<AccountModel> _customers = [];
   List<AccountModel> _filteredCustomers = [];
-  List<AmenityServiceEntity> _selectedServices = [];
+  AmenityServiceEntity? _selectedService;
   List<StaffScheduleEntity> _staffSchedules = [];
   List<FamilyScheduleEntity> _availableFamilySchedules = [];
 
@@ -59,7 +57,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
 
     final now = DateTime.now();
     final startDate = DateTime(now.year, now.month, now.day);
-    final endDate = startDate.add(const Duration(days: 7));
+    final endDate = startDate.add(const Duration(days: 2));
     _selectedDate = startDate;
     _selectedDateRangeEnd = endDate;
     _loadStaffSchedulesForRange(startDate, endDate);
@@ -84,6 +82,12 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
     final month = value.month.toString().padLeft(2, '0');
     final day = value.day.toString().padLeft(2, '0');
     return '${value.year}-$month-$day';
+  }
+
+  String _formatTimeOnly(TimeOfDay value) {
+    final hour = value.hour.toString().padLeft(2, '0');
+    final minute = value.minute.toString().padLeft(2, '0');
+    return '$hour:$minute:00';
   }
 
   TimeOfDay _buildScheduleTimeOfDay(String time) {
@@ -116,39 +120,33 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
   Future<void> _loadCustomers() async {
     setState(() => _isLoadingCustomers = true);
     try {
-      final dataSource = AccountRemoteDataSource();
-      final customers = await dataSource.getCustomers();
+      final accountDataSource = AccountRemoteDataSource();
+      final customers = await accountDataSource.getCustomers();
+      
       setState(() {
         _customers = customers;
-        _filteredCustomers = customers;
         _isLoadingCustomers = false;
       });
     } catch (e) {
-      setState(() => _isLoadingCustomers = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Lỗi tải danh sách khách hàng: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      // Silently fail for "system customer list" load as staff might not have permission
+      // and it's used primarily for robust ID matching
+      setState(() {
+        _isLoadingCustomers = false;
+        _customers = [];
+      });
+      debugPrint('Optional load all customers failed: $e');
+    }
+
+    // Always ensure staff schedules are loaded for the initial selected date (today)
+    if (_selectedDate != null) {
+      _loadStaffSchedulesForRange(_selectedDate!, _selectedDate!);
     }
   }
 
   void _filterCustomers() {
     final query = _searchController.text.toLowerCase();
     setState(() {
-      final baseList = _selectedDate == null
-          ? _customers
-          : _availableFamilySchedules.isNotEmpty
-          ? _customers.where((customer) {
-              final match = _availableFamilySchedules.any(
-                (schedule) => schedule.customerId == customer.id,
-              );
-              return match;
-            }).toList()
-          : <AccountModel>[];
+      final baseList = _customers;
 
       if (query.isEmpty) {
         _filteredCustomers = baseList;
@@ -172,16 +170,15 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
     );
     if (picked != null) {
       final startDate = DateTime(picked.year, picked.month, picked.day);
-      final endDate = startDate.add(const Duration(days: 7));
       setState(() {
         _selectedDate = startDate;
-        _selectedDateRangeEnd = endDate;
+        _selectedDateRangeEnd = startDate; // Same day for staff schedule check
         _selectedTime = null;
-        _selectedCustomer = null;
+        // Don't clear _selectedCustomer here, let _applyAvailableSchedules handle it
         _availableFamilySchedules = [];
         _staffSchedules = [];
       });
-      _loadStaffSchedulesForRange(startDate, endDate);
+      _loadStaffSchedulesForRange(startDate, startDate);
     }
   }
 
@@ -199,19 +196,6 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
       initialTime: initialTime,
     );
     if (picked != null) {
-      final isValid = _availableFamilySchedules.any(
-        (schedule) => _isTimeWithinSchedule(schedule, picked),
-      );
-      if (!isValid) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Giờ chọn không nằm trong lịch phân công'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
       setState(() => _selectedTime = picked);
     }
   }
@@ -232,10 +216,10 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
 
   void _toggleService(AmenityServiceEntity service) {
     setState(() {
-      if (_selectedServices.any((s) => s.id == service.id)) {
-        _selectedServices.removeWhere((s) => s.id == service.id);
+      if (_selectedService?.id == service.id) {
+        _selectedService = null;
       } else {
-        _selectedServices.add(service);
+        _selectedService = service;
       }
     });
   }
@@ -246,11 +230,61 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
         .whereType<FamilyScheduleEntity>()
         .toList();
 
+    // Match schedules with real accounts to get valid IDs
+    final List<AccountModel> filteredList = [];
+    
+    for (final s in availableSchedules) {
+      // Try search by ID first in the master account list
+      AccountModel matchedAccount = _customers.firstWhere(
+        (c) => c.id.toLowerCase() == s.customerId.toLowerCase(),
+        orElse: () => _customers.firstWhere(
+          (c) => c.displayName.toLowerCase() == (s.customerName?.toLowerCase() ?? ''),
+          orElse: () => AccountModel( // Fallback if no account found in system
+            id: s.customerId,
+            email: '',
+            username: s.customerName ?? 'Khách hàng',
+            isActive: true,
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+            roleName: 'Customer',
+            isEmailVerified: true,
+          ),
+        ),
+      );
+      
+      if (!filteredList.any((c) => c.id == matchedAccount.id)) {
+        filteredList.add(matchedAccount);
+      }
+    }
+
     setState(() {
       _staffSchedules = schedules;
       _availableFamilySchedules = availableSchedules;
+      _filteredCustomers = filteredList;
+      
+      // If none matched from schedules but we have real customers, show all real customers
+      // to avoid 404s when booking for customers who might not have a schedule entry yet
+      if (_filteredCustomers.isEmpty) {
+        _filteredCustomers = _customers;
+      }
+
+      // Keep selected customer if they are still available in the new list
+      if (_selectedCustomer != null) {
+        final stillAvailable = _filteredCustomers.any((c) => c.id == _selectedCustomer!.id);
+        if (!stillAvailable) {
+          _selectedCustomer = null;
+          _selectedTime = null;
+        } else {
+          // Update available schedules for the selected customer
+          _availableFamilySchedules = _staffSchedules
+              .map((schedule) => schedule.familySchedule)
+              .whereType<FamilyScheduleEntity>()
+              .where((schedule) => schedule.customerId == _selectedCustomer!.id || 
+                    (schedule.customerName != null && schedule.customerName == _selectedCustomer!.displayName))
+              .toList();
+        }
+      }
     });
-    _filterCustomers();
   }
 
   void _submit() {
@@ -264,10 +298,10 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
       return;
     }
 
-    if (_selectedServices.isEmpty) {
+    if (_selectedService == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Vui lòng chọn ít nhất một dịch vụ'),
+          content: Text('Vui lòng chọn một dịch vụ'),
           backgroundColor: Colors.red,
         ),
       );
@@ -294,38 +328,30 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
       return;
     }
 
-    final matchedSchedule = _availableFamilySchedules.firstWhere(
-      (schedule) => _isTimeWithinSchedule(schedule, _selectedTime!),
-      orElse: () => _availableFamilySchedules.first,
-    );
-
-    // Combine date and time
-    final startTime = DateTime(
+    // Calculate end time based on service duration (fallback to +30m if not available)
+    final durationMinutes = int.tryParse(_selectedService!.duration ?? '30') ?? 30;
+    final startDateTime = DateTime(
       _selectedDate!.year,
       _selectedDate!.month,
       _selectedDate!.day,
       _selectedTime!.hour,
       _selectedTime!.minute,
     );
+    final endDateTime = startDateTime.add(Duration(minutes: durationMinutes));
+    final endTimeStr = '${endDateTime.hour.toString().padLeft(2, '0')}:${endDateTime.minute.toString().padLeft(2, '0')}:00';
 
-    final endTime = _buildScheduleDateTime(
-      _selectedDate!,
-      matchedSchedule.endTime,
-    );
-
-    // Get service IDs
-    final serviceIds = _selectedServices.map((s) => s.id).toList();
-
+    // Combine date and time
+    final dateStr = _formatDateOnly(_selectedDate!);
+    final startTimeStr = _formatTimeOnly(_selectedTime!);
+    
     // Dispatch create booking event
     context.read<AmenityTicketBloc>().add(
       CreateServiceBookingEvent(
         customerId: _selectedCustomer!.id,
-        serviceIds: serviceIds,
-        startTime: startTime,
-        endTime: endTime,
-        notes: _notesController.text.trim().isEmpty
-            ? null
-            : _notesController.text.trim(),
+        amenityServiceId: _selectedService!.id,
+        date: dateStr,
+        startTime: startTimeStr,
+        endTime: endTimeStr,
       ),
     );
   }
@@ -334,17 +360,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
   Widget build(BuildContext context) {
     final padding = AppResponsive.pagePadding(context);
 
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(
-          create: (context) =>
-              InjectionContainer.amenityServiceBloc
-                ..add(const LoadActiveAmenityServices()),
-        ),
-        BlocProvider(create: (context) => InjectionContainer.amenityTicketBloc),
-        BlocProvider(create: (context) => InjectionContainer.staffScheduleBloc),
-      ],
-      child: EmployeeScaffold(
+    return EmployeeScaffold(
         body: SafeArea(
           child: Column(
             children: [
@@ -392,7 +408,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                           // Reset form
                           setState(() {
                             _selectedCustomer = null;
-                            _selectedServices = [];
+                            _selectedService = null;
                             _selectedDate = null;
                             _selectedDateRangeEnd = null;
                             _selectedTime = null;
@@ -498,7 +514,6 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
               ),
             ],
           ),
-        ),
       ),
     );
   }
@@ -566,7 +581,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
     final scale = AppResponsive.scaleFactor(context);
 
     final hasCustomer = _selectedCustomer != null;
-    final hasServices = _selectedServices.isNotEmpty;
+    final hasServices = _selectedService != null;
     final hasDateTime = _selectedDate != null && _selectedTime != null;
 
     if (!hasCustomer && !hasServices && !hasDateTime) {
@@ -649,16 +664,16 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
           SizedBox(height: 10 * scale),
           if (hasCustomer)
             Text(
-              'Khách hàng: ${_selectedCustomer!.displayName}',
+              'Khách hàng: ${_selectedCustomer!.displayName} (${_selectedCustomer!.id})',
               style: AppTextStyles.arimo(
-                fontSize: 13 * scale,
+                fontSize: 13, // Removed scale variable as it might vary, using standard size
                 color: AppColors.textPrimary,
               ),
             ),
-          if (hasCustomer) SizedBox(height: 6 * scale),
+          if (hasCustomer) const SizedBox(height: 6),
           if (hasServices)
             Text(
-              'Dịch vụ đã chọn: ${_selectedServices.length}',
+              'Dịch vụ: ${_selectedService!.name}',
               style: AppTextStyles.arimo(
                 fontSize: 13 * scale,
                 color: AppColors.textPrimary,
@@ -680,7 +695,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
 
   Widget _buildCustomerSelector() {
     return InkWell(
-      onTap: _selectedDate == null ? null : () => _showCustomerSearchDialog(),
+      onTap: _selectedDate == null ? null : () => _showCustomerSelectionBottomSheet(),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -791,92 +806,135 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (_selectedServices.isNotEmpty) ...[
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _selectedServices.map((service) {
-                      return Chip(
-                        label: Text(service.name),
-                        onDeleted: () => _toggleService(service),
-                        backgroundColor: AppColors.primary.withValues(
-                          alpha: 0.1,
-                        ),
-                        deleteIconColor: AppColors.primary,
-                      );
-                    }).toList(),
+                if (_selectedService != null) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: Chip(
+                      label: Text(_selectedService!.name),
+                      backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                      labelStyle: AppTextStyles.arimo(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      onDeleted: () => setState(() => _selectedService = null),
+                      deleteIconColor: AppColors.primary,
+                    ),
                   ),
-                  const SizedBox(height: 12),
                 ],
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: services.map((service) {
-                    final isSelected = _selectedServices.any(
-                      (s) => s.id == service.id,
-                    );
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: services.length,
+                  separatorBuilder: (context, index) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final service = services[index];
+                    final isSelected = _selectedService?.id == service.id;
+
                     return InkWell(
                       onTap: () => _toggleService(service),
+                      borderRadius: BorderRadius.circular(12),
                       child: Container(
-                        width: 220,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 12,
-                        ),
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? AppColors.primary
+                              ? AppColors.primary.withValues(alpha: 0.05)
                               : AppColors.white,
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: isSelected
                                 ? AppColors.primary
                                 : AppColors.borderLight,
+                            width: isSelected ? 1.5 : 1,
                           ),
                         ),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(
-                              isSelected
-                                  ? Icons.check_circle
-                                  : Icons.circle_outlined,
-                              size: 18,
-                              color: isSelected
-                                  ? Colors.white
-                                  : AppColors.textSecondary,
+                            // Service Image
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: service.imageUrl != null
+                                  ? Image.network(
+                                      service.imageUrl!,
+                                      width: 80,
+                                      height: 80,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) =>
+                                          _buildPlaceholderImage(),
+                                    )
+                                  : _buildPlaceholderImage(),
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 12),
+                            // Service Info
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    service.name,
-                                    style: AppTextStyles.arimo(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w700,
-                                      color: isSelected
-                                          ? AppColors.white
-                                          : AppColors.textPrimary,
-                                    ),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          service.name,
+                                          style: AppTextStyles.arimo(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.textPrimary,
+                                          ),
+                                        ),
+                                      ),
+                                      if (isSelected)
+                                        const Icon(
+                                          Icons.check_circle,
+                                          color: AppColors.primary,
+                                          size: 20,
+                                        ),
+                                    ],
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    service.description ?? '',
+                                    service.description ?? 'Dịch vụ tiện ích',
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
                                     style: AppTextStyles.arimo(
-                                      fontSize: 11,
-                                      color: isSelected
-                                          ? AppColors.white.withValues(
-                                              alpha: 0.85,
-                                            )
-                                          : AppColors.textSecondary,
+                                      fontSize: 13,
+                                      color: AppColors.textSecondary,
                                     ),
                                   ),
-                                  const SizedBox(height: 6),
-                                  // Có thể bổ sung thêm thời lượng / giá dịch vụ nếu BE trả về
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.background,
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            const Icon(
+                                              Icons.access_time,
+                                              size: 14,
+                                              color: AppColors.textSecondary,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              '${service.duration ?? '30'} phút',
+                                              style: AppTextStyles.arimo(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600,
+                                                color: AppColors.textSecondary,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ],
                               ),
                             ),
@@ -884,7 +942,7 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                         ),
                       ),
                     );
-                  }).toList(),
+                  },
                 ),
               ],
             ),
@@ -921,8 +979,8 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                _selectedDate != null && _selectedDateRangeEnd != null
-                    ? '${DateFormat('dd/MM/yyyy', 'vi').format(_selectedDate!)} - ${DateFormat('dd/MM/yyyy', 'vi').format(_selectedDateRangeEnd!)}'
+                _selectedDate != null
+                    ? DateFormat('dd/MM/yyyy', 'vi').format(_selectedDate!)
                     : 'Chọn ngày',
                 style: AppTextStyles.arimo(
                   color: _selectedDate != null
@@ -1025,107 +1083,197 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
     );
   }
 
-  void _showCustomerSearchDialog() {
-    showDialog(
+  Widget _buildPlaceholderImage() {
+    return Container(
+      width: 80,
+      height: 80,
+      color: AppColors.background,
+      child: const Icon(
+        Icons.image_outlined,
+        color: AppColors.textSecondary,
+        size: 30,
+      ),
+    );
+  }
+
+  void _showCustomerSelectionBottomSheet() {
+    showModalBottomSheet(
       context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Container(
-          constraints: const BoxConstraints(maxHeight: 500),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(color: AppColors.borderLight),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return Container(
+            height: MediaQuery.of(context).size.height * 0.75,
+            decoration: const BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Column(
+              children: [
+                // Handle
+                Container(
+                  margin: const EdgeInsets.only(top: 12),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.borderLight,
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Chọn khách hàng',
-                        style: AppTextStyles.arimo(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 12, 16),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Chọn khách hàng',
+                          style: AppTextStyles.arimo(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                          ),
                         ),
                       ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close),
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Tìm kiếm theo tên, email, số điện thoại...',
-                    prefixIcon: const Icon(Icons.search),
-                    filled: true,
-                    fillColor: AppColors.background,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: AppColors.borderLight),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (value) {
+                      _filterCustomers();
+                      setModalState(() {});
+                    },
+                    decoration: InputDecoration(
+                      hintText: 'Tìm theo tên, email, SĐT...',
+                      prefixIcon: const Icon(Icons.search, size: 20),
+                      filled: true,
+                      fillColor: AppColors.background,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide.none,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              Expanded(
-                child: _isLoadingCustomers || _isLoadingStaffSchedules
-                    ? const Center(child: CircularProgressIndicator())
-                    : _selectedDate == null
-                    ? Center(
-                        child: Text(
-                          'Vui lòng chọn ngày trước',
-                          style: AppTextStyles.arimo(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      )
-                    : _filteredCustomers.isEmpty
-                    ? Center(
-                        child: Text(
-                          'Không tìm thấy khách hàng',
-                          style: AppTextStyles.arimo(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      )
-                    : ListView.builder(
-                        itemCount: _filteredCustomers.length,
-                        itemBuilder: (context, index) {
-                          final customer = _filteredCustomers[index];
-                          return ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: AppColors.primary,
-                              child: Text(
-                                customer.displayName[0].toUpperCase(),
-                                style: const TextStyle(color: Colors.white),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: _isLoadingCustomers || _isLoadingStaffSchedules
+                      ? const Center(child: CircularProgressIndicator())
+                      : _filteredCustomers.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.person_search_outlined,
+                                    size: 64,
+                                    color: AppColors.textSecondary.withValues(alpha: 0.3),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'Không tìm thấy khách hàng',
+                                    style: AppTextStyles.arimo(
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
                               ),
+                            )
+                          : ListView.builder(
+                              itemCount: _filteredCustomers.length,
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              itemBuilder: (context, index) {
+                                final customer = _filteredCustomers[index];
+                                final isSelected =
+                                    _selectedCustomer?.id == customer.id;
+
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 8),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? AppColors.primary.withValues(alpha: 0.05)
+                                        : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: ListTile(
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 4,
+                                    ),
+                                    leading: CircleAvatar(
+                                      radius: 24,
+                                      backgroundColor: AppColors.primary
+                                          .withValues(alpha: 0.1),
+                                      child: Text(
+                                        customer.displayName[0].toUpperCase(),
+                                        style: AppTextStyles.arimo(
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.primary,
+                                        ),
+                                      ),
+                                    ),
+                                    title: Text(
+                                      customer.displayName,
+                                      style: AppTextStyles.arimo(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 15,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                    subtitle: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          customer.phone ?? customer.email,
+                                          style: AppTextStyles.arimo(
+                                            fontSize: 12,
+                                            color: AppColors.textSecondary,
+                                          ),
+                                        ),
+                                        Text(
+                                          'ID: ${customer.id}',
+                                          style: AppTextStyles.arimo(
+                                            fontSize: 10,
+                                            color: AppColors.textSecondary,
+                                          ).copyWith(fontStyle: FontStyle.italic),
+                                        ),
+                                      ],
+                                    ),
+                                    trailing: isSelected
+                                        ? const Icon(
+                                            Icons.check_circle,
+                                            color: AppColors.primary,
+                                          )
+                                        : const Icon(
+                                            Icons.arrow_forward_ios,
+                                            size: 14,
+                                            color: AppColors.borderLight,
+                                          ),
+                                    onTap: () {
+                                      _selectCustomer(customer);
+                                    },
+                                  ),
+                                );
+                              },
                             ),
-                            title: Text(customer.displayName),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(customer.email),
-                                if (customer.phone != null)
-                                  Text(customer.phone!),
-                              ],
-                            ),
-                            onTap: () => _selectCustomer(customer),
-                          );
-                        },
-                      ),
-              ),
-            ],
-          ),
-        ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

@@ -10,30 +10,24 @@ class AmenityTicketRepositoryImpl implements AmenityTicketRepository {
   AmenityTicketRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<List<AmenityTicketEntity>> createBooking({
+  Future<AmenityTicketEntity> createBooking({
     required String customerId,
-    required List<int> serviceIds,
-    required DateTime startTime,
-    required DateTime endTime,
-    String? notes,
+    required int amenityServiceId,
+    required String date,
+    required String startTime,
+    required String endTime,
   }) async {
     try {
-      // BE chỉ nhận 1 service mỗi lần, nên tạo từng ticket riêng
-      final List<AmenityTicketEntity> tickets = [];
+      final request = StaffCreateAmenityTicketRequestModel(
+        amenityServiceId: amenityServiceId,
+        customerId: customerId,
+        date: date,
+        startTime: startTime,
+        endTime: endTime,
+      );
       
-      for (final serviceId in serviceIds) {
-        final request = StaffCreateAmenityTicketRequestModel(
-          amenityServiceId: serviceId,
-          customerId: customerId,
-          startTime: startTime,
-          endTime: endTime,
-        );
-        
-        final model = await remoteDataSource.staffCreateAmenityTicket(request);
-        tickets.add(model.toEntity());
-      }
-      
-      return tickets;
+      final model = await remoteDataSource.staffCreateAmenityTicket(request);
+      return model.toEntity();
     } catch (e) {
       rethrow;
     }

@@ -31,16 +31,16 @@ class AmenityTicketLoaded extends AmenityTicketState {
 
 /// Booking created successfully
 class ServiceBookingCreated extends AmenityTicketState {
-  final List<AmenityTicketEntity> tickets;
+  final AmenityTicketEntity ticket;
   final String message;
 
   const ServiceBookingCreated({
-    required this.tickets,
+    required this.ticket,
     this.message = 'Đặt dịch vụ thành công',
   });
 
   @override
-  List<Object?> get props => [tickets, message];
+  List<Object?> get props => [ticket, message];
 }
 
 /// Action success state (confirm/complete/cancel)

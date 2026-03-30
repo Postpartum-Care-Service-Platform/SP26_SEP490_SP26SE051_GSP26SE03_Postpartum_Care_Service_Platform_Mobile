@@ -18,11 +18,19 @@ class AmenityServiceEntity {
   
   /// Is active
   final bool isActive;
+  
+  /// Service image URL
+  final String? imageUrl;
+  
+  /// Service duration in minutes
+  final String? duration;
 
   const AmenityServiceEntity({
     required this.id,
     required this.name,
     this.description,
+    this.imageUrl,
+    this.duration,
     required this.createdAt,
     required this.updatedAt,
     required this.isActive,
@@ -33,6 +41,8 @@ class AmenityServiceEntity {
     int? id,
     String? name,
     String? description,
+    String? imageUrl,
+    String? duration,
     DateTime? createdAt,
     DateTime? updatedAt,
     bool? isActive,
@@ -41,6 +51,8 @@ class AmenityServiceEntity {
       id: id ?? this.id,
       name: name ?? this.name,
       description: description ?? this.description,
+      imageUrl: imageUrl ?? this.imageUrl,
+      duration: duration ?? this.duration,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       isActive: isActive ?? this.isActive,
