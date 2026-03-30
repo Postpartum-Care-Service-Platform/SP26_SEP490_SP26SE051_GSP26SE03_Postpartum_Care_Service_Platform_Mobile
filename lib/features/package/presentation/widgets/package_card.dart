@@ -119,7 +119,7 @@ class PackageCard extends StatelessWidget {
                       vertical: 4 * scale,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.primary,
+                      color: Colors.black.withValues(alpha: 0.38),
                       borderRadius: BorderRadius.circular(14 * scale),
                     ),
                     child: Text(
@@ -194,7 +194,7 @@ class PackageCard extends StatelessWidget {
                               ? 26 * scale
                               : 28 * scale,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.white,
+                          color: AppColors.primary,
                         ).copyWith(height: 1.05),
                       ),
                       Text(

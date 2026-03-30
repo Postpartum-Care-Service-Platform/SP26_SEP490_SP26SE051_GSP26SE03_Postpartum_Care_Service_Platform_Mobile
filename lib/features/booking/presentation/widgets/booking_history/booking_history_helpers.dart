@@ -36,6 +36,11 @@ class BookingHistoryHelpers {
         return 'Đã xác nhận';
       case 'Pending':
         return 'Đang chờ';
+      case 'InProgress':
+      case 'inprogress':
+      case 'In-Progress':
+      case 'in-progress':
+        return 'In-Progress';
       case 'Cancelled':
         return 'Đã hủy';
       default:
@@ -48,6 +53,10 @@ class BookingHistoryHelpers {
       case 'Confirmed':
         return AppColors.verified;
       case 'Pending':
+      case 'InProgress':
+      case 'inprogress':
+      case 'In-Progress':
+      case 'in-progress':
         return AppColors.primary;
       case 'Cancelled':
         return AppColors.red;

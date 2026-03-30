@@ -17,7 +17,7 @@ class AppColors {
 
   // Text Colors
   static const Color textPrimary = Color(0xFF000000); // Black
-  static const Color textSecondary = Color(0xFF99A1AF); // Gray
+  static const Color textSecondary = Color.fromARGB(255, 56, 60, 66); // Gray
   static const Color textOnPrimary = Color(0xFFFFFFFF); // White on primary background
 
   // Border Colors

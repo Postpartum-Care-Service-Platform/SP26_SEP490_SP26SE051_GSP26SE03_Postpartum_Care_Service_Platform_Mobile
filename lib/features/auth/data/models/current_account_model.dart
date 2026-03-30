@@ -196,6 +196,15 @@ class NowPackageModel extends Equatable {
   DateTime? get lastServiceDate =>
       serviceDates.isEmpty ? null : serviceDates.last.date;
 
+  String get normalizedBookingStatus => bookingStatus.trim().toLowerCase();
+
+  bool get isInProgressStatus =>
+      normalizedBookingStatus == 'inprogress' ||
+      normalizedBookingStatus == 'in_progress' ||
+      normalizedBookingStatus == 'in progress';
+
+  bool get isServiceUnlocked => serviceIsActive || isInProgressStatus;
+
   factory NowPackageModel.fromJson(Map<String, dynamic> json) {
     final rawPaidAmount = json['paidAmount'];
     final paidAmount = rawPaidAmount is num ? rawPaidAmount.toDouble() : 0.0;

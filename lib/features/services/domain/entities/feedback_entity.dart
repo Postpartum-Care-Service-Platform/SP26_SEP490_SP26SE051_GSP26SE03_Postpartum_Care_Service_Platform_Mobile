@@ -7,6 +7,8 @@ class FeedbackEntity extends Equatable {
   final String customerName;
   final int feedbackTypeId;
   final String? feedbackTypeName;
+  final int? bookingId;
+  final int? familyScheduleId;
   final String title;
   final String content;
   final int rating; // 1-5 stars
@@ -21,6 +23,8 @@ class FeedbackEntity extends Equatable {
     required this.customerName,
     required this.feedbackTypeId,
     this.feedbackTypeName,
+    this.bookingId,
+    this.familyScheduleId,
     required this.title,
     required this.content,
     required this.rating,
@@ -48,6 +52,8 @@ class FeedbackEntity extends Equatable {
         customerName,
         feedbackTypeId,
         feedbackTypeName,
+        bookingId,
+        familyScheduleId,
         title,
         content,
         rating,

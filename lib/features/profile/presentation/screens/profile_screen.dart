@@ -149,20 +149,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               );
                             },
                           ),
-                          ProfileMenuItem(
-                            icon: Icons.medical_information_outlined,
-                            title: AppStrings.medicalRecords,
-                            onTap: () {
-       
-                            },
-                          ),
-                          ProfileMenuItem(
-                            icon: Icons.description_outlined,
-                            title: AppStrings.contract,
-                            onTap: () {
-             
-                            },
-                          ),
+                        
                           ProfileMenuItem(
                             icon: Icons.history_rounded,
                             title: AppStrings.bookingHistory,

@@ -4,7 +4,7 @@ import 'package:equatable/equatable.dart';
 /// Represents a menu selection by customer for a specific date
 class MenuRecordEntity extends Equatable {
   final int id;
-  final String accountId;
+  final String? accountId;
   final int menuId;
   final String name;
   final DateTime date;
@@ -14,7 +14,7 @@ class MenuRecordEntity extends Equatable {
 
   const MenuRecordEntity({
     required this.id,
-    required this.accountId,
+    this.accountId,
     required this.menuId,
     required this.name,
     required this.date,

@@ -622,6 +622,7 @@ class AppStrings {
   // Booking Status
   static const String bookingStatusDraft = 'Bản nháp';
   static const String bookingStatusConfirmed = 'Đã xác nhận';
+  static const String bookingStatusInProgress = 'Đang diễn ra';
   static const String bookingStatusCompleted = 'Đã hoàn thành';
 
   // Transaction Status

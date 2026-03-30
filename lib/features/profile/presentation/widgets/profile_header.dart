@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_text_styles.dart';
@@ -30,12 +32,14 @@ class ProfileHeader extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 24 * scale, vertical: 10 * scale),
       child: Column(
         children: [
-          Text(
-            AppStrings.welcomeBack,
-            style: AppTextStyles.tinos(
-              fontSize: 20 * scale,
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.w700,
+          SvgPicture.asset(
+            AppAssets.theJoyfulNestBrand,
+            width: 220 * scale,
+            height: 34 * scale,
+            fit: BoxFit.contain,
+            colorFilter: const ColorFilter.mode(
+              AppColors.primary,
+              BlendMode.srcIn,
             ),
           ),
           SizedBox(height: 10 * scale),

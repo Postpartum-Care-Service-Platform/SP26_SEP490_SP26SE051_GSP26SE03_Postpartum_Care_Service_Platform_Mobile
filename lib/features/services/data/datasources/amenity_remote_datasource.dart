@@ -48,31 +48,31 @@ class AmenityRemoteDataSourceImpl implements AmenityRemoteDataSource {
   }
 
   @override
-  Future<AmenityTicketModel> createTicket({
-    required int amenityServiceId,
-    required DateTime startTime,
-    required DateTime endTime,
-  }) async {
-    try {
-      // DateTime created from picker is in local timezone (UTC+7 for Vietnam)
-      // .toUtc() automatically converts from local timezone to UTC
-      // Example: User selects 22:00 (UTC+7) -> .toUtc() converts to 15:00 UTC
-      final startTimeUtc = startTime.toUtc();
-      final endTimeUtc = endTime.toUtc();
-      
-      final response = await dio.post(
-        ApiEndpoints.createAmenityTicket,
-        data: {
-          'amenityServiceId': amenityServiceId,
-          'startTime': startTimeUtc.toIso8601String(),
-          'endTime': endTimeUtc.toIso8601String(),
-        },
-      );
-      return AmenityTicketModel.fromJson(response.data as Map<String, dynamic>);
-    } on DioException catch (e) {
-      throw _handleError(e);
-    }
+Future<AmenityTicketModel> createTicket({
+  required int amenityServiceId,
+  required DateTime startTime,
+  required DateTime endTime,
+}) async {
+  try {
+    // Định dạng dữ liệu theo yêu cầu API mới
+    final String dateStr = "${startTime.year}-${startTime.month.toString().padLeft(2, '0')}-${startTime.day.toString().padLeft(2, '0')}";
+    final String startStr = "${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}:00";
+    final String endStr = "${endTime.hour.toString().padLeft(2, '0')}:${endTime.minute.toString().padLeft(2, '0')}:00";
+
+    final response = await dio.post(
+      ApiEndpoints.createAmenityTicket,
+      data: {
+        'amenityServiceId': amenityServiceId,
+        'date': dateStr,
+        'startTime': startStr,
+        'endTime': endStr,
+      },
+    );
+    return AmenityTicketModel.fromJson(response.data as Map<String, dynamic>);
+  } on DioException catch (e) {
+    throw _handleError(e);
   }
+}
 
   String _handleError(DioException error) {
     if (error.response != null) {

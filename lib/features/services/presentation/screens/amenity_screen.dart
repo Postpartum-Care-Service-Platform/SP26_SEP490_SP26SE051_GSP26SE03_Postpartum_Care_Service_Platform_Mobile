@@ -44,8 +44,9 @@ class _AmenityScreenState extends State<AmenityScreen> {
       context.read<AmenityBloc>().add(const AmenityServicesLoadRequested());
       // Wait a bit then show sheet
       Future.delayed(const Duration(milliseconds: 500), () {
+        if (!mounted) return;
         final newState = context.read<AmenityBloc>().state;
-        if (newState is AmenityLoaded && mounted) {
+        if (newState is AmenityLoaded) {
           CreateAmenityTicketSheet.show(context, newState.services);
         }
       });
@@ -257,6 +258,9 @@ class _AmenityScreenState extends State<AmenityScreen> {
   Widget _buildEmptyState(BuildContext context, double scale) {
     return Container(
       width: double.infinity,
+      constraints: BoxConstraints(
+        minHeight: MediaQuery.of(context).size.height * 0.52,
+      ),
       padding: EdgeInsets.all(32 * scale),
       decoration: BoxDecoration(
         color: AppColors.white,
@@ -272,17 +276,24 @@ class _AmenityScreenState extends State<AmenityScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.room_service_outlined,
-            size: 64 * scale,
-            color: AppColors.textSecondary,
+          Container(
+            padding: EdgeInsets.all(20 * scale),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.room_service_outlined,
+              size: 36 * scale,
+              color: AppColors.primary,
+            ),
           ),
-          SizedBox(height: 16 * scale),
+          SizedBox(height: 18 * scale),
           Text(
             AppStrings.amenityNoTickets,
-            style: AppTextStyles.arimo(
-              fontSize: 16 * scale,
-              fontWeight: FontWeight.w600,
+            style: AppTextStyles.tinos(
+              fontSize: 22 * scale,
+              fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
             ),
             textAlign: TextAlign.center,

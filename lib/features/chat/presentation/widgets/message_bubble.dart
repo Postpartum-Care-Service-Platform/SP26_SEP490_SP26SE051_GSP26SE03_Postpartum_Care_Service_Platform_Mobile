@@ -156,23 +156,7 @@ class MessageBubble extends StatelessWidget {
               ],
             ),
           ),
-          if (isMine)
-            SizedBox(
-              width: avatarSize + 8 * scale,
-              child: Align(
-                alignment: Alignment.bottomRight,
-                child: showAvatar
-                    ? AvatarWidget(
-                        size: 28,
-                        imageUrl: avatarUrl,
-                        displayName: displayName,
-                        borderWidth: 0,
-                        backgroundColor:
-                            AppColors.primary.withValues(alpha: 0.12),
-                      )
-                    : SizedBox(height: avatarSize),
-              ),
-            ),
+
         ],
       ),
     );

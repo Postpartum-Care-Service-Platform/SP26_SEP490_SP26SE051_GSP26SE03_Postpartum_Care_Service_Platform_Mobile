@@ -53,41 +53,53 @@ class PackageModel extends Equatable {
   });
 
   factory PackageModel.fromJson(Map<String, dynamic> json) {
-    return PackageModel(
-      id: json['id'] as int,
-      packageName: json['packageName'] as String,
-      description: json['description'] as String,
-      packageTypeId: json['packageTypeId'] as int?,
-      packageTypeName: json['packageTypeName'] as String?,
-      imageUrl: json['imageUrl'] as String?,
-      roomTypeId: json['roomTypeId'] as int?,
-      roomTypeName: json['roomTypeName'] as String?,
-      durationDays: json['durationDays'] as int?,
-      basePrice: (json['basePrice'] as num).toDouble(),
-      isActive: json['isActive'] as bool,
-      createdBy: json['createdBy'] as String?,
-      createdByName: json['createdByName'] as String?,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
-      hasRoomAvailabilityWarning: json['hasRoomAvailabilityWarning'] as bool? ?? false,
-      unavailableFrom: json['unavailableFrom'] != null
-          ? DateTime.parse(json['unavailableFrom'] as String)
-          : null,
-      unavailableTo: json['unavailableTo'] != null
-          ? DateTime.parse(json['unavailableTo'] as String)
-          : null,
-      firstAvailableDate: json['firstAvailableDate'] != null
-          ? DateTime.parse(json['firstAvailableDate'] as String)
-          : null,
-      totalRooms: json['totalRooms'] as int?,
-      availableRooms: json['availableRooms'] as int?,
-      carePlanDetails: json['carePlanDetails'] != null
-          ? (json['carePlanDetails'] as List<dynamic>)
-              .map((item) => CarePlanModel.fromJson(item as Map<String, dynamic>))
-              .toList()
-          : null,
-    );
-  }
+  return PackageModel(
+    id: json['id'] as int,
+    // Sửa description: cho phép null hoặc để mặc định là chuỗi rỗng
+    packageName: json['packageName']?.toString() ?? '', 
+    description: json['description']?.toString() ?? '', // Tránh lỗi null string
+    
+    packageTypeId: json['packageTypeId'] as int?,
+    packageTypeName: json['packageTypeName'] as String?,
+    imageUrl: json['imageUrl'] as String?,
+    roomTypeId: json['roomTypeId'] as int?,
+    roomTypeName: json['roomTypeName'] as String?,
+    durationDays: json['durationDays'] as int?,
+    
+    // Sử dụng num để an toàn cho cả int và double từ API
+    basePrice: (json['basePrice'] as num?)?.toDouble() ?? 0.0,
+    isActive: json['isActive'] as bool? ?? false,
+    
+    createdBy: json['createdBy'] as String?,
+    createdByName: json['createdByName'] as String?,
+    
+    // DateTime.parse cần kiểm tra null trước khi gọi
+    createdAt: json['createdAt'] != null 
+        ? DateTime.parse(json['createdAt'] as String) 
+        : DateTime.now(),
+    updatedAt: json['updatedAt'] != null 
+        ? DateTime.parse(json['updatedAt'] as String) 
+        : DateTime.now(),
+        
+    hasRoomAvailabilityWarning: json['hasRoomAvailabilityWarning'] as bool? ?? false,
+    unavailableFrom: json['unavailableFrom'] != null
+        ? DateTime.parse(json['unavailableFrom'] as String)
+        : null,
+    unavailableTo: json['unavailableTo'] != null
+        ? DateTime.parse(json['unavailableTo'] as String)
+        : null,
+    firstAvailableDate: json['firstAvailableDate'] != null
+        ? DateTime.parse(json['firstAvailableDate'] as String)
+        : null,
+    totalRooms: json['totalRooms'] as int?,
+    availableRooms: json['availableRooms'] as int?,
+    carePlanDetails: json['carePlanDetails'] != null
+        ? (json['carePlanDetails'] as List<dynamic>)
+            .map((item) => CarePlanModel.fromJson(item as Map<String, dynamic>))
+            .toList()
+        : null,
+  );
+}
 
   Map<String, dynamic> toJson() {
     return {

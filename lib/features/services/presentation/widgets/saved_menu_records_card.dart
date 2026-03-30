@@ -48,7 +48,7 @@ class SavedMenuRecordsCard extends StatelessWidget {
     return null;
   }
 
-  /// Sort menu types in order: Sáng, Phụ (Sáng), Trưa, Phụ (Chiều), Tối
+  /// Sort menu types in order: Sáng, Phụ (Sáng), Trưa, Phụ (Chiều), Chiều, Phụ (Tối)
   List<MenuTypeEntity> _getSortedMenuTypes() {
     final sorted = List<MenuTypeEntity>.from(menuTypes);
     sorted.sort((a, b) {
@@ -68,10 +68,18 @@ class SavedMenuRecordsCard extends StatelessWidget {
       return 3; // Trưa
     } else if (name.contains('Phụ') && name.contains('Chiều')) {
       return 4; // Phụ (Chiều)
+    } else if (name.contains('Chiều') && !name.contains('Phụ')) {
+      return 5; // Chiều
+    } else if (name.contains('Phụ') && name.contains('Tối')) {
+      return 6; // Phụ (Tối)
     } else if (name.contains('Tối')) {
-      return 5; // Tối
+      return 7; // Tối
     }
     return 99; // Unknown, put at end
+  }
+
+  bool _isSubMealType(String name) {
+    return name.contains('Phụ');
   }
 
   @override
@@ -110,6 +118,11 @@ class SavedMenuRecordsCard extends StatelessWidget {
             final record = _getRecordForMenuType(menuType.id);
             final menu = record != null ? _getMenu(record.menuId) : null;
             final hasMenu = record != null && menu != null;
+
+            // Hide sub-meals when they have no selected menu
+            if (_isSubMealType(menuType.name) && !hasMenu) {
+              return const SizedBox.shrink();
+            }
 
             return _MenuSection(
               menuType: menuType,
@@ -183,34 +196,43 @@ class _MenuSection extends StatelessWidget {
                   AppColors.primary,
                 ),
               ),
-              SizedBox(width: 12 * scale),
-              // Menu type and name
+              SizedBox(width: 4 * scale),
+              // Menu type and selected menu name (same row)
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
-                    Text(
-                      menuType.name,
-                      style: AppTextStyles.tinos(
-                        fontSize: 16 * scale,
-                        fontWeight: FontWeight.bold,
-                        color: hasMenu
-                            ? AppColors.textPrimary
-                            : AppColors.textSecondary,
+                    Expanded(
+                      child: Text(
+                        menuType.name,
+                        style: AppTextStyles.tinos(
+                          fontSize: 16 * scale,
+                          fontWeight: FontWeight.bold,
+                          color: hasMenu
+                              ? AppColors.textPrimary
+                              : AppColors.textSecondary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    if (hasMenu && menu != null) ...[
-                      SizedBox(height: 4 * scale),
-                      Text(
-                        record?.name.isNotEmpty == true
-                            ? record!.name
-                            : menu!.menuName,
-                        style: AppTextStyles.arimo(
-                          fontSize: 14 * scale,
-                          color: AppColors.textSecondary,
+                    if (hasMenu && menu != null)
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            record?.name.isNotEmpty == true
+                                ? record!.name
+                                : menu!.menuName,
+                            textAlign: TextAlign.right,
+                            style: AppTextStyles.arimo(
+                              fontSize: 14 * scale,
+                              color: AppColors.textSecondary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ),
-                    ],
                   ],
                 ),
               ),

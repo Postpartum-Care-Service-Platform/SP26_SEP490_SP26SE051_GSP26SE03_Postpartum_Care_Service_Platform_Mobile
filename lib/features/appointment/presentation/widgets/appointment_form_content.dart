@@ -478,8 +478,10 @@ class AppointmentFormContentState extends State<AppointmentFormContent> {
 
     final dateStr =
         '${_selectedDate!.year}-${_selectedDate!.month.toString().padLeft(2, '0')}-${_selectedDate!.day.toString().padLeft(2, '0')}';
+    
+    // Thêm ':00' vào cuối để đúng format "HH:mm:ss"
     final timeStr =
-        '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}';
+        '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}:00';
 
     widget.onSubmit(
       dateStr,

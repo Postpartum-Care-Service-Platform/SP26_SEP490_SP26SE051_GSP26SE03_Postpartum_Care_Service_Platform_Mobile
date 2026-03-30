@@ -72,7 +72,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
             if (nowPackage != null) {
               final isFullyPaid = nowPackage.remainingAmount <= 0;
 
-              if (nowPackage.serviceIsActive && isFullyPaid) {
+              if (nowPackage.isServiceUnlocked && isFullyPaid) {
                 return ServiceDashboard(nowPackage: nowPackage);
               } else {
                 return CurrentPackageView(nowPackage: nowPackage);
