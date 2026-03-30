@@ -544,7 +544,7 @@ class _PackageRoomRow extends StatelessWidget {
         if (roomValue.isNotEmpty)
           Expanded(
             child: _InfoSection(
-              label: 'Phòng',
+              label: 'Loại Phòng',
               value: roomValue,
               icon: Icons.business_rounded,
             ),

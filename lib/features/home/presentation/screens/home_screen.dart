@@ -139,11 +139,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                   ),
                   SizedBox(height: 28 * scale),
-                  const HomeTestimonialBanner(),
-
-                  SizedBox(height: 28 * scale),
 
                   const HomeLoveWallSection(),
+                  SizedBox(height: 28 * scale),
+                  const HomeTestimonialBanner(),
+
                   SizedBox(height: 28 * scale),
                   const HomeExperienceBanner(),
 
@@ -221,10 +221,7 @@ class _SideWavePainter extends CustomPainter {
   final Color color;
   final double strokeWidth;
 
-  const _SideWavePainter({
-    required this.color,
-    required this.strokeWidth,
-  });
+  const _SideWavePainter({required this.color, required this.strokeWidth});
 
   @override
   void paint(Canvas canvas, Size size) {
