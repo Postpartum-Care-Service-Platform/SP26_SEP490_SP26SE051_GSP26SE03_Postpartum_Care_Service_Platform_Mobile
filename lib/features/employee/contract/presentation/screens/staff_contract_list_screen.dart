@@ -7,6 +7,7 @@ import '../../../../../core/utils/app_text_styles.dart';
 import '../../../../../core/widgets/app_app_bar.dart';
 import '../../../../../features/contract/data/datasources/contract_remote_datasource.dart';
 import '../../../../../features/contract/data/models/contract_model.dart';
+import '../../../../../features/contract/data/models/contract_preview_model.dart';
 import '../../../../../features/employee/contract/presentation/screens/staff_contract_screen.dart';
 import '../../../../../features/employee/shell/presentation/widgets/employee_scaffold.dart';
 
@@ -33,17 +34,51 @@ class _StaffContractListScreenState extends State<StaffContractListScreen> {
   DateTime? _signedDateFrom;
   DateTime? _signedDateTo;
   bool _showFilters = false;
+  final Map<int, ContractPreviewModel> _previewByBookingId = {};
 
   Future<List<ContractModel>> _load() async {
-    if (_filter == 'no_schedule') {
-      final list = await _remote.getNoScheduleContracts();
-      list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      return list;
-    } else {
-      final list = await _remote.getAllContracts();
-      list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      return list;
+    final list = _filter == 'no_schedule'
+        ? await _remote.getNoScheduleContracts()
+        : await _remote.getAllContracts();
+
+    list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+    await _hydrateMissingCustomerInfo(list);
+
+    return list;
+  }
+
+  Future<void> _hydrateMissingCustomerInfo(List<ContractModel> contracts) async {
+    final bookingIdsToFetch = contracts
+        .where((c) => _needsPreviewFallback(c))
+        .map((c) => c.bookingId)
+        .where((id) => !_previewByBookingId.containsKey(id))
+        .toSet();
+
+    if (bookingIdsToFetch.isEmpty) return;
+
+    final entries = await Future.wait(
+      bookingIdsToFetch.map((bookingId) async {
+        try {
+          final preview = await _remote.previewContractByBooking(bookingId);
+          return MapEntry<int, ContractPreviewModel?>(bookingId, preview);
+        } catch (_) {
+          return MapEntry<int, ContractPreviewModel?>(bookingId, null);
+        }
+      }),
+    );
+
+    for (final entry in entries) {
+      final preview = entry.value;
+      if (preview == null) continue;
+      _previewByBookingId[entry.key] = preview;
     }
+  }
+
+  bool _needsPreviewFallback(ContractModel contract) {
+    final name = contract.customer?.username.trim() ?? '';
+    final email = contract.customer?.email.trim() ?? '';
+    return name.isEmpty && email.isEmpty;
   }
 
   Future<void> _refresh() async {
@@ -59,11 +94,14 @@ class _StaffContractListScreenState extends State<StaffContractListScreen> {
     if (_searchQuery.isNotEmpty) {
       final query = _searchQuery.toLowerCase();
       filtered = filtered.where((c) {
-        final customerName = (c.customer?.username ?? '').toLowerCase();
-        final customerEmail = (c.customer?.email ?? '').toLowerCase();
+        final preview = _previewByBookingId[c.bookingId];
+        final customerName =
+            (c.customer?.username ?? preview?.customerName ?? '').toLowerCase();
+        final customerEmail =
+            (c.customer?.email ?? preview?.customerEmail ?? '').toLowerCase();
         final contractCode = c.contractCode.toLowerCase();
         final bookingId = c.bookingId.toString().toLowerCase();
-        
+
         return customerName.contains(query) ||
             customerEmail.contains(query) ||
             contractCode.contains(query) ||
@@ -267,8 +305,11 @@ class _StaffContractListScreenState extends State<StaffContractListScreen> {
                     separatorBuilder: (_, __) => SizedBox(height: 10 * scale),
                     itemBuilder: (context, index) {
                       final c = items[index];
+                      final preview = _previewByBookingId[c.bookingId];
+
                       return _ContractItem(
                         contract: c,
+                        preview: preview,
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
@@ -748,10 +789,12 @@ class _StaffContractListScreenState extends State<StaffContractListScreen> {
 
 class _ContractItem extends StatelessWidget {
   final ContractModel contract;
+  final ContractPreviewModel? preview;
   final VoidCallback? onTap;
 
   const _ContractItem({
     required this.contract,
+    required this.preview,
     this.onTap,
   });
 
@@ -793,14 +836,26 @@ class _ContractItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
     final statusColor = _statusColor(contract.status);
-    final customerName = contract.customer?.username;
-    final customerEmail = contract.customer?.email;
-    final customerPhone = contract.customer?.phone;
-    final displayName = customerName?.isNotEmpty == true
+    final customerName = contract.customer?.username.trim();
+    final customerEmail = contract.customer?.email.trim();
+    final customerPhone = contract.customer?.phone?.trim();
+
+    final fallbackName = preview?.customerName?.trim();
+    final fallbackEmail = preview?.customerEmail?.trim();
+    final fallbackPhone = preview?.customerPhone?.trim();
+
+    final resolvedName = (customerName?.isNotEmpty == true)
         ? customerName!
-        : (customerEmail?.isNotEmpty == true ? customerEmail! : 'Chưa có khách hàng');
-    final hasCustomer =
-        customerName?.isNotEmpty == true || customerEmail?.isNotEmpty == true;
+        : ((fallbackName?.isNotEmpty == true) ? fallbackName! : null);
+    final resolvedEmail = (customerEmail?.isNotEmpty == true)
+        ? customerEmail!
+        : ((fallbackEmail?.isNotEmpty == true) ? fallbackEmail! : null);
+    final resolvedPhone = (customerPhone?.isNotEmpty == true)
+        ? customerPhone!
+        : ((fallbackPhone?.isNotEmpty == true) ? fallbackPhone! : null);
+
+    final displayName = resolvedName ?? resolvedEmail ?? 'Chưa có khách hàng';
+    final hasCustomer = resolvedName != null || resolvedEmail != null;
 
     return InkWell(
       onTap: onTap,
@@ -890,7 +945,7 @@ class _ContractItem extends StatelessWidget {
                               : AppColors.textSecondary,
                         ),
                       ),
-                      if (customerEmail != null) ...[
+                      if (resolvedEmail != null) ...[
                         SizedBox(height: 4 * scale),
                         Row(
                           children: [
@@ -902,7 +957,7 @@ class _ContractItem extends StatelessWidget {
                             SizedBox(width: 4 * scale),
                             Expanded(
                               child: Text(
-                                customerEmail,
+                                resolvedEmail,
                                 style: AppTextStyles.arimo(
                                   fontSize: 12 * scale,
                                   color: AppColors.textSecondary,
@@ -913,7 +968,7 @@ class _ContractItem extends StatelessWidget {
                           ],
                         ),
                       ],
-                      if (customerPhone != null) ...[
+                      if (resolvedPhone != null) ...[
                         SizedBox(height: 4 * scale),
                         Row(
                           children: [
@@ -924,7 +979,7 @@ class _ContractItem extends StatelessWidget {
                             ),
                             SizedBox(width: 4 * scale),
                             Text(
-                              customerPhone,
+                              resolvedPhone,
                               style: AppTextStyles.arimo(
                                 fontSize: 12 * scale,
                                 color: AppColors.textSecondary,

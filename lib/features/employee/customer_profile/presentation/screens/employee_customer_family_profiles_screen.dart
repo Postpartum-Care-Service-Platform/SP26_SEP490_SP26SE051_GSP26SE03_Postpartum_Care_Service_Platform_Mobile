@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/di/injection_container.dart';
+import '../../../../../core/routing/app_router.dart';
+import '../../../../../core/routing/app_routes.dart';
 import '../../../../../core/utils/app_responsive.dart';
 import '../../../../../core/utils/app_text_styles.dart';
 import '../../../../../core/widgets/app_toast.dart';
@@ -486,19 +488,29 @@ class _EmployeeCustomerFamilyProfilesScreenState
             onPressed: () => Navigator.of(context).pop(),
           ),
           actions: [
-            IconButton(
-              tooltip: 'Tạo lịch sinh hoạt',
-              onPressed: _creatingSchedule ? null : _createFamilySchedule,
-              icon: const Icon(Icons.event_available_rounded),
-            ),
-            IconButton(
-              tooltip: 'Làm mới',
-              onPressed: _refreshAll,
-              icon: const Icon(Icons.refresh_rounded),
+            Padding(
+              padding: EdgeInsets.only(right: 12 * scale),
+              child: Row(
+                children: [
+                  IconButton(
+                    tooltip: 'Tạo lịch sinh hoạt',
+                    onPressed: _creatingSchedule ? null : _createFamilySchedule,
+                    icon: const Icon(Icons.event_available_rounded),
+                  ),
+                  SizedBox(width: 12 * scale),
+                  IconButton(
+                    tooltip: 'Làm mới',
+                    onPressed: _refreshAll,
+                    icon: const Icon(Icons.refresh_rounded),
+                  ),
+                ],
+              ),
             ),
           ],
           bottom: TabBar(
             isScrollable: true,
+            tabAlignment: TabAlignment.start,
+            labelPadding: EdgeInsets.symmetric(horizontal: 12 * scale),
             labelStyle: AppTextStyles.arimo(
               fontSize: 13 * scale,
               fontWeight: FontWeight.w700,
@@ -873,16 +885,24 @@ class _EmployeeCustomerFamilyProfilesScreenState
 
         final records = snapshot.data ?? const [];
         if (records.isEmpty) {
-          return _emptyText(scale, 'Không có giao dịch của khách hàng này.');
+          return _TransactionEmptyState(
+            scale: scale,
+            onCreateTransaction: () {
+              AppRouter.push(context, AppRoutes.staffTransactionList);
+            },
+          );
         }
 
         return _buildGenericMapList(
           scale: scale,
           records: records,
-          titleBuilder: (item) => 'Transaction #${item['id'] ?? item['transactionId'] ?? 'N/A'}',
+          titleBuilder: (item) =>
+              'Transaction #${item['id'] ?? item['transactionId'] ?? 'N/A'}',
           subtitleBuilder: (item) {
             final amount = item['amount']?.toString() ?? '0';
-            final status = item['status']?.toString() ?? item['transactionStatus']?.toString() ?? 'Unknown';
+            final status = item['status']?.toString() ??
+                item['transactionStatus']?.toString() ??
+                'Unknown';
             return 'Số tiền: $amount • Trạng thái: $status';
           },
         );
@@ -1045,4 +1065,69 @@ class _EmployeeCustomerFamilyProfilesScreenState
   }
 
   String _fmtDate(DateTime value) => value.toIso8601String().split('T').first;
+}
+
+class _TransactionEmptyState extends StatelessWidget {
+  final double scale;
+  final VoidCallback onCreateTransaction;
+
+  const _TransactionEmptyState({
+    required this.scale,
+    required this.onCreateTransaction,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 28 * scale),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 72 * scale,
+              height: 72 * scale,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.08),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.receipt_long_rounded,
+                size: 34 * scale,
+                color: AppColors.primary,
+              ),
+            ),
+            SizedBox(height: 14 * scale),
+            Text(
+              'Chưa có giao dịch',
+              style: AppTextStyles.arimo(
+                fontSize: 15 * scale,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            SizedBox(height: 6 * scale),
+            Text(
+              'Khách hàng này chưa phát sinh giao dịch nào.',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.arimo(
+                fontSize: 12.5 * scale,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            SizedBox(height: 14 * scale),
+            FilledButton.icon(
+              onPressed: onCreateTransaction,
+              icon: const Icon(Icons.add_card_rounded),
+              label: const Text('Tạo giao dịch mới'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).maybePop(),
+              child: const Text('Quay lại'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

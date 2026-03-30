@@ -28,7 +28,6 @@ enum EmployeeQuickMenuExtraAction {
   createCustomer,
   transactions,
   contracts,
-  customerProfileQuickTest,
 }
 
 /// Model định nghĩa 1 item trong menu nhanh
@@ -366,7 +365,6 @@ List<_QuickMenuGroup> _buildQuickMenuGroups(List<EmployeeQuickMenuItem> items) {
       case EmployeeQuickMenuExtraAction.mealPlan:
       case EmployeeQuickMenuExtraAction.familyProfile:
       case EmployeeQuickMenuExtraAction.createCustomer:
-      case EmployeeQuickMenuExtraAction.customerProfileQuickTest:
         customerCare.add(item);
         break;
       case EmployeeQuickMenuExtraAction.transactions:
@@ -581,7 +579,7 @@ class _EmployeeQuickMenuExpandedGrid extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 12),
             child: _QuickMenuGroupSection(
               group: entry.value,
-              initiallyExpanded: entry.key == 0,
+              initiallyExpanded: true,
               onItemTap: onItemTap,
               currentTab: currentTab,
             ),
@@ -770,12 +768,6 @@ class EmployeeQuickMenuPresets {
         label: 'Suất ăn',
         iconAsset: AppAssets.menuSecond,
         action: EmployeeQuickMenuExtraAction.mealPlan,
-      ),
-      EmployeeQuickMenuItem.extra(
-        id: 'customer_profile_quick_test',
-        label: 'Test Profile KH',
-        iconAsset: AppAssets.family,
-        action: EmployeeQuickMenuExtraAction.customerProfileQuickTest,
       ),
 
       // Nhóm tài chính
