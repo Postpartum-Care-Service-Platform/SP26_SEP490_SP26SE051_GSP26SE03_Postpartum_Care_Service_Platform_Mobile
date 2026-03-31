@@ -126,22 +126,6 @@ class _PackageScreenState extends State<PackageScreen> {
 
             return Column(
               children: [
-                // Filter tabs
-                Container(
-                  padding: EdgeInsets.fromLTRB(
-                    20 * scale,
-                    16 * scale,
-                    20 * scale,
-                    12 * scale,
-                  ),
-                  color: AppColors.background,
-                  child: PackageFilterTabs(
-                    currentFilter: state.currentFilter,
-                    onFilterChanged: (filter) {
-                      context.read<PackageBloc>().add(PackageFilterChanged(filter));
-                    },
-                  ),
-                ),
                 // Packages grid
                 Expanded(
                   child: RefreshIndicator(
@@ -152,10 +136,8 @@ class _PackageScreenState extends State<PackageScreen> {
                     child: _buildPackageGrid(
                       context,
                       scale,
-                      state.filteredPackages,
-                      state.currentFilter == PackageFilter.center
-                          ? AppStrings.noCenterPackages
-                          : AppStrings.noHomePackages,
+                      state.centerPackages,
+                      AppStrings.noCenterPackages,
                     ),
                   ),
                 ),

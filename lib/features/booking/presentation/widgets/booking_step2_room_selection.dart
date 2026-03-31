@@ -405,7 +405,7 @@ class _RoomTile extends StatelessWidget {
           mainAxisSize: MainAxisSize.max,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Top row: icon + tầng
+            // Top row: icon + radio
             Row(
               children: [
                 Container(
@@ -421,22 +421,7 @@ class _RoomTile extends StatelessWidget {
                     color: AppColors.primary,
                   ),
                 ),
-                SizedBox(width: 6 * scale),
-                Expanded(
-                  child: Text(
-                    room.floor != null
-                        ? '${AppStrings.bookingFloor} ${room.floor}'
-                        : '',
-                    style: AppTextStyles.arimo(
-                      fontSize: 10 * scale,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textSecondary,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                SizedBox(width: 6 * scale),
+                const Spacer(),
                 Container(
                   width: 16 * scale,
                   height: 16 * scale,
@@ -476,14 +461,15 @@ class _RoomTile extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
             SizedBox(height: 4 * scale),
-            // Room type (giới hạn chiều cao cố định để tránh overflow)
+            // Room type
             SizedBox(
               height: 28 * scale,
               child: Center(
                 child: Text(
                   room.roomTypeName,
                   style: AppTextStyles.arimo(
-                    fontSize: 10 * scale,
+                    fontSize: 13 * scale,
+                    fontWeight: FontWeight.w500,
                     color: AppColors.textSecondary,
                   ),
                   textAlign: TextAlign.center,
