@@ -13,6 +13,7 @@ class ContractModel extends ContractEntity {
     super.signedDate,
     super.sentAt,
     super.fileUrl,
+    super.images,
     super.checkinDate,
     super.checkoutDate,
     required super.status,
@@ -35,6 +36,9 @@ class ContractModel extends ContractEntity {
           ? DateTime.parse(json['sentAt'] as String)
           : null,
       fileUrl: json['fileUrl'] as String?,
+      images: json['images'] != null
+          ? (json['images'] as List).map((e) => e as String).toList()
+          : null,
       checkinDate: json['checkinDate'] != null
           ? DateTime.parse(json['checkinDate'] as String)
           : null,
@@ -60,6 +64,7 @@ class ContractModel extends ContractEntity {
       'signedDate': signedDate?.toIso8601String(),
       'sentAt': sentAt?.toIso8601String(),
       'fileUrl': fileUrl,
+      'images': images,
       'checkinDate': checkinDate?.toIso8601String(),
       'checkoutDate': checkoutDate?.toIso8601String(),
       'status': status,
@@ -81,6 +86,7 @@ class ContractModel extends ContractEntity {
       signedDate: signedDate,
       sentAt: sentAt,
       fileUrl: fileUrl,
+      images: images,
       checkinDate: checkinDate,
       checkoutDate: checkoutDate,
       status: status,

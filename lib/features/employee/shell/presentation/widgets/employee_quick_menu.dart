@@ -669,12 +669,6 @@ class EmployeeQuickMenuPresets {
         iconAsset: AppAssets.calendarBold,
         action: EmployeeQuickMenuExtraAction.checkInOut,
       ),
-      EmployeeQuickMenuItem.extra(
-        id: 'tasks',
-        label: 'Công việc',
-        iconAsset: AppAssets.menuFirst,
-        action: EmployeeQuickMenuExtraAction.tasks,
-      ),
       EmployeeQuickMenuItem.bottom(
         id: 'chat',
         label: 'Trao đổi',
@@ -714,12 +708,6 @@ class EmployeeQuickMenuPresets {
         action: EmployeeQuickMenuExtraAction.checkInOut,
       ),
       EmployeeQuickMenuItem.extra(
-        id: 'tasks',
-        label: 'Công việc',
-        iconAsset: AppAssets.menuFirst,
-        action: EmployeeQuickMenuExtraAction.tasks,
-      ),
-      EmployeeQuickMenuItem.extra(
         id: 'appointments',
         label: 'Lịch hẹn',
         iconAsset: AppAssets.calendar,
@@ -756,12 +744,6 @@ class EmployeeQuickMenuPresets {
         label: 'Tiện ích',
         iconAsset: AppAssets.serviceAmenity,
         action: EmployeeQuickMenuExtraAction.amenityService,
-      ),
-      EmployeeQuickMenuItem.extra(
-        id: 'amenity_ticket',
-        label: 'Phiếu DV',
-        iconAsset: AppAssets.menuFirst,
-        action: EmployeeQuickMenuExtraAction.amenityTicket,
       ),
       EmployeeQuickMenuItem.extra(
         id: 'meal_plan',
