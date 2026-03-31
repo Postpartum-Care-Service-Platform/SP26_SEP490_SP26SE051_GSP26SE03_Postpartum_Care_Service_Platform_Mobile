@@ -91,7 +91,18 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     BookingLoadPackages event,
     Emitter<BookingState> emit,
   ) async {
-    if (state is BookingLoading || state is BookingPackagesLoaded) {
+    // Nếu đã có packages cached, emit lại luôn (cho phép quay lại step 1)
+    if (_packages != null && _packages!.isNotEmpty) {
+      emit(
+        BookingPackagesLoaded(
+          packages: _packages!,
+          selectedPackageId: _selectedPackageId,
+        ),
+      );
+      return;
+    }
+
+    if (state is BookingLoading) {
       return;
     }
 
@@ -118,11 +129,11 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     _selectedRoomId = null;
     _rooms = null;
 
-    final currentState = state;
-    if (currentState is BookingPackagesLoaded) {
+    // Luôn emit BookingPackagesLoaded khi chọn/đổi gói
+    if (_packages != null) {
       emit(
         BookingPackagesLoaded(
-          packages: currentState.packages,
+          packages: _packages!,
           selectedPackageId: _selectedPackageId,
         ),
       );
@@ -142,7 +153,14 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       _familyProfiles = profiles;
 
       if (_selectedFamilyProfileIds.isEmpty && profiles.isNotEmpty) {
-        _selectedFamilyProfileIds = [profiles.first.id];
+        // Auto-select only Mẹ (memberTypeId=2) and Em bé (memberTypeId=3)
+        final eligibleIds = profiles
+            .where((p) => p.memberTypeId == 2 || p.memberTypeId == 3)
+            .map((p) => p.id)
+            .toList();
+        if (eligibleIds.isNotEmpty) {
+          _selectedFamilyProfileIds = eligibleIds;
+        }
       }
 
       emit(

@@ -12,6 +12,7 @@ import '../../../package/presentation/widgets/package_card.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../booking/presentation/bloc/booking_bloc.dart';
 import '../../../booking/presentation/bloc/booking_state.dart';
+import 'package_detail_bottom_sheet.dart';
 
 class BookingStep1PackageSelection extends StatelessWidget {
   final Function(int) onPackageSelected;
@@ -126,9 +127,33 @@ class BookingStep1PackageSelection extends StatelessWidget {
                   );
                 }
 
-                // Use selectedPackageId from outer scope
-
-                return ListView.separated(
+                return Column(
+                  children: [
+                    // Hint nhắc nhở long press
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(
+                          16 * scale, 12 * scale, 16 * scale, 0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Icon(
+                            Icons.touch_app_rounded,
+                            size: 14 * scale,
+                            color: AppColors.textSecondary.withValues(alpha: 0.6),
+                          ),
+                          SizedBox(width: 4 * scale),
+                          Text(
+                            'Nhấn giữ để xem chi tiết',
+                            style: AppTextStyles.arimo(
+                              fontSize: 11.5 * scale,
+                              color: AppColors.textSecondary.withValues(alpha: 0.6),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: ListView.separated(
                   padding: EdgeInsets.all(16 * scale),
                   itemCount: packageState.centerPackages.length,
                   separatorBuilder: (_, __) => SizedBox(height: 12 * scale),
@@ -146,6 +171,12 @@ class BookingStep1PackageSelection extends StatelessWidget {
                           : () {
                               onPackageSelected(package.id);
                             },
+                      onLongPress: () {
+                        PackageDetailBottomSheet.show(
+                          context,
+                          package: package,
+                        );
+                      },
                         child: AnimatedScale(
                           duration: const Duration(milliseconds: 180),
                           curve: Curves.easeOut,
@@ -242,6 +273,9 @@ class BookingStep1PackageSelection extends StatelessWidget {
                       ),
                     );
                   },
+                ),
+                    ),
+                  ],
                 );
               }
 

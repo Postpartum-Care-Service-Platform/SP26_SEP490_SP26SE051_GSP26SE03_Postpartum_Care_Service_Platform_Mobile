@@ -68,10 +68,10 @@ class HomeStaffOwnerProfile extends Equatable {
   final String? memberTypeName;
   final String customerId;
   final String fullName;
-  final DateTime dateOfBirth;
-  final String gender;
-  final String address;
-  final String phoneNumber;
+  final DateTime? dateOfBirth;
+  final String? gender;
+  final String? address;
+  final String? phoneNumber;
   final String? avatarUrl;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -84,10 +84,10 @@ class HomeStaffOwnerProfile extends Equatable {
     this.memberTypeName,
     required this.customerId,
     required this.fullName,
-    required this.dateOfBirth,
-    required this.gender,
-    required this.address,
-    required this.phoneNumber,
+    this.dateOfBirth,
+    this.gender,
+    this.address,
+    this.phoneNumber,
     this.avatarUrl,
     required this.createdAt,
     required this.updatedAt,

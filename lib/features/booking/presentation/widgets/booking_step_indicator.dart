@@ -98,18 +98,23 @@ class BookingStepIndicator extends StatelessWidget {
     final size = 40.0 * scale;
     
     if (isCompleted) {
-      // Completed step: Green circle with white checkmark
+      // Completed step: Primary circle with white number
       return Container(
         width: size,
         height: size,
         decoration: BoxDecoration(
-          color: AppColors.appointmentCompleted, // Green
+          color: AppColors.primary,
           shape: BoxShape.circle,
         ),
-        child: Icon(
-          Icons.check,
-          color: AppColors.white,
-          size: 20 * scale,
+        child: Center(
+          child: Text(
+            '${index + 1}',
+            style: AppTextStyles.arimo(
+              fontSize: 16 * scale,
+              fontWeight: FontWeight.w600,
+              color: AppColors.white,
+            ),
+          ),
         ),
       );
     } else {
@@ -144,8 +149,8 @@ class BookingStepIndicator extends StatelessWidget {
       width: double.infinity, // Fill available width
       decoration: BoxDecoration(
         color: isCompleted
-            ? AppColors.appointmentCompleted // Green for completed
-            : AppColors.textSecondary.withValues(alpha: 0.3), // Light gray for incomplete
+            ? AppColors.primary
+            : AppColors.textSecondary.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(1 * scale),
       ),
     );

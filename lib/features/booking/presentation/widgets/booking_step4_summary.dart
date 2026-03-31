@@ -294,12 +294,6 @@ class BookingStep4Summary extends StatelessWidget {
                       amount: totalPrice,
                       scale: scale,
                     ),
-                    SizedBox(height: 8 * scale),
-                    _PriceRow(
-                      label: AppStrings.bookingDiscount,
-                      amount: 0,
-                      scale: scale,
-                    ),
                     Divider(height: 22 * scale),
                     _PriceRow(
                       label: AppStrings.bookingFinalAmount,

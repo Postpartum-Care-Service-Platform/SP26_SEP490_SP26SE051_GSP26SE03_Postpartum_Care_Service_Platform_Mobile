@@ -32,7 +32,6 @@ class HomeServiceStep4Summary extends StatelessWidget {
           return sum + (price * count);
         });
         final total = state.totalPrice > 0 ? state.totalPrice : subtotal;
-        const discount = 0.0;
 
         return SafeArea(
           top: false,
@@ -265,11 +264,6 @@ class HomeServiceStep4Summary extends StatelessWidget {
                     _PriceRow(
                       label: AppStrings.bookingTotalPrice,
                       value: _formatPrice(subtotal),
-                    ),
-                    SizedBox(height: 8 * scale),
-                    _PriceRow(
-                      label: AppStrings.bookingDiscount,
-                      value: _formatPrice(discount),
                     ),
                     SizedBox(height: 10 * scale),
                     Divider(color: AppColors.borderLight, height: 1 * scale),
