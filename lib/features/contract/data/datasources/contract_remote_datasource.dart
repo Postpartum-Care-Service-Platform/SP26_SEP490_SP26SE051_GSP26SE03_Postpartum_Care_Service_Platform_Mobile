@@ -37,10 +37,9 @@ abstract class ContractRemoteDataSource {
     required DateTime signedDate,
   });
 
-  /// Staff/Admin: Upload signed contract by file (multipart/form-data)
   Future<String> uploadSignedFile({
     required int id,
-    required String filePath,
+    required List<String> filePaths,
     required DateTime signedDate,
   });
 
@@ -261,14 +260,25 @@ class ContractRemoteDataSourceImpl implements ContractRemoteDataSource {
   @override
   Future<String> uploadSignedFile({
     required int id,
-    required String filePath,
+    required List<String> filePaths,
     required DateTime signedDate,
   }) async {
     try {
       final formData = FormData.fromMap({
-        'file': await MultipartFile.fromFile(filePath),
         'signedDate': signedDate.toIso8601String().split('T')[0],
       });
+
+      for (var path in filePaths) {
+         formData.files.add(MapEntry(
+           'file', 
+           await MultipartFile.fromFile(path),
+         ));
+         // Also add to 'files' array in case the API expects 'files' list
+         formData.files.add(MapEntry(
+           'files', 
+           await MultipartFile.fromFile(path),
+         ));
+      }
 
       // Ưu tiên endpoint upload-file nếu backend có hỗ trợ.
       try {

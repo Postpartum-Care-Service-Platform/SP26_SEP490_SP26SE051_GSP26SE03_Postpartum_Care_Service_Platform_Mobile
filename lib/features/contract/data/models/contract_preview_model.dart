@@ -16,15 +16,28 @@ class ContractPreviewModel {
   });
 
   factory ContractPreviewModel.fromJson(Map<String, dynamic> json) {
-    final payload = _asMap(json['data']) ?? json;
+    // Nếu có payload 'data' và nó là map (thường gặp khi wrap response)
+    var payload = json;
+    if (json.containsKey('data') && json['data'] is Map) {
+      final dataMap = json['data'] as Map;
+      if (dataMap.containsKey('contractCode') || dataMap.containsKey('htmlContent')) {
+        payload = dataMap.cast<String, dynamic>();
+      }
+    }
+
+    // Đọc an toàn (thử cả camelCase và PascalCase)
+    String? getStr(String key) {
+      final val = payload[key] ?? payload[key.substring(0, 1).toUpperCase() + key.substring(1)];
+      return val?.toString();
+    }
 
     return ContractPreviewModel(
-      bookingId: _asInt(payload['bookingId']) ?? 0,
-      contractCode: (payload['contractCode'] as String?) ?? '',
-      htmlContent: (payload['htmlContent'] as String?) ?? '',
-      customerName: (payload['customerName'] as String?)?.trim(),
-      customerEmail: (payload['customerEmail'] as String?)?.trim(),
-      customerPhone: (payload['customerPhone'] as String?)?.trim(),
+      bookingId: _asInt(payload['bookingId']) ?? _asInt(payload['BookingId']) ?? 0,
+      contractCode: getStr('contractCode') ?? '',
+      htmlContent: getStr('htmlContent') ?? '',
+      customerName: getStr('customerName')?.trim(),
+      customerEmail: getStr('customerEmail')?.trim(),
+      customerPhone: getStr('customerPhone')?.trim(),
     );
   }
 

@@ -12,6 +12,7 @@ class ContractEntity extends Equatable {
   final DateTime? signedDate;
   final DateTime? sentAt;
   final String? fileUrl;
+  final List<String>? images;
   final DateTime? checkinDate;
   final DateTime? checkoutDate;
   final String status; // Draft, Signed, etc.
@@ -28,6 +29,7 @@ class ContractEntity extends Equatable {
     this.signedDate,
     this.sentAt,
     this.fileUrl,
+    this.images,
     this.checkinDate,
     this.checkoutDate,
     required this.status,
@@ -46,6 +48,7 @@ class ContractEntity extends Equatable {
         signedDate,
         sentAt,
         fileUrl,
+        images,
         checkinDate,
         checkoutDate,
         status,
