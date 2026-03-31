@@ -23,7 +23,7 @@ class EmployeeAppointmentListScreen extends StatelessWidget {
     return BlocProvider(
       create: (context) =>
           InjectionContainer.employeeAppointmentBloc
-            ..add(const LoadMyAssignedAppointments()),
+            ..add(const LoadAllAppointments()),
       child: const _EmployeeAppointmentListContent(),
     );
   }
@@ -39,14 +39,14 @@ class _EmployeeAppointmentListContent extends StatelessWidget {
         child: Column(
           children: [
             const EmployeeHeaderBar(
-              title: 'Lịch hẹn của tôi',
-              subtitle: 'Quản lý và theo dõi lịch hẹn được giao',
+              title: 'Danh sách Lịch hẹn',
+              subtitle: 'Quản lý và theo dõi tất cả lịch hẹn trên hệ thống',
             ),
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () async {
                   context.read<AppointmentBloc>().add(
-                    const LoadMyAssignedAppointments(),
+                    const LoadAllAppointments(),
                   );
                 },
                 child: BlocConsumer<AppointmentBloc, AppointmentState>(
@@ -137,7 +137,7 @@ class _ErrorState extends StatelessWidget {
             ElevatedButton(
               onPressed: () {
                 context.read<AppointmentBloc>().add(
-                  const LoadMyAssignedAppointments(),
+                  const LoadAllAppointments(),
                 );
               },
               child: const Text('Thử lại'),
@@ -206,7 +206,6 @@ class _LoadedContentState extends State<_LoadedContent> {
   String _searchQuery = '';
   String _statusFilter = 'all';
   DateTime? _dateFilter;
-  bool _showFilters = false;
 
   int _getActiveFilterCount() {
     int count = 0;
@@ -288,6 +287,119 @@ class _LoadedContentState extends State<_LoadedContent> {
     return filtered;
   }
 
+  Future<bool> _showConfirmDialog({
+    required String title,
+    required String message,
+    required Color color,
+    IconData icon = Icons.help_outline_rounded,
+  }) async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (context) => Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 40),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      icon,
+                      size: 40,
+                      color: color,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    title,
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.arimo(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.arimo(
+                      fontSize: 14,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: Text(
+                            'Quay lại',
+                            style: AppTextStyles.arimo(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: color,
+                            foregroundColor: AppColors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: Text(
+                            'Xác nhận',
+                            style: AppTextStyles.arimo(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ) ??
+        false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final padding = AppResponsive.pagePadding(context);
@@ -295,7 +407,6 @@ class _LoadedContentState extends State<_LoadedContent> {
 
     // Apply filters
     final filteredAppointments = _applyFilters(widget.appointments);
-    final bool isUsingFilters = _getActiveFilterCount() > 0;
 
     // Separate upcoming and completed appointments
     final upcomingAppointments = filteredAppointments
@@ -310,375 +421,256 @@ class _LoadedContentState extends State<_LoadedContent> {
         .where((a) => a.status == AppointmentStatus.completed)
         .toList();
 
-    return CustomScrollView(
-      slivers: [
-        SliverPadding(
-          padding: padding,
-          sliver: SliverList(
-            delegate: SliverChildListDelegate([
-              const SizedBox(height: 12),
-              _buildSearchBar(scale),
-              if (_showFilters) _buildAdvancedFilters(scale, padding),
-              const SizedBox(height: 12),
-              if (isUsingFilters)
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16 * scale),
-                  child: Text(
-                    'Đang hiển thị ${filteredAppointments.length} lịch hẹn',
-                    style: AppTextStyles.arimo(
-                      fontSize: 12 * scale,
-                      color: AppColors.textSecondary,
+    return Column(
+      children: [
+        _buildSearchBar(scale),
+        _buildFilterBar(scale),
+        Expanded(
+          child: CustomScrollView(
+            slivers: [
+              if (filteredAppointments.isEmpty)
+                SliverFillRemaining(
+                  child: _buildNoFilteredAppointmentsState(scale),
+                )
+              else ...[
+                if (upcomingAppointments.isNotEmpty)
+                  SliverPadding(
+                    padding: padding.copyWith(top: 16),
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate([
+                        const _SectionTitle(
+                          icon: Icons.calendar_today_rounded,
+                          title: 'Lịch hẹn sắp tới',
+                        ),
+                        const SizedBox(height: 12),
+                        ...upcomingAppointments.map(
+                          (appointment) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _AppointmentCard(
+                              appointment: appointment,
+                              onConfirm: () => _handleConfirm(appointment),
+                              onComplete: () => _handleComplete(appointment),
+                              onCancel: () => _handleCancel(appointment),
+                            ),
+                          ),
+                        ),
+                      ]),
                     ),
                   ),
-                ),
-            ]),
+                if (completedAppointments.isNotEmpty)
+                  SliverPadding(
+                    padding: padding.copyWith(top: 24, bottom: 24),
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate([
+                         _SectionTitle(
+                          icon: Icons.check_circle_outline_rounded,
+                          title: 'Đã hoàn thành',
+                          iconColor: AppColors.textSecondary.withValues(alpha: 0.5),
+                        ),
+                        const SizedBox(height: 12),
+                        ...completedAppointments.map(
+                          (appointment) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _CompletedAppointmentCard(
+                              appointment: appointment,
+                            ),
+                          ),
+                        ),
+                      ]),
+                    ),
+                  ),
+              ],
+            ],
           ),
         ),
-        if (filteredAppointments.isEmpty)
-          SliverPadding(
-            padding: padding.copyWith(top: 24),
-            sliver: SliverToBoxAdapter(
-              child: _buildNoFilteredAppointmentsState(scale),
-            ),
-          )
-        else ...[
-          if (upcomingAppointments.isNotEmpty)
-            SliverPadding(
-              padding: padding.copyWith(top: 16),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  _SectionTitle(
-                    icon: Icons.calendar_month,
-                    title: 'Lịch sắp tới (${upcomingAppointments.length})',
-                  ),
-                  const SizedBox(height: 8),
-                  ...upcomingAppointments.map(
-                    (appointment) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _AppointmentCard(appointment: appointment),
-                    ),
-                  ),
-                ]),
-              ),
-            ),
-          if (completedAppointments.isNotEmpty)
-            SliverPadding(
-              padding: padding.copyWith(top: 16, bottom: 24),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  _SectionTitle(
-                    icon: Icons.check_circle_outline,
-                    title: 'Đã hoàn thành (${completedAppointments.length})',
-                    iconColor: AppColors.textSecondary,
-                  ),
-                  const SizedBox(height: 8),
-                  ...completedAppointments.map(
-                    (appointment) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _CompletedAppointmentCard(
-                        appointment: appointment,
-                      ),
-                    ),
-                  ),
-                ]),
-              ),
-            ),
-        ],
       ],
     );
   }
 
+  Future<void> _handleConfirm(AppointmentEntity appointment) async {
+    final confirmed = await _showConfirmDialog(
+      title: 'Xác nhận Lịch hẹn',
+      message: 'Bạn xác nhận sẽ tham gia lịch hẹn này?',
+      color: const Color(0xFF2563EB),
+      icon: Icons.check_circle_outline_rounded,
+    );
+    if (confirmed && mounted) {
+      context.read<AppointmentBloc>().add(
+        ConfirmAppointmentEvent(appointment.id),
+      );
+    }
+  }
+
+  Future<void> _handleComplete(AppointmentEntity appointment) async {
+    final confirmed = await _showConfirmDialog(
+      title: 'Hoàn thành Lịch hẹn',
+      message: 'Bạn xác nhận đã hoàn thành lịch hẹn này?',
+      color: const Color(0xFF16A34A),
+      icon: Icons.done_all_rounded,
+    );
+    if (confirmed && mounted) {
+      context.read<AppointmentBloc>().add(
+        CompleteAppointmentEvent(appointment.id),
+      );
+    }
+  }
+
+  Future<void> _handleCancel(AppointmentEntity appointment) async {
+    final confirmed = await _showConfirmDialog(
+      title: 'Hủy Lịch hẹn',
+      message: 'Bạn có chắc chắn muốn hủy lịch hẹn này? Thao tác này không thể hoàn tác.',
+      color: const Color(0xFFDC2626),
+      icon: Icons.close_rounded,
+    );
+    if (confirmed && mounted) {
+      context.read<AppointmentBloc>().add(
+        CancelAppointmentEvent(appointment.id),
+      );
+    }
+  }
+
   Widget _buildSearchBar(double scale) {
+    final padding = AppResponsive.pagePadding(context);
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16 * scale),
-      child: TextField(
-        controller: _searchController,
-        decoration: InputDecoration(
-          hintText: 'Tìm kiếm theo tên, email, SĐT khách hàng...',
-          prefixIcon: const Icon(Icons.search),
-          suffixIcon: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (_searchQuery.isNotEmpty)
-                IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    setState(() {
-                      _searchQuery = '';
-                      _searchController.clear();
-                    });
-                  },
-                ),
-              Stack(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.filter_list),
-                    onPressed: () {
-                      setState(() {
-                        _showFilters = !_showFilters;
-                      });
-                    },
-                  ),
-                  if (_getActiveFilterCount() > 0)
-                    Positioned(
-                      right: 8,
-                      top: 8,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 16,
-                          minHeight: 16,
-                        ),
-                        child: Text(
-                          '${_getActiveFilterCount()}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ],
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12 * scale),
-            borderSide: BorderSide(
-              color: AppColors.textSecondary.withValues(alpha: 0.3),
+      padding: EdgeInsets.fromLTRB(padding.left, 16, padding.right, 8),
+      child: Container(
+        height: 50,
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
-          ),
-          filled: true,
-          fillColor: AppColors.white,
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: 16 * scale,
-            vertical: 12 * scale,
+          ],
+        ),
+        child: TextField(
+          controller: _searchController,
+          onChanged: (value) => setState(() => _searchQuery = value),
+          decoration: InputDecoration(
+            hintText: 'Tìm theo tên khách, SĐT, email...',
+            hintStyle: AppTextStyles.arimo(
+              fontSize: 14,
+              color: AppColors.textSecondary.withValues(alpha: 0.6),
+            ),
+            prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primary, size: 20),
+            suffixIcon: _searchQuery.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.close_rounded, size: 18),
+                    onPressed: () {
+                      _searchController.clear();
+                      setState(() => _searchQuery = '');
+                    },
+                  )
+                : null,
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(vertical: 14),
           ),
         ),
-        onChanged: (value) {
-          setState(() {
-            _searchQuery = value;
-          });
+      ),
+    );
+  }
+
+  Widget _buildFilterBar(double scale) {
+    final padding = AppResponsive.pagePadding(context);
+    final filters = [
+      {'id': 'all', 'label': 'Tất cả'},
+      {'id': 'pending', 'label': 'Chờ xác nhận'},
+      {'id': 'scheduled', 'label': 'Đã xác nhận'},
+      {'id': 'completed', 'label': 'Hoàn thành'},
+      {'id': 'cancelled', 'label': 'Đã hủy'},
+    ];
+
+    return Container(
+      height: 50,
+      margin: const EdgeInsets.only(top: 8),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.symmetric(horizontal: padding.left),
+        itemCount: filters.length,
+        itemBuilder: (context, index) {
+          final filter = filters[index];
+          final isSelected = _statusFilter == filter['id'];
+
+          return Padding(
+            padding: const EdgeInsets.only(right: 8, bottom: 8),
+            child: ChoiceChip(
+              label: Text(filter['label']!),
+              selected: isSelected,
+              onSelected: (selected) {
+                if (selected) setState(() => _statusFilter = filter['id']!);
+              },
+              labelStyle: AppTextStyles.arimo(
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? AppColors.white : AppColors.textSecondary,
+              ),
+              selectedColor: AppColors.primary,
+              backgroundColor: AppColors.white,
+              elevation: isSelected ? 2 : 0,
+              pressElevation: 4,
+              shadowColor: AppColors.primary.withValues(alpha: 0.3),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(
+                  color: isSelected ? AppColors.primary : AppColors.background,
+                  width: 1,
+                ),
+              ),
+              showCheckmark: false,
+            ),
+          );
         },
       ),
     );
   }
 
-  Widget _buildAdvancedFilters(double scale, EdgeInsets padding) {
-    return Container(
-      margin: EdgeInsets.fromLTRB(16 * scale, 8 * scale, 16 * scale, 0),
-      padding: EdgeInsets.all(16 * scale),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(12 * scale),
-        border: Border.all(
-          color: AppColors.textSecondary.withValues(alpha: 0.2),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Bộ lọc nâng cao',
-                style: AppTextStyles.arimo(
-                  fontSize: 14 * scale,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              TextButton(
-                onPressed: _clearFilters,
-                child: Text(
-                  'Xóa bộ lọc',
-                  style: AppTextStyles.arimo(
-                    fontSize: 12 * scale,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12 * scale),
-          // Status filter
-          Text(
-            'Trạng thái:',
-            style: AppTextStyles.arimo(
-              fontSize: 12 * scale,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          SizedBox(height: 8 * scale),
-          Wrap(
-            spacing: 8 * scale,
-            runSpacing: 4 * scale,
-            children: [
-              _buildStatusChip(value: 'all', label: 'Tất cả'),
-              _buildStatusChip(value: 'pending', label: 'Chờ xử lý'),
-              _buildStatusChip(value: 'scheduled', label: 'Đã lên lịch'),
-              _buildStatusChip(value: 'completed', label: 'Đã hoàn thành'),
-              _buildStatusChip(value: 'cancelled', label: 'Đã hủy'),
-            ],
-          ),
-          SizedBox(height: 12 * scale),
-          // Date filter
-          Text(
-            'Ngày:',
-            style: AppTextStyles.arimo(
-              fontSize: 12 * scale,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          SizedBox(height: 8 * scale),
-          InkWell(
-            onTap: () async {
-              final date = await showDatePicker(
-                context: context,
-                initialDate: _dateFilter ?? DateTime.now(),
-                firstDate: DateTime(2020),
-                lastDate: DateTime(2030),
-              );
-              if (date != null) {
-                setState(() {
-                  _dateFilter = date;
-                });
-              }
-            },
-            child: Container(
-              padding: EdgeInsets.all(12 * scale),
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: AppColors.textSecondary.withValues(alpha: 0.3),
-                ),
-                borderRadius: BorderRadius.circular(8 * scale),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.calendar_today,
-                    size: 16 * scale,
-                    color: AppColors.textSecondary,
-                  ),
-                  SizedBox(width: 8 * scale),
-                  Expanded(
-                    child: Text(
-                      _dateFilter == null
-                          ? 'Chọn ngày'
-                          : '${_dateFilter!.day}/${_dateFilter!.month}/${_dateFilter!.year}',
-                      style: AppTextStyles.arimo(
-                        fontSize: 12 * scale,
-                        color: _dateFilter == null
-                            ? AppColors.textSecondary
-                            : AppColors.textPrimary,
-                      ),
-                    ),
-                  ),
-                  if (_dateFilter != null)
-                    InkWell(
-                      onTap: () {
-                        setState(() {
-                          _dateFilter = null;
-                        });
-                      },
-                      child: Icon(
-                        Icons.close,
-                        size: 16 * scale,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatusChip({required String value, required String label}) {
-    final isSelected = _statusFilter == value;
-
-    return ChoiceChip(
-      label: Text(
-        label,
-        style: AppTextStyles.arimo(
-          fontSize: 12,
-          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-          color: isSelected ? AppColors.white : AppColors.textSecondary,
-        ),
-      ),
-      selected: isSelected,
-      selectedColor: AppColors.primary,
-      backgroundColor: AppColors.background,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(999),
-        side: BorderSide(
-          color: isSelected
-              ? AppColors.primary
-              : AppColors.textSecondary.withValues(alpha: 0.2),
-        ),
-      ),
-      onSelected: (_) {
-        setState(() {
-          _statusFilter = value;
-        });
-      },
-    );
-  }
-
   Widget _buildNoFilteredAppointmentsState(double scale) {
-    final hasFilters = _getActiveFilterCount() > 0;
-
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16 * scale),
+    return Center(
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.search_off,
-            size: 40 * scale,
-            color: AppColors.textSecondary.withValues(alpha: 0.4),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.event_busy_rounded,
+              size: 60,
+              color: AppColors.textSecondary.withValues(alpha: 0.3),
+            ),
           ),
-          SizedBox(height: 12 * scale),
+          const SizedBox(height: 20),
           Text(
-            'Không tìm thấy lịch hẹn phù hợp',
-            textAlign: TextAlign.center,
+            'Không tìm thấy lịch hẹn',
             style: AppTextStyles.arimo(
-              fontSize: 14 * scale,
-              fontWeight: FontWeight.w600,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
             ),
           ),
-          SizedBox(height: 4 * scale),
+          const SizedBox(height: 8),
           Text(
-            'Thử thay đổi từ khóa tìm kiếm hoặc điều chỉnh lại bộ lọc.',
-            textAlign: TextAlign.center,
+            'Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm',
             style: AppTextStyles.arimo(
-              fontSize: 12 * scale,
+              fontSize: 14,
               color: AppColors.textSecondary,
             ),
           ),
-          if (hasFilters) ...[
-            SizedBox(height: 8 * scale),
-            TextButton(
-              onPressed: _clearFilters,
-              child: Text(
-                'Xóa tất cả bộ lọc',
-                style: AppTextStyles.arimo(
-                  fontSize: 12 * scale,
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+          const SizedBox(height: 32),
+          TextButton.icon(
+            onPressed: _clearFilters,
+            icon: const Icon(Icons.refresh_rounded),
+            label: const Text('Đặt lại bộ lọc'),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.primary,
+              textStyle: AppTextStyles.arimo(fontWeight: FontWeight.w700),
             ),
-          ],
+          ),
         ],
       ),
     );
@@ -701,14 +693,15 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: iconColor ?? AppColors.primary),
-        const SizedBox(width: 8),
+        Icon(icon, size: 18, color: iconColor ?? AppColors.primary),
+        const SizedBox(width: 10),
         Text(
           title,
           style: AppTextStyles.arimo(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
+            fontSize: 15,
+            fontWeight: FontWeight.w800,
             color: AppColors.textPrimary,
+            letterSpacing: -0.3,
           ),
         ),
       ],
@@ -716,175 +709,194 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-/// Appointment card for upcoming appointments
+/// Main appointment card for active appointments
 class _AppointmentCard extends StatelessWidget {
   final AppointmentEntity appointment;
+  final VoidCallback onConfirm;
+  final VoidCallback onComplete;
+  final VoidCallback onCancel;
 
-  const _AppointmentCard({required this.appointment});
+  const _AppointmentCard({
+    required this.appointment,
+    required this.onConfirm,
+    required this.onComplete,
+    required this.onCancel,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final statusColor = _statusAccentColor(appointment.status);
+
     return Container(
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 5),
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
           ),
         ],
-        border: Border(
-          left: BorderSide(
-            color: _statusAccentColor(appointment.status),
-            width: 3,
-          ),
-        ),
       ),
-      padding: const EdgeInsets.all(14),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Row(
-                children: [
-                  const Icon(
-                    Icons.access_time,
-                    size: 16,
-                    color: Color(0xFF6B7280),
+          // Header with Status
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: statusColor.withValues(alpha: 0.08),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Row(
+              children: [
+                _StatusBadge(status: appointment.status),
+                const Spacer(),
+                Text(
+                  '#${appointment.id}',
+                  style: AppTextStyles.arimo(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: statusColor,
                   ),
-                  const SizedBox(width: 6),
-                  Text(
-                    _formatDate(appointment.appointmentDate),
-                    style: AppTextStyles.arimo(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF111827),
+                ),
+              ],
+            ),
+          ),
+          
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Title and Date
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            appointment.appointmentTypeName ?? appointment.name ?? 'Lịch hẹn',
+                            style: AppTextStyles.arimo(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.textPrimary,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _formatDateTime(appointment.appointmentDate),
+                            style: AppTextStyles.arimo(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const Spacer(),
-              _StatusBadge(status: appointment.status),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            appointment.name ?? 'Lịch hẹn',
-            style: AppTextStyles.arimo(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+                  ],
+                ),
+                
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Divider(height: 1, color: Color(0xFFF1F5F9)),
+                ),
+                
+                // Customer Info
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 18,
+                      backgroundColor: AppColors.background,
+                      child: Icon(Icons.person_outline_rounded, size: 18, color: AppColors.textSecondary),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            appointment.customer?.username ?? 'Khách lẻ',
+                            style: AppTextStyles.arimo(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          Text(
+                            appointment.customer?.phone ?? appointment.customer?.email ?? 'Không có thông tin liên hệ',
+                            style: AppTextStyles.arimo(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: 20),
+                
+                // Action Buttons
+                Row(
+                  children: [
+                    if (appointment.status == AppointmentStatus.pending)
+                      Expanded(
+                        child: _ActionIconButton(
+                          onTap: onConfirm,
+                          icon: Icons.check_rounded,
+                          label: 'Xác nhận',
+                          color: const Color(0xFF2563EB),
+                        ),
+                      ),
+                    if (appointment.status == AppointmentStatus.scheduled)
+                      Expanded(
+                        child: _ActionIconButton(
+                          onTap: onComplete,
+                          icon: Icons.done_all_rounded,
+                          label: 'Hoàn thành',
+                          color: const Color(0xFF16A34A),
+                        ),
+                      ),
+                    if (appointment.status == AppointmentStatus.pending || 
+                        appointment.status == AppointmentStatus.scheduled)
+                      const SizedBox(width: 10),
+                    
+                    Expanded(
+                      child: _ActionIconButton(
+                        onTap: onCancel,
+                        icon: Icons.close_rounded,
+                        label: 'Hủy lịch',
+                        color: const Color(0xFFDC2626),
+                        isOutlined: true,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ),
-          if (appointment.customer != null) ...[
-            const SizedBox(height: 8),
-            _InfoRow(
-              icon: Icons.person,
-              text:
-                  appointment.customer!.username ?? appointment.customer!.email,
-            ),
-          ],
-          if (appointment.customer?.phone != null) ...[
-            const SizedBox(height: 4),
-            _InfoRow(icon: Icons.phone, text: appointment.customer!.phone!),
-          ],
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              if (appointment.status == AppointmentStatus.scheduled ||
-                  appointment.status == AppointmentStatus.pending)
-                Expanded(
-                  child: _ActionButton(
-                    label: 'Xác nhận',
-                    icon: Icons.check_circle,
-                    color: const Color(0xFF1B7F3A),
-                    onTap: () => _confirmAppointment(context),
-                  ),
-                ),
-              if (appointment.status == AppointmentStatus.scheduled ||
-                  appointment.status == AppointmentStatus.pending)
-                const SizedBox(width: 8),
-              if (appointment.status == AppointmentStatus.scheduled)
-                Expanded(
-                  child: _ActionButton(
-                    label: 'Hoàn thành',
-                    icon: Icons.done_all,
-                    color: AppColors.primary,
-                    onTap: () => _completeAppointment(context),
-                  ),
-                ),
-              if (appointment.status != AppointmentStatus.cancelled)
-                Expanded(
-                  child: _ActionButton(
-                    label: 'Hủy',
-                    icon: Icons.cancel,
-                    color: Colors.red,
-                    onTap: () => _cancelAppointment(context),
-                  ),
-                ),
-            ],
           ),
         ],
       ),
     );
   }
 
-  void _confirmAppointment(BuildContext context) {
-    context.read<AppointmentBloc>().add(
-      ConfirmAppointmentEvent(appointment.id),
-    );
-  }
-
-  void _completeAppointment(BuildContext context) {
-    context.read<AppointmentBloc>().add(
-      CompleteAppointmentEvent(appointment.id),
-    );
-  }
-
-  void _cancelAppointment(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Xác nhận hủy'),
-        content: const Text('Bạn có chắc muốn hủy lịch hẹn này?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Không'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              context.read<AppointmentBloc>().add(
-                CancelAppointmentEvent(appointment.id),
-              );
-            },
-            child: const Text('Có'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+  String _formatDateTime(DateTime date) {
+    return '${date.day}/${date.month}/${date.year} | ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
   }
 
   Color _statusAccentColor(AppointmentStatus status) {
     switch (status) {
-      case AppointmentStatus.completed:
-        return const Color(0xFF1B7F3A);
-      case AppointmentStatus.scheduled:
-        return const Color(0xFF2563EB);
-      case AppointmentStatus.pending:
-        return const Color(0xFF9A6B00);
-      case AppointmentStatus.cancelled:
-        return const Color(0xFFB91C1C);
-      default:
-        return const Color(0xFF6B7280);
+      case AppointmentStatus.completed: return const Color(0xFF16A34A);
+      case AppointmentStatus.scheduled: return const Color(0xFF2563EB);
+      case AppointmentStatus.pending: return const Color(0xFFCA8A04);
+      case AppointmentStatus.cancelled: return const Color(0xFFDC2626);
+      default: return const Color(0xFF64748B);
     }
   }
 }
@@ -897,67 +909,48 @@ class _CompletedAppointmentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Opacity(
-      opacity: 0.75,
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.background,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.background, width: 1.5),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0FDF4),
+              shape: BoxShape.circle,
             ),
-          ],
-        ),
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      _StatusBadge(status: appointment.status),
-                      const SizedBox(width: 8),
-                      Text(
-                        _formatDate(appointment.appointmentDate),
-                        style: AppTextStyles.arimo(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFF6B7280),
-                        ),
-                      ),
-                    ],
+            child: const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 24),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  appointment.appointmentTypeName ?? appointment.name ?? 'Lịch hẹn',
+                  style: AppTextStyles.arimo(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    appointment.name ?? 'Lịch hẹn',
-                    style: AppTextStyles.arimo(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
+                ),
+                Text(
+                  '${appointment.customer?.username ?? 'Khách khách'} • ${_formatDate(appointment.appointmentDate)}',
+                  style: AppTextStyles.arimo(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
                   ),
-                  if (appointment.customer != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      appointment.customer!.username ??
-                          appointment.customer!.email,
-                      style: AppTextStyles.arimo(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
+                ),
+              ],
             ),
-            const Icon(Icons.check_circle, color: Color(0xFF1B7F3A), size: 32),
-          ],
-        ),
+          ),
+          Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary.withValues(alpha: 0.3)),
+        ],
       ),
     );
   }
@@ -987,7 +980,7 @@ class _StatusBadge extends StatelessWidget {
         status.displayText,
         style: AppTextStyles.arimo(
           fontSize: 12,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
           color: config.foreground,
         ),
       ),
@@ -999,27 +992,27 @@ class _StatusBadge extends StatelessWidget {
       case AppointmentStatus.completed:
         return _StatusConfig(
           background: const Color(0xFFE8F7EE),
-          foreground: const Color(0xFF1B7F3A),
+          foreground: const Color(0xFF16A34A),
         );
       case AppointmentStatus.scheduled:
         return _StatusConfig(
-          background: const Color(0xFFDBEAFE),
+          background: const Color(0xFFEFF6FF),
           foreground: const Color(0xFF2563EB),
         );
       case AppointmentStatus.pending:
         return _StatusConfig(
-          background: const Color(0xFFFFF6E5),
-          foreground: const Color(0xFF9A6B00),
+          background: const Color(0xFFFFFBEB),
+          foreground: const Color(0xFFCA8A04),
         );
       case AppointmentStatus.cancelled:
         return _StatusConfig(
-          background: const Color(0xFFFEE2E2),
-          foreground: const Color(0xFFB91C1C),
+          background: const Color(0xFFFEF2F2),
+          foreground: const Color(0xFFDC2626),
         );
       default:
         return _StatusConfig(
-          background: const Color(0xFFF3F4F6),
-          foreground: const Color(0xFF6B7280),
+          background: const Color(0xFFF8FAFC),
+          foreground: const Color(0xFF64748B),
         );
     }
   }
@@ -1032,74 +1025,50 @@ class _StatusConfig {
   _StatusConfig({required this.background, required this.foreground});
 }
 
-/// Info row widget
-class _InfoRow extends StatelessWidget {
-  final IconData icon;
-  final String text;
-
-  const _InfoRow({required this.icon, required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 14, color: AppColors.primary),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            text,
-            style: AppTextStyles.arimo(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: const Color(0xFF6B7280),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Action button widget
-class _ActionButton extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final Color color;
+class _ActionIconButton extends StatelessWidget {
   final VoidCallback onTap;
+  final IconData icon;
+  final String label;
+  final Color color;
+  final bool isOutlined;
 
-  const _ActionButton({
-    required this.label,
-    required this.icon,
-    required this.color,
+  const _ActionIconButton({
     required this.onTap,
+    required this.icon,
+    required this.label,
+    required this.color,
+    this.isOutlined = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color, width: 1),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 16, color: color),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: AppTextStyles.arimo(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: color,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isOutlined ? Colors.transparent : color,
+            borderRadius: BorderRadius.circular(12),
+            border: isOutlined ? Border.all(color: color, width: 1.5) : null,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 16, color: isOutlined ? color : AppColors.white),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: AppTextStyles.arimo(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: isOutlined ? color : AppColors.white,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

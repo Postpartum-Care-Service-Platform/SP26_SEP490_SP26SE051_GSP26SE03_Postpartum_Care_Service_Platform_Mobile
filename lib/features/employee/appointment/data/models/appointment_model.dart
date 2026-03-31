@@ -13,6 +13,7 @@ class AppointmentModel {
   final DateTime appointmentDate;
   final CustomerInfoModel? customer;
   final StaffInfoModel? staff;
+  final String? appointmentTypeName;
 
   AppointmentModel({
     required this.id,
@@ -24,13 +25,25 @@ class AppointmentModel {
     required this.appointmentDate,
     this.customer,
     this.staff,
+    this.appointmentTypeName,
   });
 
   /// Convert from JSON
   factory AppointmentModel.fromJson(Map<String, dynamic> json) {
+    // If customerId is not at top level, check inside customer object
+    String cId = json['customerId'] as String? ?? '';
+    if (cId.isEmpty && json['customer'] != null) {
+      cId = (json['customer'] as Map<String, dynamic>)['id'] as String? ?? '';
+    }
+
+    String? typeName;
+    if (json['appointmentType'] != null) {
+      typeName = (json['appointmentType'] as Map<String, dynamic>)['name'] as String?;
+    }
+
     return AppointmentModel(
       id: json['id'] as int,
-      customerId: json['customerId'] as String? ?? '',
+      customerId: cId,
       staffId: json['staffId'] as String?,
       name: json['name'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),
@@ -42,6 +55,7 @@ class AppointmentModel {
       staff: json['staff'] != null
           ? StaffInfoModel.fromJson(json['staff'] as Map<String, dynamic>)
           : null,
+      appointmentTypeName: typeName,
     );
   }
 
@@ -57,6 +71,7 @@ class AppointmentModel {
       'appointmentDate': appointmentDate.toIso8601String(),
       'customer': customer?.toJson(),
       'staff': staff?.toJson(),
+      'appointmentTypeName': appointmentTypeName,
     };
   }
 
@@ -92,6 +107,7 @@ class AppointmentModel {
       appointmentDate: appointmentDate,
       customer: customer?.toEntity(),
       staff: staff?.toEntity(),
+      appointmentTypeName: appointmentTypeName,
     );
   }
 
@@ -111,6 +127,7 @@ class AppointmentModel {
       staff: entity.staff != null 
           ? StaffInfoModel.fromEntity(entity.staff!) 
           : null,
+      appointmentTypeName: entity.appointmentTypeName,
     );
   }
 }

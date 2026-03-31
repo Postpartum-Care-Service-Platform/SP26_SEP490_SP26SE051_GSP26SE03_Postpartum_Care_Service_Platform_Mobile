@@ -29,6 +29,9 @@ class AppointmentEntity {
   
   /// Staff information
   final StaffInfo? staff;
+  
+  /// Appointment type name (from API)
+  final String? appointmentTypeName;
 
   const AppointmentEntity({
     required this.id,
@@ -40,6 +43,7 @@ class AppointmentEntity {
     required this.appointmentDate,
     this.customer,
     this.staff,
+    this.appointmentTypeName,
   });
 
   /// Create a copy with updated fields
@@ -53,6 +57,7 @@ class AppointmentEntity {
     DateTime? appointmentDate,
     CustomerInfo? customer,
     StaffInfo? staff,
+    String? appointmentTypeName,
   }) {
     return AppointmentEntity(
       id: id ?? this.id,
@@ -64,6 +69,7 @@ class AppointmentEntity {
       appointmentDate: appointmentDate ?? this.appointmentDate,
       customer: customer ?? this.customer,
       staff: staff ?? this.staff,
+      appointmentTypeName: appointmentTypeName ?? this.appointmentTypeName,
     );
   }
 }

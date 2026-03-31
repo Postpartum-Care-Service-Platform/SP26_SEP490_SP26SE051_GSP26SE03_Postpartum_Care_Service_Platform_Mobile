@@ -48,8 +48,129 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
     await _futureBookings;
   }
 
+  Future<bool> _showConfirmDialog({
+    required String title,
+    required String message,
+    required Color color,
+    IconData icon = Icons.help_outline_rounded,
+  }) async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (context) => Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 40),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      icon,
+                      size: 40,
+                      color: color,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    title,
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.arimo(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.arimo(
+                      fontSize: 14,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: Text(
+                            'Quay lại',
+                            style: AppTextStyles.arimo(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: color,
+                            foregroundColor: AppColors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: Text(
+                            'Xác nhận',
+                            style: AppTextStyles.arimo(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ) ??
+        false;
+  }
+
   Future<void> _handleConfirm(BookingModel booking) async {
     if (_isActionInProgress) return;
+    
+    final confirmed = await _showConfirmDialog(
+      title: 'Xác nhận Booking',
+      message: 'Bạn có chắc chắn muốn xác nhận gói dịch vụ này?',
+      color: const Color(0xFF2563EB),
+    );
+    if (!confirmed) return;
+
     setState(() => _isActionInProgress = true);
     try {
       final message = await _dataSource.confirmBooking(booking.id);
@@ -84,6 +205,14 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
 
   Future<void> _handleCancel(BookingModel booking) async {
     if (_isActionInProgress) return;
+
+    final confirmed = await _showConfirmDialog(
+      title: 'Hủy Booking',
+      message: 'Hành động này sẽ hủy hoàn toàn gói dịch vụ. Tiếp tục?',
+      color: const Color(0xFFDC2626),
+    );
+    if (!confirmed) return;
+
     setState(() => _isActionInProgress = true);
     try {
       final message = await _dataSource.cancelBooking(booking.id);
@@ -118,6 +247,14 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
 
   Future<void> _handleComplete(BookingModel booking) async {
     if (_isActionInProgress) return;
+
+    final confirmed = await _showConfirmDialog(
+      title: 'Hoàn thành Gói',
+      message: 'Bạn xác nhận khách đã sử dụng hết dịch vụ và muốn kết thúc booking này?',
+      color: const Color(0xFF16A34A),
+    );
+    if (!confirmed) return;
+
     setState(() => _isActionInProgress = true);
     try {
       final message = await _dataSource.completeBooking(booking.id);
@@ -398,42 +535,63 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
     return Padding(
       padding: EdgeInsets.fromLTRB(
         16 * scale,
-        8 * scale,
+        12 * scale,
         16 * scale,
         8 * scale,
       ),
-      child: TextField(
-        controller: _searchController,
-        decoration: InputDecoration(
-          hintText: 'Tìm kiếm theo tên, email, SĐT, gói dịch vụ...',
-          prefixIcon: const Icon(Icons.search),
-          suffixIcon: _searchQuery.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    setState(() {
-                      _searchQuery = '';
-                      _searchController.clear();
-                    });
-                  },
-                )
-              : null,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12 * scale),
-            borderSide: BorderSide(color: AppColors.textSecondary.withValues(alpha: 0.3)),
-          ),
-          filled: true,
-          fillColor: AppColors.white,
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: 16 * scale,
-            vertical: 12 * scale,
-          ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(16 * scale),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 12 * scale,
+              offset: Offset(0, 4 * scale),
+            ),
+          ],
         ),
-        onChanged: (value) {
-          setState(() {
-            _searchQuery = value;
-          });
-        },
+        child: TextField(
+          controller: _searchController,
+          style: AppTextStyles.arimo(
+            fontSize: 14 * scale,
+            color: AppColors.textPrimary,
+          ),
+          decoration: InputDecoration(
+            hintText: 'Tìm theo tên, SĐT, gói dịch vụ...',
+            hintStyle: AppTextStyles.arimo(
+              fontSize: 14 * scale,
+              color: AppColors.textSecondary.withValues(alpha: 0.6),
+            ),
+            prefixIcon: Icon(
+              Icons.search_rounded,
+              color: AppColors.primary,
+              size: 22 * scale,
+            ),
+            suffixIcon: _searchQuery.isNotEmpty
+                ? IconButton(
+                    icon: Icon(Icons.cancel_rounded, size: 20 * scale),
+                    color: AppColors.textSecondary.withValues(alpha: 0.6),
+                    onPressed: () {
+                      setState(() {
+                        _searchQuery = '';
+                        _searchController.clear();
+                      });
+                    },
+                  )
+                : null,
+            border: InputBorder.none,
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 16 * scale,
+              vertical: 14 * scale,
+            ),
+          ),
+          onChanged: (value) {
+            setState(() {
+              _searchQuery = value;
+            });
+          },
+        ),
       ),
     );
   }
@@ -612,64 +770,59 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
   }
 
   Widget _buildFilterBar(double scale) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        16 * scale,
-        8 * scale,
-        16 * scale,
-        4 * scale,
-      ),
-      child: Row(
-        children: [
-          Text(
-            'Trạng thái:',
-            style: AppTextStyles.arimo(
-              fontSize: 13 * scale,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: DropdownButton<String>(
-              value: _statusFilter,
-              isExpanded: true,
-              items: const [
-                DropdownMenuItem(value: 'all', child: Text('Tất cả')),
-                DropdownMenuItem(value: 'pending', child: Text('Chờ xử lý')),
-                DropdownMenuItem(value: 'confirmed', child: Text('Đã xác nhận')),
-                DropdownMenuItem(value: 'completed', child: Text('Đã hoàn thành')),
-                DropdownMenuItem(value: 'cancelled', child: Text('Đã hủy')),
-              ],
-              onChanged: (value) {
-                if (value == null) return;
-                setState(() {
-                  _statusFilter = value;
-                });
-              },
-            ),
-          ),
-          if (_getActiveFilterCount() > 0) ...[
-            const SizedBox(width: 8),
-            Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: 8 * scale,
-                vertical: 4 * scale,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12 * scale),
-              ),
-              child: Text(
-                '${_getActiveFilterCount()} bộ lọc',
+    final statusOptions = [
+      {'value': 'all', 'label': 'Tất cả'},
+      {'value': 'pending', 'label': 'Chờ xử lý'},
+      {'value': 'confirmed', 'label': 'Đã xác nhận'},
+      {'value': 'completed', 'label': 'Đã hoàn thành'},
+      {'value': 'cancelled', 'label': 'Đã hủy'},
+    ];
+
+    return Container(
+      height: 48 * scale,
+      margin: EdgeInsets.only(bottom: 8 * scale),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.symmetric(horizontal: 16 * scale),
+        itemCount: statusOptions.length,
+        itemBuilder: (context, index) {
+          final option = statusOptions[index];
+          final isSelected = _statusFilter == option['value'];
+          
+          return Padding(
+            padding: EdgeInsets.only(right: 8 * scale),
+            child: ChoiceChip(
+              label: Text(
+                option['label']!,
                 style: AppTextStyles.arimo(
-                  fontSize: 11 * scale,
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 13 * scale,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  color: isSelected ? AppColors.white : AppColors.textSecondary,
                 ),
               ),
+              selected: isSelected,
+              onSelected: (selected) {
+                if (selected) {
+                  setState(() {
+                    _statusFilter = option['value']!;
+                  });
+                }
+              },
+              selectedColor: AppColors.primary,
+              backgroundColor: AppColors.white,
+              checkmarkColor: AppColors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(25 * scale),
+                side: BorderSide(
+                  color: isSelected ? AppColors.primary : AppColors.textSecondary.withValues(alpha: 0.2),
+                  width: 1,
+                ),
+              ),
+              elevation: isSelected ? 2 : 0,
+              pressElevation: 4,
             ),
-          ],
-        ],
+          );
+        },
       ),
     );
   }
@@ -704,210 +857,346 @@ class _BookingItem extends StatelessWidget {
 
     final status = booking.status;
     Color statusColor;
+    String statusIcon;
     switch (status.toLowerCase()) {
       case 'pending':
         statusColor = const Color(0xFFF97316); // orange
+        statusIcon = 'wait';
         break;
       case 'confirmed':
         statusColor = const Color(0xFF2563EB); // blue
+        statusIcon = 'check';
         break;
       case 'completed':
         statusColor = const Color(0xFF16A34A); // green
+        statusIcon = 'done';
         break;
       case 'cancelled':
         statusColor = const Color(0xFFDC2626); // red
+        statusIcon = 'cancel';
         break;
       default:
         statusColor = AppColors.textSecondary;
+        statusIcon = 'info';
     }
 
-    final customerName = booking.customer?.username.isNotEmpty == true
+    final String customerName = booking.customer?.username.isNotEmpty == true
         ? booking.customer!.username
         : (booking.customer?.email ?? 'Khách hàng');
-    final packageName = booking.package?.packageName ?? 'Gói dịch vụ';
+    final String packageName = booking.package?.packageName ?? 'Gói dịch vụ';
+    final String bookingDate = '${booking.startDate.day}/${booking.startDate.month}/${booking.startDate.year}';
+    final String price = '${booking.finalAmount.toStringAsFixed(0)} đ';
 
     return Container(
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(16 * scale),
+        borderRadius: BorderRadius.circular(20 * scale),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10 * scale,
-            offset: Offset(0, 4 * scale),
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 15 * scale,
+            offset: Offset(0, 6 * scale),
           ),
         ],
+        border: Border.all(
+          color: statusColor.withValues(alpha: 0.15),
+          width: 1,
+        ),
       ),
-      padding: EdgeInsets.all(14 * scale),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 10 * scale,
-                  vertical: 6 * scale,
-                ),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  status,
-                  style: AppTextStyles.arimo(
-                    fontSize: 11 * scale,
-                    fontWeight: FontWeight.w700,
-                    color: statusColor,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20 * scale),
+        child: Column(
+          children: [
+            // Header Row
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 12 * scale),
+              color: statusColor.withValues(alpha: 0.05),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: statusColor.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          _getIconForStatus(statusIcon),
+                          size: 14 * scale,
+                          color: statusColor,
+                        ),
+                      ),
+                      SizedBox(width: 8 * scale),
+                      Text(
+                        '#${booking.id}',
+                        style: AppTextStyles.arimo(
+                          fontSize: 12 * scale,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10 * scale,
+                      vertical: 4 * scale,
+                    ),
+                    decoration: BoxDecoration(
+                      color: statusColor,
+                      borderRadius: BorderRadius.circular(8 * scale),
+                    ),
+                    child: Text(
+                      _getStatusDisplayText(status),
+                      style: AppTextStyles.arimo(
+                        fontSize: 10 * scale,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.white,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              Text(
-                '#${booking.id}',
-                style: AppTextStyles.arimo(
-                  fontSize: 12 * scale,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 10 * scale),
-          Text(
-            packageName,
-            style: AppTextStyles.arimo(
-              fontSize: 15 * scale,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
             ),
-          ),
-          SizedBox(height: 4 * scale),
-          Text(
-            customerName,
-            style: AppTextStyles.arimo(
-              fontSize: 13 * scale,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          SizedBox(height: 8 * scale),
-          Row(
-            children: [
-              Icon(
-                Icons.calendar_today,
-                size: 14 * scale,
-                color: AppColors.textSecondary,
+            
+            // Body Content
+            Padding(
+              padding: EdgeInsets.all(16 * scale),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    packageName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.arimo(
+                      fontSize: 16 * scale,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  SizedBox(height: 12 * scale),
+                  Row(
+                    children: [
+                      _buildInfoItem(
+                        icon: Icons.person_outline_rounded,
+                        label: customerName,
+                        scale: scale,
+                      ),
+                      SizedBox(width: 16 * scale),
+                      _buildInfoItem(
+                        icon: Icons.calendar_today_rounded,
+                        label: bookingDate,
+                        scale: scale,
+                      ),
+                    ],
+                  ),
+                  if (booking.customer?.phone != null) ...[
+                    SizedBox(height: 8 * scale),
+                    _buildInfoItem(
+                      icon: Icons.phone_iphone_rounded,
+                      label: booking.customer!.phone!,
+                      scale: scale,
+                    ),
+                  ],
+                  SizedBox(height: 14 * scale),
+                  const Divider(height: 1),
+                  SizedBox(height: 14 * scale),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Tổng cộng',
+                            style: AppTextStyles.arimo(
+                              fontSize: 11 * scale,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          Text(
+                            price,
+                            style: AppTextStyles.arimo(
+                              fontSize: 18 * scale,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      // Collapsed action buttons logic
+                      if (onConfirm != null || onComplete != null || onRecordOfflinePayment != null || onViewContract != null)
+                        Row(
+                          children: [
+                            if (onCancel != null)
+                              _CircularActionButton(
+                                icon: Icons.close_rounded,
+                                color: const Color(0xFFDC2626),
+                                onTap: onCancel!,
+                                scale: scale,
+                                tooltip: 'Hủy',
+                              ),
+                            if (onConfirm != null) ...[
+                              SizedBox(width: 10 * scale),
+                              _CircularActionButton(
+                                icon: Icons.check_rounded,
+                                color: const Color(0xFF2563EB),
+                                onTap: onConfirm!,
+                                scale: scale,
+                                tooltip: 'Xác nhận',
+                              ),
+                            ],
+                            if (onComplete != null) ...[
+                              SizedBox(width: 10 * scale),
+                              _CircularActionButton(
+                                icon: Icons.done_all_rounded,
+                                color: const Color(0xFF16A34A),
+                                onTap: onComplete!,
+                                scale: scale,
+                                tooltip: 'Hoàn thành',
+                              ),
+                            ],
+                            if (onRecordOfflinePayment != null || onViewContract != null) ...[
+                               SizedBox(width: 10 * scale),
+                               _buildMoreActions(context, scale),
+                            ]
+                          ],
+                        ),
+                    ],
+                  ),
+                ],
               ),
-              SizedBox(width: 6 * scale),
-              Text(
-                '${booking.startDate.day}/${booking.startDate.month}/${booking.startDate.year}',
-                style: AppTextStyles.arimo(
-                  fontSize: 12 * scale,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 6 * scale),
-          Row(
-            children: [
-              Icon(
-                Icons.payments_outlined,
-                size: 14 * scale,
-                color: AppColors.textSecondary,
-              ),
-              SizedBox(width: 6 * scale),
-              Text(
-                '${booking.finalAmount.toStringAsFixed(0)} đ',
-                style: AppTextStyles.arimo(
-                  fontSize: 13 * scale,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primary,
-                ),
-              ),
-            ],
-          ),
-          if (onConfirm != null ||
-              onComplete != null ||
-              onRecordOfflinePayment != null ||
-              onViewContract != null) ...[
-            SizedBox(height: 10 * scale),
-            Row(
-              children: [
-                if (onCancel != null)
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: onCancel,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFFDC2626),
-                        side: const BorderSide(color: Color(0xFFDC2626)),
-                      ),
-                      icon: const Icon(Icons.cancel_outlined, size: 18),
-                      label: const Text('Hủy'),
-                    ),
-                  ),
-                if (onCancel != null &&
-                    (onConfirm != null ||
-                        onComplete != null ||
-                        onRecordOfflinePayment != null ||
-                        onViewContract != null))
-                  SizedBox(width: 8 * scale),
-                if (onConfirm != null)
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: onConfirm,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF2563EB),
-                        side: const BorderSide(color: Color(0xFF2563EB)),
-                      ),
-                      icon: const Icon(Icons.check_circle_outline, size: 18),
-                      label: const Text('Xác nhận'),
-                    ),
-                  ),
-                if ((onConfirm != null && onComplete != null) ||
-                    (onConfirm != null && onRecordOfflinePayment != null))
-                  SizedBox(width: 8 * scale),
-                if (onComplete != null)
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: onComplete,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF16A34A),
-                        side: const BorderSide(color: Color(0xFF16A34A)),
-                      ),
-                      icon: const Icon(Icons.done_all, size: 18),
-                      label: const Text('Hoàn thành'),
-                    ),
-                  ),
-                if (onRecordOfflinePayment != null) SizedBox(width: 8 * scale),
-                if (onRecordOfflinePayment != null)
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: onRecordOfflinePayment,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF9333EA),
-                        side: const BorderSide(color: Color(0xFF9333EA)),
-                      ),
-                      icon: const Icon(Icons.payments, size: 18),
-                      label: const Text('Thanh toán offline'),
-                    ),
-                  ),
-                if (onViewContract != null) SizedBox(width: 8 * scale),
-                if (onViewContract != null)
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: onViewContract,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF0F766E),
-                        side: const BorderSide(color: Color(0xFF0F766E)),
-                      ),
-                      icon: const Icon(Icons.description_outlined, size: 18),
-                      label: const Text('Hợp đồng'),
-                    ),
-                  ),
-              ],
             ),
           ],
-        ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMoreActions(BuildContext context, double scale) {
+    return PopupMenuButton<String>(
+      onSelected: (value) {
+        if (value == 'payment' && onRecordOfflinePayment != null) {
+          onRecordOfflinePayment!();
+        } else if (value == 'contract' && onViewContract != null) {
+          onViewContract!();
+        }
+      },
+      icon: Container(
+        padding: EdgeInsets.all(8 * scale),
+        decoration: BoxDecoration(
+          color: AppColors.textSecondary.withValues(alpha: 0.1),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(Icons.more_vert_rounded, size: 20 * scale, color: AppColors.textSecondary),
+      ),
+      itemBuilder: (context) => [
+        if (onRecordOfflinePayment != null)
+          const PopupMenuItem(
+            value: 'payment',
+            child: Row(
+              children: [
+                Icon(Icons.payments_outlined, size: 20),
+                SizedBox(width: 8),
+                Text('Thanh toán offline'),
+              ],
+            ),
+          ),
+        if (onViewContract != null)
+          const PopupMenuItem(
+            value: 'contract',
+            child: Row(
+              children: [
+                Icon(Icons.description_outlined, size: 20),
+                SizedBox(width: 8),
+                Text('Hợp đồng'),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildInfoItem({
+    required IconData icon,
+    required String label,
+    required double scale,
+  }) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16 * scale, color: AppColors.textSecondary.withValues(alpha: 0.6)),
+        SizedBox(width: 4 * scale),
+        Text(
+          label,
+          style: AppTextStyles.arimo(
+            fontSize: 13 * scale,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  IconData _getIconForStatus(String iconKey) {
+    switch (iconKey) {
+      case 'wait': return Icons.hourglass_empty_rounded;
+      case 'check': return Icons.check_circle_outline_rounded;
+      case 'done': return Icons.done_all_rounded;
+      case 'cancel': return Icons.cancel_outlined;
+      default: return Icons.info_outline_rounded;
+    }
+  }
+
+  String _getStatusDisplayText(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending': return 'CHỜ XỬ LÝ';
+      case 'confirmed': return 'ĐÃ XÁC NHẬN';
+      case 'completed': return 'HOÀN THÀNH';
+      case 'cancelled': return 'ĐÃ HỦY';
+      default: return status.toUpperCase();
+    }
+  }
+}
+
+class _CircularActionButton extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+  final double scale;
+  final String tooltip;
+
+  const _CircularActionButton({
+    required this.icon,
+    required this.color,
+    required this.onTap,
+    required this.scale,
+    required this.tooltip,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12 * scale),
+        child: Container(
+          padding: EdgeInsets.all(10 * scale),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12 * scale),
+            border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
+          ),
+          child: Icon(
+            icon,
+            size: 20 * scale,
+            color: color,
+          ),
+        ),
       ),
     );
   }
