@@ -26,64 +26,6 @@ class EmployeePackageBookingScreen extends StatefulWidget {
 class _EmployeePackageBookingScreenState
     extends State<EmployeePackageBookingScreen> {
   AccountModel? _selectedCustomer;
-  List<AccountModel> _customers = [];
-  List<AccountModel> _filteredCustomers = [];
-  bool _isLoadingCustomers = false;
-
-  final _searchController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    _loadCustomers();
-    _searchController.addListener(_filterCustomers);
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _loadCustomers() async {
-    setState(() => _isLoadingCustomers = true);
-    try {
-      final dataSource = AccountRemoteDataSource();
-      final customers = await dataSource.getCustomers();
-      setState(() {
-        _customers = customers;
-        _filteredCustomers = customers;
-        _isLoadingCustomers = false;
-      });
-    } catch (e) {
-      setState(() => _isLoadingCustomers = false);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Lỗi tải danh sách khách hàng: $e',
-            style: AppTextStyles.arimo(color: AppColors.white),
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
-  void _filterCustomers() {
-    final query = _searchController.text.toLowerCase();
-    setState(() {
-      if (query.isEmpty) {
-        _filteredCustomers = _customers;
-      } else {
-        _filteredCustomers = _customers.where((customer) {
-          return customer.displayName.toLowerCase().contains(query) ||
-              customer.email.toLowerCase().contains(query) ||
-              (customer.phone?.toLowerCase().contains(query) ?? false);
-        }).toList();
-      }
-    });
-  }
 
   void _selectCustomer(AccountModel customer) {
     setState(() {
@@ -98,170 +40,11 @@ class _EmployeePackageBookingScreenState
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) {
-        return SafeArea(
-          child: Container(
-            constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.82),
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(22 * scale)),
-            ),
-            child: Column(
-              children: [
-                SizedBox(height: 10 * scale),
-                Container(
-                  width: 44 * scale,
-                  height: 5 * scale,
-                  decoration: BoxDecoration(
-                    color: AppColors.borderLight,
-                    borderRadius: BorderRadius.circular(99),
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.fromLTRB(16 * scale, 14 * scale, 16 * scale, 8 * scale),
-                  child: Row(
-                    children: [
-                      Text(
-                        'Chọn khách hàng',
-                        style: AppTextStyles.arimo(
-                          fontSize: 17 * scale,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(Icons.close_rounded),
-                        color: AppColors.textSecondary,
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.fromLTRB(16 * scale, 0, 16 * scale, 12 * scale),
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Tìm theo tên, email, SĐT',
-                      prefixIcon: const Icon(Icons.search_rounded),
-                      suffixIcon: _searchController.text.isNotEmpty
-                          ? IconButton(
-                              onPressed: () {
-                                _searchController.clear();
-                              },
-                              icon: const Icon(Icons.close_rounded),
-                            )
-                          : null,
-                      filled: true,
-                      fillColor: const Color(0xFFF8F7F5),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14 * scale),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 14 * scale,
-                        vertical: 12 * scale,
-                      ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: _isLoadingCustomers
-                      ? const Center(
-                          child: CircularProgressIndicator(color: AppColors.primary),
-                        )
-                      : _filteredCustomers.isEmpty
-                          ? Center(
-                              child: Text(
-                                'Không tìm thấy khách hàng phù hợp',
-                                style: AppTextStyles.arimo(
-                                  fontSize: 13 * scale,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            )
-                          : ListView.separated(
-                              padding: EdgeInsets.fromLTRB(12 * scale, 0, 12 * scale, 16 * scale),
-                              itemCount: _filteredCustomers.length,
-                              separatorBuilder: (_, __) => SizedBox(height: 6 * scale),
-                              itemBuilder: (context, index) {
-                                final c = _filteredCustomers[index];
-                                final isSelected = _selectedCustomer?.id == c.id;
-                                return Material(
-                                  color: isSelected
-                                      ? AppColors.primary.withValues(alpha: 0.08)
-                                      : const Color(0xFFFAFAFA),
-                                  borderRadius: BorderRadius.circular(12 * scale),
-                                  child: InkWell(
-                                    borderRadius: BorderRadius.circular(12 * scale),
-                                    onTap: () => _selectCustomer(c),
-                                    child: Padding(
-                                      padding: EdgeInsets.all(12 * scale),
-                                      child: Row(
-                                        children: [
-                                          Container(
-                                            width: 36 * scale,
-                                            height: 36 * scale,
-                                            decoration: BoxDecoration(
-                                              color: AppColors.primary.withValues(alpha: 0.14),
-                                              borderRadius: BorderRadius.circular(10 * scale),
-                                            ),
-                                            child: const Icon(
-                                              Icons.person_rounded,
-                                              color: AppColors.primary,
-                                              size: 20,
-                                            ),
-                                          ),
-                                          SizedBox(width: 10 * scale),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  c.displayName,
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
-                                                  style: AppTextStyles.arimo(
-                                                    fontSize: 14 * scale,
-                                                    fontWeight: FontWeight.w700,
-                                                    color: AppColors.textPrimary,
-                                                  ),
-                                                ),
-                                                SizedBox(height: 2 * scale),
-                                                Text(
-                                                  [
-                                                    c.email,
-                                                    if (c.phone != null && c.phone!.isNotEmpty) c.phone!,
-                                                  ].join(' • '),
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
-                                                  style: AppTextStyles.arimo(
-                                                    fontSize: 12 * scale,
-                                                    color: AppColors.textSecondary,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          if (isSelected)
-                                            const Icon(
-                                              Icons.check_circle_rounded,
-                                              color: AppColors.primary,
-                                            ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+      builder: (context) => _CustomerSearchBottomSheet(
+        selectedCustomer: _selectedCustomer,
+        onSelectCustomer: _selectCustomer,
+        scale: scale,
+      ),
     );
   }
 
@@ -280,7 +63,10 @@ class _EmployeePackageBookingScreenState
     }
 
     context.read<BookingBloc>().add(
-          BookingCreateBookingForCustomer(_selectedCustomer!.id),
+          BookingCreateBookingForCustomer(
+            _selectedCustomer!.id,
+            discountAmount: 0,
+          ),
         );
   }
 
@@ -410,3 +196,260 @@ class _EmployeePackageBookingScreenState
   }
 }
 
+class _CustomerSearchBottomSheet extends StatefulWidget {
+  final AccountModel? selectedCustomer;
+  final Function(AccountModel) onSelectCustomer;
+  final double scale;
+
+  const _CustomerSearchBottomSheet({
+    required this.selectedCustomer,
+    required this.onSelectCustomer,
+    required this.scale,
+  });
+
+  @override
+  State<_CustomerSearchBottomSheet> createState() => _CustomerSearchBottomSheetState();
+}
+
+class _CustomerSearchBottomSheetState extends State<_CustomerSearchBottomSheet> {
+  final _searchController = TextEditingController();
+  List<AccountModel> _filteredCustomers = [];
+  bool _isLoadingCustomers = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _searchCustomerByPhone() async {
+    final phone = _searchController.text.trim();
+    if (phone.isEmpty) return;
+
+    setState(() => _isLoadingCustomers = true);
+    FocusManager.instance.primaryFocus?.unfocus();
+
+    try {
+      final dataSource = AccountRemoteDataSource();
+      final customer = await dataSource.getAccountByPhone(phone);
+      
+      setState(() {
+        if (customer != null && customer.isCustomer) {
+          _filteredCustomers = [customer];
+        } else {
+          _filteredCustomers = [];
+        }
+        _isLoadingCustomers = false;
+      });
+    } catch (e) {
+      setState(() {
+        _filteredCustomers = [];
+        _isLoadingCustomers = false;
+      });
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e.toString(),
+            style: AppTextStyles.arimo(color: AppColors.white),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = widget.scale;
+    return SafeArea(
+      child: Container(
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.82),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(22 * scale)),
+        ),
+        child: Column(
+          children: [
+            SizedBox(height: 10 * scale),
+            Container(
+              width: 44 * scale,
+              height: 5 * scale,
+              decoration: BoxDecoration(
+                color: AppColors.borderLight,
+                borderRadius: BorderRadius.circular(99),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(16 * scale, 14 * scale, 16 * scale, 8 * scale),
+              child: Row(
+                children: [
+                  Text(
+                    'Chọn khách hàng',
+                    style: AppTextStyles.arimo(
+                      fontSize: 17 * scale,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close_rounded),
+                    color: AppColors.textSecondary,
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.fromLTRB(16 * scale, 0, 16 * scale, 12 * scale),
+              child: TextField(
+                controller: _searchController,
+                onSubmitted: (_) => _searchCustomerByPhone(),
+                keyboardType: TextInputType.phone,
+                decoration: InputDecoration(
+                  hintText: 'Nhập số điện thoại cần tìm...',
+                  prefixIcon: const Icon(Icons.search_rounded),
+                  suffixIcon: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_searchController.text.isNotEmpty)
+                        IconButton(
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _filteredCustomers.clear());
+                          },
+                          icon: const Icon(Icons.close_rounded),
+                        ),
+                      IconButton(
+                        onPressed: _searchCustomerByPhone,
+                        icon: const Icon(Icons.arrow_forward_rounded, color: AppColors.primary),
+                      ),
+                    ],
+                  ),
+                  filled: true,
+                  fillColor: const Color(0xFFF8F7F5),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14 * scale),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 14 * scale,
+                    vertical: 12 * scale,
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: _isLoadingCustomers
+                  ? const Center(
+                      child: CircularProgressIndicator(color: AppColors.primary),
+                    )
+                  : _filteredCustomers.isEmpty && _searchController.text.isEmpty
+                      ? Center(
+                          child: Text(
+                            'Vui lòng nhập SĐT để tìm khách hàng',
+                            style: AppTextStyles.arimo(
+                              fontSize: 13 * scale,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        )
+                      : _filteredCustomers.isEmpty && _searchController.text.isNotEmpty
+                          ? Center(
+                              child: Text(
+                                'Không tìm thấy khách hàng phù hợp',
+                                style: AppTextStyles.arimo(
+                                  fontSize: 13 * scale,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            )
+                          : ListView.separated(
+                              padding: EdgeInsets.fromLTRB(12 * scale, 0, 12 * scale, 16 * scale),
+                              itemCount: _filteredCustomers.length,
+                              separatorBuilder: (_, __) => SizedBox(height: 6 * scale),
+                              itemBuilder: (context, index) {
+                                final c = _filteredCustomers[index];
+                                final isSelected = widget.selectedCustomer?.id == c.id;
+                                return Material(
+                                  color: isSelected
+                                      ? AppColors.primary.withValues(alpha: 0.08)
+                                      : const Color(0xFFFAFAFA),
+                                  borderRadius: BorderRadius.circular(12 * scale),
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(12 * scale),
+                                    onTap: () => widget.onSelectCustomer(c),
+                                    child: Padding(
+                                      padding: EdgeInsets.all(12 * scale),
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            width: 36 * scale,
+                                            height: 36 * scale,
+                                            decoration: BoxDecoration(
+                                              color: AppColors.primary.withValues(alpha: 0.14),
+                                              borderRadius: BorderRadius.circular(10 * scale),
+                                            ),
+                                            child: const Icon(
+                                              Icons.person_rounded,
+                                              color: AppColors.primary,
+                                              size: 20,
+                                            ),
+                                          ),
+                                          SizedBox(width: 10 * scale),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  c.displayName,
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: AppTextStyles.arimo(
+                                                    fontSize: 14 * scale,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: AppColors.textPrimary,
+                                                  ),
+                                                ),
+                                                SizedBox(height: 2 * scale),
+                                                Text(
+                                                  [
+                                                    c.email,
+                                                    if (c.phone != null && c.phone!.isNotEmpty) c.phone!,
+                                                  ].join(' • '),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: AppTextStyles.arimo(
+                                                    fontSize: 12 * scale,
+                                                    color: AppColors.textSecondary,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          if (isSelected)
+                                            const Icon(
+                                              Icons.check_circle_rounded,
+                                              color: AppColors.primary,
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

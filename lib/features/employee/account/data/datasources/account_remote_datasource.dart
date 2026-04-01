@@ -34,6 +34,19 @@ class AccountRemoteDataSource {
     }
   }
 
+  /// Get account by phone
+  Future<AccountModel?> getAccountByPhone(String phone) async {
+    try {
+      final response = await _dio.get(
+        ApiEndpoints.getAccountByPhone(phone),
+      );
+      return AccountModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null;
+      throw _handleError(e);
+    }
+  }
+
   String _handleError(DioException error) {
     if (error.response != null) {
       final statusCode = error.response!.statusCode;

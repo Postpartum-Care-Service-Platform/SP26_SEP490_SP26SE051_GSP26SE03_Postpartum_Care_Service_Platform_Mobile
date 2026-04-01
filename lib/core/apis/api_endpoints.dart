@@ -45,6 +45,7 @@ class ApiEndpoints {
   static const String getCurrentAccount = '/Account/GetCurrentAccount';
   static const String getAllAccounts = '/Account/GetAll';
   static String getAccountById(String id) => '/Account/GetById/$id';
+  static String getAccountByPhone(String phone) => '/Account/phone/$phone';
 
   // User endpoints (legacy / placeholder)
   static const String profile = '/user/profile';
@@ -109,6 +110,7 @@ class ApiEndpoints {
   static const String getAllBookings = '/Booking/all';
   static String confirmBooking(int id) => '/Booking/$id/confirm';
   static String completeBooking(int id) => '/Booking/$id/complete';
+  static String checkInBooking(int id) => '/Booking/$id/check-in';
   static String cancelBooking(int id) => '/Booking/$id/cancel';
   static const String createPaymentLink = '/Transaction/create-payment-link';
   static const String createOfflinePayment = '/Transaction/payment';
