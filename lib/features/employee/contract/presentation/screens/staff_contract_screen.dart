@@ -283,139 +283,188 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
       context: context,
       builder: (ctx) {
         final scale = AppResponsive.scaleFactor(ctx);
-        return Dialog(
-          insetPadding: EdgeInsets.all(16 * scale),
-          child: Padding(
-            padding: EdgeInsets.all(16 * scale),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
+        int currentIndex = 0;
+
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Dialog(
+              insetPadding: EdgeInsets.all(16 * scale),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16 * scale)),
+              child: SizedBox(
+                height: 550 * scale, // Fixed height to provide constraints for Flexible
+                child: Padding(
+                  padding: EdgeInsets.all(16 * scale),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Icon(
-                          Icons.image_rounded,
-                          color: AppColors.primary,
-                          size: 22 * scale,
+                        Row(
+                          children: [
+                            Container(
+                              padding: EdgeInsets.all(6 * scale),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.image_rounded,
+                                color: AppColors.primary,
+                                size: 18 * scale,
+                              ),
+                            ),
+                            SizedBox(width: 8 * scale),
+                            Text(
+                              'Hợp đồng đã ký',
+                              style: AppTextStyles.arimo(
+                                fontSize: 16 * scale,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                          ],
                         ),
-                        SizedBox(width: 8 * scale),
-                        Text(
-                          'Hợp đồng đã ký (hình ảnh)',
-                          style: AppTextStyles.arimo(
-                            fontSize: 15 * scale,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                          ),
+                        IconButton(
+                          onPressed: () => Navigator.of(ctx).pop(),
+                          icon: const Icon(Icons.close_rounded),
+                          splashRadius: 20 * scale,
                         ),
                       ],
                     ),
-                    IconButton(
-                      onPressed: () => Navigator.of(ctx).pop(),
-                      icon: const Icon(Icons.close_rounded),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 12 * scale),
-                Flexible(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12 * scale),
-                    child: Container(
-                      color: AppColors.background,
-                      child: PageView.builder(
-                        itemCount: imageUrls.length,
-                        itemBuilder: (context, index) {
-                          return InteractiveViewer(
-                            minScale: 0.7,
-                            maxScale: 4,
-                            child: Image.network(
-                              imageUrls[index],
-                              fit: BoxFit.contain,
-                              loadingBuilder: (context, child, loadingProgress) {
-                                if (loadingProgress == null) return child;
-                                return Center(
-                                  child: Padding(
-                                    padding: EdgeInsets.all(16 * scale),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const CircularProgressIndicator(
-                                          color: AppColors.primary,
+                    SizedBox(height: 12 * scale),
+                    Flexible(
+                      child: AspectRatio(
+                        aspectRatio: 0.7, 
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12 * scale),
+                          child: Container(
+                            color: AppColors.background,
+                            child: Stack(
+                              children: [
+                                PageView.builder(
+                                  itemCount: imageUrls.length,
+                                  onPageChanged: (idx) {
+                                    setDialogState(() => currentIndex = idx);
+                                  },
+                                  itemBuilder: (context, index) {
+                                    return InteractiveViewer(
+                                      minScale: 1.0,
+                                      maxScale: 5.0,
+                                      child: Image.network(
+                                        imageUrls[index],
+                                        fit: BoxFit.contain,
+                                        loadingBuilder: (context, child, loadingProgress) {
+                                          if (loadingProgress == null) return child;
+                                          return Center(
+                                            child: CircularProgressIndicator(
+                                              value: loadingProgress.expectedTotalBytes != null
+                                                  ? loadingProgress.cumulativeBytesLoaded /
+                                                      loadingProgress.expectedTotalBytes!
+                                                  : null,
+                                              color: AppColors.primary,
+                                            ),
+                                          );
+                                        },
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return Center(
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(Icons.broken_image_outlined, size: 48 * scale, color: AppColors.textSecondary),
+                                                SizedBox(height: 8 * scale),
+                                                Text(
+                                                  'Không thể tải ảnh #${index + 1}',
+                                                  style: AppTextStyles.arimo(
+                                                    fontSize: 12 * scale,
+                                                    color: AppColors.textSecondary,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    );
+                                  },
+                                ),
+                                if (imageUrls.length > 1)
+                                  Positioned(
+                                    top: 12 * scale,
+                                    right: 12 * scale,
+                                    child: Container(
+                                      padding: EdgeInsets.symmetric(horizontal: 10 * scale, vertical: 4 * scale),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withValues(alpha: 0.5),
+                                        borderRadius: BorderRadius.circular(20 * scale),
+                                      ),
+                                      child: Text(
+                                        '${currentIndex + 1} / ${imageUrls.length}',
+                                        style: AppTextStyles.arimo(
+                                          fontSize: 11 * scale,
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w700,
                                         ),
-                                        SizedBox(height: 8 * scale),
-                                        Text(
-                                          'Đang tải hình ảnh ${index + 1}/${imageUrls.length}...',
-                                          style: AppTextStyles.arimo(
-                                            fontSize: 12 * scale,
-                                            color: AppColors.textSecondary,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                              errorBuilder: (context, error, stackTrace) {
-                                return Center(
-                                  child: Padding(
-                                    padding: EdgeInsets.all(16 * scale),
-                                    child: Text(
-                                      'Không thể tải hình ảnh hợp đồng đã ký',
-                                      textAlign: TextAlign.center,
-                                      style: AppTextStyles.arimo(
-                                        fontSize: 13 * scale,
-                                        color: AppColors.textSecondary,
                                       ),
                                     ),
                                   ),
-                                );
-                              },
+                              ],
                             ),
-                          );
-                        },
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                    if (imageUrls.length > 1) ...[
+                      SizedBox(height: 8 * scale),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(
+                          imageUrls.length,
+                          (i) => Container(
+                            width: 6 * scale,
+                            height: 6 * scale,
+                            margin: EdgeInsets.symmetric(horizontal: 2 * scale),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: i == currentIndex
+                                  ? AppColors.primary
+                                  : AppColors.borderLight,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                    SizedBox(height: 16 * scale),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: AppColors.white,
+                          padding: EdgeInsets.symmetric(vertical: 12 * scale),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10 * scale),
+                          ),
+                          elevation: 0,
+                        ),
+                        icon: const Icon(Icons.check_rounded, size: 18),
+                        label: Text(
+                          'Đóng',
+                          style: AppTextStyles.arimo(
+                            fontSize: 14 * scale,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                if (imageUrls.length > 1) ...[
-                   SizedBox(height: 8 * scale),
-                   Text(
-                     'Vuốt ngang để xem thêm ảnh (${imageUrls.length} ảnh)',
-                     textAlign: TextAlign.center,
-                     style: AppTextStyles.arimo(
-                       fontSize: 12 * scale,
-                       color: AppColors.textSecondary,
-                     ).copyWith(fontStyle: FontStyle.italic),
-                   ),
-                ],
-                SizedBox(height: 16 * scale),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () => Navigator.of(ctx).pop(),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.white,
-                      padding: EdgeInsets.symmetric(vertical: 12 * scale),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10 * scale),
-                      ),
-                    ),
-                    icon: const Icon(Icons.check_rounded),
-                    label: Text(
-                      'Đóng',
-                      style: AppTextStyles.arimo(
-                        fontSize: 14 * scale,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
+          );
+          },
         );
       },
     );
@@ -437,14 +486,21 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
   }
 
 
-  bool _isPdfUrl(String? url) {
+  bool _isPdf(ContractModel contract) {
+    final url = contract.fileUrl;
     if (url == null || url.trim().isEmpty) {
+      if (contract.images != null && contract.images!.isNotEmpty) return false;
       return false;
     }
-    return RegExp(r'\.pdf(\?|$)', caseSensitive: false).hasMatch(url);
+    // If it's a list string, check if the first one is PDF
+    final firstUrl = url.contains(',') ? url.split(',').first : url;
+    return RegExp(r'\.pdf(\?|$)', caseSensitive: false).hasMatch(firstUrl);
   }
 
-  bool _isImageUrl(String? url) {
+  bool _isImage(ContractModel contract) {
+    if (contract.images != null && contract.images!.isNotEmpty) return true;
+    
+    final url = contract.fileUrl;
     if (url == null || url.trim().isEmpty) {
       return false;
     }
@@ -455,12 +511,14 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
     ).hasMatch(url) || url.contains('image/upload');
   }
 
-  String _fileTypeLabel(String? url) {
-    if (_isPdfUrl(url)) {
+  String _fileTypeLabelText(ContractModel contract) {
+    if (_isPdf(contract)) {
       return 'PDF';
     }
-    if (_isImageUrl(url)) {
-      return 'Ảnh';
+    if (_isImage(contract)) {
+      final count = contract.images?.length ?? 
+                    (contract.fileUrl?.contains(',') == true ? contract.fileUrl!.split(',').length : 1);
+      return count > 1 ? 'Ảnh • $count' : 'Ảnh';
     }
     return 'Khác';
   }
@@ -1745,7 +1803,7 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                           width: itemWidth,
                           child: _ActionButton(
                             icon: Icons.visibility_rounded,
-                            label: 'Preview Hợp Đồng',
+                            label: 'Xem trước hợp đồng',
                             color: const Color(0xFF0284C7),
                             onPressed: _openPreview,
                             scale: scale,
@@ -1842,11 +1900,11 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                   ),
                   SizedBox(height: 12 * scale),
                   _ActionButton(
-                    icon: _isPdfUrl(contract.fileUrl)
+                    icon: _isPdf(contract)
                         ? Icons.picture_as_pdf_rounded
                         : Icons.image_rounded,
                     label:
-                        'Xem file đã ký (${_fileTypeLabel(contract.fileUrl)})',
+                        'Xem file đã ký (${_fileTypeLabelText(contract)})',
                     color: const Color(0xFF059669),
                     onPressed: _openSignedContractImage,
                     scale: scale,
