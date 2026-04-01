@@ -6,6 +6,7 @@ import '../../../../../core/di/injection_container.dart';
 import '../../../../../features/package/presentation/bloc/package_bloc.dart';
 import '../../../../../features/package/presentation/screens/package_screen.dart';
 import '../../../../../features/employee/shell/presentation/screens/employee_chat_screen.dart';
+import '../../../../../features/chat/presentation/screens/employee_support_request_screen.dart';
 import '../widgets/employee_bottom_nav_bar.dart';
 import '../widgets/employee_fab.dart';
 import '../widgets/employee_more_sheet.dart';
@@ -31,6 +32,7 @@ class _EmployeePortalScreenState extends State<EmployeePortalScreen> {
       ), // AppBottomTab.services
     ),
     const EmployeeChatScreen(), // AppBottomTab.chat
+    const EmployeeSupportRequestScreen(), // AppBottomTab.supportRequests
   ];
 
   void _onTabSelected(AppBottomTab tab) {
@@ -57,6 +59,7 @@ class _EmployeePortalScreenState extends State<EmployeePortalScreen> {
           AppBottomTab.appointment => _screens[0],
           AppBottomTab.services => _screens[1],
           AppBottomTab.chat => _screens[2],
+          AppBottomTab.supportRequests => _screens[3],
           _ => _screens[0],
         },
         bottomNavigationBar: EmployeeBottomNavBar(

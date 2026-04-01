@@ -100,4 +100,6 @@ class AppRoutes {
   // Employee Customer Profile Routes
   static const String employeeCustomerFamilyProfile =
       '/employee-customer-family-profile';
+
+  static const String employeeSupportRequests = '/employee-support-requests';
 }

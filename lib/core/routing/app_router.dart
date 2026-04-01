@@ -42,6 +42,7 @@ import '../../features/employee/contract/presentation/screens/staff_member_type_
 import '../../features/employee/amenity_ticket/presentation/screens/staff_amenity_ticket_list_screen.dart';
 import '../../features/employee/appointment/presentation/screens/employee_appointment_list_screen.dart';
 import '../../features/employee/customer_profile/presentation/screens/employee_customer_family_profiles_screen.dart';
+import '../../features/chat/presentation/screens/employee_support_request_screen.dart';
 import '../../features/employee/account/data/models/account_model.dart';
 import '../../features/chat/presentation/screens/conversation_list_screen.dart';
 import '../../features/chat/presentation/screens/conversation_detail_screen.dart';
@@ -253,6 +254,9 @@ class AppRouter {
       // Employee Routes
       case AppRoutes.employeePortal:
         return MaterialPageRoute(builder: (_) => const EmployeePortalScreen());
+
+      case AppRoutes.employeeSupportRequests:
+        return MaterialPageRoute(builder: (_) => const EmployeeSupportRequestScreen());
 
       // Employee Routes - Quick Menu
       case AppRoutes.employeeAmenities:

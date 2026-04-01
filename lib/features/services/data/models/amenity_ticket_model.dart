@@ -1,5 +1,4 @@
 import '../../domain/entities/amenity_ticket_entity.dart';
-import '../../../../core/utils/app_date_time_utils.dart';
 
 /// Amenity Ticket Model - Data layer
 class AmenityTicketModel extends AmenityTicketEntity {

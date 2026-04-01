@@ -26,6 +26,7 @@ enum EmployeeQuickMenuExtraAction {
   createCustomer,
   transactions,
   contracts,
+  supportRequests,
 }
 
 /// Model định nghĩa 1 item trong menu nhanh
@@ -369,6 +370,9 @@ List<_QuickMenuGroup> _buildQuickMenuGroups(List<EmployeeQuickMenuItem> items) {
       case EmployeeQuickMenuExtraAction.contracts:
         finance.add(item);
         break;
+      case EmployeeQuickMenuExtraAction.supportRequests:
+        customerCare.add(item);
+        break;
       case EmployeeQuickMenuExtraAction.staffProfile:
         personal.add(item);
         break;
@@ -662,16 +666,22 @@ class EmployeeQuickMenuPresets {
         tab: AppBottomTab.appointment,
       ),
       EmployeeQuickMenuItem.extra(
-        id: 'check_in_out',
-        label: 'Check-in/out',
-        iconAsset: AppAssets.calendarBold,
-        action: EmployeeQuickMenuExtraAction.checkInOut,
+        id: 'family_profile',
+        label: 'Gia đình',
+        iconAsset: AppAssets.family,
+        action: EmployeeQuickMenuExtraAction.familyProfile,
       ),
       EmployeeQuickMenuItem.bottom(
-        id: 'chat',
-        label: 'Trao đổi',
+        id: 'services',
+        label: 'Dịch vụ',
+        iconAsset: AppAssets.appIconThird,
+        tab: AppBottomTab.services,
+      ),
+      EmployeeQuickMenuItem.bottom(
+        id: 'support_requests',
+        label: 'Yêu cầu Chat',
         iconAsset: AppAssets.chatMessage,
-        tab: AppBottomTab.chat,
+        tab: AppBottomTab.supportRequests,
       ),
     ];
   }
@@ -692,10 +702,10 @@ class EmployeeQuickMenuPresets {
         tab: AppBottomTab.services,
       ),
       EmployeeQuickMenuItem.bottom(
-        id: 'chat',
-        label: 'Trao đổi',
+        id: 'support_requests',
+        label: 'Yêu cầu Chat',
         iconAsset: AppAssets.chatMessage,
-        tab: AppBottomTab.chat,
+        tab: AppBottomTab.supportRequests,
       ),
 
       // Nhóm vận hành ưu tiên cao
@@ -743,6 +753,7 @@ class EmployeeQuickMenuPresets {
         iconAsset: AppAssets.menuSecond,
         action: EmployeeQuickMenuExtraAction.mealPlan,
       ),
+
 
       // Nhóm tài chính
       EmployeeQuickMenuItem.extra(
