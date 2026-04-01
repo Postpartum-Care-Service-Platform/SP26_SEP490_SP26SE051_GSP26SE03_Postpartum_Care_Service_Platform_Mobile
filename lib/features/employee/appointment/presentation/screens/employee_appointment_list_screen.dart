@@ -207,14 +207,6 @@ class _LoadedContentState extends State<_LoadedContent> {
   String _statusFilter = 'all';
   DateTime? _dateFilter;
 
-  int _getActiveFilterCount() {
-    int count = 0;
-    if (_searchQuery.isNotEmpty) count++;
-    if (_statusFilter != 'all') count++;
-    if (_dateFilter != null) count++;
-    return count;
-  }
-
   void _clearFilters() {
     setState(() {
       _searchQuery = '';

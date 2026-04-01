@@ -302,7 +302,7 @@ class _CreateAmenityTicketSheetState extends State<CreateAmenityTicketSheet> {
         title: AppStrings.amenityCreateTicket,
         isLoading: context.watch<AmenityBloc>().state is AmenityLoaded &&
             (context.watch<AmenityBloc>().state as AmenityLoaded).isCreatingTicket,
-        isDisabled: _hasConflict(),
+        isDisabled: _selectedService == null || _hasConflict(),
         onSave: _handleSubmit,
         children: [
           // Service Selection
@@ -567,11 +567,34 @@ class _CreateAmenityTicketSheetState extends State<CreateAmenityTicketSheet> {
         SizedBox(height: 12 * scale),
         GestureDetector(
           onTap: () async {
+            final amenityState = context.read<AmenityBloc>().state;
+            DateTime minDate = DateTime.now();
+            DateTime maxDate = DateTime.now().add(const Duration(days: 365));
+
+            if (amenityState is AmenityLoaded) {
+              if (amenityState.checkInDate != null) {
+                // Determine if today is after checkInDate. If so, user can only pick from today onwards to prevent booking in the past
+                // Or if it's strictly check-in to check-out. Let's use checkInDate as firstDate, but bound by today for fairness?
+                // Actually, just limit securely to the booking range.
+                minDate = amenityState.checkInDate!;
+                if (DateTime.now().isAfter(minDate)) {
+                  // If we are currently in the middle of a booking
+                  final today = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+                  minDate = today.isAfter(amenityState.checkOutDate ?? maxDate)
+                      ? amenityState.checkOutDate ?? maxDate
+                      : today;
+                }
+              }
+              if (amenityState.checkOutDate != null) {
+                maxDate = amenityState.checkOutDate!;
+              }
+            }
+
             final picked = await showDatePicker(
               context: context,
-              initialDate: _selectedDate ?? DateTime.now(),
-              firstDate: DateTime.now(),
-              lastDate: DateTime.now().add(const Duration(days: 365)),
+              initialDate: _selectedDate ?? minDate,
+              firstDate: minDate,
+              lastDate: maxDate.isBefore(minDate) ? minDate : maxDate,
               locale: const Locale('vi', 'VN'),
             );
             if (picked != null) {

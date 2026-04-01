@@ -27,6 +27,8 @@ class AmenityLoaded extends AmenityState {
   final bool isLoadingServices;
   final bool isLoadingTickets;
   final bool isCreatingTicket;
+  final DateTime? checkInDate;
+  final DateTime? checkOutDate;
 
   const AmenityLoaded({
     required this.services,
@@ -34,6 +36,8 @@ class AmenityLoaded extends AmenityState {
     this.isLoadingServices = false,
     this.isLoadingTickets = false,
     this.isCreatingTicket = false,
+    this.checkInDate,
+    this.checkOutDate,
   });
 
   AmenityLoaded copyWith({
@@ -42,6 +46,8 @@ class AmenityLoaded extends AmenityState {
     bool? isLoadingServices,
     bool? isLoadingTickets,
     bool? isCreatingTicket,
+    DateTime? checkInDate,
+    DateTime? checkOutDate,
   }) {
     return AmenityLoaded(
       services: services ?? this.services,
@@ -49,6 +55,8 @@ class AmenityLoaded extends AmenityState {
       isLoadingServices: isLoadingServices ?? this.isLoadingServices,
       isLoadingTickets: isLoadingTickets ?? this.isLoadingTickets,
       isCreatingTicket: isCreatingTicket ?? this.isCreatingTicket,
+      checkInDate: checkInDate ?? this.checkInDate,
+      checkOutDate: checkOutDate ?? this.checkOutDate,
     );
   }
 
@@ -59,6 +67,8 @@ class AmenityLoaded extends AmenityState {
         isLoadingServices,
         isLoadingTickets,
         isCreatingTicket,
+        checkInDate,
+        checkOutDate,
       ];
 }
 

@@ -97,26 +97,6 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
     return TimeOfDay(hour: hour, minute: minute);
   }
 
-  DateTime _buildScheduleDateTime(DateTime date, String time) {
-    final scheduleTime = _buildScheduleTimeOfDay(time);
-    return DateTime(
-      date.year,
-      date.month,
-      date.day,
-      scheduleTime.hour,
-      scheduleTime.minute,
-    );
-  }
-
-  bool _isTimeWithinSchedule(FamilyScheduleEntity schedule, TimeOfDay time) {
-    final start = _buildScheduleTimeOfDay(schedule.startTime);
-    final end = _buildScheduleTimeOfDay(schedule.endTime);
-    final selectedMinutes = time.hour * 60 + time.minute;
-    final startMinutes = start.hour * 60 + start.minute;
-    final endMinutes = end.hour * 60 + end.minute;
-    return selectedMinutes >= startMinutes && selectedMinutes <= endMinutes;
-  }
-
   Future<void> _loadCustomers() async {
     setState(() => _isLoadingCustomers = true);
     try {

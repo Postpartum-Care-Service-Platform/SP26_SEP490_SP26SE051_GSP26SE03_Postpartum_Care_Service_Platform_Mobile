@@ -1,11 +1,11 @@
 import '../../domain/entities/amenity_ticket_entity.dart';
-import '../../../../core/utils/app_date_time_utils.dart';
 
 /// Amenity Ticket Model - Data layer
 class AmenityTicketModel extends AmenityTicketEntity {
   const AmenityTicketModel({
     required super.id,
     required super.amenityServiceId,
+    super.amenityServiceName,
     required super.customerId,
     required super.startTime,
     required super.endTime,
@@ -25,6 +25,7 @@ class AmenityTicketModel extends AmenityTicketEntity {
   return AmenityTicketModel(
     id: json['id'] as int,
     amenityServiceId: json['amenityServiceId'] as int,
+    amenityServiceName: json['amenityServiceName'] as String?,
     customerId: json['customerId'] as String,
     startTime: startTime,
     endTime: endTime,
@@ -32,11 +33,11 @@ class AmenityTicketModel extends AmenityTicketEntity {
   );
 }
 
-@override
 Map<String, dynamic> toJson() {
   return {
     'id': id,
     'amenityServiceId': amenityServiceId,
+    'amenityServiceName': amenityServiceName,
     'customerId': customerId,
     'date': "${startTime.year}-${startTime.month.toString().padLeft(2, '0')}-${startTime.day.toString().padLeft(2, '0')}",
     'startTime': "${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}:00",
@@ -50,6 +51,7 @@ Map<String, dynamic> toJson() {
     return AmenityTicketEntity(
       id: id,
       amenityServiceId: amenityServiceId,
+      amenityServiceName: amenityServiceName,
       customerId: customerId,
       startTime: startTime,
       endTime: endTime,

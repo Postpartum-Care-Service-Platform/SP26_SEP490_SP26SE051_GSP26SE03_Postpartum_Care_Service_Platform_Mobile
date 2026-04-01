@@ -18,6 +18,8 @@ class ContractEntity extends Equatable {
   final String status; // Draft, Signed, etc.
   final DateTime createdAt;
   final CustomerEntity? customer;
+  final String? htmlContent;
+  final String? pdfContent;
 
   const ContractEntity({
     required this.id,
@@ -35,6 +37,8 @@ class ContractEntity extends Equatable {
     required this.status,
     required this.createdAt,
     this.customer,
+    this.htmlContent,
+    this.pdfContent,
   });
 
   @override
@@ -54,5 +58,7 @@ class ContractEntity extends Equatable {
         status,
         createdAt,
         customer,
+        htmlContent,
+        pdfContent,
       ];
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
@@ -7,6 +8,7 @@ import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_loading.dart';
 import '../../../../core/widgets/app_app_bar.dart';
+import '../../../../core/di/injection_container.dart';
 import '../bloc/booking_bloc.dart';
 import '../bloc/booking_event.dart';
 import '../bloc/booking_state.dart';
@@ -14,6 +16,9 @@ import '../widgets/invoice/booking_details_card.dart';
 import '../widgets/invoice/customer_info_card.dart';
 import '../widgets/invoice/invoice_header.dart';
 import '../widgets/invoice/invoice_helpers.dart';
+import '../../../contract/presentation/bloc/contract_bloc.dart';
+import '../../../contract/presentation/bloc/contract_event.dart';
+import '../../../contract/presentation/bloc/contract_state.dart';
 import '../widgets/invoice/price_details_card.dart';
 import '../widgets/invoice/transaction_item.dart';
 import 'booking_history_screen.dart';
@@ -254,8 +259,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                                 ),
                                 SizedBox(height: 12 * scale),
                                 // Contract
-                                if (booking.contract != null &&
-                                    booking.contract!.fileUrl != null)
+                                if (booking.contract != null)
                                   Material(
                                     color: AppColors.white,
                                     borderRadius: BorderRadius.circular(
@@ -266,7 +270,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
                                         16 * scale,
                                       ),
                                       onTap: () => _openContract(
-                                        booking.contract!.fileUrl!,
+                                        booking.id, // pass booking id instead of full url
                                       ),
                                       child: Container(
                                         width: double.infinity,
@@ -378,12 +382,12 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
     );
   }
 
-  Future<void> _openContract(String url) async {
+  Future<void> _openContract(int bookingId) async {
     if (!mounted) return;
 
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => _ContractImageViewerScreen(imageUrl: url),
+        builder: (_) => _ContractHtmlViewerScreen(bookingId: bookingId),
       ),
     );
   }
@@ -518,69 +522,132 @@ class _PaneEmpty extends StatelessWidget {
   }
 }
 
-class _ContractImageViewerScreen extends StatelessWidget {
-  final String imageUrl;
+class _ContractHtmlViewerScreen extends StatefulWidget {
+  final int bookingId;
 
-  const _ContractImageViewerScreen({required this.imageUrl});
+  const _ContractHtmlViewerScreen({required this.bookingId});
+
+  @override
+  State<_ContractHtmlViewerScreen> createState() => _ContractHtmlViewerScreenState();
+}
+
+class _ContractHtmlViewerScreenState extends State<_ContractHtmlViewerScreen> {
 
   @override
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-        title: Text(
-          'Hợp đồng',
-          style: AppTextStyles.tinos(
-            fontSize: 20 * scale,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-          ),
+    return BlocProvider(
+      create: (context) => InjectionContainer.contractBloc
+        ..add(ContractLoadByBookingId(widget.bookingId)),
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppAppBar(
+          title: 'Hợp đồng',
+          centerTitle: true,
+          titleFontSize: 20 * scale,
+          titleFontWeight: FontWeight.w700,
         ),
-      ),
-      body: Center(
-        child: InteractiveViewer(
-          minScale: 0.8,
-          maxScale: 5,
-          child: Image.network(
-            imageUrl,
-            fit: BoxFit.contain,
-            loadingBuilder: (context, child, loadingProgress) {
-              if (loadingProgress == null) return child;
+        body: BlocBuilder<ContractBloc, ContractState>(
+          builder: (context, state) {
+            if (state is ContractLoading) {
               return const Center(
-                child: CircularProgressIndicator(
+                child: AppLoadingIndicator(
                   color: AppColors.primary,
                 ),
               );
-            },
-            errorBuilder: (context, error, stackTrace) {
-              return Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24 * scale),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.broken_image_outlined,
-                      color: Colors.white70,
-                      size: 44 * scale,
-                    ),
-                    SizedBox(height: 12 * scale),
-                    Text(
-                      'Không thể hiển thị hợp đồng dưới dạng ảnh.',
-                      textAlign: TextAlign.center,
-                      style: AppTextStyles.arimo(
-                        fontSize: 14 * scale,
-                        color: Colors.white70,
+            }
+
+            if (state is ContractError) {
+              return Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24 * scale),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        color: AppColors.red,
+                        size: 44 * scale,
                       ),
-                    ),
-                  ],
+                      SizedBox(height: 12 * scale),
+                      Text(
+                        state.message,
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.arimo(
+                          fontSize: 14 * scale,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      SizedBox(height: 16 * scale),
+                      ElevatedButton(
+                        onPressed: () {
+                          context
+                              .read<ContractBloc>()
+                              .add(ContractLoadByBookingId(widget.bookingId));
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                        ),
+                        child: Text(
+                          AppStrings.retry,
+                          style: TextStyle(color: AppColors.white),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
-            },
-          ),
+            }
+
+            if (state is ContractLoaded) {
+              final contract = state.contract;
+              final contentHtml = contract.htmlContent;
+              if (contentHtml == null || contentHtml.isEmpty) {
+                return Center(
+                  child: Text(
+                    'Hợp đồng chưa có nội dung chi tiết.',
+                    style: AppTextStyles.arimo(
+                      fontSize: 14 * scale,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                );
+              }
+
+              return SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 16 * scale,
+                  vertical: 24 * scale,
+                ),
+                child: Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(20 * scale),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(12 * scale),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 10 * scale,
+                        offset: Offset(0, 4 * scale),
+                      )
+                    ],
+                  ),
+                  child: HtmlWidget(
+                    contentHtml,
+                    textStyle: AppTextStyles.arimo(
+                      fontSize: 14 * scale,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            return const SizedBox();
+          },
         ),
       ),
     );

@@ -41,12 +41,6 @@ class ContractPreviewModel {
     );
   }
 
-  static Map<String, dynamic>? _asMap(dynamic value) {
-    if (value is Map<String, dynamic>) return value;
-    if (value is Map) return value.cast<String, dynamic>();
-    return null;
-  }
-
   static int? _asInt(dynamic value) {
     if (value is int) return value;
     if (value is String) return int.tryParse(value);

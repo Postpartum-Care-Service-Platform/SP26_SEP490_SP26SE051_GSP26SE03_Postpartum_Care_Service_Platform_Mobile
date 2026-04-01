@@ -639,6 +639,7 @@ class InjectionContainer {
     getAmenityServicesUsecase: _getAmenityServicesUsecase,
     getMyAmenityTicketsUsecase: _getMyAmenityTicketsUsecase,
     createAmenityTicketUsecase: _createAmenityTicketUsecase,
+    getBookingsUsecase: _getBookingsUsecase,
   );
 
   static HomeServiceBloc get homeServiceBloc => HomeServiceBloc(

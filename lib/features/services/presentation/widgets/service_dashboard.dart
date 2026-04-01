@@ -49,7 +49,7 @@ class ServiceDashboard extends StatelessWidget {
         child: SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(
             20 * scale,
-            20 * scale,
+            10 * scale,
             20 * scale,
             24 * scale,
           ),
@@ -58,7 +58,7 @@ class ServiceDashboard extends StatelessWidget {
             children: [
               // Welcome Section
               _buildWelcomeSection(context, scale),
-              SizedBox(height: 12 * scale),
+              SizedBox(height: 8 * scale),
               if (isHomeService) ...[
                 _HomeServiceDashboard(nowPackage: nowPackage),
               ] else ...[

@@ -4,7 +4,6 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
-import '../../../../core/di/injection_container.dart';
 import '../../../../core/widgets/app_loading.dart';
 import '../bloc/notification_bloc.dart';
 import '../bloc/notification_event.dart';
@@ -20,10 +19,7 @@ class NotificationDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
 
-    return BlocProvider(
-      create: (context) => InjectionContainer.notificationBloc
-        ..add(const NotificationLoadRequested()),
-      child: Drawer(
+    return Drawer(
         width: MediaQuery.of(context).size.width * 0.85,
         backgroundColor: AppColors.white,
         child: SafeArea(
@@ -182,7 +178,6 @@ class NotificationDrawer extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 }

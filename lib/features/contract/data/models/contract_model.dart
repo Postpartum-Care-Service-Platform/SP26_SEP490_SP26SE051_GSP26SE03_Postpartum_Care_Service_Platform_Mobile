@@ -19,6 +19,8 @@ class ContractModel extends ContractEntity {
     required super.status,
     required super.createdAt,
     super.customer,
+    super.htmlContent,
+    super.pdfContent,
   });
 
   factory ContractModel.fromJson(Map<String, dynamic> json) {
@@ -50,6 +52,8 @@ class ContractModel extends ContractEntity {
       customer: json['customer'] != null
           ? CustomerModel.fromJson(json['customer'] as Map<String, dynamic>)
           : null,
+      htmlContent: json['htmlContent'] as String?,
+      pdfContent: json['pdfContent'] as String?,
     );
   }
 
@@ -72,6 +76,8 @@ class ContractModel extends ContractEntity {
       'customer': customer != null
           ? (customer as CustomerModel).toJson()
           : null,
+      'htmlContent': htmlContent,
+      'pdfContent': pdfContent,
     };
   }
 
@@ -92,6 +98,8 @@ class ContractModel extends ContractEntity {
       status: status,
       createdAt: createdAt,
       customer: customer,
+      htmlContent: htmlContent,
+      pdfContent: pdfContent,
     );
   }
 }
