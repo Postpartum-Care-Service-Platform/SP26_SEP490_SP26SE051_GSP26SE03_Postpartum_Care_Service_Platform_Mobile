@@ -3,6 +3,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
+import '../../../../core/widgets/app_network_image.dart';
 import '../../domain/entities/menu_entity.dart';
 import '../../domain/entities/food_entity.dart';
 
@@ -142,7 +143,7 @@ class _FoodItem extends StatelessWidget {
             child: food.imageUrl != null
                 ? ClipRRect(
                     borderRadius: BorderRadius.circular(8 * scale),
-                    child: Image.network(
+                    child: AppNetworkImage(
                       food.imageUrl!,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {

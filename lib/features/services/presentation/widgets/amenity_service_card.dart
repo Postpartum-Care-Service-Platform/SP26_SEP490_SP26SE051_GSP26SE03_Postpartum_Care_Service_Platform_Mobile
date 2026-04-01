@@ -3,6 +3,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
+import '../../../../core/widgets/app_network_image.dart';
 import '../../domain/entities/amenity_service_entity.dart';
 
 /// Amenity Service Card Widget
@@ -51,20 +52,11 @@ class AmenityServiceCard extends StatelessWidget {
                 height: 100 * scale,
                 color: AppColors.borderLight,
                 child: service.imageUrl != null && service.imageUrl!.isNotEmpty
-                    ? Image.network(
+                    ? AppNetworkImage(
                         service.imageUrl!,
                         width: double.infinity,
                         height: 100 * scale,
                         fit: BoxFit.cover,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Center(
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: AppColors.primary,
-                            ),
-                          );
-                        },
                         errorBuilder: (context, error, stackTrace) => Icon(
                           Icons.image_not_supported,
                           color: AppColors.textSecondary,
