@@ -295,6 +295,7 @@ class AppStrings {
   static const String bottomNavServices = 'Dịch vụ';
   static const String bottomNavSchedule = 'Lịch hẹn';
   static const String bottomNavChat = 'Tư vấn';
+  static const String bottomNavSupportRequests = 'Yêu cầu';
   static const String bottomNavProfile = 'Tôi';
 
   // Error Messages

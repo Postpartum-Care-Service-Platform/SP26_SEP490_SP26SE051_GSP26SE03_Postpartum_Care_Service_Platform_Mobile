@@ -233,6 +233,9 @@ class ApiEndpoints {
   /// Get all menus
   static const String menus = '/Menu';
 
+  /// Get menu by ID
+  static String menuById(int id) => '/Menu/$id';
+
   /// Get all menu types
   static const String menuTypes = '/MenuType';
 
