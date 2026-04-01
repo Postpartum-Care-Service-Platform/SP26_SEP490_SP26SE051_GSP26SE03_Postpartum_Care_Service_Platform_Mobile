@@ -236,6 +236,9 @@ class EmployeeMoreSheet {
           ),
         );
         break;
+      case EmployeeQuickMenuExtraAction.supportRequests:
+        AppRouter.push(context, AppRoutes.employeeSupportRequests);
+        break;
     }
   }
 
@@ -278,6 +281,9 @@ List<_MenuGroup> _buildGroupedItems(List<EmployeeQuickMenuItem> items) {
       case EmployeeQuickMenuExtraAction.transactions:
       case EmployeeQuickMenuExtraAction.contracts:
         finance.add(item);
+        break;
+      case EmployeeQuickMenuExtraAction.supportRequests:
+        customerCare.add(item);
         break;
       case EmployeeQuickMenuExtraAction.staffProfile:
         personal.add(item);

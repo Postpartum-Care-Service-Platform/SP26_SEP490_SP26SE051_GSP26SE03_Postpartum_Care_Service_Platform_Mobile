@@ -11,21 +11,18 @@ import '../constants/app_strings.dart';
 import '../constants/app_assets.dart';
 import '../utils/app_responsive.dart';
 
-enum AppBottomTab { home, appointment, services, chat, profile }
+enum AppBottomTab { home, appointment, services, chat, profile, supportRequests }
 
 extension AppBottomTabX on AppBottomTab {
   IconData? get icon {
     switch (this) {
       case AppBottomTab.home:
-        return null; // Use SVG instead
       case AppBottomTab.appointment:
-        return null; // Use SVG instead
       case AppBottomTab.services:
-        return null; // Use SVG instead
       case AppBottomTab.chat:
-        return null; // Use SVG instead
+      case AppBottomTab.supportRequests:
       case AppBottomTab.profile:
-        return null;
+        return null; // Use SVG instead
     }
   }
 
@@ -38,6 +35,8 @@ extension AppBottomTabX on AppBottomTab {
       case AppBottomTab.services:
         return AppAssets.appIconThird;
       case AppBottomTab.chat:
+        return AppAssets.chatMessage;
+      case AppBottomTab.supportRequests:
         return AppAssets.chatMessage;
       case AppBottomTab.profile:
         return AppAssets.profile;
@@ -54,6 +53,8 @@ extension AppBottomTabX on AppBottomTab {
         return AppStrings.bottomNavServices;
       case AppBottomTab.chat:
         return AppStrings.bottomNavChat;
+      case AppBottomTab.supportRequests:
+        return AppStrings.bottomNavSupportRequests;
       case AppBottomTab.profile:
         return AppStrings.bottomNavProfile;
     }
