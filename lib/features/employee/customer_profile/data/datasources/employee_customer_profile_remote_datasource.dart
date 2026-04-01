@@ -4,6 +4,7 @@ import '../../../../../core/apis/api_client.dart';
 import '../../../../../core/apis/api_endpoints.dart';
 import '../../../../../features/auth/data/models/current_account_model.dart';
 import '../../../../../features/services/data/models/menu_record_model.dart';
+import '../../../../../features/services/data/models/menu_model.dart';
 
 class EmployeeCustomerProfileRemoteDataSource {
   final Dio _dio;
@@ -227,6 +228,15 @@ class EmployeeCustomerProfileRemoteDataSource {
     try {
       final response = await _dio.get(ApiEndpoints.getAccountById(customerId));
       return CurrentAccountModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<MenuModel> getMenuById(int id) async {
+    try {
+      final response = await _dio.get(ApiEndpoints.menuById(id));
+      return MenuModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw _handleError(e);
     }

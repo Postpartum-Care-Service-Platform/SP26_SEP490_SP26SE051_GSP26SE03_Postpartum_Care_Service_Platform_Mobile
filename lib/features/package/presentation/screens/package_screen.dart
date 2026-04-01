@@ -11,7 +11,6 @@ import '../bloc/package_bloc.dart';
 import '../bloc/package_event.dart';
 import '../bloc/package_state.dart';
 import '../widgets/package_card.dart';
-import '../widgets/package_filter_tabs.dart';
 import '../../../../features/care_plan/presentation/widgets/care_plan_bottom_sheet.dart';
 
 class PackageScreen extends StatefulWidget {

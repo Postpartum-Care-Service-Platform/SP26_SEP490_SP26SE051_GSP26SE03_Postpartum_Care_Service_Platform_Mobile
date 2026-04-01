@@ -310,8 +310,8 @@ class _LoadedContentState extends State<_LoadedContent> {
               _DashboardSummaryRow(
                 summaryFuture: _summaryFuture,
                 onSupportRequestsTap: () {
-                  // Điều hướng đến chat với tab support requests
-                  AppRouter.push(context, AppRoutes.employeeChat);
+                  // Điều hướng đến quản lý yêu cầu chat riêng biệt
+                  AppRouter.push(context, AppRoutes.employeeSupportRequests);
                 },
                 onContractsTap: () {
                   AppRouter.push(context, AppRoutes.staffContractList);
@@ -335,6 +335,9 @@ class _LoadedContentState extends State<_LoadedContent> {
                       break;
                     case AppBottomTab.chat:
                       AppRouter.push(context, AppRoutes.employeeChat);
+                      break;
+                    case AppBottomTab.supportRequests:
+                      AppRouter.push(context, AppRoutes.employeeSupportRequests);
                       break;
                     case AppBottomTab.appointment:
                     case AppBottomTab.home:
@@ -396,6 +399,9 @@ class _LoadedContentState extends State<_LoadedContent> {
                           ),
                         ),
                       );
+                      break;
+                    case EmployeeQuickMenuExtraAction.supportRequests:
+                      AppRouter.push(context, AppRoutes.employeeSupportRequests);
                       break;
                   }
                 },

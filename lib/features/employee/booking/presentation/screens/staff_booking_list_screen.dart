@@ -997,7 +997,7 @@ class _BookingItem extends StatelessWidget {
                     SizedBox(height: 8 * scale),
                     _buildInfoItem(
                       icon: Icons.phone_iphone_rounded,
-                      label: booking.customer!.phone!,
+                      label: booking.customer!.phone,
                       scale: scale,
                     ),
                   ],

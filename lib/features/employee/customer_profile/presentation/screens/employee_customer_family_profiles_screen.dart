@@ -13,6 +13,7 @@ import '../../../../../features/family_profile/domain/entities/family_profile_en
 import '../../../../../features/family_profile/presentation/widgets/family_member_card.dart';
 import '../../../../../features/services/data/datasources/family_schedule_remote_datasource.dart';
 import '../../../../../features/services/data/models/menu_record_model.dart';
+import '../../../../../features/services/data/models/menu_model.dart';
 import '../../../../../features/employee/customer_profile/data/datasources/employee_customer_profile_remote_datasource.dart';
 
 class EmployeeCustomerFamilyProfilesScreen extends StatefulWidget {
@@ -447,6 +448,137 @@ class _EmployeeCustomerFamilyProfilesScreenState
     }
   }
 
+  Future<void> _viewMenuDetails(int menuId) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final menu = await _profileDs.getMenuById(menuId);
+      if (mounted) {
+        Navigator.pop(context); // hide loader
+        _showMenuDetailsDialog(menu);
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // hide loader
+        AppToast.showError(context, message: 'Không thể tải chi tiết thực đơn: $e');
+      }
+    }
+  }
+
+  void _showMenuDetailsDialog(MenuModel menu) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        maxChildSize: 0.9,
+        minChildSize: 0.5,
+        builder: (context, scrollController) => Container(
+          decoration: const BoxDecoration(
+            color: AppColors.background,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.borderLight,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Expanded(
+                child: ListView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(20),
+                  children: [
+                    Text(
+                      menu.menuName,
+                      style: AppTextStyles.arimo(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      menu.menuTypeName,
+                      style: AppTextStyles.arimo(
+                        fontSize: 14,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    if (menu.description?.isNotEmpty == true) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        menu.description!,
+                        style: AppTextStyles.arimo(
+                          fontSize: 14,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                    const Divider(height: 32),
+                    Text(
+                      'Danh sách món ăn',
+                      style: AppTextStyles.arimo(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    if (menu.foods.isEmpty)
+                      const Text('Chưa có món ăn nào trong thực đơn này.')
+                    else
+                      for (final food in menu.foods)
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.borderLight),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                food.name,
+                                style: AppTextStyles.arimo(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              if (food.description != null)
+                                Text(
+                                  food.description!,
+                                  style: AppTextStyles.arimo(
+                                    fontSize: 13,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _refreshAll() {
     setState(() {
       _familyProfilesFuture = _loadFamilyProfiles(widget.customerId);
@@ -669,16 +801,19 @@ class _EmployeeCustomerFamilyProfilesScreenState
                 separatorBuilder: (_, __) => SizedBox(height: 10 * scale),
                 itemBuilder: (context, index) {
                   final r = records[index];
-                  return Container(
-                    padding: EdgeInsets.all(12 * scale),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12 * scale),
-                      border: Border.all(color: AppColors.borderLight),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+                  return InkWell(
+                    onTap: () => _viewMenuDetails(r.menuId),
+                    borderRadius: BorderRadius.circular(12 * scale),
+                    child: Container(
+                      padding: EdgeInsets.all(12 * scale),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12 * scale),
+                        border: Border.all(color: AppColors.borderLight),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                         Text(
                           r.name,
                           style: AppTextStyles.arimo(
@@ -720,8 +855,9 @@ class _EmployeeCustomerFamilyProfilesScreenState
                         ),
                       ],
                     ),
-                  );
-                },
+                  ),
+                );
+              },
               );
             },
           ),
