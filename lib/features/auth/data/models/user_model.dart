@@ -7,12 +7,14 @@ class UserModel extends Equatable {
   final String email;
   final String username;
   final String role;
+  final String? memberType;
 
   const UserModel({
     required this.id,
     required this.email,
     required this.username,
     required this.role,
+    this.memberType,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
@@ -20,6 +22,7 @@ class UserModel extends Equatable {
         email: json['email'] as String,
         username: json['username'] as String,
         role: json['role'] as String,
+        memberType: json['memberType'] as String?,
       );
 
   Map<String, dynamic> toJson() => {
@@ -27,6 +30,7 @@ class UserModel extends Equatable {
         'email': email,
         'username': username,
         'role': role,
+        'memberType': memberType,
       };
 
   UserEntity toEntity() => UserEntity(
@@ -34,9 +38,10 @@ class UserModel extends Equatable {
         email: email,
         username: username,
         role: role,
+        memberType: memberType,
       );
 
   @override
-  List<Object?> get props => [id, email, username, role];
+  List<Object?> get props => [id, email, username, role, memberType];
 }
 

@@ -8,6 +8,7 @@ import '../../../../../core/di/injection_container.dart';
 import '../../../../../core/routing/app_router.dart';
 import '../../../../../core/routing/app_routes.dart';
 import '../../../../../core/utils/app_text_styles.dart';
+import '../../../../../features/auth/presentation/bloc/auth_state.dart';
 import '../../../../../features/employee/account/presentation/screens/employee_profile_screen.dart';
 import '../../../../../features/employee/shell/presentation/widgets/employee_quick_menu.dart';
 
@@ -16,7 +17,12 @@ class EmployeeMoreSheet {
 
   static void show(BuildContext context) {
     final authBloc = InjectionContainer.authBloc;
-    final allItems = EmployeeQuickMenuPresets.allItems();
+    final authState = authBloc.state;
+    String? memberType;
+    if (authState is AuthCurrentAccountLoaded) {
+      memberType = (authState.account as dynamic).memberType;
+    }
+    final allItems = EmployeeQuickMenuPresets.allItems(memberType);
 
     // Chỉ lấy các extra actions (không phải bottom tab)
     final extraItems = allItems
@@ -236,6 +242,9 @@ class EmployeeMoreSheet {
           ),
         );
         break;
+      case EmployeeQuickMenuExtraAction.wallet:
+        AppRouter.push(context, AppRoutes.employeeWallet);
+        break;
       case EmployeeQuickMenuExtraAction.supportRequests:
         AppRouter.push(context, AppRoutes.employeeSupportRequests);
         break;
@@ -280,6 +289,7 @@ List<_MenuGroup> _buildGroupedItems(List<EmployeeQuickMenuItem> items) {
         break;
       case EmployeeQuickMenuExtraAction.transactions:
       case EmployeeQuickMenuExtraAction.contracts:
+      case EmployeeQuickMenuExtraAction.wallet:
         finance.add(item);
         break;
       case EmployeeQuickMenuExtraAction.supportRequests:

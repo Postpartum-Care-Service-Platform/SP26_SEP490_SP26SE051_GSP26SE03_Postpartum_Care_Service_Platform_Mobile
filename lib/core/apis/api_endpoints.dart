@@ -320,4 +320,11 @@ class ApiEndpoints {
   
   /// Create home service payment link
   static const String createHomeServicePaymentLink = '/Transaction/create-home-service-payment-link';
+
+  // ==========================================
+  // Wallet endpoints
+  // ==========================================
+  
+  static const String myWallet = '/Wallet/me';
+  static const String myWalletTransactions = '/Wallet/me/transactions';
 }
