@@ -452,10 +452,11 @@ class AppRouter {
 
       // Feedback Routes
       case AppRoutes.feedback:
+        final bool isReadOnly = (args is Map<String, dynamic> && args['isReadOnly'] == true);
         return MaterialPageRoute(
           builder: (_) => BlocProvider(
             create: (_) => InjectionContainer.feedbackBloc,
-            child: const FeedbackScreen(),
+            child: FeedbackScreen(isReadOnly: isReadOnly),
           ),
         );
 

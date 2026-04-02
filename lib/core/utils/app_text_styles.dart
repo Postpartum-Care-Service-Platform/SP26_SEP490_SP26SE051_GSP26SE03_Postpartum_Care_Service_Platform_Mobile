@@ -3,14 +3,15 @@ import 'package:flutter/material.dart';
 /// App Text Styles - Centralized text styles using custom fonts
 /// Following clean architecture principles for code reusability
 class AppTextStyles {
-  AppTextStyles._(); // Private constructor to prevent instantiation
+  AppTextStyles._();
 
-  /// Queens font - Used for app name and titles
   static TextStyle tinos({
     double fontSize = 24,
     FontWeight fontWeight = FontWeight.normal,
     Color? color,
     double? letterSpacing,
+    double? height,                
+    List<Shadow>? shadows,          
   }) {
     return TextStyle(
       fontFamily: 'Queens',
@@ -18,15 +19,18 @@ class AppTextStyles {
       fontWeight: fontWeight,
       color: color,
       letterSpacing: letterSpacing,
+      height: height,              
+      shadows: shadows,             
     );
   }
 
-  /// ES Rebond Grotesque font - Used for body text, buttons, labels
   static TextStyle arimo({
     double fontSize = 14,
     FontWeight fontWeight = FontWeight.normal,
     Color? color,
     double? letterSpacing,
+    double? height,               
+    List<Shadow>? shadows,         
   }) {
     return TextStyle(
       fontFamily: 'ESRebondGrotesque',
@@ -34,6 +38,8 @@ class AppTextStyles {
       fontWeight: fontWeight,
       color: color,
       letterSpacing: letterSpacing,
+      height: height,              
+      shadows: shadows,            
     );
   }
 }

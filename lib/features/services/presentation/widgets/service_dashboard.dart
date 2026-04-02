@@ -29,6 +29,22 @@ class ServiceDashboard extends StatelessWidget {
     required this.nowPackage,
   });
 
+  bool get _isCheckoutExpired {
+    final checkoutDate = nowPackage.checkoutDate;
+    if (checkoutDate == null) return false;
+
+    final localCheckout = checkoutDate.toLocal();
+    final normalizedCheckout = DateTime(
+      localCheckout.year,
+      localCheckout.month,
+      localCheckout.day,
+    );
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    return today.isAfter(normalizedCheckout);
+  }
+
   @override
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
@@ -66,8 +82,10 @@ class ServiceDashboard extends StatelessWidget {
                 ResortKeyCard(nowPackage: nowPackage),
                 SizedBox(height: 18 * scale),
 
-                // Services Section
-                _buildServicesSection(context, scale),
+                if (_isCheckoutExpired)
+                  _buildCheckoutExpiredBanner(context, scale)
+                else
+                  _buildServicesSection(context, scale),
               ],
             ],
           ),
@@ -247,6 +265,63 @@ class ServiceDashboard extends StatelessWidget {
               fit: BoxFit.contain,
               width: 28 * scale,
               height: 28 * scale,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCheckoutExpiredBanner(BuildContext context, double scale) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(20 * scale),
+        border: Border.all(
+          color: AppColors.borderLight,
+          width: 1.2 * scale,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 12 * scale,
+            offset: Offset(0, 4 * scale),
+          ),
+        ],
+      ),
+      padding: EdgeInsets.symmetric(
+        horizontal: 16 * scale,
+        vertical: 20 * scale,
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: EdgeInsets.all(10 * scale),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: SvgPicture.asset(
+              AppAssets.helper,
+              fit: BoxFit.contain,
+              width: 28 * scale,
+              height: 28 * scale,
+              colorFilter: const ColorFilter.mode(
+                AppColors.primary,
+                BlendMode.srcIn,
+              ),
+            ),
+          ),
+          SizedBox(height: 12 * scale),
+          Text(
+            AppStrings.servicesCheckoutExpiredMessage,
+            textAlign: TextAlign.center,
+            style: AppTextStyles.arimo(
+              fontSize: 13 * scale,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
             ),
           ),
         ],

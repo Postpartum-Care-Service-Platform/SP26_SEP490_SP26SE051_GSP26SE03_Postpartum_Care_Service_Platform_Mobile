@@ -4,4 +4,7 @@ import '../entities/package_entity.dart';
 abstract class PackageRepository {
   /// Get all packages
   Future<List<PackageEntity>> getPackages();
+  
+  /// Get package by ID
+  Future<PackageEntity> getPackageById(int id);
 }

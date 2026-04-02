@@ -13,4 +13,10 @@ class PackageRepositoryImpl implements PackageRepository {
     final models = await dataSource.getPackages();
     return models.map((model) => model.toEntity()).toList();
   }
+
+  @override
+  Future<PackageEntity> getPackageById(int id) async {
+    final model = await dataSource.getPackageById(id);
+    return model.toEntity();
+  }
 }

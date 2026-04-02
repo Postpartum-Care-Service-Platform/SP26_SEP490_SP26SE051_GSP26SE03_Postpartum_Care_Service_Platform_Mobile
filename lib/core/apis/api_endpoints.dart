@@ -95,11 +95,13 @@ class ApiEndpoints {
 
   // Package endpoints
   static const String packages = '/Packages/center';
+  static String packageById(int id) => '/Packages/$id';
   static const String packageTypes = '/PackageType';
 
   // Package Activities (thay cho Care Plan cũ)
   static String getCarePlanDetailsByPackage(int packageId) =>
       '/package-activities/by-package/$packageId';
+  static String getCarePlanActivityById(int id) => '/package-activities/$id';
 
   // Booking endpoints
   static const String createBooking = '/Booking';

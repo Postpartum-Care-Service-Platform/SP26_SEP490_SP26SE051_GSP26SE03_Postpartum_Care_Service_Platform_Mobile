@@ -6,12 +6,13 @@ import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_loading.dart';
 import '../../../../core/widgets/app_app_bar.dart';
+import '../../../../core/di/injection_container.dart';
 import '../../domain/entities/package_entity.dart';
 import '../bloc/package_bloc.dart';
 import '../bloc/package_event.dart';
 import '../bloc/package_state.dart';
 import '../widgets/package_card.dart';
-import '../../../../features/care_plan/presentation/widgets/care_plan_bottom_sheet.dart';
+import '../../../../features/booking/presentation/widgets/package_detail_bottom_sheet.dart';
 
 class PackageScreen extends StatefulWidget {
   final bool showBackButton;
@@ -192,12 +193,36 @@ class _PackageScreenState extends State<PackageScreen> {
         final package = packages[index];
         return PackageCard(
           package: package,
-          onTap: () {
-            CarePlanBottomSheet.show(
-              context,
-              packageId: package.id,
-              packageName: package.packageName,
+          onTap: () async {
+            // Show loading overlay
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => const Center(
+                child: AppLoadingIndicator(color: AppColors.white),
+              ),
             );
+
+            try {
+              // Fetch getPackageById
+              final packageDetail = await InjectionContainer.packageRepository
+                  .getPackageById(package.id);
+              
+              if (context.mounted) {
+                Navigator.of(context).pop(); // Dismiss loading
+                PackageDetailBottomSheet.show(
+                  context,
+                  package: packageDetail,
+                );
+              }
+            } catch (e) {
+              if (context.mounted) {
+                Navigator.of(context).pop(); // Dismiss loading
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(e.toString())),
+                );
+              }
+            }
           },
         );
       },

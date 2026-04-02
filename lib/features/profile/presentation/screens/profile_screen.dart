@@ -104,7 +104,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: ListView(
                     padding: EdgeInsets.symmetric(vertical: 8 * scale),
                     children: [
-                      AppWidgets.sectionHeader(context, title: AppStrings.account),
+                      AppWidgets.sectionHeader(
+                        context,
+                        title: AppStrings.account,
+                      ),
                       AppWidgets.sectionContainer(
                         context,
                         children: [
@@ -149,7 +152,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               );
                             },
                           ),
-                        
+
                           ProfileMenuItem(
                             icon: Icons.history_rounded,
                             title: AppStrings.bookingHistory,
@@ -161,39 +164,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               );
                             },
                           ),
+                          ProfileMenuItem(
+                            svgIcon: AppAssets.menuSecond,
+                            title: AppStrings.feedBackForService,
+                            onTap: () {
+                              AppRouter.push(
+                                context,
+                                AppRoutes.feedback,
+                                arguments: {'isReadOnly': true},
+                              );
+                            },
+                          ),
                         ],
                       ),
 
                       SizedBox(height: 12 * scale),
 
-                      AppWidgets.sectionHeader(context, title: AppStrings.helpandPolicy),
+                      AppWidgets.sectionHeader(
+                        context,
+                        title: AppStrings.helpandPolicy,
+                      ),
                       AppWidgets.sectionContainer(
                         context,
                         children: [
                           ProfileMenuItem(
+                            icon: Icons.lock_outline_rounded,
+                            title: AppStrings.privacy,
+                            onTap: () =>
+                                AppRouter.push(context, AppRoutes.privacy),
+                          ),
+                          ProfileMenuItem(
                             icon: Icons.help_outline_rounded,
                             title: AppStrings.help,
-                            onTap: () => AppRouter.push(context, AppRoutes.help),
-                          ),
-                          ProfileMenuItem(
-                            icon: Icons.contact_support_outlined,
-                            title: AppStrings.contact,
-                            onTap: () => AppRouter.push(context, AppRoutes.contact),
-                          ),
-                          ProfileMenuItem(
-                            icon: Icons.info_outline_rounded,
-                            title: AppStrings.about,
-                            onTap: () => AppRouter.push(context, AppRoutes.about),
+                            onTap: () =>
+                                AppRouter.push(context, AppRoutes.help),
                           ),
                           ProfileMenuItem(
                             icon: Icons.description_outlined,
                             title: AppStrings.terms,
-                            onTap: () => AppRouter.push(context, AppRoutes.terms),
+                            onTap: () =>
+                                AppRouter.push(context, AppRoutes.terms),
                           ),
                           ProfileMenuItem(
-                            icon: Icons.lock_outline_rounded,
-                            title: AppStrings.privacy,
-                            onTap: () => AppRouter.push(context, AppRoutes.privacy),
+                            icon: Icons.info_outline_rounded,
+                            title: AppStrings.about,
+                            onTap: () =>
+                                AppRouter.push(context, AppRoutes.about),
+                          ),
+                          ProfileMenuItem(
+                            icon: Icons.contact_support_outlined,
+                            title: AppStrings.contact,
+                            onTap: () =>
+                                AppRouter.push(context, AppRoutes.contact),
                           ),
                         ],
                       ),

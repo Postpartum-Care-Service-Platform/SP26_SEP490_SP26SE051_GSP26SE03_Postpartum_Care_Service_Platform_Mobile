@@ -19,7 +19,12 @@ import '../widgets/create_feedback_sheet.dart';
 /// Feedback Screen
 /// Displays user's feedbacks and allows creating new feedback
 class FeedbackScreen extends StatefulWidget {
-  const FeedbackScreen({super.key});
+  final bool isReadOnly;
+
+  const FeedbackScreen({
+    super.key,
+    this.isReadOnly = false,
+  });
 
   @override
   State<FeedbackScreen> createState() => _FeedbackScreenState();
@@ -156,19 +161,21 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
             return const SizedBox.shrink();
           },
         ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: _handleCreateFeedback,
-          backgroundColor: AppColors.primary,
-          child: SvgPicture.asset(
-            AppAssets.pencilFeedback,
-            width: 24 * scale,
-            height: 24 * scale,
-            colorFilter: const ColorFilter.mode(
-              AppColors.white,
-              BlendMode.srcIn,
-            ),
-          ),
-        ),
+        floatingActionButton: widget.isReadOnly
+            ? null
+            : FloatingActionButton(
+                onPressed: _handleCreateFeedback,
+                backgroundColor: AppColors.primary,
+                child: SvgPicture.asset(
+                  AppAssets.pencilFeedback,
+                  width: 24 * scale,
+                  height: 24 * scale,
+                  colorFilter: const ColorFilter.mode(
+                    AppColors.white,
+                    BlendMode.srcIn,
+                  ),
+                ),
+              ),
       ),
     );
   }
