@@ -28,6 +28,9 @@ import '../../../../../features/employee/appointment/presentation/bloc/appointme
 import '../../../../../features/employee/appointment/presentation/bloc/appointment/appointment_state.dart';
 import '../../../../../features/employee/shell/presentation/widgets/employee_header_bar.dart';
 import '../../../../../features/employee/shell/presentation/widgets/employee_scaffold.dart';
+import '../../../../../features/wallet/data/datasources/wallet_remote_datasource.dart';
+import '../../../../../features/wallet/presentation/bloc/wallet_cubit.dart';
+import '../../../../../features/wallet/presentation/bloc/wallet_state.dart';
 
 /// Employee Dashboard Screen - Trang chính sau khi staff đăng nhập
 /// Hiển thị tổng quan thống kê, quick menu và danh sách appointment gần nhất
@@ -252,6 +255,23 @@ class _LoadedContentState extends State<_LoadedContent> {
   @override
   Widget build(BuildContext context) {
     final padding = AppResponsive.pagePadding(context);
+    final authState = context.watch<AuthBloc>().state;
+    String? memberType;
+    bool isHomeStaff = false;
+    if (authState is AuthCurrentAccountLoaded) {
+      final account = authState.account;
+      memberType = (account as dynamic).memberType;
+      
+      // Resilience: check ownerProfile if memberType is null at root
+      if (memberType == null) {
+        try {
+          memberType = (account as dynamic).ownerProfile?.memberTypeName;
+        } catch (_) {}
+      }
+      
+      final typeLower = memberType?.toLowerCase().trim() ?? '';
+      isHomeStaff = typeLower == 'home-staff' || typeLower == 'homestaff' || typeLower == 'home nurse';
+    }
 
     // Tính toán stats
     final totalAssigned = widget.appointments.length;
@@ -287,28 +307,34 @@ class _LoadedContentState extends State<_LoadedContent> {
             delegate: SliverChildListDelegate([
               const SizedBox(height: 12),
               const _HeaderCard(),
-              const SizedBox(height: 16),
-              // Stats cho Appointment
-              _SectionTitle(
-                title: 'Lịch hẹn',
-                icon: Icons.event_note,
-                onViewAll: () {
-                  AppRouter.push(context, AppRoutes.employeeAppointmentList);
-                },
-              ),
-              const SizedBox(height: 12),
-              _StatsGrid(
-                totalAssigned: totalAssigned,
-                completed: completed,
-                pending: pending,
-                onTap: () {
-                  AppRouter.push(context, AppRoutes.employeeAppointmentList);
-                },
-              ),
+              if (isHomeStaff) ...[
+                const SizedBox(height: 16),
+                const _HomeStaffWalletSection(),
+              ] else ...[
+                const SizedBox(height: 16),
+                // Stats cho Appointment
+                _SectionTitle(
+                  title: 'Lịch hẹn',
+                  icon: Icons.event_note,
+                  onViewAll: () {
+                    AppRouter.push(context, AppRoutes.employeeAppointmentList);
+                  },
+                ),
+                const SizedBox(height: 12),
+                _StatsGrid(
+                  totalAssigned: totalAssigned,
+                  completed: completed,
+                  pending: pending,
+                  onTap: () {
+                    AppRouter.push(context, AppRoutes.employeeAppointmentList);
+                  },
+                ),
+              ],
               const SizedBox(height: 16),
 
               _DashboardSummaryRow(
                 summaryFuture: _summaryFuture,
+                isHomeStaff: isHomeStaff,
                 onSupportRequestsTap: () {
                   // Điều hướng đến quản lý yêu cầu chat riêng biệt
                   AppRouter.push(context, AppRoutes.employeeSupportRequests);
@@ -325,8 +351,8 @@ class _LoadedContentState extends State<_LoadedContent> {
               ),
               const SizedBox(height: 20),
               EmployeeQuickMenuSection(
-                primaryItems: EmployeeQuickMenuPresets.primaryItems(),
-                allItems: EmployeeQuickMenuPresets.allItems(),
+                primaryItems: EmployeeQuickMenuPresets.primaryItems(memberType),
+                allItems: EmployeeQuickMenuPresets.allItems(memberType),
                 currentTab: AppBottomTab.appointment,
                 onBottomTabSelected: (tab) {
                   switch (tab) {
@@ -389,6 +415,9 @@ class _LoadedContentState extends State<_LoadedContent> {
                         AppRoutes.employeeAppointmentList,
                       );
                       break;
+                    case EmployeeQuickMenuExtraAction.wallet:
+                      AppRouter.push(context, AppRoutes.employeeWallet);
+                      break;
                     case EmployeeQuickMenuExtraAction.staffProfile:
                       final authBloc = InjectionContainer.authBloc;
                       Navigator.of(context).push(
@@ -406,16 +435,18 @@ class _LoadedContentState extends State<_LoadedContent> {
                   }
                 },
               ),
-              if (recentAppointments.isNotEmpty) ...[
+              if (!isHomeStaff) ...[
+                if (recentAppointments.isNotEmpty) ...[
+                  const SizedBox(height: 24),
+                  _RecentAppointmentsSection(
+                    appointments: recentAppointments,
+                    totalCount: totalAssigned,
+                  ),
+                ],
+                // Section Booking
                 const SizedBox(height: 24),
-                _RecentAppointmentsSection(
-                  appointments: recentAppointments,
-                  totalCount: totalAssigned,
-                ),
+                _RecentBookingsSection(bookingsFuture: _recentBookingsFuture),
               ],
-              // Section Booking
-              const SizedBox(height: 24),
-              _RecentBookingsSection(bookingsFuture: _recentBookingsFuture),
               const SizedBox(height: 24),
             ]),
           ),
@@ -684,6 +715,7 @@ class _DashboardSummary {
 
 class _DashboardSummaryRow extends StatelessWidget {
   final Future<_DashboardSummary>? summaryFuture;
+  final bool isHomeStaff;
   final VoidCallback? onSupportRequestsTap;
   final VoidCallback? onContractsTap;
   final VoidCallback? onBookingsTap;
@@ -691,6 +723,7 @@ class _DashboardSummaryRow extends StatelessWidget {
 
   const _DashboardSummaryRow({
     required this.summaryFuture,
+    this.isHomeStaff = false,
     this.onSupportRequestsTap,
     this.onContractsTap,
     this.onBookingsTap,
@@ -725,6 +758,34 @@ class _DashboardSummaryRow extends StatelessWidget {
         final summary = snapshot.data!;
         if (summary.isAllZero) {
           return const SizedBox.shrink();
+        }
+
+        if (isHomeStaff) {
+          return Row(
+            children: [
+              Expanded(
+                child: _DashboardMiniCard(
+                  icon: Icons.support_agent,
+                  title: 'Hỗ trợ',
+                  value: '${summary.mySupportRequests}',
+                  color: const Color(0xFF2563EB),
+                  scale: scale,
+                  onTap: onSupportRequestsTap,
+                ),
+              ),
+              SizedBox(width: 8 * scale),
+              Expanded(
+                child: _DashboardMiniCard(
+                  icon: Icons.notifications_active_outlined,
+                  title: 'Thông báo',
+                  value: '${summary.unreadNotifications}',
+                  color: const Color(0xFFF97316),
+                  scale: scale,
+                  onTap: onNotificationsTap,
+                ),
+              ),
+            ],
+          );
         }
 
         return Column(
@@ -1759,4 +1820,209 @@ class _BookingCardSkeleton extends StatelessWidget {
   }
 }
 
-// Removed: _CompletedAppointmentCard, _StatusBadge, _InfoRow, _ActionButton, _StatusConfig moved to EmployeeAppointmentListScreen
+/// Wallet summary section for home-staff - Premium iOS style
+class _HomeStaffWalletSection extends StatefulWidget {
+  const _HomeStaffWalletSection();
+
+  @override
+  State<_HomeStaffWalletSection> createState() => _HomeStaffWalletSectionState();
+}
+
+class _HomeStaffWalletSectionState extends State<_HomeStaffWalletSection> {
+  late WalletCubit _walletCubit;
+
+  @override
+  void initState() {
+    super.initState();
+    _walletCubit = WalletCubit(
+      remoteDataSource: WalletRemoteDataSourceImpl(dio: ApiClient.dio),
+    )..loadWallet();
+  }
+
+  @override
+  void dispose() {
+    _walletCubit.close();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider.value(
+      value: _walletCubit,
+      child: BlocBuilder<WalletCubit, WalletState>(
+        builder: (context, state) {
+          double balance = 0;
+          bool isLoading = state is WalletLoading || state is WalletInitial;
+
+          if (state is WalletLoaded) {
+            balance = state.wallet.balance.toDouble();
+          }
+
+          final formattedBalance =
+              NumberFormat.currency(locale: 'vi_VN', symbol: 'đ')
+                  .format(balance);
+
+          return Container(
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            child: InkWell(
+              onTap: () {
+                AppRouter.push(context, AppRoutes.employeeWallet).then((_) {
+                  if (mounted) _walletCubit.loadWallet();
+                });
+              },
+              borderRadius: BorderRadius.circular(24),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primary,
+                      AppColors.primary.withValues(alpha: 0.85),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.25),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: Stack(
+                    children: [
+                      // Decorative Element 1: Glass Circle
+                      Positioned(
+                        right: -50,
+                        top: -50,
+                        child: Container(
+                          width: 150,
+                          height: 150,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withValues(alpha: 0.1),
+                          ),
+                        ),
+                      ),
+                      // Decorative Element 2: Soft Light highlight
+                      Positioned(
+                        left: -20,
+                        bottom: -20,
+                        child: Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withValues(alpha: 0.05),
+                          ),
+                        ),
+                      ),
+                      
+                      Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withValues(alpha: 0.2),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: const Icon(
+                                        Icons.wallet_outlined,
+                                        color: Colors.white,
+                                        size: 18,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      'Số dư Ví nhân viên',
+                                      style: AppTextStyles.arimo(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.white.withValues(alpha: 0.9),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white24,
+                                    borderRadius: BorderRadius.circular(100),
+                                  ),
+                                  child: const Icon(
+                                    Icons.arrow_forward_ios_rounded,
+                                    color: Colors.white,
+                                    size: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            if (isLoading)
+                              _buildSkeletonLoader()
+                            else
+                              Text(
+                                formattedBalance,
+                                style: AppTextStyles.arimo(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Cập nhật lúc: ${DateFormat('HH:mm').format(DateTime.now())}',
+                              style: AppTextStyles.arimo(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w400,
+                                color: Colors.white70,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSkeletonLoader() {
+    return Container(
+      height: 42,
+      width: 180,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Center(
+        child: SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: Colors.white.withValues(alpha: 0.5),
+          ),
+        ),
+      ),
+    );
+  }
+}
+

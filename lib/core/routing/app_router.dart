@@ -63,6 +63,10 @@ import '../../features/booking/presentation/bloc/booking_event.dart';
 import '../../features/chat/presentation/bloc/chat_bloc.dart';
 import '../../features/chat/presentation/bloc/chat_event.dart';
 import '../../features/employee/amenity_service/presentation/bloc/amenity_service/amenity_service_event.dart';
+import '../../features/wallet/presentation/screens/employee_wallet_screen.dart';
+import '../../features/wallet/presentation/bloc/wallet_cubit.dart';
+import '../../features/wallet/data/datasources/wallet_remote_datasource.dart';
+import '../../core/apis/api_client.dart';
 import 'app_routes.dart';
 
 /// App Router - Centralized navigation management
@@ -381,6 +385,16 @@ class AppRouter {
           );
         }
         return null;
+
+      case AppRoutes.employeeWallet:
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (_) => WalletCubit(
+              remoteDataSource: WalletRemoteDataSourceImpl(dio: ApiClient.dio),
+            ),
+            child: const EmployeeWalletScreen(),
+          ),
+        );
 
       // Employee Routes - Legacy/Mock screens
       case AppRoutes.employeeTasks:

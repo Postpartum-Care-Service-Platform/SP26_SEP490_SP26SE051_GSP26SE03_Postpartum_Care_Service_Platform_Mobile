@@ -316,6 +316,7 @@ class CurrentAccountModel extends Equatable {
   final String? avatarUrl;
   final OwnerProfileModel? ownerProfile;
   final NowPackageModel? nowPackage;
+  final String? memberType;
 
   const CurrentAccountModel({
     required this.id,
@@ -331,6 +332,7 @@ class CurrentAccountModel extends Equatable {
     this.avatarUrl,
     this.ownerProfile,
     this.nowPackage,
+    this.memberType,
   });
 
   /// Get display name - prefer fullName from ownerProfile, fallback to username
@@ -359,6 +361,7 @@ class CurrentAccountModel extends Equatable {
                 json['nowPackage'] as Map<String, dynamic>,
               )
             : null,
+        memberType: json['memberType'] as String?,
       );
 
   Map<String, dynamic> toJson() => {
@@ -392,6 +395,7 @@ class CurrentAccountModel extends Equatable {
               }
             : null,
         'nowPackage': nowPackage?.toJson(),
+        'memberType': memberType,
       };
 
   UserEntity toEntity() => UserEntity(
@@ -399,6 +403,7 @@ class CurrentAccountModel extends Equatable {
         email: email,
         username: username,
         role: roleName,
+        memberType: memberType ?? ownerProfile?.memberTypeName,
       );
 
   @override
@@ -416,5 +421,6 @@ class CurrentAccountModel extends Equatable {
         avatarUrl,
         ownerProfile,
         nowPackage,
+        memberType,
       ];
 }

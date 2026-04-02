@@ -27,6 +27,7 @@ enum EmployeeQuickMenuExtraAction {
   transactions,
   contracts,
   supportRequests,
+  wallet,
 }
 
 /// Model định nghĩa 1 item trong menu nhanh
@@ -368,6 +369,7 @@ List<_QuickMenuGroup> _buildQuickMenuGroups(List<EmployeeQuickMenuItem> items) {
         break;
       case EmployeeQuickMenuExtraAction.transactions:
       case EmployeeQuickMenuExtraAction.contracts:
+      case EmployeeQuickMenuExtraAction.wallet:
         finance.add(item);
         break;
       case EmployeeQuickMenuExtraAction.supportRequests:
@@ -657,7 +659,9 @@ class _EmployeeQuickMenuIconTile extends StatelessWidget {
 /// Cấu hình default cho menu nhanh nhân viên.
 /// Bạn có thể dùng trực tiếp hoặc custom lại trong screen.
 class EmployeeQuickMenuPresets {
-  static List<EmployeeQuickMenuItem> primaryItems() {
+  static List<EmployeeQuickMenuItem> primaryItems(String? memberType) {
+    final raw = memberType?.toLowerCase().trim() ?? '';
+    final isHomeNurse = raw == 'home-staff' || raw == 'homestaff' || raw == 'home nurse';
     return [
       EmployeeQuickMenuItem.bottom(
         id: 'schedule',
@@ -665,12 +669,20 @@ class EmployeeQuickMenuPresets {
         iconAsset: AppAssets.calendar,
         tab: AppBottomTab.appointment,
       ),
-      EmployeeQuickMenuItem.extra(
-        id: 'family_profile',
-        label: 'Gia đình',
-        iconAsset: AppAssets.family,
-        action: EmployeeQuickMenuExtraAction.familyProfile,
-      ),
+      if (isHomeNurse)
+        EmployeeQuickMenuItem.extra(
+          id: 'wallet',
+          label: 'Ví tiền',
+          iconAsset: AppAssets.menuFirst,
+          action: EmployeeQuickMenuExtraAction.wallet,
+        )
+      else
+        EmployeeQuickMenuItem.extra(
+          id: 'family_profile',
+          label: 'Gia đình',
+          iconAsset: AppAssets.family,
+          action: EmployeeQuickMenuExtraAction.familyProfile,
+        ),
       EmployeeQuickMenuItem.bottom(
         id: 'services',
         label: 'Dịch vụ',
@@ -686,8 +698,11 @@ class EmployeeQuickMenuPresets {
     ];
   }
 
-  static List<EmployeeQuickMenuItem> allItems() {
-    return [
+  static List<EmployeeQuickMenuItem> allItems(String? memberType) {
+    final raw = memberType?.toLowerCase().trim() ?? '';
+    final isHomeNurse = raw == 'home-staff' || raw == 'homestaff' || raw == 'home nurse';
+
+    final items = <EmployeeQuickMenuItem>[
       // Tabs chính
       EmployeeQuickMenuItem.bottom(
         id: 'schedule',
@@ -708,25 +723,27 @@ class EmployeeQuickMenuPresets {
         tab: AppBottomTab.supportRequests,
       ),
 
-      // Nhóm vận hành ưu tiên cao
-      EmployeeQuickMenuItem.extra(
-        id: 'check_in_out',
-        label: 'Check-in/out',
-        iconAsset: AppAssets.calendarBold,
-        action: EmployeeQuickMenuExtraAction.checkInOut,
-      ),
-      EmployeeQuickMenuItem.extra(
-        id: 'appointments',
-        label: 'Lịch hẹn',
-        iconAsset: AppAssets.calendar,
-        action: EmployeeQuickMenuExtraAction.appointments,
-      ),
-      EmployeeQuickMenuItem.extra(
-        id: 'room',
-        label: 'Phòng ở',
-        iconAsset: AppAssets.family,
-        action: EmployeeQuickMenuExtraAction.room,
-      ),
+      // Nhóm vận hành
+      if (!isHomeNurse) ...[
+        EmployeeQuickMenuItem.extra(
+          id: 'check_in_out',
+          label: 'Check-in/out',
+          iconAsset: AppAssets.calendarBold,
+          action: EmployeeQuickMenuExtraAction.checkInOut,
+        ),
+        EmployeeQuickMenuItem.extra(
+          id: 'appointments',
+          label: 'Lịch hẹn',
+          iconAsset: AppAssets.calendar,
+          action: EmployeeQuickMenuExtraAction.appointments,
+        ),
+        EmployeeQuickMenuItem.extra(
+          id: 'room',
+          label: 'Phòng ở',
+          iconAsset: AppAssets.family,
+          action: EmployeeQuickMenuExtraAction.room,
+        ),
+      ],
 
       // Nhóm chăm sóc khách hàng
       EmployeeQuickMenuItem.extra(
@@ -741,33 +758,42 @@ class EmployeeQuickMenuPresets {
         iconAsset: AppAssets.family,
         action: EmployeeQuickMenuExtraAction.familyProfile,
       ),
-      EmployeeQuickMenuItem.extra(
-        id: 'amenity_service',
-        label: 'Tiện ích',
-        iconAsset: AppAssets.serviceAmenity,
-        action: EmployeeQuickMenuExtraAction.amenityService,
-      ),
-      EmployeeQuickMenuItem.extra(
-        id: 'meal_plan',
-        label: 'Suất ăn',
-        iconAsset: AppAssets.menuSecond,
-        action: EmployeeQuickMenuExtraAction.mealPlan,
-      ),
-
+      if (!isHomeNurse) ...[
+        EmployeeQuickMenuItem.extra(
+          id: 'amenity_service',
+          label: 'Tiện ích',
+          iconAsset: AppAssets.serviceAmenity,
+          action: EmployeeQuickMenuExtraAction.amenityService,
+        ),
+        EmployeeQuickMenuItem.extra(
+          id: 'meal_plan',
+          label: 'Suất ăn',
+          iconAsset: AppAssets.menuSecond,
+          action: EmployeeQuickMenuExtraAction.mealPlan,
+        ),
+      ],
 
       // Nhóm tài chính
       EmployeeQuickMenuItem.extra(
-        id: 'transactions',
-        label: 'Giao dịch',
-        iconAsset: AppAssets.menuThird,
-        action: EmployeeQuickMenuExtraAction.transactions,
+        id: 'wallet',
+        label: 'Ví tiền',
+        iconAsset: AppAssets.menuFirst,
+        action: EmployeeQuickMenuExtraAction.wallet,
       ),
-      EmployeeQuickMenuItem.extra(
-        id: 'contracts',
-        label: 'Hợp đồng',
-        iconAsset: AppAssets.menuThird,
-        action: EmployeeQuickMenuExtraAction.contracts,
-      ),
+      if (!isHomeNurse) ...[
+        EmployeeQuickMenuItem.extra(
+          id: 'transactions',
+          label: 'Giao dịch',
+          iconAsset: AppAssets.menuThird,
+          action: EmployeeQuickMenuExtraAction.transactions,
+        ),
+        EmployeeQuickMenuItem.extra(
+          id: 'contracts',
+          label: 'Hợp đồng',
+          iconAsset: AppAssets.menuThird,
+          action: EmployeeQuickMenuExtraAction.contracts,
+        ),
+      ],
 
       // Nhóm cá nhân
       EmployeeQuickMenuItem.extra(
@@ -777,5 +803,7 @@ class EmployeeQuickMenuPresets {
         action: EmployeeQuickMenuExtraAction.staffProfile,
       ),
     ];
+    
+    return items;
   }
 }
