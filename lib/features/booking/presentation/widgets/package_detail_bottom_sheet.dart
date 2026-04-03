@@ -783,70 +783,211 @@ class _ActivityItem extends StatelessWidget {
           SizedBox(width: 12 * scale),
           // Activity card
           Expanded(
-            child: Container(
-              margin: EdgeInsets.only(bottom: 12 * scale),
-              padding: EdgeInsets.all(14 * scale),
-              decoration: BoxDecoration(
-                color: AppColors.white,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
                 borderRadius: BorderRadius.circular(12 * scale),
-                border: Border.all(
-                  color: AppColors.borderLight,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 6 * scale,
-                    offset: Offset(0, 2 * scale),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Time badge
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 8 * scale,
-                      vertical: 4 * scale,
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (_) {
+                      final sheetScale = AppResponsive.scaleFactor(context);
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.background,
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(20 * sheetScale),
+                            topRight: Radius.circular(20 * sheetScale),
+                          ),
+                        ),
+                        padding: EdgeInsets.fromLTRB(
+                          20 * sheetScale,
+                          12 * sheetScale,
+                          20 * sheetScale,
+                          24 * sheetScale,
+                        ),
+                        child: SafeArea(
+                          top: false,
+                          child: FutureBuilder<CarePlanEntity>(
+                            future: InjectionContainer.carePlanRepository
+                                .getCarePlanActivityById(activity.id),
+                            initialData: activity,
+                            builder: (context, snapshot) {
+                              final detail = snapshot.data ?? activity;
+
+                              if (snapshot.connectionState ==
+                                      ConnectionState.waiting &&
+                                  snapshot.data == null) {
+                                return const Center(
+                                  child: AppLoadingIndicator(
+                                    color: AppColors.primary,
+                                  ),
+                                );
+                              }
+
+                              return Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Center(
+                                    child: Container(
+                                      width: 40 * sheetScale,
+                                      height: 4 * sheetScale,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.textSecondary
+                                            .withValues(alpha: 0.3),
+                                        borderRadius: BorderRadius.circular(
+                                          2 * sheetScale,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(height: 14 * sheetScale),
+                                  Text(
+                                    detail.activityName,
+                                    style: AppTextStyles.tinos(
+                                      fontSize: 22 * sheetScale,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  SizedBox(height: 10 * sheetScale),
+                                  Wrap(
+                                    spacing: 8 * sheetScale,
+                                    runSpacing: 8 * sheetScale,
+                                    children: [
+                                      Container(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 10 * sheetScale,
+                                          vertical: 6 * sheetScale,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primary
+                                              .withValues(alpha: 0.1),
+                                          borderRadius: BorderRadius.circular(
+                                            8 * sheetScale,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          '${AppStrings.day} ${detail.dayNo}',
+                                          style: AppTextStyles.arimo(
+                                            fontSize: 12 * sheetScale,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.primary,
+                                          ),
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 10 * sheetScale,
+                                          vertical: 6 * sheetScale,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primary
+                                              .withValues(alpha: 0.1),
+                                          borderRadius: BorderRadius.circular(
+                                            8 * sheetScale,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          '${detail.startTime} - ${detail.endTime}',
+                                          style: AppTextStyles.arimo(
+                                            fontSize: 12 * sheetScale,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.primary,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 14 * sheetScale),
+                                  Text(
+                                    detail.instruction == null ||
+                                            detail.instruction!.trim().isEmpty
+                                        ? 'Không có hướng dẫn chi tiết cho hoạt động này.'
+                                        : detail.instruction!,
+                                    style: AppTextStyles.arimo(
+                                      fontSize: 14 * sheetScale,
+                                      color: AppColors.textSecondary,
+                                    ).copyWith(height: 1.5),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+                child: Container(
+                  margin: EdgeInsets.only(bottom: 12 * scale),
+                  padding: EdgeInsets.all(14 * scale),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(12 * scale),
+                    border: Border.all(
+                      color: AppColors.borderLight,
                     ),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8 * scale),
-                    ),
-                    child: Text(
-                      '${activity.startTime} - ${activity.endTime}',
-                      style: AppTextStyles.arimo(
-                        fontSize: 11 * scale,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 6 * scale,
+                        offset: Offset(0, 2 * scale),
                       ),
-                    ),
+                    ],
                   ),
-                  SizedBox(height: 8 * scale),
-                  // Activity name
-                  Text(
-                    activity.activityName,
-                    style: AppTextStyles.arimo(
-                      fontSize: 14 * scale,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Time badge
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8 * scale,
+                          vertical: 4 * scale,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8 * scale),
+                        ),
+                        child: Text(
+                          '${activity.startTime} - ${activity.endTime}',
+                          style: AppTextStyles.arimo(
+                            fontSize: 11 * scale,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 8 * scale),
+                      // Activity name
+                      Text(
+                        activity.activityName,
+                        style: AppTextStyles.arimo(
+                          fontSize: 14 * scale,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      // Instruction
+                      if (activity.instruction != null &&
+                          activity.instruction!.isNotEmpty) ...[
+                        SizedBox(height: 6 * scale),
+                        Text(
+                          activity.instruction!,
+                          style: AppTextStyles.arimo(
+                            fontSize: 12 * scale,
+                            color: AppColors.textSecondary,
+                          ).copyWith(height: 1.4),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ],
                   ),
-                  // Instruction
-                  if (activity.instruction != null &&
-                      activity.instruction!.isNotEmpty) ...[
-                    SizedBox(height: 6 * scale),
-                    Text(
-                      activity.instruction!,
-                      style: AppTextStyles.arimo(
-                        fontSize: 12 * scale,
-                        color: AppColors.textSecondary,
-                      ).copyWith(height: 1.4),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ],
+                ),
               ),
             ),
           ),

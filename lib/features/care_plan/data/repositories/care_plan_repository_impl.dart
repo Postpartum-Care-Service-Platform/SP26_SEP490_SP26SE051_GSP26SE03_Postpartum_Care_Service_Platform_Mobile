@@ -13,4 +13,10 @@ class CarePlanRepositoryImpl implements CarePlanRepository {
     final models = await dataSource.getCarePlanDetailsByPackage(packageId);
     return models.map((model) => model.toEntity()).toList();
   }
+
+  @override
+  Future<CarePlanEntity> getCarePlanActivityById(int id) async {
+    final model = await dataSource.getCarePlanActivityById(id);
+    return model.toEntity();
+  }
 }

@@ -24,7 +24,7 @@ class HomeServiceStepIndicator extends StatelessWidget {
     final circleSize = 40.0 * scale;
     final circleRadius = circleSize / 2;
     final lineHeight = 2.0 * scale;
-    final paddingTop = 16.0 * scale;
+    final paddingTop = 0.0 * scale;
     final paddingBottom = 12.0 * scale;
     
     return Container(

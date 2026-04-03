@@ -26,6 +26,7 @@ class AmenityScreen extends StatefulWidget {
 }
 
 class _AmenityScreenState extends State<AmenityScreen> {
+
   @override
   void initState() {
     super.initState();
@@ -101,9 +102,9 @@ class _AmenityScreenState extends State<AmenityScreen> {
                           scale,
                           AppStrings.amenityAvailableServices,
                         ),
-                        SizedBox(height: 12 * scale),
+                        SizedBox(height: 8 * scale),
                         _buildServicesGrid(context, scale, state.services),
-                        SizedBox(height: 24 * scale),
+                        SizedBox(height: 12 * scale),
                       ],
 
                       // My Tickets Section

@@ -76,6 +76,8 @@ class PackageBloc extends Bloc<PackageEvent, PackageState> {
     final homePackages = <PackageEntity>[];
 
     for (final package in packages) {
+      if (!package.isActive) continue;
+
       final packageTypeName = package.packageTypeName?.toLowerCase() ?? '';
       final isHome = package.packageTypeId == 3 || packageTypeName.contains('home');
 

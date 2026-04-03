@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -7,19 +8,13 @@ import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 
 /// Loại dịch vụ: tại trung tâm hay tại nhà
-enum ServiceLocationType {
-  center,
-  home,
-}
+enum ServiceLocationType { center, home }
 
 /// Màn chọn loại dịch vụ trước khi vào flow đặt gói
 class ServiceLocationSelection extends StatelessWidget {
   final ValueChanged<ServiceLocationType> onLocationSelected;
 
-  const ServiceLocationSelection({
-    super.key,
-    required this.onLocationSelected,
-  });
+  const ServiceLocationSelection({super.key, required this.onLocationSelected});
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +35,8 @@ class ServiceLocationSelection extends StatelessWidget {
                       chipLabel: AppStrings.servicesLocationCenterChip,
                       accentColor: AppColors.packageVip,
                       backgroundImageAsset: AppAssets.walkInService,
-                      onTap: () => onLocationSelected(ServiceLocationType.center),
+                      onTap: () =>
+                          onLocationSelected(ServiceLocationType.center),
                     ),
                     _LocationHalfCard(
                       key: const ValueKey('home_location_card'),
@@ -90,15 +86,19 @@ class _LocationHalfCard extends StatelessWidget {
     final contentPadding = EdgeInsets.all(20 * scale);
     final contentAlign = isTop ? Alignment.centerLeft : Alignment.centerRight;
     final textAlign = isTop ? TextAlign.left : TextAlign.right;
-    final contentCrossAxisAlignment =
-        isTop ? CrossAxisAlignment.start : CrossAxisAlignment.end;
+    final contentCrossAxisAlignment = isTop
+        ? CrossAxisAlignment.start
+        : CrossAxisAlignment.end;
 
     return Expanded(
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(radius),
         child: Container(
-          margin: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 8 * scale),
+          margin: EdgeInsets.symmetric(
+            horizontal: 16 * scale,
+            vertical: 8 * scale,
+          ),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(radius),
             boxShadow: [
@@ -118,7 +118,9 @@ class _LocationHalfCard extends StatelessWidget {
                 Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      begin: isTop ? Alignment.topCenter : Alignment.bottomCenter,
+                      begin: isTop
+                          ? Alignment.topCenter
+                          : Alignment.bottomCenter,
                       end: isTop ? Alignment.bottomRight : Alignment.topLeft,
                       colors: [
                         accentColor.withValues(alpha: 0.8),
@@ -134,7 +136,9 @@ class _LocationHalfCard extends StatelessWidget {
                   child: Image.asset(
                     backgroundImageAsset,
                     fit: BoxFit.fill,
-                    alignment: isTop ? Alignment.topCenter : Alignment.bottomCenter,
+                    alignment: isTop
+                        ? Alignment.topCenter
+                        : Alignment.bottomCenter,
                     color: Colors.black.withValues(alpha: 0.16),
                     colorBlendMode: BlendMode.darken,
                   ),
@@ -157,8 +161,12 @@ class _LocationHalfCard extends StatelessWidget {
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        begin: isTop ? Alignment.centerLeft : Alignment.centerRight,
-                        end: isTop ? Alignment.centerRight : Alignment.centerLeft,
+                        begin: isTop
+                            ? Alignment.centerLeft
+                            : Alignment.centerRight,
+                        end: isTop
+                            ? Alignment.centerRight
+                            : Alignment.centerLeft,
                         colors: [
                           Colors.black.withValues(alpha: 0.24),
                           Colors.black.withValues(alpha: 0.06),
@@ -225,51 +233,69 @@ class _LocationCardHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: crossAxisAlignment,
-      children: [
-        Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: 10 * scale,
-            vertical: 4 * scale,
-          ),
-          decoration: BoxDecoration(
-            color: AppColors.white.withValues(alpha: 0.18),
-            borderRadius: BorderRadius.circular(100 * scale),
-            border: Border.all(
-              color: AppColors.white.withValues(alpha: 0.55),
-              width: 1,
-            ),
-          ),
-          child: Text(
-            chipLabel,
-            style: AppTextStyles.arimo(
-              fontSize: 11 * scale,
-              fontWeight: FontWeight.w600,
-              color: AppColors.white,
-            ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8 * scale),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+        child: Container(
+          padding: EdgeInsets.all(12 * scale),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: crossAxisAlignment,
+            children: [
+              Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 10 * scale,
+                  vertical: 4 * scale,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.white.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(100 * scale),
+                  border: Border.all(
+                    color: AppColors.white.withValues(alpha: 0.55),
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  chipLabel,
+                  style: AppTextStyles.arimo(
+                    fontSize: 11 * scale,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.white,
+                  ),
+                ),
+              ),
+              SizedBox(height: 10 * scale),
+              Text(
+                title,
+                textAlign: textAlign,
+                style: AppTextStyles.tinos(
+                  fontSize: 24 * scale,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.white,
+                  shadows: [
+                    Shadow(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      blurRadius: 6,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 6 * scale),
+              Text(
+                subtitle,
+                textAlign: textAlign,
+                style: AppTextStyles.arimo(
+                  fontSize: 15 * scale,
+                  height: 1.4,
+                  color: AppColors.white.withValues(alpha: 0.9),
+                ),
+              ),
+            ],
           ),
         ),
-        SizedBox(height: 10 * scale),
-        Text(
-          title,
-          textAlign: textAlign,
-          style: AppTextStyles.tinos(
-            fontSize: 22 * scale,
-            fontWeight: FontWeight.bold,
-            color: AppColors.white,
-          ),
-        ),
-        SizedBox(height: 6 * scale),
-        Text(
-          subtitle,
-          textAlign: textAlign,
-          style: AppTextStyles.arimo(
-            fontSize: 13 * scale,
-            color: AppColors.white.withValues(alpha: 0.9),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
@@ -293,7 +319,7 @@ class _LocationCtaPill extends StatelessWidget {
         vertical: 8 * scale,
       ),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.primary.withValues(alpha: 0.822),
         borderRadius: BorderRadius.circular(100 * scale),
         boxShadow: [
           BoxShadow(
@@ -309,16 +335,16 @@ class _LocationCtaPill extends StatelessWidget {
           Text(
             label,
             style: AppTextStyles.arimo(
-              fontSize: 13 * scale,
+              fontSize: 14 * scale,
               fontWeight: FontWeight.w600,
-              color: accentColor,
+              color: AppColors.white,
             ),
           ),
           SizedBox(width: 6 * scale),
           Icon(
             Icons.arrow_forward_rounded,
             size: 18 * scale,
-            color: accentColor,
+            color: AppColors.white,
           ),
         ],
       ),
@@ -330,10 +356,7 @@ class _OrnamentPainter extends CustomPainter {
   final Color accentColor;
   final bool isTop;
 
-  const _OrnamentPainter({
-    required this.accentColor,
-    required this.isTop,
-  });
+  const _OrnamentPainter({required this.accentColor, required this.isTop});
 
   @override
   void paint(Canvas canvas, Size size) {

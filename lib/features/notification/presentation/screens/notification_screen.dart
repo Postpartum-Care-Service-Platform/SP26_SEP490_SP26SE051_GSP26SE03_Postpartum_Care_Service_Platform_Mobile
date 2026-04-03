@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
-import '../../../../core/di/injection_container.dart';
 import '../../domain/entities/notification_entity.dart';
 import '../bloc/notification_bloc.dart';
 import '../bloc/notification_event.dart';
@@ -35,11 +34,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => InjectionContainer.notificationBloc
-        ..add(const NotificationLoadRequested()),
-      child: Scaffold(
-        backgroundColor: AppColors.background,
+    return Scaffold(
+      backgroundColor: AppColors.background,
         appBar: AppAppBar(
           title: AppStrings.notificationTitle,
           centerTitle: true,
@@ -83,8 +79,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
             return const SizedBox.shrink();
           },
         ),
-      ),
-    );
+      );
   }
 }
 

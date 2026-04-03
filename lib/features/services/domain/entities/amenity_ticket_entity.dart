@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 class AmenityTicketEntity extends Equatable {
   final int id;
   final int amenityServiceId;
+  final String? amenityServiceName;
   final String customerId;
   final DateTime startTime;
   final DateTime endTime;
@@ -12,6 +13,7 @@ class AmenityTicketEntity extends Equatable {
   const AmenityTicketEntity({
     required this.id,
     required this.amenityServiceId,
+    this.amenityServiceName,
     required this.customerId,
     required this.startTime,
     required this.endTime,
@@ -41,6 +43,7 @@ class AmenityTicketEntity extends Equatable {
   List<Object?> get props => [
         id,
         amenityServiceId,
+        amenityServiceName,
         customerId,
         startTime,
         endTime,

@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/usecases/get_amenity_services_usecase.dart';
 import '../../domain/usecases/get_my_amenity_tickets_usecase.dart';
 import '../../domain/usecases/create_amenity_ticket_usecase.dart';
+import '../../../booking/domain/usecases/get_bookings_usecase.dart';
 import 'amenity_event.dart';
 import 'amenity_state.dart';
 
@@ -10,11 +11,13 @@ class AmenityBloc extends Bloc<AmenityEvent, AmenityState> {
   final GetAmenityServicesUsecase getAmenityServicesUsecase;
   final GetMyAmenityTicketsUsecase getMyAmenityTicketsUsecase;
   final CreateAmenityTicketUsecase createAmenityTicketUsecase;
+  final GetBookingsUsecase getBookingsUsecase;
 
   AmenityBloc({
     required this.getAmenityServicesUsecase,
     required this.getMyAmenityTicketsUsecase,
     required this.createAmenityTicketUsecase,
+    required this.getBookingsUsecase,
   }) : super(const AmenityInitial()) {
     on<AmenityServicesLoadRequested>(_onServicesLoadRequested);
     on<MyAmenityTicketsLoadRequested>(_onTicketsLoadRequested);
@@ -64,17 +67,36 @@ class AmenityBloc extends Bloc<AmenityEvent, AmenityState> {
 
     try {
       final tickets = await getMyAmenityTicketsUsecase();
+      DateTime? checkInDate;
+      DateTime? checkOutDate;
+
+      try {
+        final bookings = await getBookingsUsecase();
+        final activeBooking = bookings.firstWhere(
+          (b) => b.status == 'Confirmed' || b.status == 'InProgress',
+          orElse: () => bookings.isNotEmpty ? bookings.first : throw Exception('No booking'),
+        );
+        checkInDate = activeBooking.startDate;
+        checkOutDate = activeBooking.endDate;
+      } catch (_) {
+        // Ignore if we can't get the booking dates (e.g. no active booking, API fail)
+      }
+
       if (state is AmenityLoaded) {
         final currentState = state as AmenityLoaded;
         emit(currentState.copyWith(
           tickets: tickets,
           isLoadingTickets: false,
+          checkInDate: checkInDate ?? currentState.checkInDate,
+          checkOutDate: checkOutDate ?? currentState.checkOutDate,
         ));
       } else {
         emit(AmenityLoaded(
           services: const [],
           tickets: tickets,
           isLoadingTickets: false,
+          checkInDate: checkInDate,
+          checkOutDate: checkOutDate,
         ));
       }
     } catch (e) {

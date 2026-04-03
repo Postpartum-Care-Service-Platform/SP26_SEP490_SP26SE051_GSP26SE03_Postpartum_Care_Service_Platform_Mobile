@@ -73,33 +73,24 @@ class AmenityTicketCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header with status badge
+          // Row 1: Service name + Status badge
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _formatDate(ticket.startTime),
-                      style: AppTextStyles.arimo(
-                        fontSize: 14 * scale,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                      ),
+              if (ticket.amenityServiceName != null &&
+                  ticket.amenityServiceName!.isNotEmpty)
+                Expanded(
+                  child: Text(
+                    ticket.amenityServiceName!,
+                    style: AppTextStyles.arimo(
+                      fontSize: 15 * scale,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
                     ),
-                    SizedBox(height: 4 * scale),
-                    Text(
-                      ticket.timeRange,
-                      style: AppTextStyles.arimo(
-                        fontSize: 12 * scale,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
               Container(
                 padding: EdgeInsets.symmetric(
                   horizontal: 12 * scale,
@@ -120,6 +111,28 @@ class AmenityTicketCard extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                     color: _getStatusColor(),
                   ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8 * scale),
+          // Row 2: Date + Time range
+          Row(
+            children: [
+              Text(
+                _formatDate(ticket.startTime),
+                style: AppTextStyles.arimo(
+                  fontSize: 14 * scale,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              SizedBox(width: 12 * scale),
+              Text(
+                ticket.timeRange,
+                style: AppTextStyles.arimo(
+                  fontSize: 12 * scale,
+                  color: AppColors.textSecondary,
                 ),
               ),
             ],

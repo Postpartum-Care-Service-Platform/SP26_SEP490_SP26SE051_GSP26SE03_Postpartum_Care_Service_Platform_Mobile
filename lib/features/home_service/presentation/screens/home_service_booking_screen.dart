@@ -25,13 +25,11 @@ import '../widgets/home_service_step_indicator.dart';
 class HomeServiceBookingScreen extends StatefulWidget {
   final VoidCallback? onBackToLocationSelection;
 
-  const HomeServiceBookingScreen({
-    super.key,
-    this.onBackToLocationSelection,
-  });
+  const HomeServiceBookingScreen({super.key, this.onBackToLocationSelection});
 
   @override
-  State<HomeServiceBookingScreen> createState() => _HomeServiceBookingScreenState();
+  State<HomeServiceBookingScreen> createState() =>
+      _HomeServiceBookingScreenState();
 }
 
 class _HomeServiceBookingScreenState extends State<HomeServiceBookingScreen> {
@@ -79,41 +77,43 @@ class _HomeServiceBookingScreenState extends State<HomeServiceBookingScreen> {
     final scale = AppResponsive.scaleFactor(context);
 
     return BlocProvider(
-      create: (context) => InjectionContainer.homeServiceBloc
-        ..add(const HomeServiceLoadActivities()),
+      create: (context) =>
+          InjectionContainer.homeServiceBloc
+            ..add(const HomeServiceLoadActivities()),
       child: Builder(
         builder: (blocContext) => Scaffold(
           backgroundColor: AppColors.background,
           body: BlocConsumer<HomeServiceBloc, HomeServiceState>(
             listener: (context, state) {
-              if (state is HomeServiceBookingCreated && !_isNavigatingToPayment) {
+              if (state is HomeServiceBookingCreated &&
+                  !_isNavigatingToPayment) {
                 _isNavigatingToPayment = true;
                 final booking = _mapHomeBookingToBooking(state.booking);
                 final bookingBloc = InjectionContainer.bookingBloc;
 
                 Navigator.of(context)
                     .push(
-                  MaterialPageRoute(
-                    builder: (_) => BlocProvider<BookingBloc>.value(
-                      value: bookingBloc,
-                      child: PaymentScreen(
-                        booking: booking,
-                        paymentType: 'Full',
-                        isHomeService: true,
-                        staffId: state.booking.staffId,
+                      MaterialPageRoute(
+                        builder: (_) => BlocProvider<BookingBloc>.value(
+                          value: bookingBloc,
+                          child: PaymentScreen(
+                            booking: booking,
+                            paymentType: 'Full',
+                            isHomeService: true,
+                            staffId: state.booking.staffId,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                )
+                    )
                     .then((_) {
-                  if (mounted) {
-                    setState(() {
-                      _isNavigatingToPayment = false;
+                      if (mounted) {
+                        setState(() {
+                          _isNavigatingToPayment = false;
+                        });
+                      } else {
+                        _isNavigatingToPayment = false;
+                      }
                     });
-                  } else {
-                    _isNavigatingToPayment = false;
-                  }
-                });
               }
             },
             builder: (context, state) {
@@ -171,7 +171,7 @@ class _HomeServiceBookingScreenState extends State<HomeServiceBookingScreen> {
       child: Container(
         padding: EdgeInsets.symmetric(
           horizontal: 20 * scale,
-          vertical: 12 * scale,
+          vertical: 8 * scale,
         ),
         child: Row(
           children: [
@@ -233,13 +233,22 @@ class _HomeServiceBookingScreenState extends State<HomeServiceBookingScreen> {
     );
   }
 
-  Widget _buildBottomBar(HomeServiceState state, double scale, BuildContext blocContext) {
+  Widget _buildBottomBar(
+    HomeServiceState state,
+    double scale,
+    BuildContext blocContext,
+  ) {
     final estimatedPrice = _getEstimatedPrice(state);
 
     return SafeArea(
       top: false,
       child: Container(
-        padding: EdgeInsets.fromLTRB(4 * scale, 2 * scale, 4 * scale, 2 * scale),
+        padding: EdgeInsets.fromLTRB(
+          4 * scale,
+          2 * scale,
+          4 * scale,
+          2 * scale,
+        ),
         decoration: BoxDecoration(
           color: AppColors.background,
           boxShadow: [
@@ -269,7 +278,10 @@ class _HomeServiceBookingScreenState extends State<HomeServiceBookingScreen> {
 
   Widget _buildEstimatedPriceCard(double? price, double scale) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 12 * scale),
+      padding: EdgeInsets.symmetric(
+        horizontal: 16 * scale,
+        vertical: 12 * scale,
+      ),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(10 * scale),
@@ -287,11 +299,15 @@ class _HomeServiceBookingScreenState extends State<HomeServiceBookingScreen> {
           ),
           SizedBox(height: 4 * scale),
           Text(
-            price != null ? _formatPrice(price) : AppStrings.bookingPriceNotAvailable,
+            price != null
+                ? _formatPrice(price)
+                : AppStrings.bookingPriceNotAvailable,
             style: AppTextStyles.arimo(
               fontSize: 16 * scale,
               fontWeight: FontWeight.bold,
-              color: price != null ? AppColors.primary : AppColors.textSecondary,
+              color: price != null
+                  ? AppColors.primary
+                  : AppColors.textSecondary,
             ),
           ),
         ],
@@ -299,7 +315,11 @@ class _HomeServiceBookingScreenState extends State<HomeServiceBookingScreen> {
     );
   }
 
-  Widget _buildNextButton(HomeServiceState state, double scale, BuildContext blocContext) {
+  Widget _buildNextButton(
+    HomeServiceState state,
+    double scale,
+    BuildContext blocContext,
+  ) {
     final canProceed = _canProceed(state);
 
     return ElevatedButton(
@@ -311,7 +331,9 @@ class _HomeServiceBookingScreenState extends State<HomeServiceBookingScreen> {
               }
 
               if (_currentStep == 3) {
-                blocContext.read<HomeServiceBloc>().add(const HomeServiceCreateBooking());
+                blocContext.read<HomeServiceBloc>().add(
+                  const HomeServiceCreateBooking(),
+                );
               }
             }
           : null,
@@ -327,13 +349,26 @@ class _HomeServiceBookingScreenState extends State<HomeServiceBookingScreen> {
         minimumSize: Size(0, 48 * scale),
         elevation: canProceed ? 2 : 0,
       ),
-      child: Text(
-        _currentStep == 3 ? AppStrings.homeServicePay : AppStrings.bookingNext,
-        style: AppTextStyles.arimo(
-          fontSize: 16 * scale,
-          fontWeight: FontWeight.w600,
-          color: canProceed ? AppColors.white : AppColors.textSecondary,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            _currentStep == 3
+                ? AppStrings.homeServicePay
+                : AppStrings.bookingNext,
+            style: AppTextStyles.arimo(
+              fontSize: 16 * scale,
+              fontWeight: FontWeight.w600,
+              color: canProceed ? AppColors.white : AppColors.textSecondary,
+            ),
+          ),
+          SizedBox(width: 8 * scale),
+          Icon(
+            Icons.arrow_forward_rounded,
+            size: 18 * scale,
+            color: canProceed ? AppColors.white : AppColors.textSecondary,
+          ),
+        ],
       ),
     );
   }
@@ -385,12 +420,14 @@ class _HomeServiceBookingScreenState extends State<HomeServiceBookingScreen> {
           return state.selections.isNotEmpty &&
               state.selections.every((s) => s.dateTimeSlots.isNotEmpty);
         }
-        if (state is HomeServiceFreeStaffLoaded || state is HomeServiceSummaryReady) {
+        if (state is HomeServiceFreeStaffLoaded ||
+            state is HomeServiceSummaryReady) {
           return true;
         }
         return false;
       case 2:
-        return state is HomeServiceFreeStaffLoaded && state.selectedStaff != null;
+        return state is HomeServiceFreeStaffLoaded &&
+            state.selectedStaff != null;
       case 3:
         return state is HomeServiceSummaryReady;
       default:
@@ -403,13 +440,16 @@ class _HomeServiceBookingScreenState extends State<HomeServiceBookingScreen> {
     final paidAmount = homeBooking.paidAmount;
     final remainingAmount = homeBooking.remainingAmount;
 
-    final serviceDates = homeBooking.services
-        .expand((service) => service.serviceDates)
-        .toList()
-      ..sort();
+    final serviceDates =
+        homeBooking.services.expand((service) => service.serviceDates).toList()
+          ..sort();
 
-    final startDate = serviceDates.isNotEmpty ? serviceDates.first : homeBooking.createdAt;
-    final endDate = serviceDates.isNotEmpty ? serviceDates.last : homeBooking.createdAt;
+    final startDate = serviceDates.isNotEmpty
+        ? serviceDates.first
+        : homeBooking.createdAt;
+    final endDate = serviceDates.isNotEmpty
+        ? serviceDates.last
+        : homeBooking.createdAt;
 
     return BookingEntity(
       id: homeBooking.id,

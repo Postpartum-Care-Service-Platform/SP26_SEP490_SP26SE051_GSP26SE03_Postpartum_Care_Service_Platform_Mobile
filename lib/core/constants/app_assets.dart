@@ -34,6 +34,7 @@ class AppAssets {
   static const String theJoyfulNestBrand = 'assets/images/thejoyfulnest.svg';
   static const String walkInService = 'assets/images/Walk-in_Service.jpg';
   static const String homeCareService = 'assets/images/Home-care_Service.jpg';
+  static const String notificationBell = 'assets/images/notification-bell.svg';
 
   // Home Experience - placeholder assets for new Home screen design
   // Welcome icons (round pills)

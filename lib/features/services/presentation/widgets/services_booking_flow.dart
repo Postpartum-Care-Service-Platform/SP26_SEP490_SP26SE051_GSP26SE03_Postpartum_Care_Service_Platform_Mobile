@@ -257,13 +257,26 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
         minimumSize: Size(0, 48 * scale),
         elevation: _canProceed(state) ? 2 : 0,
       ),
-      child: Text(
-        _currentStep == 4 ? AppStrings.bookingConfirm : AppStrings.bookingNext,
-        style: AppTextStyles.arimo(
-          fontSize: 16 * scale,
-          fontWeight: FontWeight.w600,
-          color: _canProceed(state) ? AppColors.white : AppColors.textSecondary,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            _currentStep == 3
+                ? AppStrings.homeServicePay
+                : AppStrings.bookingNext,
+            style: AppTextStyles.arimo(
+              fontSize: 16 * scale,
+              fontWeight: FontWeight.w600,
+              color: _canProceed(state) ? AppColors.white : AppColors.textSecondary,
+            ),
+          ),
+          SizedBox(width: 8 * scale),
+          Icon(
+            Icons.arrow_forward_rounded,
+            size: 18 * scale,
+            color: _canProceed(state) ? AppColors.white : AppColors.textSecondary,
+          ),
+        ],
       ),
     );
   }

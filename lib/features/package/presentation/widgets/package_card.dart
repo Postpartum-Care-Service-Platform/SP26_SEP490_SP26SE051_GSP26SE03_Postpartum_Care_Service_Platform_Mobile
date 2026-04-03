@@ -194,7 +194,6 @@ class PackageCard extends StatelessWidget {
                           fontSize: package.packageName.length > 24
                               ? 26 * scale
                               : 28 * scale,
-                          fontWeight: FontWeight.bold,
                           color: AppColors.primary,
                         ).copyWith(height: 1.05),
                       ),

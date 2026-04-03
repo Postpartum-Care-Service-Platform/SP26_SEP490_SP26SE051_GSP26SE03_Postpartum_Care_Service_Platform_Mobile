@@ -4,4 +4,7 @@ import '../entities/care_plan_entity.dart';
 abstract class CarePlanRepository {
   /// Get care plan details by package ID
   Future<List<CarePlanEntity>> getCarePlanDetailsByPackage(int packageId);
+
+  /// Get activity detail by ID
+  Future<CarePlanEntity> getCarePlanActivityById(int id);
 }
