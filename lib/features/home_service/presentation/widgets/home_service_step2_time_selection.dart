@@ -100,9 +100,6 @@ class _SelectionCard extends StatelessWidget {
     final entries = selection.dateTimeSlots.entries.toList()
       ..sort((a, b) => a.key.compareTo(b.key));
 
-    // Lấy time slot chung (từ entry đầu tiên nếu có)
-    final currentSlot = entries.isNotEmpty ? entries.first.value : null;
-
     return Container(
       margin: EdgeInsets.only(bottom: 14 * scale),
       padding: EdgeInsets.all(14 * scale),
@@ -146,64 +143,66 @@ class _SelectionCard extends StatelessWidget {
           ),
           SizedBox(height: 12 * scale),
 
-          // Khung giờ chung (1 lần duy nhất)
-          Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: 14 * scale,
-              vertical: 10 * scale,
-            ),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.06),
-              borderRadius: BorderRadius.circular(10 * scale),
-              border: Border.all(
-                color: AppColors.primary.withValues(alpha: 0.18),
+          // Khung giờ chung (1 lần duy nhất, áp dụng toàn bộ ngày)
+          if (entries.isNotEmpty) ...[
+            Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: 14 * scale,
+                vertical: 10 * scale,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(10 * scale),
+                border: Border.all(
+                  color: AppColors.primary.withValues(alpha: 0.18),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.access_time_rounded,
+                    size: 20 * scale,
+                    color: AppColors.primary,
+                  ),
+                  SizedBox(width: 10 * scale),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Khung giờ chung',
+                          style: AppTextStyles.arimo(
+                            fontSize: 11 * scale,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        SizedBox(height: 2 * scale),
+                        Text(
+                          entries.isNotEmpty
+                              ? '${_formatTime(entries.first.value.startTime)} - ${_formatTime(entries.first.value.endTime)}'
+                              : '08:00 - ${_formatDefaultEndTime(selection.activity.duration)}',
+                          style: AppTextStyles.arimo(
+                            fontSize: 15 * scale,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  _TimePickerButton(
+                    scale: scale,
+                    currentSlot: entries.isNotEmpty ? entries.first.value : null,
+                    durationMinutes: selection.activity.duration,
+                    activity: selection.activity,
+                    date: entries.first.key,
+                    applyToAll: true,
+                  ),
+                ],
               ),
             ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.access_time_rounded,
-                  size: 20 * scale,
-                  color: AppColors.primary,
-                ),
-                SizedBox(width: 10 * scale),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Khung giờ chung',
-                        style: AppTextStyles.arimo(
-                          fontSize: 11 * scale,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      SizedBox(height: 2 * scale),
-                      Text(
-                        currentSlot != null
-                            ? '${_formatTime(currentSlot.startTime)} - ${_formatTime(currentSlot.endTime)}'
-                            : '08:00 - ${_formatDefaultEndTime(selection.activity.duration)}',
-                        style: AppTextStyles.arimo(
-                          fontSize: 15 * scale,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                _TimePickerButton(
-                  scale: scale,
-                  currentSlot: currentSlot,
-                  durationMinutes: selection.activity.duration,
-                  activity: selection.activity,
-                  dates: entries.map((e) => e.key).toList(),
-                ),
-              ],
-            ),
-          ),
-
-          SizedBox(height: 12 * scale),
+            SizedBox(height: 12 * scale),
+          ],
 
           // Nút thêm ngày
           SizedBox(
@@ -252,6 +251,7 @@ class _SelectionCard extends StatelessWidget {
                   '${selection.activity.id}-${entry.key.toIso8601String()}',
                 ),
                 date: entry.key,
+                slot: entry.value,
                 activity: selection.activity,
               ),
             ),
@@ -566,24 +566,79 @@ class _WeekdayText extends StatelessWidget {
   }
 }
 
-/// Nút đổi giờ chung
+/// Nút đổi giờ áp dụng cho một ngày duy nhất hoặc nhiều ngày
 class _TimePickerButton extends StatelessWidget {
   final double scale;
   final ServiceTimeSlot? currentSlot;
   final int durationMinutes;
   final HomeActivityEntity activity;
-  final List<DateTime> dates;
+  final DateTime date;
+  final bool applyToAll;
+  final bool iconOnly;
 
   const _TimePickerButton({
     required this.scale,
     required this.currentSlot,
     required this.durationMinutes,
     required this.activity,
-    required this.dates,
+    required this.date,
+    this.applyToAll = false,
+    this.iconOnly = false,
   });
+
+  Future<void> _handleTap(BuildContext context) async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: currentSlot != null
+          ? TimeOfDay(
+              hour: currentSlot!.startTime.hour,
+              minute: currentSlot!.startTime.minute,
+            )
+          : const TimeOfDay(hour: 8, minute: 0),
+    );
+
+    if (picked == null || !context.mounted) return;
+
+    final start = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      picked.hour,
+      picked.minute,
+    );
+    final end = start.add(Duration(minutes: durationMinutes));
+
+    context.read<HomeServiceBloc>().add(
+          HomeServiceSelectTime(
+            activity: activity,
+            date: date,
+            startTime: start,
+            endTime: end,
+            applyToAll: applyToAll,
+          ),
+        );
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (iconOnly) {
+      return GestureDetector(
+        onTap: () => _handleTap(context),
+        child: Container(
+          padding: EdgeInsets.all(6 * scale),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            Icons.edit_rounded,
+            size: 16 * scale,
+            color: AppColors.primary,
+          ),
+        ),
+      );
+    }
+
     return Material(
       color: AppColors.white,
       shape: RoundedRectangleBorder(
@@ -592,41 +647,7 @@ class _TimePickerButton extends StatelessWidget {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(8 * scale),
-        onTap: () async {
-          final picked = await showTimePicker(
-            context: context,
-            initialTime: currentSlot != null
-                ? TimeOfDay(
-                    hour: currentSlot!.startTime.hour,
-                    minute: currentSlot!.startTime.minute,
-                  )
-                : const TimeOfDay(hour: 8, minute: 0),
-          );
-
-          if (picked == null || !context.mounted) return;
-
-          // Lấy 1 ngày bất kỳ để tạo event (bloc sẽ áp dụng cho tất cả các ngày)
-          final referenceDate =
-              dates.isNotEmpty ? dates.first : DateTime.now();
-
-          final start = DateTime(
-            referenceDate.year,
-            referenceDate.month,
-            referenceDate.day,
-            picked.hour,
-            picked.minute,
-          );
-          final end = start.add(Duration(minutes: durationMinutes));
-
-          context.read<HomeServiceBloc>().add(
-                HomeServiceSelectTime(
-                  activity: activity,
-                  date: referenceDate,
-                  startTime: start,
-                  endTime: end,
-                ),
-              );
-        },
+        onTap: () => _handleTap(context),
         child: Padding(
           padding: EdgeInsets.symmetric(
             horizontal: 12 * scale,
@@ -657,14 +678,16 @@ class _TimePickerButton extends StatelessWidget {
   }
 }
 
-/// Hàng ngày (chỉ hiện ngày + nút xóa, không có time picker riêng)
+/// Hàng ngày bao gồm ngày, giờ đã chọn, và nút sửa/xóa
 class _DateRow extends StatelessWidget {
   final DateTime date;
+  final ServiceTimeSlot slot;
   final HomeActivityEntity activity;
 
   const _DateRow({
     super.key,
     required this.date,
+    required this.slot,
     required this.activity,
   });
 
@@ -673,47 +696,99 @@ class _DateRow extends StatelessWidget {
     final scale = AppResponsive.scaleFactor(context);
 
     return Container(
-      margin: EdgeInsets.only(bottom: 6 * scale),
+      margin: EdgeInsets.only(bottom: 8 * scale),
       padding: EdgeInsets.symmetric(
-        horizontal: 12 * scale,
+        horizontal: 14 * scale,
         vertical: 10 * scale,
       ),
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: AppColors.primary.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(10 * scale),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(
-            Icons.calendar_today_rounded,
-            size: 16 * scale,
-            color: AppColors.primary,
-          ),
-          SizedBox(width: 10 * scale),
+          // Thông tin Ngày & Giờ
           Expanded(
-            child: Text(
-              _formatDate(date),
-              style: AppTextStyles.arimo(
-                fontSize: 13 * scale,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.calendar_today_rounded,
+                      size: 13 * scale,
+                      color: AppColors.textSecondary,
+                    ),
+                    SizedBox(width: 8 * scale),
+                    Text(
+                      _formatDate(date),
+                      style: AppTextStyles.arimo(
+                        fontSize: 13 * scale,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 4 * scale),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.access_time_rounded,
+                      size: 14 * scale,
+                      color: AppColors.primary,
+                    ),
+                    SizedBox(width: 8 * scale),
+                    Text(
+                      '${_formatTime(slot.startTime)} - ${_formatTime(slot.endTime)}',
+                      style: AppTextStyles.arimo(
+                        fontSize: 14 * scale,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-          GestureDetector(
-            onTap: () {
-              context.read<HomeServiceBloc>().add(
-                    HomeServiceRemoveActivityDate(
-                      activity: activity,
-                      date: date,
-                    ),
-                  );
-            },
-            child: Icon(
-              Icons.close_rounded,
-              size: 18 * scale,
-              color: AppColors.textSecondary,
-            ),
+          
+          // Action Buttons: Change Time & Remove
+          Row(
+            children: [
+              _TimePickerButton(
+                scale: scale,
+                currentSlot: slot,
+                durationMinutes: activity.duration,
+                activity: activity,
+                date: date,
+                iconOnly: true,
+              ),
+              SizedBox(width: 8 * scale),
+              GestureDetector(
+                onTap: () {
+                  context.read<HomeServiceBloc>().add(
+                        HomeServiceRemoveActivityDate(
+                          activity: activity,
+                          date: date,
+                        ),
+                      );
+                },
+                child: Container(
+                  padding: EdgeInsets.all(6 * scale),
+                  decoration: BoxDecoration(
+                    color: AppColors.textSecondary.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.close_rounded,
+                    size: 16 * scale,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -722,5 +797,9 @@ class _DateRow extends StatelessWidget {
 
   String _formatDate(DateTime d) {
     return '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+  }
+
+  String _formatTime(DateTime t) {
+    return '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
   }
 }

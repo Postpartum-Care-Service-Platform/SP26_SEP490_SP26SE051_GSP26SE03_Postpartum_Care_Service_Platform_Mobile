@@ -103,20 +103,20 @@ class HomeServiceRemoteDataSourceImpl implements HomeServiceRemoteDataSource {
         final entries = selection.dateTimeSlots.entries.toList()
           ..sort((a, b) => a.key.compareTo(b.key));
 
-        final allDates = entries
-            .map((entry) => DateTime(entry.key.year, entry.key.month, entry.key.day))
-            .toList();
-
-        // Keep deterministic payload: always use time from earliest selected date.
-        final firstTimeSlot = entries.first.value;
-
         return {
           'activityId': selection.activity.id,
-          'serviceDates': allDates
-              .map((date) => date.toIso8601String().split('T')[0])
-              .toList(),
-          'startTime': '${firstTimeSlot.startTime.hour.toString().padLeft(2, '0')}:${firstTimeSlot.startTime.minute.toString().padLeft(2, '0')}:00',
-          'endTime': '${firstTimeSlot.endTime.hour.toString().padLeft(2, '0')}:${firstTimeSlot.endTime.minute.toString().padLeft(2, '0')}:00',
+          'dateTimes': entries.map((entry) {
+            final date = entry.key;
+            final slot = entry.value;
+            return {
+              'serviceDate':
+                  '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
+              'startTime':
+                  '${slot.startTime.hour.toString().padLeft(2, '0')}:${slot.startTime.minute.toString().padLeft(2, '0')}:00',
+              'endTime':
+                  '${slot.endTime.hour.toString().padLeft(2, '0')}:${slot.endTime.minute.toString().padLeft(2, '0')}:00',
+            };
+          }).toList(),
         };
       }).toList();
 

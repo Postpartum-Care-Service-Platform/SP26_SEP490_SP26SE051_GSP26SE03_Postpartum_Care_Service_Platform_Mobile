@@ -28,8 +28,15 @@ class AppNetworkImage extends StatelessWidget {
       return _buildErrorWidget();
     }
 
-    int? cacheWidth = width != null ? (width! * 2).toInt() : null;
-    int? cacheHeight = height != null ? (height! * 2).toInt() : null;
+    int? cacheWidth;
+    if (width != null && !width!.isInfinite && !width!.isNaN) {
+      cacheWidth = (width! * 2).toInt();
+    }
+    
+    int? cacheHeight;
+    if (height != null && !height!.isInfinite && !height!.isNaN) {
+      cacheHeight = (height! * 2).toInt();
+    }
     
     if (cacheWidth == null && cacheHeight == null) {
       cacheWidth = 500;

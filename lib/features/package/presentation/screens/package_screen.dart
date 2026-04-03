@@ -12,6 +12,7 @@ import '../bloc/package_bloc.dart';
 import '../bloc/package_event.dart';
 import '../bloc/package_state.dart';
 import '../widgets/package_card.dart';
+import '../widgets/package_grid_skeleton.dart';
 import '../../../../features/booking/presentation/widgets/package_detail_bottom_sheet.dart';
 
 class PackageScreen extends StatefulWidget {
@@ -49,11 +50,7 @@ class _PackageScreenState extends State<PackageScreen> {
       body: BlocBuilder<PackageBloc, PackageState>(
         builder: (context, state) {
           if (state is PackageLoading) {
-            return const Center(
-              child: AppLoadingIndicator(
-                color: AppColors.primary,
-              ),
-            );
+            return const PackageGridSkeleton();
           }
 
           if (state is PackageError) {

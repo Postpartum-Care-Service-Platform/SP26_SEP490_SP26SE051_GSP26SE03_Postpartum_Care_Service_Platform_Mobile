@@ -67,7 +67,7 @@ class ScheduleActivityItem extends StatelessWidget {
         // Activity content
         Expanded(
           child: GestureDetector(
-            onLongPress: () {
+            onTap: () {
               ScheduleActivityDetailSheet.show(context, schedule);
             },
             child: Container(
@@ -207,6 +207,8 @@ class ScheduleActivityItem extends StatelessWidget {
                               fontSize: 13 * scale,
                               color: AppColors.textSecondary,
                             ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],

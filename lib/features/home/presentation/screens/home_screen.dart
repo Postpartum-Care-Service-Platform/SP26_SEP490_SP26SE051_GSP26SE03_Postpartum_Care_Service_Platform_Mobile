@@ -17,6 +17,7 @@ import '../../../../features/package/presentation/bloc/package_bloc.dart';
 import '../../../../features/package/presentation/bloc/package_event.dart';
 import '../../../../features/package/presentation/bloc/package_state.dart';
 import '../../../../features/package/presentation/widgets/package_carousel.dart';
+import '../../../../features/package/presentation/widgets/package_carousel_skeleton.dart';
 import '../widgets/home_experience_sections.dart';
 import '../widgets/home_header.dart';
 import '../widgets/section_header.dart';
@@ -67,13 +68,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   BlocBuilder<PackageBloc, PackageState>(
                     builder: (context, state) {
                       if (state is PackageLoading) {
-                        return const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(24.0),
-                            child: AppLoadingIndicator(
-                              color: AppColors.primary,
-                            ),
-                          ),
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 4.0),
+                          child: PackageCarouselSkeleton(),
                         );
                       }
 

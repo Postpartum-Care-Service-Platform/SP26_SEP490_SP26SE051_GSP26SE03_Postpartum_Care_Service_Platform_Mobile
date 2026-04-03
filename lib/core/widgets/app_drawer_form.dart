@@ -35,84 +35,73 @@ class AppDrawerForm extends StatelessWidget {
     final shadowBlur = 24 * scale;
     final shadowOffset = -8 * scale;
     
-    // Kích thước drawer: luôn mở tương đối cao để user không phải kéo thêm
-    // isCompact: dùng cho form nhỏ (1-2 input) → ~60% chiều cao
-    // normal: form lớn → ~90% chiều cao
-    final initialSize = isCompact ? 0.6 : 0.9;
-    final minSize = isCompact ? 0.5 : 0.5;
-
-    return DraggableScrollableSheet(
-      initialChildSize: initialSize,
-      minChildSize: minSize,
-      maxChildSize: 0.95,
-      expand: false,
-      builder: (context, scrollController) {
-        return Container(
-          decoration: BoxDecoration(
-            color: AppColors.background,
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(borderRadius),
+    // Make drawer wrap its content smoothly without taking full screen or redundant height
+    return Padding(
+      // Add padding for keyboard to push it up
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top - 24 * scale,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(borderRadius),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: shadowBlur,
+              offset: Offset(0, shadowOffset),
+              spreadRadius: 0,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: shadowBlur,
-                offset: Offset(0, shadowOffset),
-                spreadRadius: 0,
+          ],
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min, // Hug content closely
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Optionally some spacing can be added here if needed, but keeping it compact
+              SizedBox(height: 8 * scale),
+              
+              // Header
+              _Header(
+                title: title,
+                scale: scale,
+                onClose: () => Navigator.of(context).pop(),
               ),
+
+              // Form Content - scrollable if too tall
+              Flexible(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16 * scale,
+                    vertical: 8 * scale,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisSize: MainAxisSize.min,
+                    children: children,
+                  ),
+                ),
+              ),
+
+              // Footer with Save Button
+              if (onSave != null)
+                _Footer(
+                  onSave: onSave!,
+                  isLoading: isLoading,
+                  isDisabled: isDisabled,
+                  saveButtonText: saveButtonText,
+                  scale: scale,
+                ),
             ],
           ),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return Column(
-                // Chiếm toàn bộ chiều cao drawer để footer luôn nằm sát đáy
-                mainAxisSize: MainAxisSize.max,
-                children: [
-                  // Handle bar - optimized with const
-                  _HandleBar(scale: scale, color: handleBarColor),
-                  
-                  // Header - separated for better repaint optimization
-                  _Header(
-                    title: title,
-                    scale: scale,
-                    onClose: () => Navigator.of(context).pop(),
-                  ),
-
-                  // Form Content - optimized scroll view with flexible sizing
-                  Flexible(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxHeight: constraints.maxHeight - 
-                                   (12 + 5 + 8) * scale - // handle bar
-                                   (8 * 2 + 40) * scale - // header
-                                   (onSave != null 
-                                       ? (12 + 48 + 16 + MediaQuery.of(context).padding.bottom) * scale 
-                                       : 0.0), // footer
-                      ),
-                      child: _Content(
-                        scrollController: scrollController,
-                        scale: scale,
-                        isCompact: isCompact,
-                        children: children,
-                      ),
-                    ),
-                  ),
-
-                  // Footer with Save Button - separated widget for optimization
-                  if (onSave != null)
-                    _Footer(
-                      onSave: onSave!,
-                      isLoading: isLoading,
-                      isDisabled: isDisabled,
-                      saveButtonText: saveButtonText,
-                      scale: scale,
-                    ),
-                ],
-              );
-            },
-          ),
-        );
-      },
+        ),
+      ),
     );
   }
 }
