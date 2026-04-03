@@ -11,7 +11,7 @@ import '../constants/app_strings.dart';
 import '../constants/app_assets.dart';
 import '../utils/app_responsive.dart';
 
-enum AppBottomTab { home, appointment, services, chat, profile, supportRequests }
+enum AppBottomTab { home, appointment, services, chat, supportRequests, profile }
 
 extension AppBottomTabX on AppBottomTab {
   IconData? get icon {
@@ -147,7 +147,15 @@ class _PillBottomNavState extends State<_PillBottomNav>
   late Animation<Offset> _slideAnimation;
   late Animation<double> _scaleAnimation;
 
-  int _indexOf(AppBottomTab tab) => AppBottomTab.values.indexOf(tab);
+  static const List<AppBottomTab> _customerTabs = [
+    AppBottomTab.home,
+    AppBottomTab.appointment,
+    AppBottomTab.services,
+    AppBottomTab.chat,
+    AppBottomTab.profile,
+  ];
+
+  int _indexOf(AppBottomTab tab) => _customerTabs.indexOf(tab);
 
   @override
   void initState() {
@@ -195,7 +203,7 @@ class _PillBottomNavState extends State<_PillBottomNav>
 
   @override
   Widget build(BuildContext context) {
-    const itemCount = 5; // số lượng tab hiện tại
+    final itemCount = _customerTabs.length; // số lượng tab customer
     final scale = AppResponsive.scaleFactor(context);
 
     return LayoutBuilder(
@@ -219,10 +227,11 @@ class _PillBottomNavState extends State<_PillBottomNav>
 
         final itemWidth = (barWidth - outerHPadding * 2) / itemCount;
         final selectedIndex = _indexOf(widget.currentTab);
+        final safeSelectedIndex = selectedIndex >= 0 ? selectedIndex : 0;
 
         final selectedLeft =
             outerHPadding +
-            itemWidth * selectedIndex +
+            itemWidth * safeSelectedIndex +
             (itemWidth - selectedPillWidth) / 2;
 
         return SizedBox(
@@ -320,7 +329,7 @@ class _PillBottomNavState extends State<_PillBottomNav>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      for (final tab in AppBottomTab.values)
+                      for (final tab in _customerTabs)
                         Expanded(
                           child: _NavIconButton(
                             icon: tab.icon,
