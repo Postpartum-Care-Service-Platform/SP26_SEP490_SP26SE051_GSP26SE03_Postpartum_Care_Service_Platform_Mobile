@@ -26,10 +26,21 @@ class AppScaffold extends StatefulWidget {
 }
 
 class _AppScaffoldState extends State<AppScaffold> {
+  static const List<AppBottomTab> _customerTabs = [
+    AppBottomTab.home,
+    AppBottomTab.appointment,
+    AppBottomTab.services,
+    AppBottomTab.chat,
+    AppBottomTab.profile,
+  ];
+
   late AppBottomTab _currentTab;
   late final PageController _pageController;
 
-  int get _currentIndex => _currentTab.index;
+  int get _currentIndex {
+    final index = _customerTabs.indexOf(_currentTab);
+    return index >= 0 ? index : 0;
+  }
 
   final List<Widget> _screens = const [
     HomeScreen(),
@@ -42,7 +53,10 @@ class _AppScaffoldState extends State<AppScaffold> {
   @override
   void initState() {
     super.initState();
-    _currentTab = widget.initialTab ?? AppBottomTab.home;
+    final initialTab = widget.initialTab ?? AppBottomTab.home;
+    _currentTab = _customerTabs.contains(initialTab)
+        ? initialTab
+        : AppBottomTab.home;
     _pageController = PageController(initialPage: _currentIndex);
   }
 
@@ -53,7 +67,7 @@ class _AppScaffoldState extends State<AppScaffold> {
   }
 
   void _onTabSelected(AppBottomTab tab, BuildContext context) {
-    final index = tab.index;
+    final index = _customerTabs.indexOf(tab);
     if (index < 0 || index >= _screens.length) return;
     if (tab == _currentTab) return;
 
@@ -80,8 +94,8 @@ class _AppScaffoldState extends State<AppScaffold> {
           body: PageView(
             controller: _pageController,
             onPageChanged: (index) {
-              if (index < 0 || index >= AppBottomTab.values.length) return;
-              final newTab = AppBottomTab.values[index];
+              if (index < 0 || index >= _customerTabs.length) return;
+              final newTab = _customerTabs[index];
               setState(() {
                 _currentTab = newTab;
               });
