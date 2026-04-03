@@ -4,7 +4,10 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../../../core/constants/app_colors.dart';  
 import '../../../../../core/widgets/app_bottom_navigation_bar.dart';
+import '../../../../../features/auth/presentation/bloc/auth_bloc.dart';
+import '../../../../../features/auth/presentation/bloc/auth_state.dart';
 import '../../../../../features/employee/shell/presentation/widgets/employee_quick_menu.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// Bottom nav cho nhân viên, được **đồng bộ** với quick menu
 /// Sử dụng EmployeeQuickMenuPresets để đảm bảo tính nhất quán
@@ -20,8 +23,17 @@ class EmployeeBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    String? memberType;
+    try {
+      final authBloc = context.read<AuthBloc>();
+      final state = authBloc.state;
+      if (state is AuthCurrentAccountLoaded) {
+        memberType = (state.account as dynamic).memberType;
+      }
+    } catch (_) {}
+
     // Lấy các bottom tab items từ quick menu presets
-    final primaryItems = EmployeeQuickMenuPresets.primaryItems();
+    final primaryItems = EmployeeQuickMenuPresets.primaryItems(memberType);
     final bottomTabItems = primaryItems
         .where((item) => item.type == EmployeeQuickMenuItemType.bottomTab)
         .toList();

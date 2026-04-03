@@ -45,6 +45,7 @@ class ApiEndpoints {
   static const String getCurrentAccount = '/Account/GetCurrentAccount';
   static const String getAllAccounts = '/Account/GetAll';
   static String getAccountById(String id) => '/Account/GetById/$id';
+  static String getAccountByPhone(String phone) => '/Account/phone/$phone';
 
   // User endpoints (legacy / placeholder)
   static const String profile = '/user/profile';
@@ -111,6 +112,7 @@ class ApiEndpoints {
   static const String getAllBookings = '/Booking/all';
   static String confirmBooking(int id) => '/Booking/$id/confirm';
   static String completeBooking(int id) => '/Booking/$id/complete';
+  static String checkInBooking(int id) => '/Booking/$id/check-in';
   static String cancelBooking(int id) => '/Booking/$id/cancel';
   static const String createPaymentLink = '/Transaction/create-payment-link';
   static const String createOfflinePayment = '/Transaction/payment';
@@ -235,6 +237,9 @@ class ApiEndpoints {
   /// Get all menus
   static const String menus = '/Menu';
 
+  /// Get menu by ID
+  static String menuById(int id) => '/Menu/$id';
+
   /// Get all menu types
   static const String menuTypes = '/MenuType';
 
@@ -317,4 +322,11 @@ class ApiEndpoints {
   
   /// Create home service payment link
   static const String createHomeServicePaymentLink = '/Transaction/create-home-service-payment-link';
+
+  // ==========================================
+  // Wallet endpoints
+  // ==========================================
+  
+  static const String myWallet = '/Wallet/me';
+  static const String myWalletTransactions = '/Wallet/me/transactions';
 }

@@ -287,6 +287,48 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
     }
   }
 
+  Future<void> _handleCheckIn(BookingModel booking) async {
+    if (_isActionInProgress) return;
+
+    final confirmed = await _showConfirmDialog(
+      title: 'Check-in Khách',
+      message: 'Xác nhận khách hàng đã đến trung tâm và bắt đầu sử dụng dịch vụ?',
+      color: const Color(0xFF0D9488), // teal color for check-in
+    );
+    if (!confirmed) return;
+
+    setState(() => _isActionInProgress = true);
+    try {
+      final message = await _dataSource.checkInBooking(booking.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            message,
+            style: AppTextStyles.arimo(color: AppColors.white),
+          ),
+          backgroundColor: AppColors.primary,
+        ),
+      );
+      await _refresh();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Lỗi check-in booking: $e',
+            style: AppTextStyles.arimo(color: AppColors.white),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isActionInProgress = false);
+      }
+    }
+  }
+
   List<BookingModel> _applyFilter(List<BookingModel> bookings) {
     var filtered = bookings;
 
@@ -485,9 +527,12 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
                           onConfirm: booking.status.toLowerCase() == 'pending'
                               ? () => _handleConfirm(booking)
                               : null,
-                          onComplete: booking.status.toLowerCase() == 'confirmed' &&
+                          onComplete: ['confirmed', 'in_progress', 'active', 'checked_in'].contains(booking.status.toLowerCase()) &&
                                   booking.remainingAmount <= 0
                               ? () => _handleComplete(booking)
+                              : null,
+                          onCheckIn: booking.status.toLowerCase() == 'confirmed'
+                              ? () => _handleCheckIn(booking)
                               : null,
                           onRecordOfflinePayment: () async {
                             final bookingBloc = InjectionContainer.bookingBloc;
@@ -507,8 +552,7 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
                             }
                           },
                           onViewContract:
-                              booking.status.toLowerCase() == 'confirmed' ||
-                                  booking.status.toLowerCase() == 'completed'
+                              ['confirmed', 'in_progress', 'active', 'checked_in', 'completed'].contains(booking.status.toLowerCase())
                               ? () {
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
@@ -774,6 +818,7 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
       {'value': 'all', 'label': 'Tất cả'},
       {'value': 'pending', 'label': 'Chờ xử lý'},
       {'value': 'confirmed', 'label': 'Đã xác nhận'},
+      {'value': 'in_progress', 'label': 'Đang thực hiện'},
       {'value': 'completed', 'label': 'Đã hoàn thành'},
       {'value': 'cancelled', 'label': 'Đã hủy'},
     ];
@@ -839,6 +884,7 @@ class _BookingItem extends StatelessWidget {
   final VoidCallback? onCancel;
   final VoidCallback? onConfirm;
   final VoidCallback? onComplete;
+  final VoidCallback? onCheckIn;
   final VoidCallback? onRecordOfflinePayment;
   final VoidCallback? onViewContract;
 
@@ -847,6 +893,7 @@ class _BookingItem extends StatelessWidget {
     this.onCancel,
     this.onConfirm,
     this.onComplete,
+    this.onCheckIn,
     this.onRecordOfflinePayment,
     this.onViewContract,
   });
@@ -866,6 +913,10 @@ class _BookingItem extends StatelessWidget {
       case 'confirmed':
         statusColor = const Color(0xFF2563EB); // blue
         statusIcon = 'check';
+        break;
+      case 'in_progress':
+        statusColor = const Color(0xFF0D9488); // teal
+        statusIcon = 'in_progress';
         break;
       case 'completed':
         statusColor = const Color(0xFF16A34A); // green
@@ -1028,7 +1079,7 @@ class _BookingItem extends StatelessWidget {
                         ],
                       ),
                       // Collapsed action buttons logic
-                      if (onConfirm != null || onComplete != null || onRecordOfflinePayment != null || onViewContract != null)
+                      if (onConfirm != null || onComplete != null || onCheckIn != null || onRecordOfflinePayment != null || onViewContract != null)
                         Row(
                           children: [
                             if (onCancel != null)
@@ -1047,6 +1098,16 @@ class _BookingItem extends StatelessWidget {
                                 onTap: onConfirm!,
                                 scale: scale,
                                 tooltip: 'Xác nhận',
+                              ),
+                            ],
+                            if (onCheckIn != null) ...[
+                              SizedBox(width: 10 * scale),
+                              _CircularActionButton(
+                                icon: Icons.login_rounded,
+                                color: const Color(0xFF0D9488),
+                                onTap: onCheckIn!,
+                                scale: scale,
+                                tooltip: 'Check-in',
                               ),
                             ],
                             if (onComplete != null) ...[
@@ -1145,6 +1206,7 @@ class _BookingItem extends StatelessWidget {
     switch (iconKey) {
       case 'wait': return Icons.hourglass_empty_rounded;
       case 'check': return Icons.check_circle_outline_rounded;
+      case 'in_progress': return Icons.directions_run_rounded;
       case 'done': return Icons.done_all_rounded;
       case 'cancel': return Icons.cancel_outlined;
       default: return Icons.info_outline_rounded;
@@ -1155,6 +1217,7 @@ class _BookingItem extends StatelessWidget {
     switch (status.toLowerCase()) {
       case 'pending': return 'CHỜ XỬ LÝ';
       case 'confirmed': return 'ĐÃ XÁC NHẬN';
+      case 'in_progress': return 'ĐANG THỰC HIỆN';
       case 'completed': return 'HOÀN THÀNH';
       case 'cancelled': return 'ĐÃ HỦY';
       default: return status.toUpperCase();

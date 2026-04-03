@@ -3,6 +3,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
+import '../../../../core/widgets/app_network_image.dart';
 import '../../domain/entities/package_entity.dart';
 
 class PackageCard extends StatelessWidget {
@@ -66,7 +67,7 @@ class PackageCard extends StatelessWidget {
               fit: StackFit.expand,
               children: [
                 if (package.imageUrl != null && package.imageUrl!.isNotEmpty)
-                  Image.network(
+                  AppNetworkImage(
                     package.imageUrl!,
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => _fallbackImage(scale),

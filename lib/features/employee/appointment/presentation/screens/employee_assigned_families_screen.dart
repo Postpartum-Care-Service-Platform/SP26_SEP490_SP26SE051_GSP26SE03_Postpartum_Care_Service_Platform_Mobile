@@ -1,4 +1,8 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../../core/apis/api_client.dart';
@@ -256,14 +260,15 @@ class _EmployeeAssignedFamiliesScreenState
                             _CalendarGrid(
                               days: calendarDays,
                               onCheckPressed: (activity) async {
-                                final note = await _askForNote(sheetContext);
-                                if (!sheetContext.mounted || note == null) {
+                                final checkData = await _askForCheckInDetails(sheetContext);
+                                if (!sheetContext.mounted || checkData == null) {
                                   return;
                                 }
 
                                 final success = await _checkSchedule(
                                   activity.staffScheduleId,
-                                  note,
+                                  checkData.note,
+                                  checkData.imagePaths,
                                 );
                                 if (!success || !sheetContext.mounted || !mounted) {
                                   return;
@@ -276,7 +281,7 @@ class _EmployeeAssignedFamiliesScreenState
                                   if (index != -1) {
                                     initialActivities[index] = initialActivities[index].copyWith(
                                       status: 'Done',
-                                      note: note,
+                                      note: checkData.note,
                                     );
                                   }
                                 });
@@ -316,52 +321,227 @@ class _EmployeeAssignedFamiliesScreenState
     );
   }
 
-  Future<String?> _askForNote(BuildContext context) async {
+  Future<_CheckInDetails?> _askForCheckInDetails(BuildContext context) async {
+    final scale = AppResponsive.scaleFactor(context);
     final controller = TextEditingController();
+    final picker = ImagePicker();
+    List<String> imagePaths = [];
 
-    final confirmed = await showDialog<bool>(
+    final result = await showDialog<_CheckInDetails>(
       context: context,
       builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Xác nhận check'),
-          content: TextField(
-            controller: controller,
-            decoration: const InputDecoration(
-              labelText: 'Ghi chú',
-              hintText: 'Nhập ghi chú (tuỳ chọn)',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Huỷ'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Xác nhận'),
-            ),
-          ],
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: AppColors.white,
+              surfaceTintColor: Colors.transparent,
+              scrollable: true,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16 * scale),
+              ),
+              title: Row(
+                children: [
+                  const Icon(Icons.check_circle_outline_rounded, color: AppColors.primary),
+                  SizedBox(width: 8 * scale),
+                  const Text('Xác nhận hoàn tất'),
+                ],
+              ),
+              content: SizedBox(
+                width: 300 * scale, // Help define intrinsic width
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Vui lòng chụp ảnh hoặc chọn ảnh minh chứng kết quả trước khi nhấn xác nhận.',
+                      style: AppTextStyles.arimo(
+                        fontSize: 13 * scale,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    SizedBox(height: 16 * scale),
+                    TextField(
+                      controller: controller,
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        labelText: 'Ghi chú',
+                        hintText: 'Nhập ghi chú (tuỳ chọn)',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12 * scale),
+                        ),
+                        contentPadding: EdgeInsets.all(12 * scale),
+                      ),
+                    ),
+                    SizedBox(height: 20 * scale),
+                    Text(
+                      'Hình ảnh minh chứng (${imagePaths.length})',
+                      style: AppTextStyles.arimo(
+                        fontSize: 14 * scale,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 10 * scale),
+                    if (imagePaths.isNotEmpty) ...[
+                      SizedBox(
+                        height: 80 * scale,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: imagePaths.length,
+                          separatorBuilder: (_, __) => SizedBox(width: 8 * scale),
+                          itemBuilder: (context, index) {
+                            return Stack(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8 * scale),
+                                  child: Image.file(
+                                    File(imagePaths[index]),
+                                    width: 80 * scale,
+                                    height: 80 * scale,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                Positioned(
+                                  top: 2,
+                                  right: 2,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        imagePaths.removeAt(index);
+                                      });
+                                    },
+                                    child: Container(
+                                      decoration: const BoxDecoration(
+                                        color: Colors.black54,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.close,
+                                        size: 16,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                      SizedBox(height: 12 * scale),
+                    ],
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () async {
+                              final image = await picker.pickImage(
+                                source: ImageSource.camera,
+                                imageQuality: 70,
+                                maxWidth: 1200,
+                              );
+                              if (image != null) {
+                                setState(() {
+                                  imagePaths.add(image.path);
+                                });
+                              }
+                            },
+                            icon: const Icon(Icons.camera_alt_outlined),
+                            label: const Text('Máy ảnh'),
+                            style: OutlinedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(vertical: 10 * scale),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10 * scale),
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 8 * scale),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () async {
+                              final images = await picker.pickMultiImage(
+                                imageQuality: 70,
+                                maxWidth: 1200,
+                              );
+                              if (images.isNotEmpty) {
+                                setState(() {
+                                  imagePaths.addAll(images.map((e) => e.path));
+                                });
+                              }
+                            },
+                            icon: const Icon(Icons.photo_library_outlined),
+                            label: const Text('Thư viện'),
+                            style: OutlinedButton.styleFrom(
+                              padding: EdgeInsets.symmetric(vertical: 10 * scale),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10 * scale),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Huỷ'),
+                ),
+                ElevatedButton(
+                  onPressed: imagePaths.isEmpty
+                      ? null
+                      : () {
+                          Navigator.of(dialogContext).pop(_CheckInDetails(
+                            note: controller.text.trim(),
+                            imagePaths: imagePaths,
+                          ));
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: AppColors.borderLight,
+                  ),
+                  child: const Text('Xác nhận'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
 
-    if (confirmed != true) {
-      return null;
-    }
-
-    return controller.text.trim();
+    return result;
   }
 
-  Future<bool> _checkSchedule(int staffScheduleId, String? note) async {
+  Future<bool> _checkSchedule(
+    int staffScheduleId,
+    String? note,
+    List<String> imagePaths,
+  ) async {
     try {
-      final payload = {
-        'staffScheduleId': staffScheduleId,
-        'note': note ?? '',
+      final formDataMap = {
+        'StaffScheduleId': staffScheduleId,
+        'Note': note ?? '',
       };
+
+      final formData = FormData.fromMap(formDataMap);
+
+      if (imagePaths.isNotEmpty) {
+        for (final path in imagePaths) {
+          final file = await MultipartFile.fromFile(
+            path,
+            filename: path.split('/').last,
+          );
+          formData.files.add(MapEntry('Images', file));
+        }
+      }
 
       await ApiClient.dio.patch(
         ApiEndpoints.checkStaffSchedule,
-        data: payload,
+        data: formData,
       );
 
       if (!mounted) {
@@ -1179,4 +1359,10 @@ class _CustomerCard extends StatelessWidget {
       ),
     );
   }
+}
+class _CheckInDetails {
+  final String note;
+  final List<String> imagePaths;
+
+  _CheckInDetails({required this.note, required this.imagePaths});
 }

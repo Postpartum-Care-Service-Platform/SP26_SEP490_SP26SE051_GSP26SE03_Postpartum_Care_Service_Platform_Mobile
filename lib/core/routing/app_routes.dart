@@ -56,6 +56,7 @@ class AppRoutes {
   static const String staffContractList = '/staff-contract-list';
   static const String staffContractPreview = '/staff-contract-preview';
   static const String staffMemberTypeDetail = '/staff-member-type-detail';
+  static const String employeeWallet = '/employee-wallet';
 
   // Family Routes
   static const String familyPortal = '/family-portal';
@@ -100,4 +101,6 @@ class AppRoutes {
   // Employee Customer Profile Routes
   static const String employeeCustomerFamilyProfile =
       '/employee-customer-family-profile';
+
+  static const String employeeSupportRequests = '/employee-support-requests';
 }

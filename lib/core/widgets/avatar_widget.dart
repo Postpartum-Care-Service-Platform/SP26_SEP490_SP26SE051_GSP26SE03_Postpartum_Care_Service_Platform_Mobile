@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../utils/app_text_styles.dart';
 import '../utils/app_responsive.dart';
+import '../utils/cloudinary_utils.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 /// Reusable avatar widget with support for image URL and fallback
 class AvatarWidget extends StatelessWidget {
@@ -68,23 +70,25 @@ class AvatarWidget extends StatelessWidget {
           ),
           child: ClipOval(
             child: imageUrl != null && imageUrl!.isNotEmpty
-                ? Image.network(
-                    imageUrl!,
+                ? CachedNetworkImage(
+                    imageUrl: CloudinaryUtils.getOptimizedUrl(
+                      imageUrl!,
+                      width: scaledSize.toInt(),
+                      height: scaledSize.toInt(),
+                    ),
                     width: scaledSize,
                     height: scaledSize,
+                    memCacheWidth: scaledSize.toInt() * 2, // 2x for high resolution screens
+                    memCacheHeight: scaledSize.toInt() * 2,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
+                    errorWidget: (context, url, error) {
                       return _buildInitialsWidget(displayName, scaledSize, scale);
                     },
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
+                    placeholder: (context, url) {
                       return Center(
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          value: loadingProgress.expectedTotalBytes != null
-                              ? loadingProgress.cumulativeBytesLoaded /
-                                  loadingProgress.expectedTotalBytes!
-                              : null,
+                          color: AppColors.primary.withValues(alpha: 0.5),
                         ),
                       );
                     },
