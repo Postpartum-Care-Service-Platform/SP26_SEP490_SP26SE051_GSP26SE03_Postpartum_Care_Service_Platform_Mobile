@@ -426,14 +426,9 @@ class _HomeServiceDashboardContentState
   DateTime? _initialSelectedDate() {
     if (widget.serviceDates.isEmpty) return null;
 
-    final today = _normalizeDate(DateTime.now());
-    if (widget.serviceDates.any((d) => _normalizeDate(d) == today)) {
-      return today;
-    }
-
-    final sortedDates = List<DateTime>.from(widget.serviceDates)
-      ..sort((a, b) => a.compareTo(b));
-    return sortedDates.first;
+    // Luôn chọn đúng ngày hiện tại khi mở trang.
+    // Vẫn cho phép selected vào ngày chưa có lịch để người dùng thấy đúng "hôm nay".
+    return _normalizeDate(DateTime.now());
   }
 
   void _handleDateSelected(DateTime date) {
