@@ -307,6 +307,12 @@ class ApiEndpoints {
   /// Create feedback
   static const String createFeedback = '/Feedback';
 
+  /// Get public feedback content for home screen
+  static const String feedbackContent = '/Feedback/content';
+
+  /// Get public feedback images for home screen
+  static const String feedbackImages = '/Feedback/images';
+
   // ==========================================
   // Home Service Booking endpoints
   // ==========================================

@@ -59,16 +59,18 @@ class HomeServiceSelectTime extends HomeServiceEvent {
   final DateTime date;
   final DateTime startTime;
   final DateTime endTime;
+  final bool applyToAll;
 
   const HomeServiceSelectTime({
     required this.activity,
     required this.date,
     required this.startTime,
     required this.endTime,
+    this.applyToAll = false,
   });
 
   @override
-  List<Object?> get props => [activity, date, startTime, endTime];
+  List<Object?> get props => [activity, date, startTime, endTime, applyToAll];
 }
 
 /// Load free staff for selected dates and times

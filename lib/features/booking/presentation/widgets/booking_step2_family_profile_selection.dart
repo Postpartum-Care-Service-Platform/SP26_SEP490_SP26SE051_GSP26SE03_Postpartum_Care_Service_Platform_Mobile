@@ -1,22 +1,38 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/di/injection_container.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_loading.dart';
+import '../../../../core/widgets/app_toast.dart';
+import '../../../family_profile/data/models/create_family_profile_request_model.dart';
+import '../../../family_profile/data/models/member_type_model.dart';
 import '../../../family_profile/domain/entities/family_profile_entity.dart';
+import '../../../family_profile/presentation/widgets/family_profile_form_drawer.dart';
 import '../bloc/booking_bloc.dart';
 import '../bloc/booking_event.dart';
 import '../bloc/booking_state.dart';
 
-class BookingStep2FamilyProfileSelection extends StatelessWidget {
+class BookingStep2FamilyProfileSelection extends StatefulWidget {
   final void Function(List<int> selectedIds) onSelectionChanged;
 
   const BookingStep2FamilyProfileSelection({
     super.key,
     required this.onSelectionChanged,
   });
+
+  @override
+  State<BookingStep2FamilyProfileSelection> createState() =>
+      _BookingStep2FamilyProfileSelectionState();
+}
+
+class _BookingStep2FamilyProfileSelectionState
+    extends State<BookingStep2FamilyProfileSelection> {
+  bool _isSubmitting = false;
 
   String _getMemberTypeLabel(FamilyProfileEntity profile) {
     if (profile.isOwner) return AppStrings.bookingProfileOwner;
@@ -45,6 +61,113 @@ class BookingStep2FamilyProfileSelection extends StatelessWidget {
     }
 
     return gender;
+  }
+
+  bool _isMomOrBabyType(MemberTypeModel type) {
+    final normalized = type.name.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+    return normalized == 'mom' || normalized == 'baby';
+  }
+
+  Future<void> _openCreateMemberForm(List<int> selectedIds) async {
+    final scale = AppResponsive.scaleFactor(context);
+
+    List<MemberTypeModel> memberTypes;
+    try {
+      final allTypes = await InjectionContainer.familyProfileRepository.getMemberTypes();
+      memberTypes = allTypes
+          .where((t) => t.isActive)
+          .where(_isMomOrBabyType)
+          .toList()
+        ..sort((a, b) {
+          int rank(MemberTypeModel t) {
+            final name = t.name.trim().toLowerCase();
+            if (name == 'mom') return 0;
+            if (name == 'baby') return 1;
+            return 99;
+          }
+
+          final byRank = rank(a).compareTo(rank(b));
+          if (byRank != 0) return byRank;
+          return a.name.compareTo(b.name);
+        });
+    } catch (e) {
+      if (!mounted) return;
+      AppToast.showError(context, message: 'Không tải được loại thành viên: $e');
+      return;
+    }
+
+    if (!mounted) return;
+
+    if (memberTypes.isEmpty) {
+      AppToast.showWarning(context, message: 'Không có loại thành viên Mom/Baby để thêm mới.');
+      return;
+    }
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return Padding(
+          padding: EdgeInsets.only(top: 12 * scale),
+          child: FamilyProfileFormDrawer(
+            memberTypes: memberTypes,
+            onSave: ({
+              required String fullName,
+              int? memberTypeId,
+              DateTime? dateOfBirth,
+              String? gender,
+              String? address,
+              String? phoneNumber,
+              File? avatar,
+            }) async {
+              if (_isSubmitting) return;
+
+              _isSubmitting = true;
+              AppLoading.show(context, message: AppStrings.processing);
+
+              try {
+                final request = CreateFamilyProfileRequestModel(
+                  memberTypeId: memberTypeId,
+                  fullName: fullName,
+                  dateOfBirth: dateOfBirth,
+                  gender: gender,
+                  address: address,
+                  phoneNumber: phoneNumber,
+                  avatar: avatar,
+                );
+
+                final created = await InjectionContainer
+                    .familyProfileRepository
+                    .createFamilyProfile(request);
+
+                if (!mounted || !sheetContext.mounted) return;
+
+                Navigator.of(sheetContext).pop();
+                AppLoading.hide(context);
+                AppToast.showSuccess(context, message: AppStrings.updateSuccess);
+
+                context.read<BookingBloc>().add(const BookingLoadFamilyProfiles());
+
+                if (created.memberTypeId == 2 || created.memberTypeId == 3) {
+                  final nextIds = [...selectedIds];
+                  if (!nextIds.contains(created.id)) {
+                    nextIds.add(created.id);
+                    widget.onSelectionChanged(nextIds);
+                  }
+                }
+              } catch (e) {
+                if (!mounted) return;
+                AppLoading.hide(context);
+                AppToast.showError(context, message: '${AppStrings.updateFailed}: $e');
+              } finally {
+                _isSubmitting = false;
+              }
+            },
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -90,51 +213,13 @@ class BookingStep2FamilyProfileSelection extends StatelessWidget {
           }
         }
 
-        // Chỉ hiển thị Mẹ (memberTypeId=2) và Em bé (memberTypeId=3)
         final filteredProfiles = profiles
             .where((p) => p.memberTypeId == 2 || p.memberTypeId == 3)
             .toList();
 
-        if (filteredProfiles.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20 * scale),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.family_restroom_rounded,
-                    size: 56 * scale,
-                    color: AppColors.textSecondary.withValues(alpha: 0.5),
-                  ),
-                  SizedBox(height: 16 * scale),
-                  Text(
-                    'Chưa có hồ sơ Mẹ hoặc Em bé',
-                    style: AppTextStyles.arimo(
-                      fontSize: 15 * scale,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  SizedBox(height: 8 * scale),
-                  Text(
-                    'Vui lòng thêm hồ sơ Mẹ và Em bé trong mục "Hồ sơ gia đình" trước khi đặt gói dịch vụ.',
-                    style: AppTextStyles.arimo(
-                      fontSize: 13 * scale,
-                      color: AppColors.textSecondary,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-
         return ListView(
           padding: EdgeInsets.all(16 * scale),
           children: [
-            // Note giải thích mục đích
             Container(
               margin: EdgeInsets.only(bottom: 14 * scale),
               padding: EdgeInsets.all(14 * scale),
@@ -167,7 +252,41 @@ class BookingStep2FamilyProfileSelection extends StatelessWidget {
                 ],
               ),
             ),
-            // Danh sách profiles
+
+            if (filteredProfiles.isEmpty)
+              Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20 * scale),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.family_restroom_rounded,
+                        size: 56 * scale,
+                        color: AppColors.textSecondary.withValues(alpha: 0.5),
+                      ),
+                      SizedBox(height: 16 * scale),
+                      Text(
+                        'Chưa có hồ sơ Mẹ hoặc Em bé',
+                        style: AppTextStyles.arimo(
+                          fontSize: 15 * scale,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      SizedBox(height: 8 * scale),
+                      Text(
+                        'Bạn có thể tạo trực tiếp bằng nút + ở bên dưới danh sách.',
+                        style: AppTextStyles.arimo(
+                          fontSize: 13 * scale,
+                          color: AppColors.textSecondary,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ...List.generate(filteredProfiles.length, (index) {
               final profile = filteredProfiles[index];
               final isSelected = selectedIds.contains(profile.id);
@@ -184,7 +303,7 @@ class BookingStep2FamilyProfileSelection extends StatelessWidget {
                     } else {
                       next.add(profile.id);
                     }
-                    onSelectionChanged(next);
+                    widget.onSelectionChanged(next);
                   },
                   child: Container(
                     padding: EdgeInsets.all(14 * scale),
@@ -232,7 +351,7 @@ class BookingStep2FamilyProfileSelection extends StatelessWidget {
                               ),
                               SizedBox(height: 4 * scale),
                               Text(
-                                 '${AppStrings.memberType}: ${_getMemberTypeLabel(profile)}',
+                                '${AppStrings.memberType}: ${_getMemberTypeLabel(profile)}',
                                 style: AppTextStyles.arimo(
                                   fontSize: 12 * scale,
                                   fontWeight: FontWeight.w500,
@@ -260,7 +379,7 @@ class BookingStep2FamilyProfileSelection extends StatelessWidget {
                             } else {
                               next.add(profile.id);
                             }
-                            onSelectionChanged(next);
+                            widget.onSelectionChanged(next);
                           },
                           activeColor: AppColors.primary,
                         ),
@@ -270,6 +389,27 @@ class BookingStep2FamilyProfileSelection extends StatelessWidget {
                 ),
               );
             }),
+            SizedBox(height: 12 * scale),
+            Align(
+              alignment: Alignment.center,
+              child: SizedBox(
+                width: 42 * scale,
+                height: 42 * scale,
+                child: Material(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(21 * scale),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(21 * scale),
+                    onTap: _isSubmitting ? null : () => _openCreateMemberForm(selectedIds),
+                    child: Icon(
+                      Icons.add_rounded,
+                      size: 24 * scale,
+                      color: AppColors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ],
         );
       },

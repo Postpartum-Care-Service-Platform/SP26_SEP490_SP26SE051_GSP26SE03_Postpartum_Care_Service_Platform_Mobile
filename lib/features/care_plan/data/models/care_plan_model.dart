@@ -31,14 +31,14 @@ class CarePlanModel extends Equatable {
 
   factory CarePlanModel.fromJson(Map<String, dynamic> json) {
     return CarePlanModel(
-      id: json['id'] as int,
-      packageId: json['packageId'] as int,
-      packageName: json['packageName'] as String,
-      activityId: json['activityId'] as int,
-      activityName: json['activityName'] as String,
-      dayNo: json['dayNo'] as int,
-      startTime: json['startTime'] as String,
-      endTime: json['endTime'] as String,
+      id: json['id'] as int? ?? 0,
+      packageId: json['packageId'] as int? ?? 0,
+      packageName: json['packageName'] as String? ?? '',
+      activityId: json['activityId'] as int? ?? 0,
+      activityName: json['activityName'] as String? ?? '',
+      dayNo: json['dayNo'] as int? ?? 0,
+      startTime: json['startTime'] as String? ?? '',
+      endTime: json['endTime'] as String? ?? '',
       instruction: json['instruction'] as String?,
       sortOrder: json['sortOrder'] as int? ?? 0,
       homeServiceDate: json['homeServiceDate'] != null

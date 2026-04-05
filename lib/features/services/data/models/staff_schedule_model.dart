@@ -26,8 +26,8 @@ class StaffScheduleModel extends StaffScheduleEntity {
         json['familyScheduleResponse'] as Map<String, dynamic>?;
 
     return StaffScheduleModel(
-      id: json['id'] as int,
-      staffId: json['staffId'] as String,
+      id: json['id'] as int? ?? 0,
+      staffId: json['staffId'] as String? ?? '',
       staffName: json['staffName'] as String?,
       managerId: json['managerId'] as String?,
       managerName: json['managerName'] as String?,
@@ -36,7 +36,7 @@ class StaffScheduleModel extends StaffScheduleEntity {
       familySchedule: familyScheduleJson == null
           ? null
           : FamilyScheduleModel.fromJson(familyScheduleJson),
-      isChecked: json['isChecked'] as bool,
+      isChecked: json['isChecked'] as bool? ?? false,
       checkedAt: checkedAt,
     );
   }
