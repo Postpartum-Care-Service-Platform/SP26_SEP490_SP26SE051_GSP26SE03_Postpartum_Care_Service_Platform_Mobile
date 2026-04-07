@@ -795,6 +795,14 @@ class AppStrings {
   static const String menuSelected = 'Menu đã chọn - {date}';
   static const String menuNotSaved = 'Chưa lưu';
   static const String menuWaitingCheckIn = 'Chờ check-in';
+  static const String menuCreateForMultipleDays = 'Tạo thực đơn nhiều ngày';
+  static const String menuApplyForAllDays = 'Áp dụng cho tất cả ngày';
+  static const String menuSelectDaysToApply = 'Chọn ngày áp dụng';
+  static const String menuSelectAtLeastOneDay = 'Vui lòng chọn ít nhất một ngày';
+  static const String menuBulkSaveSuccess = 'Đã lưu thực đơn cho {count} ngày';
+  static const String menuSelectMealsForBulk = 'Chọn thực đơn theo từng bữa';
+  static const String menuSelectAll = 'Chọn tất cả';
+  static const String menuClearSelection = 'Bỏ chọn';
 
   // Months
   static const String month1 = 'Tháng 1';
