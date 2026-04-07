@@ -10,7 +10,6 @@ import '../../../../core/routing/app_router.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
-import '../../../../core/widgets/app_loading.dart';
 import '../../../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../../../features/auth/presentation/bloc/auth_state.dart';
 import '../../../../features/package/presentation/bloc/package_bloc.dart';
@@ -46,9 +45,9 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(height: 8 * scale),
+                  SizedBox(height: 4 * scale),
                   const HomeHeader(),
-                  SizedBox(height: 10 * scale),
+                  SizedBox(height: 2 * scale),
                   _ArtDivider(scale: scale),
                   SizedBox(height: 18 * scale),
 
@@ -166,11 +165,11 @@ class _ArtDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final stroke = 1.2 * scale;
-    final waveHeight = 16 * scale;
+    final waveHeight = 14 * scale;
     final iconSize = 26 * scale;
 
     return SizedBox(
-      height: 40 * scale,
+      height: 34 * scale,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [

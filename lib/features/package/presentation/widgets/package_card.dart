@@ -191,11 +191,27 @@ class PackageCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: AppTextStyles.tinos(
-                          fontSize: package.packageName.length > 24
-                              ? 26 * scale
-                              : 28 * scale,
+                          fontSize: package.packageName.length > 22
+                              ? 24 * scale
+                              : 26 * scale,
                           color: AppColors.primary,
-                        ).copyWith(height: 1.05),
+                          fontWeight: FontWeight.w700,
+                        ).copyWith(
+                          height: 1.05,
+                          letterSpacing: 0.2 * scale,
+                          shadows: [
+                            Shadow(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              blurRadius: 8 * scale,
+                              offset: Offset(0, 0),
+                            ),
+                            Shadow(
+                              color: Colors.black.withValues(alpha: 0.28),
+                              blurRadius: 6 * scale,
+                              offset: Offset(0, 2 * scale),
+                            ),
+                          ],
+                        ),
                       ),
                       Text(
                         _formatPrice(package.basePrice),

@@ -48,13 +48,24 @@ class ConversationList extends StatelessWidget {
     return AppMarkdownUtils.buildPreviewText(text);
   }
 
-  String _getCustomerName(Map<String, dynamic> customerInfo) {
-    // Thử các key phổ biến cho customer name
-    return customerInfo['name']?.toString() ??
-        customerInfo['displayName']?.toString() ??
-        customerInfo['fullName']?.toString() ??
-        customerInfo['customerName']?.toString() ??
-        'Khách hàng';
+  String _resolveConversationTitle(ChatConversation conversation) {
+    String? pickValid(dynamic value) {
+      final text = value?.toString().trim();
+      if (text == null || text.isEmpty || text.toLowerCase() == 'null') {
+        return null;
+      }
+      return text;
+    }
+
+    final customerInfo = conversation.customerInfo;
+    final fromCustomerInfo = customerInfo != null
+        ? pickValid(customerInfo['name']) ??
+            pickValid(customerInfo['displayName']) ??
+            pickValid(customerInfo['fullName']) ??
+            pickValid(customerInfo['customerName'])
+        : null;
+
+    return fromCustomerInfo ?? pickValid(conversation.name) ?? 'Cuộc hội thoại';
   }
 
   List<ChatConversation> _filterConversations(
@@ -311,9 +322,7 @@ class ConversationList extends StatelessWidget {
                           conversation.id == state.selectedConversation?.id;
                       final lastMessage = _latestMessage(conversation);
                       final previewText = _buildPreviewText(lastMessage);
-                      final title = conversation.customerInfo != null
-                          ? _getCustomerName(conversation.customerInfo!)
-                          : conversation.name;
+                      final title = _resolveConversationTitle(conversation);
                       final timeText =
                           formatChatTime(_conversationTime(conversation));
                       return Material(

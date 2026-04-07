@@ -24,10 +24,7 @@ import 'service_action_card.dart';
 class ServiceDashboard extends StatelessWidget {
   final NowPackageModel nowPackage;
 
-  const ServiceDashboard({
-    super.key,
-    required this.nowPackage,
-  });
+  const ServiceDashboard({super.key, required this.nowPackage});
 
   bool get _isCheckoutExpired {
     final checkoutDate = nowPackage.checkoutDate;
@@ -50,25 +47,19 @@ class ServiceDashboard extends StatelessWidget {
     final scale = AppResponsive.scaleFactor(context);
     final isHomeService = nowPackage.type.toLowerCase() == 'home';
 
+    final basePadding = AppResponsive.pagePadding(context);
+
     return SafeArea(
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              AppColors.background,
-              AppColors.background,
-            ],
+            colors: [AppColors.background, AppColors.background],
           ),
         ),
         child: SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(
-            20 * scale,
-            10 * scale,
-            20 * scale,
-            24 * scale,
-          ),
+          padding: basePadding.copyWith(top: 10 * scale, bottom: 24 * scale),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -95,34 +86,21 @@ class ServiceDashboard extends StatelessWidget {
   }
 
   Widget _buildWelcomeSection(BuildContext context, double scale) {
-    final hour = DateTime.now().hour;
-    String greeting;
-    if (hour < 12) {
-      greeting = 'Chào buổi sáng';
-    } else if (hour < 18) {
-      greeting = 'Chào buổi chiều';
-    } else {
-      greeting = 'Chào buổi tối';
-    }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          greeting,
-          style: AppTextStyles.tinos(
-            fontSize: 28 * scale,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
+        SvgPicture.asset(
+          AppAssets.theJoyfulNestBrand,
+          width: 160 * scale,
+          height: 34 * scale,
+          fit: BoxFit.contain,
+          colorFilter: const ColorFilter.mode(
+            AppColors.primary,
+            BlendMode.srcIn,
           ),
         ),
-        Text(
-          AppStrings.servicesResortExperienceDescription,
-          style: AppTextStyles.arimo(
-            fontSize: 14 * scale,
-            color: AppColors.textSecondary,
-          ),
-        ),
+        SizedBox(height: 8 * scale),
+        _BrandDivider(scale: scale),
       ],
     );
   }
@@ -134,7 +112,7 @@ class ServiceDashboard extends StatelessWidget {
         // Banner Header
         _buildServicesBanner(context, scale),
         SizedBox(height: 20 * scale),
-        
+
         // Services Grid
         GridView.count(
           crossAxisCount: 2,
@@ -203,10 +181,7 @@ class ServiceDashboard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(20 * scale),
-        border: Border.all(
-          color: AppColors.borderLight,
-          width: 1.2 * scale,
-        ),
+        border: Border.all(color: AppColors.borderLight, width: 1.2 * scale),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -278,10 +253,7 @@ class ServiceDashboard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(20 * scale),
-        border: Border.all(
-          color: AppColors.borderLight,
-          width: 1.2 * scale,
-        ),
+        border: Border.all(color: AppColors.borderLight, width: 1.2 * scale),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -330,12 +302,111 @@ class ServiceDashboard extends StatelessWidget {
   }
 }
 
+class _BrandDivider extends StatelessWidget {
+  final double scale;
+
+  const _BrandDivider({required this.scale});
+
+  @override
+  Widget build(BuildContext context) {
+    final stroke = 1.2 * scale;
+    final waveHeight = 14 * scale;
+    final iconSize = 26 * scale;
+
+    return SizedBox(
+      height: 34 * scale,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: SizedBox(
+              height: waveHeight,
+              child: CustomPaint(
+                painter: _BrandSideWavePainter(
+                  color: AppColors.primary.withValues(alpha: 0.5),
+                  strokeWidth: stroke,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(width: 10 * scale),
+          SvgPicture.asset(
+            AppAssets.appIconFourth,
+            width: iconSize,
+            height: iconSize,
+            fit: BoxFit.contain,
+          ),
+          SizedBox(width: 10 * scale),
+          Expanded(
+            child: Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.identity()..rotateY(3.141592653589793),
+              child: SizedBox(
+                height: waveHeight,
+                child: CustomPaint(
+                  painter: _BrandSideWavePainter(
+                    color: AppColors.primary.withValues(alpha: 0.5),
+                    strokeWidth: stroke,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BrandSideWavePainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+
+  const _BrandSideWavePainter({required this.color, required this.strokeWidth});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round
+      ..isAntiAlias = true;
+
+    final centerY = size.height / 2;
+
+    final path = Path()
+      ..moveTo(0, centerY)
+      ..cubicTo(
+        size.width * 0.18,
+        centerY - size.height * 0.60,
+        size.width * 0.38,
+        centerY + size.height * 0.65,
+        size.width * 0.56,
+        centerY,
+      )
+      ..cubicTo(
+        size.width * 0.74,
+        centerY - size.height * 0.65,
+        size.width * 0.88,
+        centerY + size.height * 0.45,
+        size.width,
+        centerY,
+      );
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _BrandSideWavePainter oldDelegate) {
+    return oldDelegate.color != color || oldDelegate.strokeWidth != strokeWidth;
+  }
+}
+
 class _HomeServiceDashboard extends StatelessWidget {
   final NowPackageModel nowPackage;
 
-  const _HomeServiceDashboard({
-    required this.nowPackage,
-  });
+  const _HomeServiceDashboard({required this.nowPackage});
 
   DateTime _normalizeDate(DateTime date) {
     final local = date.toLocal();
@@ -371,8 +442,9 @@ class _HomeServiceDashboard extends StatelessWidget {
     }
 
     return BlocProvider(
-      create: (context) => InjectionContainer.familyScheduleBloc
-        ..add(const FamilyScheduleLoadRequested()),
+      create: (context) =>
+          InjectionContainer.familyScheduleBloc
+            ..add(const FamilyScheduleLoadRequested()),
       child: _HomeServiceDashboardContent(
         serviceDates: serviceDates,
         nowPackage: nowPackage,
@@ -592,9 +664,9 @@ class _HomeServiceDashboardContentState
               AppWidgets.primaryButton(
                 text: AppStrings.retry,
                 onPressed: () {
-                  context
-                      .read<FamilyScheduleBloc>()
-                      .add(const FamilyScheduleLoadRequested());
+                  context.read<FamilyScheduleBloc>().add(
+                    const FamilyScheduleLoadRequested(),
+                  );
                 },
               ),
             ],
@@ -637,4 +709,3 @@ class _HomeServiceDashboardContentState
     );
   }
 }
-
