@@ -144,15 +144,41 @@ class AmenityBloc extends Bloc<AmenityEvent, AmenityState> {
     AmenityRefresh event,
     Emitter<AmenityState> emit,
   ) async {
+    DateTime? checkInDate;
+    DateTime? checkOutDate;
+    if (state is AmenityLoaded) {
+      final currentState = state as AmenityLoaded;
+      checkInDate = currentState.checkInDate;
+      checkOutDate = currentState.checkOutDate;
+    }
+
     emit(const AmenityLoading());
 
     try {
-      final services = await getAmenityServicesUsecase();
-      final tickets = await getMyAmenityTicketsUsecase();
+      final results = await Future.wait([
+        getAmenityServicesUsecase(),
+        getMyAmenityTicketsUsecase(),
+      ]);
+      final services = results[0] as List<dynamic>;
+      final tickets = results[1] as List<dynamic>;
+
+      try {
+        final bookings = await getBookingsUsecase();
+        final activeBooking = bookings.firstWhere(
+          (b) => b.status == 'Confirmed' || b.status == 'InProgress',
+          orElse: () => bookings.isNotEmpty ? bookings.first : throw Exception('No booking'),
+        );
+        checkInDate = activeBooking.startDate;
+        checkOutDate = activeBooking.endDate;
+      } catch (_) {
+        // Ignore or keep previous value
+      }
 
       emit(AmenityLoaded(
-        services: services,
-        tickets: tickets,
+        services: services.cast(),
+        tickets: tickets.cast(),
+        checkInDate: checkInDate,
+        checkOutDate: checkOutDate,
       ));
     } catch (e) {
       emit(AmenityError(e.toString()));

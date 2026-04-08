@@ -75,7 +75,10 @@ class MessageBubble extends StatelessWidget {
         senderType == 'consultant';
 
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 6 * scale),
+      padding: EdgeInsets.only(
+        top: isFirstInGroup ? 6 * scale : 1.5 * scale,
+        bottom: isLastInGroup ? 6 * scale : 1.5 * scale,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         mainAxisAlignment: isMine ? MainAxisAlignment.end : MainAxisAlignment.start,

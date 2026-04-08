@@ -166,7 +166,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           ProfileMenuItem(
                             svgIcon: AppAssets.menuSecond,
-                            title: AppStrings.feedBackForService,
+                            title: AppStrings.feedbackTitleProfile,
                             onTap: () {
                               AppRouter.push(
                                 context,

@@ -7,6 +7,7 @@ import '../models/family_schedule_model.dart';
 abstract class FamilyScheduleRemoteDataSource {
   Future<List<FamilyScheduleModel>> getMySchedules();
   Future<List<FamilyScheduleModel>> getMySchedulesByDate(String date);
+  Future<FamilyScheduleModel> confirmDone(int scheduleId);
 
   /// Staff/Manager: Create family schedule when customer checks in
   Future<String> createFamilySchedule({
@@ -49,6 +50,22 @@ class FamilyScheduleRemoteDataSourceImpl
           .map((json) =>
               FamilyScheduleModel.fromJson(json as Map<String, dynamic>))
           .toList();
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  @override
+  Future<FamilyScheduleModel> confirmDone(int scheduleId) async {
+    try {
+      final response = await dio.patch(
+        ApiEndpoints.confirmFamilyScheduleDone(scheduleId),
+      );
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        return FamilyScheduleModel.fromJson(data);
+      }
+      throw Exception('Dữ liệu xác nhận lịch không hợp lệ');
     } on DioException catch (e) {
       throw _handleError(e);
     }

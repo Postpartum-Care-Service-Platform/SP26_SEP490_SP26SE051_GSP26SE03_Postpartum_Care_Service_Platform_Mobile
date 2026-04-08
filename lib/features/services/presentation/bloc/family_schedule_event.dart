@@ -27,3 +27,13 @@ class FamilyScheduleLoadByDateRequested extends FamilyScheduleEvent {
   @override
   List<Object?> get props => [date];
 }
+
+/// Customer confirms a schedule marked as StaffDone
+class FamilyScheduleConfirmDoneRequested extends FamilyScheduleEvent {
+  final int scheduleId;
+
+  const FamilyScheduleConfirmDoneRequested(this.scheduleId);
+
+  @override
+  List<Object?> get props => [scheduleId];
+}

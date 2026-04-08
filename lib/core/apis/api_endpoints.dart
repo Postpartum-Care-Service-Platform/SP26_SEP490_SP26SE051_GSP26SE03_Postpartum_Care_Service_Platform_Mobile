@@ -10,8 +10,7 @@ class ApiEndpoints {
   static String chatConversationById(int id) => '/Chat/conversations/$id';
   static String chatConversationMessages(int id) =>
       '/Chat/conversations/$id/messages';
-  static String chatConversationStaffMessage(int id) =>
-      '/Chat/conversations/$id/staff-message';
+
   static String chatConversationMarkRead(int id) =>
       '/Chat/conversations/$id/messages/read';
   static String chatConversationRequestSupport(int id) =>
@@ -296,6 +295,10 @@ class ApiEndpoints {
 
   /// Create family schedule when customer checks in
   static const String createFamilySchedule = '/FamilySchedule';
+
+  /// Customer confirms staff-done schedule
+  static String confirmFamilyScheduleDone(int scheduleId) =>
+      '/FamilySchedule/$scheduleId/confirm-done';
 
   // ==========================================
   // Feedback endpoints

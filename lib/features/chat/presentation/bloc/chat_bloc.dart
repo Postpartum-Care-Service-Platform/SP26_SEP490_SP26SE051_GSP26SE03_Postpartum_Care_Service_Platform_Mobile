@@ -299,7 +299,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       selectedConversation: optimisticConversation,
       conversations: optimisticList,
       sendStatus: ChatSendStatus.sending,
-      isAiTyping: true,
+      isAiTyping: !selected.hasActiveSupport && !event.isStaff,
       errorMessage: null,
     ));
 
@@ -342,7 +342,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       // 1. Has human support (toStaffChannel = true) - no AI reply expected
       // 2. Or AI message is already in the result (AI replied immediately)
       // Otherwise, keep isAiTyping true until AI message arrives via Hub
-      final shouldStopTyping = selected.hasActiveSupport || result.aiMessage != null;
+      final shouldStopTyping = selected.hasActiveSupport || event.isStaff || result.aiMessage != null;
 
       emit(state.copyWith(
         selectedConversation: updatedConversation,

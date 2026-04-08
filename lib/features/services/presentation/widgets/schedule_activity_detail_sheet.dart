@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_date_time_utils.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
+import '../../../../core/widgets/app_widgets.dart';
+import '../bloc/family_schedule_bloc.dart';
+import '../bloc/family_schedule_event.dart';
 import '../../domain/entities/family_schedule_entity.dart';
 import '../../domain/entities/staff_schedule_entity.dart';
 
@@ -18,11 +22,27 @@ class ScheduleActivityDetailSheet extends StatelessWidget {
   });
 
   static void show(BuildContext context, FamilyScheduleEntity schedule) {
+    FamilyScheduleBloc? bloc;
+    try {
+      bloc = context.read<FamilyScheduleBloc>();
+    } catch (_) {
+      // Ignore if not found
+    }
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => ScheduleActivityDetailSheet(schedule: schedule),
+      builder: (sheetContext) {
+        Widget sheet = ScheduleActivityDetailSheet(schedule: schedule);
+        if (bloc != null) {
+          sheet = BlocProvider.value(
+            value: bloc,
+            child: sheet,
+          );
+        }
+        return sheet;
+      },
     );
   }
 
@@ -47,43 +67,51 @@ class ScheduleActivityDetailSheet extends StatelessWidget {
           return ListView(
             controller: scrollController,
             padding: EdgeInsets.fromLTRB(
-              18 * scale,
-              10 * scale,
-              18 * scale,
-              24 * scale,
+              16 * scale,
+              8 * scale,
+              16 * scale,
+              20 * scale,
             ),
             children: [
               _buildHandle(scale),
-              SizedBox(height: 8 * scale),
+              SizedBox(height: 6 * scale),
               _buildHeader(context, scale),
-              SizedBox(height: 14 * scale),
+              SizedBox(height: 10 * scale),
               _buildMetaSummary(scale),
-              SizedBox(height: 18 * scale),
+              SizedBox(height: 14 * scale),
               if (schedule.description?.trim().isNotEmpty ?? false) ...[
                 _buildSectionTitle(
                   title: 'Mô tả công việc',
                   icon: Icons.article_outlined,
                   scale: scale,
                 ),
-                SizedBox(height: 10 * scale),
+                SizedBox(height: 8 * scale),
                 _buildDescriptionCard(schedule.description!.trim(), scale),
-                SizedBox(height: 18 * scale),
+                SizedBox(height: 14 * scale),
               ],
               _buildSectionTitle(
                 title: AppStrings.scheduleStaffAssigned,
                 icon: Icons.groups_2_outlined,
                 scale: scale,
               ),
-              SizedBox(height: 10 * scale),
+              SizedBox(height: 8 * scale),
               _buildStaffSection(scale),
-              SizedBox(height: 18 * scale),
+              SizedBox(height: 14 * scale),
               _buildSectionTitle(
                 title: AppStrings.scheduleNote,
                 icon: Icons.sticky_note_2_outlined,
                 scale: scale,
               ),
-              SizedBox(height: 10 * scale),
-              _buildNoteSection(scale),
+              SizedBox(height: 8 * scale),
+              _buildNoteSection(context, scale),
+              if (_isStaffDone) ...[
+                SizedBox(height: 24 * scale),
+                AppWidgets.primaryButton(
+                  text: 'Xác nhận hoàn thành',
+                  onPressed: () => _showConfirmDialog(context, scale),
+                  width: double.infinity,
+                ),
+              ],
             ],
           );
         },
@@ -117,29 +145,31 @@ class ScheduleActivityDetailSheet extends StatelessWidget {
                     ? schedule.title!.trim()
                     : schedule.activity,
                 style: AppTextStyles.tinos(
-                  fontSize: 24 * scale,
+                  fontSize: 22 * scale,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,
                 ),
               ),
               SizedBox(height: 8 * scale),
-              Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 10 * scale,
-                  vertical: 5 * scale,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(8 * scale),
-                ),
-                child: Text(
-                  schedule.timeRange,
-                  style: AppTextStyles.arimo(
-                    fontSize: 13 * scale,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
+              Wrap(
+                spacing: 8 * scale,
+                runSpacing: 6 * scale,
+                children: [
+                  _buildHeaderChip(
+                    icon: Icons.access_time_rounded,
+                    text: schedule.timeRange,
+                    textColor: AppColors.primary,
+                    bgColor: AppColors.primary.withValues(alpha: 0.14),
+                    scale: scale,
                   ),
-                ),
+                  _buildHeaderChip(
+                    icon: Icons.flag_outlined,
+                    text: _statusText,
+                    textColor: _statusColor,
+                    bgColor: _statusColor.withValues(alpha: 0.12),
+                    scale: scale,
+                  ),
+                ],
               ),
             ],
           ),
@@ -156,6 +186,119 @@ class ScheduleActivityDetailSheet extends StatelessWidget {
     );
   }
 
+  void _showConfirmDialog(BuildContext context, double scale) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          'Xác nhận hoàn thành',
+          style: AppTextStyles.tinos(
+            fontSize: 20 * scale,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        content: Text(
+          'Bạn có chắc chắn xác nhận nhân viên đã hoàn thành công việc này không?',
+          style: AppTextStyles.arimo(
+            fontSize: 14 * scale,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16 * scale),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(
+              'Hủy',
+              style: AppTextStyles.arimo(
+                fontSize: 14 * scale,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(ctx).pop(); // Close dialog
+              Navigator.of(context).pop(); // Close bottom sheet
+              context.read<FamilyScheduleBloc>().add(
+                    FamilyScheduleConfirmDoneRequested(schedule.id),
+                  );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8 * scale),
+              ),
+            ),
+            child: Text(
+              'Xác nhận',
+              style: AppTextStyles.arimo(
+                fontSize: 14 * scale,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _openImageViewer(BuildContext context, List<String> images, int initialIndex) {
+    final pageController = PageController(initialPage: initialIndex);
+
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.92),
+      builder: (dialogContext) {
+        return Dialog.fullscreen(
+          backgroundColor: Colors.black.withValues(alpha: 0.96),
+          child: SafeArea(
+            child: Stack(
+              children: [
+                PageView.builder(
+                  controller: pageController,
+                  itemCount: images.length,
+                  itemBuilder: (context, index) {
+                    return InteractiveViewer(
+                      minScale: 0.8,
+                      maxScale: 4.0,
+                      child: Center(
+                        child: Image.network(
+                          images[index],
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) => Icon(
+                            Icons.broken_image_outlined,
+                            color: AppColors.white,
+                            size: 52,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: IconButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(),
+                    icon: const Icon(Icons.close_rounded),
+                    color: AppColors.white,
+                    tooltip: 'Đóng',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildMetaSummary(double scale) {
     final items = <_MetaItem>[
       _MetaItem(
@@ -163,11 +306,7 @@ class ScheduleActivityDetailSheet extends StatelessWidget {
         label: 'Đối tượng',
         value: _targetText,
       ),
-      _MetaItem(
-        icon: Icons.flag_outlined,
-        label: 'Trạng thái',
-        value: _statusText,
-      ),
+
       _MetaItem(
         icon: Icons.calendar_today_outlined,
         label: AppStrings.scheduleDay,
@@ -235,6 +374,40 @@ class ScheduleActivityDetailSheet extends StatelessWidget {
     );
   }
 
+  Widget _buildHeaderChip({
+    required IconData icon,
+    required String text,
+    required Color textColor,
+    required Color bgColor,
+    required double scale,
+  }) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: 10 * scale,
+        vertical: 5 * scale,
+      ),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13 * scale, color: textColor),
+          SizedBox(width: 5 * scale),
+          Text(
+            text,
+            style: AppTextStyles.arimo(
+              fontSize: 12 * scale,
+              fontWeight: FontWeight.w700,
+              color: textColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSectionTitle({
     required String title,
     required IconData icon,
@@ -247,7 +420,7 @@ class ScheduleActivityDetailSheet extends StatelessWidget {
         Text(
           title,
           style: AppTextStyles.tinos(
-            fontSize: 22 * scale,
+            fontSize: 20 * scale,
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
           ),
@@ -385,12 +558,6 @@ class ScheduleActivityDetailSheet extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.description_outlined,
-            size: 18 * scale,
-            color: AppColors.textSecondary,
-          ),
-          SizedBox(width: 10 * scale),
           Expanded(
             child: Text(
               description,
@@ -405,9 +572,11 @@ class ScheduleActivityDetailSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildNoteSection(double scale) {
+  Widget _buildNoteSection(BuildContext context, double scale) {
     final note = schedule.note?.trim() ?? '';
-    if (note.isEmpty) {
+    final allImages = schedule.staffSchedules.expand((s) => s.images).toList();
+
+    if (note.isEmpty && allImages.isEmpty) {
       return _buildEmptyCard(
         icon: Icons.note_alt_outlined,
         message: AppStrings.scheduleNoNote,
@@ -422,27 +591,84 @@ class ScheduleActivityDetailSheet extends StatelessWidget {
         color: AppColors.background,
         borderRadius: BorderRadius.circular(14 * scale),
         border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.24),
+          color: AppColors.textSecondary.withValues(alpha: 0.24),
         ),
       ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.sticky_note_2_outlined,
-            size: 18 * scale,
-            color: AppColors.primary,
-          ),
-          SizedBox(width: 10 * scale),
-          Expanded(
-            child: Text(
-              note,
-              style: AppTextStyles.arimo(
-                fontSize: 14 * scale,
-                color: AppColors.textPrimary,
-              ).copyWith(height: 1.45),
+          if (note.isNotEmpty)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    note,
+                    style: AppTextStyles.arimo(
+                      fontSize: 14 * scale,
+                      color: AppColors.textPrimary,
+                    ).copyWith(height: 1.45),
+                  ),
+                ),
+              ],
             ),
-          ),
+          if (allImages.isNotEmpty) ...[
+            if (note.isNotEmpty) SizedBox(height: 16 * scale),
+            SizedBox(
+              height: 90 * scale,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: allImages.length,
+                separatorBuilder: (context, index) => SizedBox(width: 8 * scale),
+                itemBuilder: (context, index) {
+                  return GestureDetector(
+                    onTap: () => _openImageViewer(context, allImages, index),
+                    child: Container(
+                      width: 90 * scale,
+                      height: 90 * scale,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8 * scale),
+                        border: Border.all(
+                          color: AppColors.borderLight,
+                          width: 1,
+                        ),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8 * scale),
+                        child: Image.network(
+                          allImages[index],
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
+                              color: AppColors.background,
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  color: AppColors.primary,
+                                  strokeWidth: 2,
+                                  value: loadingProgress.expectedTotalBytes != null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                          loadingProgress.expectedTotalBytes!
+                                      : null,
+                                ),
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            color: AppColors.background,
+                            child: Icon(
+                              Icons.error_outline,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -514,12 +740,25 @@ class ScheduleActivityDetailSheet extends StatelessWidget {
     return schedule.target;
   }
 
+  Color get _statusColor {
+    if (schedule.isCompleted || _isStaffDone) return AppColors.verified;
+    if (schedule.isMissed) return AppColors.scheduleMissed;
+    if (schedule.isCancelled) return AppColors.scheduleCancelled;
+    return AppColors.textSecondary;
+  }
+
   String get _statusText {
     if (schedule.isCompleted) return AppStrings.scheduleCompleted;
+    if (_isStaffDone) return 'Nhân viên đã Check';
     if (schedule.isMissed) return AppStrings.scheduleMissed;
     if (schedule.isCancelled) return AppStrings.scheduleCancelled;
+
+    final raw = schedule.status.trim().toLowerCase();
+    if (raw == 'scheduled') return 'Đã lên lịch';
     return schedule.status;
   }
+
+  bool get _isStaffDone => schedule.status.trim().toLowerCase() == 'staffdone';
 
   String _formatDateTime(DateTime dateTime) {
     return AppDateTimeUtils.formatVietnamDateTime(dateTime);

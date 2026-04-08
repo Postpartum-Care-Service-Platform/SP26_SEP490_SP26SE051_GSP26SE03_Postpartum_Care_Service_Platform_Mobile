@@ -31,9 +31,7 @@ class _AmenityScreenState extends State<AmenityScreen> {
   void initState() {
     super.initState();
     // Load services and tickets on init
-    context.read<AmenityBloc>()
-      ..add(const AmenityServicesLoadRequested())
-      ..add(const MyAmenityTicketsLoadRequested());
+    context.read<AmenityBloc>().add(const AmenityRefresh());
   }
 
   void _handleCreateTicket() {

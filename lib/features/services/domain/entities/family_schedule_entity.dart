@@ -7,7 +7,7 @@ class FamilyScheduleEntity extends Equatable {
   final String customerId;
   final String? customerName;
   final String? customerAvatar;
-  final int packageId;
+  final int? packageId;
   final String? packageName;
   final int? roomId;
   final String? roomName;
@@ -32,8 +32,8 @@ class FamilyScheduleEntity extends Equatable {
     required this.customerId,
     required this.customerName,
     this.customerAvatar,
-    required this.packageId,
-    required this.packageName,
+    this.packageId,
+    this.packageName,
     this.roomId,
     this.roomName,
     required this.workDate,
@@ -55,6 +55,9 @@ class FamilyScheduleEntity extends Equatable {
 
   /// Check if activity is completed (Done)
   bool get isCompleted => status.toLowerCase() == 'done';
+
+  /// Check if activity was marked done by staff and waiting customer confirmation
+  bool get isStaffDone => status.toLowerCase() == 'staffdone';
 
   /// Check if activity is missed
   bool get isMissed => status.toLowerCase() == 'missed';

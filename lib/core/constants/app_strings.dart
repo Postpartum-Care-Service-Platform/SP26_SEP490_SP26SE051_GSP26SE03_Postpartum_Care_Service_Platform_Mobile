@@ -696,6 +696,7 @@ class AppStrings {
 
   // Feedback Screen
   static const String feedbackTitle = 'Đánh giá dịch vụ';
+  static const String feedbackTitleProfile = 'Đánh giá trước đây';
   static const String feedbackWrite = 'Viết feedback';
   static const String feedbackWriteFirst = 'Viết feedback đầu tiên';
   static const String feedbackNoFeedback = 'Chưa có feedback nào';

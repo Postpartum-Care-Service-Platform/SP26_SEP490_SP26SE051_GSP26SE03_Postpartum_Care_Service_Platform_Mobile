@@ -65,7 +65,7 @@ class ConversationList extends StatelessWidget {
             pickValid(customerInfo['customerName'])
         : null;
 
-    return fromCustomerInfo ?? pickValid(conversation.name) ?? 'Cuộc hội thoại';
+    return pickValid(conversation.name) ?? fromCustomerInfo ?? 'Cuộc hội thoại';
   }
 
   List<ChatConversation> _filterConversations(

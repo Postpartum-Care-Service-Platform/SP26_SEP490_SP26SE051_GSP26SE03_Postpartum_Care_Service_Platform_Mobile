@@ -136,6 +136,7 @@ import '../../features/services/domain/repositories/family_schedule_repository.d
 import '../../features/services/domain/repositories/staff_schedule_repository.dart';
 import '../../features/services/domain/usecases/get_my_schedules_usecase.dart';
 import '../../features/services/domain/usecases/get_my_schedules_by_date_usecase.dart';
+import '../../features/services/domain/usecases/confirm_family_schedule_done_usecase.dart';
 import '../../features/services/domain/usecases/get_my_staff_schedules_by_date_range_usecase.dart';
 import '../../features/services/presentation/bloc/family_schedule_bloc.dart';
 import '../../features/services/presentation/bloc/staff_schedule/staff_schedule_bloc.dart';
@@ -471,6 +472,8 @@ class InjectionContainer {
       GetMySchedulesUsecase(familyScheduleRepository);
   static GetMySchedulesByDateUsecase get _getMySchedulesByDateUsecase =>
       GetMySchedulesByDateUsecase(familyScheduleRepository);
+  static ConfirmFamilyScheduleDoneUsecase get _confirmFamilyScheduleDoneUsecase =>
+      ConfirmFamilyScheduleDoneUsecase(familyScheduleRepository);
   static GetMyStaffSchedulesByDateRangeUsecase
   get _getMyStaffSchedulesByDateRangeUsecase =>
       GetMyStaffSchedulesByDateRangeUsecase(staffScheduleRepository);
@@ -623,6 +626,7 @@ class InjectionContainer {
   static FamilyScheduleBloc get familyScheduleBloc => FamilyScheduleBloc(
     getMySchedulesUsecase: _getMySchedulesUsecase,
     getMySchedulesByDateUsecase: _getMySchedulesByDateUsecase,
+    confirmFamilyScheduleDoneUsecase: _confirmFamilyScheduleDoneUsecase,
   );
 
   static StaffScheduleBloc get staffScheduleBloc => StaffScheduleBloc(

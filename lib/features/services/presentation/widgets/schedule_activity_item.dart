@@ -23,6 +23,7 @@ class ScheduleActivityItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
     final isCompleted = schedule.isCompleted; // Done status
+    final isStaffDone = schedule.isStaffDone;
     final isMissed = schedule.isMissed;
     final isCancelled = schedule.isCancelled;
     final isForMom = schedule.isForMom;
@@ -42,11 +43,13 @@ class ScheduleActivityItem extends StatelessWidget {
                 shape: BoxShape.circle,
                 color: isCompleted
                     ? AppColors.verified
-                    : isMissed
-                        ? AppColors.scheduleMissed
-                        : isCancelled
-                            ? AppColors.scheduleCancelled
-                            : AppColors.textSecondary,
+                    : isStaffDone
+                        ? AppColors.primary
+                        : isMissed
+                            ? AppColors.scheduleMissed
+                            : isCancelled
+                                ? AppColors.scheduleCancelled
+                                : AppColors.textSecondary,
               ),
             ),
             // Line (if not last) - shorter
@@ -79,21 +82,25 @@ class ScheduleActivityItem extends StatelessWidget {
               decoration: BoxDecoration(
                 color: isCompleted
                     ? AppColors.verified.withValues(alpha: 0.06)
-                    : isMissed
-                        ? AppColors.scheduleMissed.withValues(alpha: 0.04)
-                        : isCancelled
-                            ? AppColors.scheduleCancelled.withValues(alpha: 0.04)
-                            : AppColors.white,
+                    : isStaffDone
+                        ? AppColors.primary.withValues(alpha: 0.04)
+                        : isMissed
+                            ? AppColors.scheduleMissed.withValues(alpha: 0.04)
+                            : isCancelled
+                                ? AppColors.scheduleCancelled.withValues(alpha: 0.04)
+                                : AppColors.white,
                 borderRadius: BorderRadius.circular(12 * scale),
                 border: Border.all(
                   color: isCompleted
                       ? AppColors.verified.withValues(alpha: 0.3)
-                      : isMissed
-                          ? AppColors.scheduleMissed.withValues(alpha: 0.2)
-                          : isCancelled
-                              ? AppColors.scheduleCancelled.withValues(alpha: 0.2)
-                              : AppColors.textPrimary.withValues(alpha: 0.2),
-                  width: 1,
+                      : isStaffDone
+                          ? AppColors.primary
+                          : isMissed
+                              ? AppColors.scheduleMissed.withValues(alpha: 0.2)
+                              : isCancelled
+                                  ? AppColors.scheduleCancelled.withValues(alpha: 0.2)
+                                  : AppColors.textPrimary.withValues(alpha: 0.2),
+                  width: isStaffDone ? 1.5 : 1,
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -119,7 +126,9 @@ class ScheduleActivityItem extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: isCompleted
                             ? AppColors.verified.withValues(alpha: 0.12)
-                            : AppColors.textSecondary.withValues(alpha: 0.12),
+                            : isStaffDone
+                                ? AppColors.primary.withValues(alpha: 0.12)
+                                : AppColors.textSecondary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(6 * scale),
                       ),
                       child: Text(
@@ -129,7 +138,9 @@ class ScheduleActivityItem extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                           color: isCompleted
                               ? AppColors.verified
-                              : AppColors.textSecondary,
+                              : isStaffDone
+                                  ? AppColors.primary
+                                  : AppColors.textSecondary,
                         ),
                       ),
                     ),
@@ -143,12 +154,14 @@ class ScheduleActivityItem extends StatelessWidget {
                           _buildTargetIcon(
                             AppAssets.appIconFirst,
                             isCompleted,
+                            isStaffDone,
                             scale,
                           ),
                           SizedBox(width: 4 * scale),
                           _buildTargetIcon(
                             AppAssets.appIconSecond,
                             isCompleted,
+                            isStaffDone,
                             scale,
                           ),
                         ],
@@ -158,6 +171,7 @@ class ScheduleActivityItem extends StatelessWidget {
                       _buildTargetIcon(
                         isForMom ? AppAssets.appIconFirst : AppAssets.appIconSecond,
                         isCompleted,
+                        isStaffDone,
                         scale,
                       ),
                   ],
@@ -173,11 +187,13 @@ class ScheduleActivityItem extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                     color: isCompleted
                         ? AppColors.verified
-                        : isMissed
-                            ? AppColors.scheduleMissed
-                            : isCancelled
-                                ? AppColors.scheduleCancelled
-                                : AppColors.textPrimary,
+                        : isStaffDone
+                            ? AppColors.primary
+                            : isMissed
+                                ? AppColors.scheduleMissed
+                                : isCancelled
+                                    ? AppColors.scheduleCancelled
+                                    : AppColors.textPrimary,
                   ).copyWith(
                     decoration: (isMissed || isCancelled)
                         ? TextDecoration.lineThrough
@@ -196,7 +212,7 @@ class ScheduleActivityItem extends StatelessWidget {
   }
 
   /// Build target icon widget
-  Widget _buildTargetIcon(String assetPath, bool isCompleted, double scale) {
+  Widget _buildTargetIcon(String assetPath, bool isCompleted, bool isStaffDone, double scale) {
     return Container(
       width: 44 * scale,
       height: 44 * scale,
@@ -211,9 +227,9 @@ class ScheduleActivityItem extends StatelessWidget {
       child: SvgPicture.asset(
         assetPath,
         fit: BoxFit.contain,
-        colorFilter: isCompleted
+        colorFilter: (isCompleted || isStaffDone)
             ? ColorFilter.mode(
-                AppColors.verified,
+                isCompleted ? AppColors.verified : AppColors.primary,
                 BlendMode.srcIn,
               )
             : null,

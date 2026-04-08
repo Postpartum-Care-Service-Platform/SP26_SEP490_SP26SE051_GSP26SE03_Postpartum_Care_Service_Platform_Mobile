@@ -13,6 +13,9 @@ class StaffScheduleEntity extends Equatable {
   final FamilyScheduleEntity? familySchedule;
   final bool isChecked;
   final DateTime? checkedAt;
+  final int? roomId;
+  final String? roomName;
+  final List<String> images;
 
   const StaffScheduleEntity({
     required this.id,
@@ -25,6 +28,9 @@ class StaffScheduleEntity extends Equatable {
     this.familySchedule,
     required this.isChecked,
     this.checkedAt,
+    this.roomId,
+    this.roomName,
+    this.images = const [],
   });
 
   @override
@@ -39,5 +45,8 @@ class StaffScheduleEntity extends Equatable {
         familySchedule,
         isChecked,
         checkedAt,
+        roomId,
+        roomName,
+        images,
       ];
 }

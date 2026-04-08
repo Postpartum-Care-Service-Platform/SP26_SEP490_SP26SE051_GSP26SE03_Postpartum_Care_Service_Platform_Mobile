@@ -84,7 +84,7 @@ class ConversationDetail extends StatelessWidget {
 
             final messages = List<ChatMessage>.from(conversation.messages)
               ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
-            final showTyping = state.isAiTyping;
+            final showTyping = state.isAiTyping && !conversation.hasActiveSupport;
 
             final content = Column(
               mainAxisSize: MainAxisSize.min,
@@ -181,16 +181,21 @@ class ConversationDetail extends StatelessWidget {
 
                         final message = messages[messageIndex];
                         final sender = message.senderType.toLowerCase();
-                        final prevSender = messageIndex > 0
-                            ? messages[messageIndex - 1].senderType
-                                  .toLowerCase()
-                            : null;
-                        final nextSender = messageIndex < messages.length - 1
-                            ? messages[messageIndex + 1].senderType
-                                  .toLowerCase()
-                            : null;
-                        final isFirstInGroup = prevSender != sender;
-                        final isLastInGroup = nextSender != sender;
+
+                        bool isDifferentGroup(ChatMessage a, ChatMessage b) {
+                          if (a.senderType.toLowerCase() != b.senderType.toLowerCase()) return true;
+                          return a.createdAt.year != b.createdAt.year ||
+                                 a.createdAt.month != b.createdAt.month ||
+                                 a.createdAt.day != b.createdAt.day ||
+                                 a.createdAt.hour != b.createdAt.hour ||
+                                 a.createdAt.minute != b.createdAt.minute;
+                        }
+
+                        final prevMessage = messageIndex > 0 ? messages[messageIndex - 1] : null;
+                        final nextMessage = messageIndex < messages.length - 1 ? messages[messageIndex + 1] : null;
+
+                        final isFirstInGroup = prevMessage == null || isDifferentGroup(message, prevMessage);
+                        final isLastInGroup = nextMessage == null || isDifferentGroup(message, nextMessage);
 
                         final isMine = sender == 'customer';
                         final isAI = sender == 'ai';

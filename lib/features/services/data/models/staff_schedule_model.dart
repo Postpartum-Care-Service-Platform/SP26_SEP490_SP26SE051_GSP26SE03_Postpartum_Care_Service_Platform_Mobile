@@ -15,6 +15,9 @@ class StaffScheduleModel extends StaffScheduleEntity {
     required super.isChecked,
     super.checkedAt,
     super.staffAvatar,
+    super.roomId,
+    super.roomName,
+    super.images,
   });
 
   factory StaffScheduleModel.fromJson(Map<String, dynamic> json) {
@@ -24,6 +27,10 @@ class StaffScheduleModel extends StaffScheduleEntity {
     );
     final familyScheduleJson =
         json['familyScheduleResponse'] as Map<String, dynamic>?;
+    final imagesList = (json['images'] as List<dynamic>?)
+            ?.map((e) => e.toString())
+            .toList() ??
+        const [];
 
     return StaffScheduleModel(
       id: json['id'] as int? ?? 0,
@@ -38,6 +45,9 @@ class StaffScheduleModel extends StaffScheduleEntity {
           : FamilyScheduleModel.fromJson(familyScheduleJson),
       isChecked: json['isChecked'] as bool? ?? false,
       checkedAt: checkedAt,
+      roomId: json['roomId'] as int?,
+      roomName: json['roomName'] as String?,
+      images: imagesList,
     );
   }
 
@@ -56,6 +66,9 @@ class StaffScheduleModel extends StaffScheduleEntity {
       'isChecked': isChecked,
       'checkedAt': checkedAt?.toIso8601String(),
       'staffAvatar': staffAvatar,
+      'roomId': roomId,
+      'roomName': roomName,
+      'images': images,
     };
   }
 
@@ -71,6 +84,9 @@ class StaffScheduleModel extends StaffScheduleEntity {
       familySchedule: familySchedule,
       isChecked: isChecked,
       checkedAt: checkedAt,
+      roomId: roomId,
+      roomName: roomName,
+      images: images,
     );
   }
 }

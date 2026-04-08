@@ -69,9 +69,7 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
     bool toStaffChannel = false,
   }) async {
     try {
-      final endpoint = toStaffChannel
-          ? ApiEndpoints.chatConversationStaffMessage(conversationId)
-          : ApiEndpoints.chatConversationMessages(conversationId);
+      final endpoint = ApiEndpoints.chatConversationMessages(conversationId);
 
       final response = await _dio.post(
         endpoint,
