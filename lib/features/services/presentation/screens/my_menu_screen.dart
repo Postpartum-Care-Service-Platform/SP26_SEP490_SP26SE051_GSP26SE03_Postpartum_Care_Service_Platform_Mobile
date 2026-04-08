@@ -757,14 +757,7 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
                                     color: AppColors.textPrimary,
                                   ),
                                 ),
-                                SizedBox(height: 8 * scale),
-                                Text(
-                                  '${AppStrings.homeServiceSelectedDays} ${selectedDates.length} ${AppStrings.homeServiceDays}',
-                                  style: AppTextStyles.arimo(
-                                    fontSize: 13 * scale,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
+
                                 if (sortedSelectedDates.isNotEmpty) ...[
                                   SizedBox(height: 8 * scale),
                                   Builder(
@@ -893,17 +886,6 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
                                         ],
                                       );
                                     },
-                                  ),
-                                  SizedBox(height: 6 * scale),
-                                  Align(
-                                    alignment: Alignment.centerLeft,
-                                    child: Text(
-                                      'Dấu tích là ngày đã chọn món',
-                                      style: AppTextStyles.arimo(
-                                        fontSize: 11 * scale,
-                                        color: AppColors.textSecondary,
-                                      ),
-                                    ),
                                   ),
                                 ],
                               ],
