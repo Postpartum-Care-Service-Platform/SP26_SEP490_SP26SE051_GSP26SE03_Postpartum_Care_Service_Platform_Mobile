@@ -183,14 +183,15 @@ class MenuBloc extends Bloc<MenuEvent, MenuState> {
       final updatedRecords = await updateMenuRecordsUsecase(requestData);
       if (state is MenuLoaded) {
         final currentState = state as MenuLoaded;
+        final updatedById = <int, MenuRecordEntity>{
+          for (final item in updatedRecords) item.id: item,
+        };
+
         // Update existing records in the list
-        final updatedList = currentState.myMenuRecords.map((record) {
-          final updated = updatedRecords.firstWhere(
-            (r) => r.id == record.id,
-            orElse: () => record,
-          );
-          return updated;
-        }).toList();
+        final updatedList = currentState.myMenuRecords
+            .map((record) => updatedById[record.id] ?? record)
+            .toList();
+
         emit(currentState.copyWith(myMenuRecords: updatedList));
       }
     } catch (e) {
@@ -244,9 +245,11 @@ class MenuBloc extends Bloc<MenuEvent, MenuState> {
       final createRequests = <Map<String, dynamic>>[];
       final updateRequests = <Map<String, dynamic>>[];
 
-      // Get menus and all menu records from state to find menuTypeId
+      // Get menus from state
       final menus = state is MenuLoaded ? (state as MenuLoaded).menus : <MenuEntity>[];
-      final allMenuRecords = state is MenuLoaded ? (state as MenuLoaded).myMenuRecords : <MenuRecordEntity>[];
+
+      // Always fetch latest records from server to avoid stale state causing duplicate create
+      final allMenuRecords = await getMyMenuRecordsUsecase();
 
       for (final req in event.requests) {
         // Find menu to get menuTypeId

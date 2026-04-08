@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -17,6 +18,7 @@ import '../bloc/menu_event.dart';
 import '../bloc/menu_state.dart';
 import '../widgets/menu_calendar_picker.dart';
 import '../widgets/menu_selection_drawer.dart';
+import '../widgets/menu_list_drawer.dart';
 import '../widgets/saved_menu_records_card.dart';
 import '../widgets/unsaved_menu_selections_card.dart';
 import '../../domain/entities/menu_entity.dart';
@@ -39,6 +41,7 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
   final Map<int, MenuEntity> _unsavedSelections = {}; // menuTypeId -> MenuEntity
   // Track deletion state
   int? _deletingCount;
+  bool _isBulkSaving = false;
 
   @override
   void initState() {
@@ -382,23 +385,67 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
       return;
     }
 
-    // Get saved records for the selected date
+    final createRequests = <CreateMenuRecordRequest>[];
+    final updateRequests = <UpdateMenuRecordRequest>[];
+
+    // Get saved records for selected date
     final savedRecords = _getSavedRecordsForDate(state);
 
-    // Create save requests
-    final saveRequests = _unsavedSelections.entries.map((entry) {
-      final menu = entry.value;
-      return SaveMenuRecordRequest(
-        menuId: menu.id,
-        name: menu.menuName,
-        date: _selectedDate,
-      );
-    }).toList();
+    for (final selectedMenu in _unsavedSelections.values) {
+      MenuRecordEntity? existingRecord;
 
-    context.read<MenuBloc>().add(MenuRecordsSaveRequested(
-      requests: saveRequests,
-      existingRecords: savedRecords,
-    ));
+      try {
+        existingRecord = savedRecords.firstWhere((record) {
+          if (!record.isActive) return false;
+
+          try {
+            final existingMenu = state.menus.firstWhere((m) => m.id == record.menuId);
+            return existingMenu.menuTypeId == selectedMenu.menuTypeId;
+          } catch (_) {
+            return false;
+          }
+        });
+      } catch (_) {
+        existingRecord = null;
+      }
+
+      if (existingRecord != null) {
+        // No-op update: cùng menu thì bỏ qua
+        if (existingRecord.menuId != selectedMenu.id) {
+          updateRequests.add(UpdateMenuRecordRequest(
+            id: existingRecord.id,
+            menuId: selectedMenu.id,
+            name: selectedMenu.menuName,
+            date: _selectedDate,
+          ));
+        }
+      } else {
+        createRequests.add(CreateMenuRecordRequest(
+          menuId: selectedMenu.id,
+          name: selectedMenu.menuName,
+          date: _selectedDate,
+        ));
+      }
+    }
+
+    if (createRequests.isEmpty && updateRequests.isEmpty) {
+      AppToast.showWarning(
+        context,
+        message: 'Không có thay đổi để lưu',
+      );
+      setState(() {
+        _unsavedSelections.clear();
+      });
+      return;
+    }
+
+    if (createRequests.isNotEmpty) {
+      context.read<MenuBloc>().add(MenuRecordsCreateRequested(createRequests));
+    }
+
+    if (updateRequests.isNotEmpty) {
+      context.read<MenuBloc>().add(MenuRecordsUpdateRequested(updateRequests));
+    }
 
     // Clear unsaved selections after saving
     setState(() {
@@ -412,6 +459,596 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
     );
   }
 
+  Future<void> _openBulkCreateMenuSheet(BuildContext context, MenuLoaded state) async {
+    if (_minMenuDate == null || _maxMenuDate == null) {
+      AppToast.showWarning(
+        context,
+        message: AppStrings.menuWaitingCheckIn,
+      );
+      return;
+    }
+
+    final sortedMenuTypes = _getSortedMenuTypes(state.menuTypes);
+    final allAllowedDates = _getAllAllowedDates();
+
+    final selectedDates = allAllowedDates.map(_normalizeDate).toSet();
+    final selectionsByDate = <DateTime, Map<int, MenuEntity>>{};
+
+    DateTime activeDate = selectedDates.contains(_normalizeDate(_selectedDate))
+        ? _normalizeDate(_selectedDate)
+        : (allAllowedDates.isNotEmpty ? _normalizeDate(allAllowedDates.first) : _normalizeDate(_selectedDate));
+
+    for (final record in state.myMenuRecords) {
+      if (!record.isActive) continue;
+      final recordDate = _normalizeDate(record.date);
+      if (!selectedDates.contains(recordDate)) continue;
+
+      MenuEntity? menu;
+      try {
+        menu = state.menus.firstWhere((m) => m.id == record.menuId);
+      } catch (_) {
+        menu = null;
+      }
+
+      if (menu == null) continue;
+      final daySelections = selectionsByDate.putIfAbsent(recordDate, () => <int, MenuEntity>{});
+      daySelections[menu.menuTypeId] = menu;
+    }
+
+    Map<int, MenuEntity> getSelectionsForDate(DateTime date) {
+      final normalized = _normalizeDate(date);
+      return selectionsByDate.putIfAbsent(normalized, () => <int, MenuEntity>{});
+    }
+
+    Future<void> openMenuListDrawerForType(
+      BuildContext bottomSheetContext,
+      MenuTypeEntity menuType,
+    ) async {
+      final selectionsForActiveDate = getSelectionsForDate(activeDate);
+      final currentSelection = selectionsForActiveDate[menuType.id];
+
+      await showModalBottomSheet(
+        context: bottomSheetContext,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (context) => MenuListDrawer(
+          selectedDate: activeDate,
+          menuType: menuType,
+          availableMenus: state.menus,
+          currentSelection: currentSelection,
+          onMenuSelected: (menu) {
+            selectionsForActiveDate[menuType.id] = menu;
+          },
+        ),
+      );
+    }
+
+    if (!mounted) return;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final scale = AppResponsive.scaleFactor(context);
+
+            Future<void> handleBulkSave() async {
+              if (selectedDates.isEmpty) {
+                AppToast.showWarning(
+                  context,
+                  message: AppStrings.menuSelectAtLeastOneDay,
+                );
+                return;
+              }
+
+              final saveRequests = <SaveMenuRecordRequest>[];
+              final requestDates = <DateTime>{};
+
+              String inferMealSlot(String text) {
+                final lower = text.toLowerCase();
+                if (lower.contains('phụ') && lower.contains('sáng')) return 'snack_morning';
+                if (lower.contains('phụ') && lower.contains('chiều')) return 'snack_afternoon';
+                if (lower.contains('phụ') && lower.contains('tối')) return 'snack_night';
+                if (lower.contains('sáng')) return 'morning';
+                if (lower.contains('trưa')) return 'lunch';
+                if (lower.contains('chiều') || lower.contains('tối')) return 'dinner';
+                return 'unknown';
+              }
+
+              String dateKey(DateTime date) {
+                final normalized = _normalizeDate(date);
+                return '${normalized.year}-${normalized.month.toString().padLeft(2, '0')}-${normalized.day.toString().padLeft(2, '0')}';
+              }
+
+              String inferMenuTypeNameByMenu(MenuEntity menu) {
+                try {
+                  return state.menuTypes.firstWhere((t) => t.id == menu.menuTypeId).name;
+                } catch (_) {
+                  return menu.menuName;
+                }
+              }
+
+              // Lập chỉ mục record hiện có theo (ngày + slot bữa) để tránh bị lọt sang POST
+              final existingByDateAndSlot = <String, MenuRecordEntity>{};
+              if (kDebugMode) {
+                debugPrint('[MENU_BULK] selectedDates=${selectedDates.map(dateKey).toList()}');
+              }
+              for (final record in state.myMenuRecords) {
+                if (!record.isActive) continue;
+
+                String mealSlot = 'unknown';
+                try {
+                  final existingMenu = state.menus.firstWhere((m) => m.id == record.menuId);
+                  final menuTypeName = inferMenuTypeNameByMenu(existingMenu);
+                  mealSlot = inferMealSlot(menuTypeName);
+                } catch (_) {
+                  mealSlot = inferMealSlot(record.name);
+                }
+
+                if (mealSlot == 'unknown') continue;
+                final existingKey = '${dateKey(record.date)}|$mealSlot';
+                existingByDateAndSlot[existingKey] = record;
+                if (kDebugMode) {
+                  debugPrint(
+                    '[MENU_BULK][EXISTING] key=$existingKey id=${record.id} menuId=${record.menuId} name=${record.name}',
+                  );
+                }
+              }
+
+              for (final date in selectedDates) {
+                final normalizedDate = _normalizeDate(date);
+                final daySelections = selectionsByDate[normalizedDate];
+                if (daySelections == null || daySelections.isEmpty) continue;
+
+                for (final menu in daySelections.values) {
+                  requestDates.add(normalizedDate);
+
+                  final selectedMealSlot = inferMealSlot(inferMenuTypeNameByMenu(menu));
+                  final key = '${dateKey(normalizedDate)}|$selectedMealSlot';
+                  final existingRecord = selectedMealSlot == 'unknown'
+                      ? null
+                      : existingByDateAndSlot[key];
+
+                  if (existingRecord != null) {
+                    // No-op update: cùng menuId thì bỏ qua
+                    if (existingRecord.menuId != menu.id) {
+                      saveRequests.add(SaveMenuRecordRequest(
+                        menuId: menu.id,
+                        name: menu.menuName,
+                        date: normalizedDate,
+                      ));
+                      if (kDebugMode) {
+                        debugPrint(
+                          '[MENU_BULK][PLAN] SAVE_AS_UPDATE key=$key recordId=${existingRecord.id} oldMenuId=${existingRecord.menuId} newMenuId=${menu.id} newName=${menu.menuName}',
+                        );
+                      }
+                    } else {
+                      if (kDebugMode) {
+                        debugPrint(
+                          '[MENU_BULK][PLAN] SKIP_NO_OP key=$key recordId=${existingRecord.id} menuId=${menu.id}',
+                        );
+                      }
+                    }
+                  } else {
+                    saveRequests.add(SaveMenuRecordRequest(
+                      menuId: menu.id,
+                      name: menu.menuName,
+                      date: normalizedDate,
+                    ));
+                    if (kDebugMode) {
+                      debugPrint(
+                        '[MENU_BULK][PLAN] SAVE_AS_CREATE key=$key menuId=${menu.id} name=${menu.menuName}',
+                      );
+                    }
+                  }
+                }
+              }
+
+              if (kDebugMode) {
+                debugPrint(
+                  '[MENU_BULK][SUMMARY] saveRequests=${saveRequests.length}',
+                );
+              }
+
+              if (saveRequests.isEmpty) {
+                AppToast.showWarning(
+                  context,
+                  message: AppStrings.menuPleaseSelectAtLeastOne,
+                );
+                return;
+              }
+
+              setState(() {
+                _isBulkSaving = true;
+              });
+
+              AppLoading.show(context, message: AppStrings.processing);
+
+              this.context.read<MenuBloc>().add(
+                MenuRecordsSaveRequested(
+                  requests: saveRequests,
+                  existingRecords: state.myMenuRecords,
+                ),
+              );
+
+              Navigator.of(sheetContext).pop();
+
+              AppToast.showSuccess(
+                this.context,
+                message: AppStrings.menuBulkSaveSuccess
+                    .replaceAll('{count}', '${requestDates.length}'),
+              );
+            }
+
+            final sortedSelectedDates = selectedDates.toList()..sort();
+            final activeSelections = getSelectionsForDate(activeDate);
+
+            return Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.9,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(20 * scale),
+                  topRight: Radius.circular(20 * scale),
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    margin: EdgeInsets.only(top: 12 * scale, bottom: 8 * scale),
+                    width: 40 * scale,
+                    height: 4 * scale,
+                    decoration: BoxDecoration(
+                      color: AppColors.borderLight,
+                      borderRadius: BorderRadius.circular(2 * scale),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20 * scale, vertical: 10 * scale),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            AppStrings.menuCreateForMultipleDays,
+                            style: AppTextStyles.tinos(
+                              fontSize: 22 * scale,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.of(sheetContext).pop(),
+                          icon: Icon(
+                            Icons.close,
+                            size: 24 * scale,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.fromLTRB(20 * scale, 0, 20 * scale, 20 * scale),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: EdgeInsets.all(14 * scale),
+                            decoration: BoxDecoration(
+                              color: AppColors.white,
+                              borderRadius: BorderRadius.circular(12 * scale),
+                              border: Border.all(color: AppColors.borderLight),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  AppStrings.menuSelectDaysToApply,
+                                  style: AppTextStyles.arimo(
+                                    fontSize: 15 * scale,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+
+                                if (sortedSelectedDates.isNotEmpty) ...[
+                                  SizedBox(height: 8 * scale),
+                                  Builder(
+                                    builder: (context) {
+                                      final firstDate = sortedSelectedDates.first;
+                                      final lastDate = sortedSelectedDates.last;
+
+                                      // Monday-based calendar grid (T2 ... CN)
+                                      final leadingEmpty = firstDate.weekday - DateTime.monday;
+                                      final totalDays = lastDate.difference(firstDate).inDays + 1;
+
+                                      final calendarCells = <DateTime?>[];
+                                      for (int i = 0; i < leadingEmpty; i++) {
+                                        calendarCells.add(null);
+                                      }
+                                      for (int i = 0; i < totalDays; i++) {
+                                        calendarCells.add(firstDate.add(Duration(days: i)));
+                                      }
+                                      while (calendarCells.length % 7 != 0) {
+                                        calendarCells.add(null);
+                                      }
+
+                                      Widget weekdayLabel(String text) {
+                                        return Center(
+                                          child: Text(
+                                            text,
+                                            style: AppTextStyles.arimo(
+                                              fontSize: 12 * scale,
+                                              fontWeight: FontWeight.w700,
+                                              color: AppColors.textSecondary,
+                                            ),
+                                          ),
+                                        );
+                                      }
+
+                                      return Column(
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Expanded(child: weekdayLabel(AppStrings.weekDayMonday)),
+                                              Expanded(child: weekdayLabel(AppStrings.weekDayTuesday)),
+                                              Expanded(child: weekdayLabel(AppStrings.weekDayWednesday)),
+                                              Expanded(child: weekdayLabel(AppStrings.weekDayThursday)),
+                                              Expanded(child: weekdayLabel(AppStrings.weekDayFriday)),
+                                              Expanded(child: weekdayLabel(AppStrings.weekDaySaturday)),
+                                              Expanded(child: weekdayLabel(AppStrings.weekDaySunday)),
+                                            ],
+                                          ),
+                                          SizedBox(height: 6 * scale),
+                                          GridView.builder(
+                                            shrinkWrap: true,
+                                            physics: const NeverScrollableScrollPhysics(),
+                                            itemCount: calendarCells.length,
+                                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                              crossAxisCount: 7,
+                                              childAspectRatio: 1,
+                                              crossAxisSpacing: 6,
+                                              mainAxisSpacing: 6,
+                                            ),
+                                            itemBuilder: (context, index) {
+                                              final date = calendarCells[index];
+                                              if (date == null) {
+                                                return const SizedBox.shrink();
+                                              }
+
+                                              final normalizedDate = _normalizeDate(date);
+                                              final isActive = normalizedDate == _normalizeDate(activeDate);
+                                              final hasMenuSelected =
+                                                  (selectionsByDate[normalizedDate]?.isNotEmpty ?? false);
+
+                                              return InkWell(
+                                                borderRadius: BorderRadius.circular(10 * scale),
+                                                onTap: () {
+                                                  setModalState(() {
+                                                    activeDate = normalizedDate;
+                                                  });
+                                                },
+                                                child: Container(
+                                                  decoration: BoxDecoration(
+                                                    color: isActive
+                                                        ? AppColors.primary
+                                                        : hasMenuSelected
+                                                            ? AppColors.verified.withValues(alpha: 0.12)
+                                                            : AppColors.white,
+                                                    borderRadius: BorderRadius.circular(10 * scale),
+                                                    border: Border.all(
+                                                      color: isActive
+                                                          ? AppColors.primary
+                                                          : hasMenuSelected
+                                                              ? AppColors.verified
+                                                              : AppColors.borderLight,
+                                                    ),
+                                                  ),
+                                                  child: Stack(
+                                                    children: [
+                                                      Center(
+                                                        child: Text(
+                                                          '${date.day}',
+                                                          style: AppTextStyles.arimo(
+                                                            fontSize: 13 * scale,
+                                                            fontWeight: FontWeight.w700,
+                                                            color: isActive
+                                                                ? AppColors.white
+                                                                : AppColors.textPrimary,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      if (hasMenuSelected)
+                                                        Positioned(
+                                                          top: 4 * scale,
+                                                          right: 4 * scale,
+                                                          child: Icon(
+                                                            Icons.check_circle,
+                                                            size: 12 * scale,
+                                                            color: isActive
+                                                                ? AppColors.white
+                                                                : AppColors.verified,
+                                                          ),
+                                                        ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: 12 * scale),
+                          Text(
+                            '${AppStrings.menuSelectMealsForBulk} - ${activeDate.day}/${activeDate.month}/${activeDate.year}',
+                            style: AppTextStyles.arimo(
+                              fontSize: 15 * scale,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          SizedBox(height: 10 * scale),
+                          ...sortedMenuTypes.map((menuType) {
+                            final currentSelection = activeSelections[menuType.id];
+                            final hasSelection = currentSelection != null;
+                            return Container(
+                              margin: EdgeInsets.only(bottom: 10 * scale),
+                              decoration: BoxDecoration(
+                                color: AppColors.white,
+                                borderRadius: BorderRadius.circular(12 * scale),
+                                border: Border.all(
+                                  color: hasSelection
+                                      ? AppColors.verified
+                                      : AppColors.borderLight,
+                                  width: hasSelection ? 1.5 : 1,
+                                ),
+                              ),
+                              child: ListTile(
+                                leading: Container(
+                                  width: 34 * scale,
+                                  height: 34 * scale,
+                                  decoration: BoxDecoration(
+                                    color: hasSelection
+                                        ? AppColors.verified.withValues(alpha: 0.15)
+                                        : AppColors.background,
+                                    borderRadius: BorderRadius.circular(8 * scale),
+                                  ),
+                                  child: Center(
+                                    child: _getMenuTypeIcon(
+                                      menuType.name,
+                                      18 * scale,
+                                      hasSelection ? AppColors.verified : AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ),
+                                title: Text(
+                                  menuType.name,
+                                  style: AppTextStyles.arimo(
+                                    fontSize: 14 * scale,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                subtitle: currentSelection == null
+                                    ? null
+                                    : Text(
+                                        currentSelection.menuName,
+                                        style: AppTextStyles.arimo(
+                                          fontSize: 13 * scale,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (hasSelection)
+                                      GestureDetector(
+                                        onTap: () {
+                                          setModalState(() {
+                                            final daySelections = selectionsByDate[activeDate];
+                                            daySelections?.remove(menuType.id);
+                                            if (daySelections != null && daySelections.isEmpty) {
+                                              selectionsByDate.remove(activeDate);
+                                            }
+                                          });
+                                        },
+                                        child: Container(
+                                          margin: EdgeInsets.only(right: 6 * scale),
+                                          padding: EdgeInsets.all(2 * scale),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.red.withValues(alpha: 0.12),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Icon(
+                                            Icons.close,
+                                            color: AppColors.red,
+                                            size: 14 * scale,
+                                          ),
+                                        ),
+                                      ),
+                                    if (hasSelection)
+                                      Padding(
+                                        padding: EdgeInsets.only(right: 6 * scale),
+                                        child: Icon(
+                                          Icons.check_circle,
+                                          color: AppColors.verified,
+                                          size: 20 * scale,
+                                        ),
+                                      ),
+                                    Icon(
+                                      Icons.chevron_right,
+                                      color: AppColors.textSecondary,
+                                      size: 20 * scale,
+                                    ),
+                                  ],
+                                ),
+                                onTap: () async {
+                                  await openMenuListDrawerForType(context, menuType);
+                                  setModalState(() {});
+                                },
+                              ),
+                            );
+                          }),
+                          SizedBox(height: 20 * scale),
+                          AppWidgets.primaryButton(
+                            text: AppStrings.menuApplyForAllDays,
+                            icon: Icon(
+                              Icons.save,
+                              size: 20 * scale,
+                              color: AppColors.white,
+                            ),
+                            onPressed: handleBulkSave,
+                            width: double.infinity,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _getMenuTypeIcon(String menuTypeName, double size, Color color) {
+    if (menuTypeName.contains('Sáng') && !menuTypeName.contains('Phụ')) {
+      return Icon(Icons.sunny_snowing, size: size, color: color);
+    } else if (menuTypeName.contains('Trưa')) {
+      return SvgPicture.asset(
+        AppAssets.sun,
+        width: size,
+        height: size,
+        colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+      );
+    } else if (menuTypeName.contains('Tối')) {
+      return SvgPicture.asset(
+        AppAssets.moon,
+        width: size,
+        height: size,
+        colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+      );
+    } else if (menuTypeName.contains('Phụ')) {
+      return Icon(Icons.cookie, size: size, color: color);
+    }
+    return Icon(Icons.restaurant, size: size, color: color);
+  }
+
   List<DateTime> _getDatesWithMenus(List<MenuRecordEntity> records) {
     return records
         .where((record) => record.isActive)
@@ -422,6 +1059,94 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
 
   String _formatDate(DateTime date) {
     return '${date.day} ${AppFormatters.getMonthName(date.month)} ${date.year}';
+  }
+
+  List<MenuTypeEntity> _getSortedMenuTypes(List<MenuTypeEntity> menuTypes) {
+    final sorted = List<MenuTypeEntity>.from(menuTypes);
+    sorted.sort((a, b) {
+      int getOrder(String name) {
+        if (name.contains('Sáng') && !name.contains('Phụ')) return 1;
+        if (name.contains('Phụ') && name.contains('Sáng')) return 2;
+        if (name.contains('Trưa')) return 3;
+        if (name.contains('Phụ') && name.contains('Chiều')) return 4;
+        if (name.contains('Chiều') && !name.contains('Phụ')) return 5;
+        if (name.contains('Phụ') && name.contains('Tối')) return 6;
+        if (name.contains('Tối')) return 7;
+        return 99;
+      }
+
+      return getOrder(a.name).compareTo(getOrder(b.name));
+    });
+    return sorted;
+  }
+
+  List<DateTime> _getAllAllowedDates() {
+    if (_minMenuDate == null || _maxMenuDate == null) return [];
+
+    final days = <DateTime>[];
+    var current = _normalizeDate(_minMenuDate!);
+    final end = _normalizeDate(_maxMenuDate!);
+
+    while (!current.isAfter(end)) {
+      days.add(current);
+      current = current.add(const Duration(days: 1));
+    }
+
+    return days;
+  }
+
+  void _openCreateMenuFabOptions(BuildContext context, MenuLoaded state) {
+    final scale = AppResponsive.scaleFactor(context);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return Container(
+          decoration: BoxDecoration(
+            color: AppColors.background,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20 * scale),
+              topRight: Radius.circular(20 * scale),
+            ),
+          ),
+          padding: EdgeInsets.fromLTRB(20 * scale, 12 * scale, 20 * scale, 24 * scale),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40 * scale,
+                height: 4 * scale,
+                margin: EdgeInsets.only(bottom: 14 * scale),
+                decoration: BoxDecoration(
+                  color: AppColors.borderLight,
+                  borderRadius: BorderRadius.circular(2 * scale),
+                ),
+              ),
+              AppWidgets.primaryButton(
+                text: 'Từng ngày',
+                icon: Icon(Icons.today, size: 20 * scale, color: AppColors.white),
+                onPressed: () {
+                  Navigator.of(sheetContext).pop();
+                  _openMenuSelectionDrawer(context, state);
+                },
+                width: double.infinity,
+              ),
+              SizedBox(height: 10 * scale),
+              AppWidgets.secondaryButton(
+                text: 'Nhiều ngày',
+                icon: Icon(Icons.calendar_month, size: 20 * scale, color: AppColors.textPrimary),
+                onPressed: () {
+                  Navigator.of(sheetContext).pop();
+                  _openBulkCreateMenuSheet(context, state);
+                },
+                width: double.infinity,
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -483,6 +1208,11 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
               context,
               message: AppStrings.menuDeletedCount.replaceAll('{count}', '$count'),
             );
+          } else if (state is MenuLoaded && _isBulkSaving) {
+            AppLoading.hide(context);
+            setState(() {
+              _isBulkSaving = false;
+            });
           }
         },
         builder: (context, state) {
@@ -630,7 +1360,7 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
             );
           }
 
-          // Show "Chọn menu" FAB (small, compact) when no unsaved selections
+          // Show create options FAB when no unsaved selections
           final scale = AppResponsive.scaleFactor(context);
           return AppWidgets.primaryFabIcon(
             context: context,
@@ -643,7 +1373,7 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
                 BlendMode.srcIn,
               ),
             ),
-            onPressed: () => _openMenuSelectionDrawer(context, state),
+            onPressed: () => _openCreateMenuFabOptions(context, state),
           );
         },
       ),
