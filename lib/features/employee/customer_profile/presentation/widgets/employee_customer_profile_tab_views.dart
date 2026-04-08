@@ -115,7 +115,7 @@ class EmployeeCustomerMenuRecordsTab extends StatelessWidget {
               if (snapshot.hasError) {
                 return _ErrorText(
                   scale: scale,
-                  text: 'Không tải được Menu Record: ${snapshot.error}',
+                  text: 'Không tải được Thực Đơn khách hàng: ${snapshot.error}',
                 );
               }
 
@@ -123,7 +123,7 @@ class EmployeeCustomerMenuRecordsTab extends StatelessWidget {
               if (records.isEmpty) {
                 return _EmptyText(
                   scale: scale,
-                  text: 'Không có Menu Record theo bộ lọc hiện tại.',
+                  text: 'Không có Thực Đơn khách hàng theo bộ lọc hiện tại.',
                 );
               }
 

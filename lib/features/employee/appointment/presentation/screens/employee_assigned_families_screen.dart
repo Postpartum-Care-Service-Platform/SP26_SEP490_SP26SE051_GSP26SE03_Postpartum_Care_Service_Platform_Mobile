@@ -53,10 +53,13 @@ class _EmployeeAssignedFamiliesScreenState
     for (final item in data) {
       final row = item as Map<String, dynamic>;
       final family = row['familyScheduleResponse'] as Map<String, dynamic>?;
+      
       final customerId = (family?['customerId'] ?? '').toString().trim();
       if (customerId.isEmpty) {
         continue;
       }
+      
+      // Temporary check for booking status on any item in the group
       byCustomer.putIfAbsent(customerId, () => []).add(row);
     }
 
@@ -64,6 +67,25 @@ class _EmployeeAssignedFamiliesScreenState
     for (final entry in byCustomer.entries) {
       final customerId = entry.key;
       final items = entry.value;
+      
+      // Check booking status from the first item (all items for a family in a month usually belong to the same booking)
+      final firstRow = items.first;
+      final firstFamily = firstRow['familyScheduleResponse'] as Map<String, dynamic>?;
+      final firstBooking = firstRow['booking'] as Map<String, dynamic>?;
+      
+      final bookingStatus = (
+        firstRow['bookingStatus'] ?? 
+        firstFamily?['bookingStatus'] ?? 
+        firstBooking?['status'] ?? 
+        ''
+      ).toString().toLowerCase();
+
+      // Filter out completed bookings
+      if (bookingStatus == 'completed' || 
+          bookingStatus == 'complete' || 
+          bookingStatus == 'hoàn thành') {
+        continue;
+      }
       final first = items.first;
       final family = first['familyScheduleResponse'] as Map<String, dynamic>?;
 
@@ -280,7 +302,7 @@ class _EmployeeAssignedFamiliesScreenState
                                   );
                                   if (index != -1) {
                                     initialActivities[index] = initialActivities[index].copyWith(
-                                      status: 'Done',
+                                      status: 'StaffDone',
                                       note: checkData.note,
                                     );
                                   }
@@ -579,7 +601,9 @@ class _EmployeeAssignedFamiliesScreenState
           return normalized == 'scheduled';
         case _ActivityFilter.missed:
           return normalized == 'missed';
-        case _ActivityFilter.completed:
+        case _ActivityFilter.staffDone:
+          return normalized == 'staffdone' || normalized == 'staff_done';
+        case _ActivityFilter.done:
           return normalized == 'done' || normalized == 'completed';
         case _ActivityFilter.all:
           return true;
@@ -709,7 +733,7 @@ class _EmployeeAssignedFamiliesScreenState
   }
 }
 
-enum _ActivityFilter { all, scheduled, missed, completed }
+enum _ActivityFilter { all, scheduled, missed, staffDone, done }
 
 class _FilterTabs extends StatelessWidget {
   final _ActivityFilter current;
@@ -731,19 +755,24 @@ class _FilterTabs extends StatelessWidget {
           onTap: () => onChanged(_ActivityFilter.all),
         ),
         _FilterChip(
-          label: 'Scheduled',
+          label: 'Có lịch',
           selected: current == _ActivityFilter.scheduled,
           onTap: () => onChanged(_ActivityFilter.scheduled),
         ),
         _FilterChip(
-          label: 'Missed',
+          label: 'Lỡ lịch',
           selected: current == _ActivityFilter.missed,
           onTap: () => onChanged(_ActivityFilter.missed),
         ),
         _FilterChip(
-          label: 'Completed',
-          selected: current == _ActivityFilter.completed,
-          onTap: () => onChanged(_ActivityFilter.completed),
+          label: 'Đã làm',
+          selected: current == _ActivityFilter.staffDone,
+          onTap: () => onChanged(_ActivityFilter.staffDone),
+        ),
+        _FilterChip(
+          label: 'Khách duyệt',
+          selected: current == _ActivityFilter.done,
+          onTap: () => onChanged(_ActivityFilter.done),
         ),
       ],
     );
@@ -1160,6 +1189,9 @@ class _CalendarActivityCard extends StatelessWidget {
     if (normalized == 'done' || normalized == 'completed') {
       return const Color(0xFF16A34A);
     }
+    if (normalized == 'staffdone' || normalized == 'staff_done') {
+      return const Color(0xFF0EA5E9);
+    }
     if (normalized == 'missed') {
       return const Color(0xFFDC2626);
     }
@@ -1180,7 +1212,9 @@ class _CalendarActivityCard extends StatelessWidget {
         ? DateFormat('HH:mm').format(activity.endAt!)
         : '--:--';
     final canCheck = !(activity.status.toLowerCase() == 'done' ||
-        activity.status.toLowerCase() == 'completed');
+        activity.status.toLowerCase() == 'completed' ||
+        activity.status.toLowerCase() == 'staffdone' ||
+        activity.status.toLowerCase() == 'staff_done');
 
     return Container(
       width: double.infinity,
@@ -1218,23 +1252,45 @@ class _CalendarActivityCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  activity.status,
+                  _getStatusDisplayText(activity.status),
                   style: AppTextStyles.arimo(
                     fontSize: 10 * scale,
-                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                    color: statusColor,
                   ),
                 ),
               ),
               if (canCheck)
                 TextButton(
                   onPressed: () => onCheckPressed(activity),
-                  child: const Text('Check'),
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.symmetric(horizontal: 12 * scale),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    'Làm xong',
+                    style: AppTextStyles.arimo(
+                      fontSize: 11 * scale,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                    ),
+                  ),
                 ),
             ],
           ),
         ],
       ),
     );
+  }
+
+  String _getStatusDisplayText(String status) {
+    final normalized = status.toLowerCase();
+    if (normalized == 'scheduled') return 'Có lịch';
+    if (normalized == 'missed') return 'Lỡ lịch';
+    if (normalized == 'staffdone' || normalized == 'staff_done') return 'Đã làm';
+    if (normalized == 'done' || normalized == 'completed') return 'Khách duyệt';
+    return status;
   }
 }
 

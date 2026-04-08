@@ -26,6 +26,7 @@ enum EmployeeQuickMenuExtraAction {
   createCustomer,
   transactions,
   contracts,
+  myBookings,
   supportRequests,
   wallet,
 }
@@ -372,6 +373,9 @@ List<_QuickMenuGroup> _buildQuickMenuGroups(List<EmployeeQuickMenuItem> items) {
       case EmployeeQuickMenuExtraAction.wallet:
         finance.add(item);
         break;
+      case EmployeeQuickMenuExtraAction.myBookings:
+        operations.add(item);
+        break;
       case EmployeeQuickMenuExtraAction.supportRequests:
         customerCare.add(item);
         break;
@@ -661,7 +665,13 @@ class _EmployeeQuickMenuIconTile extends StatelessWidget {
 class EmployeeQuickMenuPresets {
   static List<EmployeeQuickMenuItem> primaryItems(String? memberType) {
     final raw = memberType?.toLowerCase().trim() ?? '';
-    final isHomeNurse = raw == 'home-staff' || raw == 'homestaff' || raw == 'home nurse';
+    final isHomeNurse = raw == 'home-staff' || 
+                        raw == 'homestaff' || 
+                        raw == 'hoemstaff' || 
+                        raw == 'home nurse' || 
+                        raw.contains('tại nhà') || 
+                        raw.contains('tai nha') || 
+                        raw.contains('homecare');
     return [
       EmployeeQuickMenuItem.bottom(
         id: 'schedule',
@@ -671,10 +681,10 @@ class EmployeeQuickMenuPresets {
       ),
       if (isHomeNurse)
         EmployeeQuickMenuItem.extra(
-          id: 'wallet',
-          label: 'Ví tiền',
-          iconAsset: AppAssets.menuFirst,
-          action: EmployeeQuickMenuExtraAction.wallet,
+          id: 'my_bookings',
+          label: 'Booking của tôi',
+          iconAsset: AppAssets.menuThird,
+          action: EmployeeQuickMenuExtraAction.myBookings,
         )
       else
         EmployeeQuickMenuItem.extra(
@@ -700,7 +710,13 @@ class EmployeeQuickMenuPresets {
 
   static List<EmployeeQuickMenuItem> allItems(String? memberType) {
     final raw = memberType?.toLowerCase().trim() ?? '';
-    final isHomeNurse = raw == 'home-staff' || raw == 'homestaff' || raw == 'home nurse';
+    final isHomeNurse = raw == 'home-staff' || 
+                        raw == 'homestaff' || 
+                        raw == 'hoemstaff' || 
+                        raw == 'home nurse' || 
+                        raw.contains('tại nhà') || 
+                        raw.contains('tai nha') || 
+                        raw.contains('homecare');
 
     final items = <EmployeeQuickMenuItem>[
       // Tabs chính
@@ -780,6 +796,13 @@ class EmployeeQuickMenuPresets {
         iconAsset: AppAssets.menuFirst,
         action: EmployeeQuickMenuExtraAction.wallet,
       ),
+      if (isHomeNurse)
+        EmployeeQuickMenuItem.extra(
+          id: 'my_bookings',
+          label: 'Booking của tôi',
+          iconAsset: AppAssets.menuThird,
+          action: EmployeeQuickMenuExtraAction.myBookings,
+        ),
       if (!isHomeNurse) ...[
         EmployeeQuickMenuItem.extra(
           id: 'transactions',

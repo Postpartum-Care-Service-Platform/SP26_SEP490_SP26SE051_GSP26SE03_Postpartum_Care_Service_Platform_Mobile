@@ -16,7 +16,12 @@ import '../../../../../features/employee/account/data/models/account_model.dart'
 import '../../../../../features/services/presentation/widgets/services_booking_flow.dart';
 
 class EmployeePackageBookingScreen extends StatefulWidget {
-  const EmployeePackageBookingScreen({super.key});
+  final VoidCallback? onBackToDefaultStaffPage;
+
+  const EmployeePackageBookingScreen({
+    super.key,
+    this.onBackToDefaultStaffPage,
+  });
 
   @override
   State<EmployeePackageBookingScreen> createState() =>
@@ -63,11 +68,8 @@ class _EmployeePackageBookingScreenState
     }
 
     context.read<BookingBloc>().add(
-          BookingCreateBookingForCustomer(
-            _selectedCustomer!.id,
-            discountAmount: 0,
-          ),
-        );
+      BookingCreateBookingForCustomer(_selectedCustomer!.id, discountAmount: 0),
+    );
   }
 
   @override
@@ -101,14 +103,21 @@ class _EmployeePackageBookingScreenState
           }
         },
         child: EmployeeScaffold(
-          appBar: const AppAppBar(
+          showFab: false,
+          appBar: AppAppBar(
             title: 'Đặt gói cho khách hàng',
             centerTitle: true,
+            onBackPressed: widget.onBackToDefaultStaffPage,
           ),
           body: Column(
             children: [
               Padding(
-                padding: EdgeInsets.fromLTRB(16 * scale, 12 * scale, 16 * scale, 8 * scale),
+                padding: EdgeInsets.fromLTRB(
+                  16 * scale,
+                  12 * scale,
+                  16 * scale,
+                  8 * scale,
+                ),
                 child: _buildCustomerSelector(scale),
               ),
               const Divider(height: 1),
@@ -116,6 +125,8 @@ class _EmployeePackageBookingScreenState
                 child: Padding(
                   padding: EdgeInsets.all(8 * scale),
                   child: ServicesBookingFlow(
+                    key: ValueKey(_selectedCustomer?.id ?? 'no-customer'),
+                    familyProfilesAccountId: _selectedCustomer?.id,
                     onBackToLocationSelection: () {
                       Navigator.of(context).maybePop();
                     },
@@ -185,10 +196,7 @@ class _EmployeePackageBookingScreenState
                       ],
                     ),
             ),
-            Icon(
-              Icons.arrow_drop_down,
-              color: AppColors.textSecondary,
-            ),
+            Icon(Icons.arrow_drop_down, color: AppColors.textSecondary),
           ],
         ),
       ),
@@ -208,10 +216,12 @@ class _CustomerSearchBottomSheet extends StatefulWidget {
   });
 
   @override
-  State<_CustomerSearchBottomSheet> createState() => _CustomerSearchBottomSheetState();
+  State<_CustomerSearchBottomSheet> createState() =>
+      _CustomerSearchBottomSheetState();
 }
 
-class _CustomerSearchBottomSheetState extends State<_CustomerSearchBottomSheet> {
+class _CustomerSearchBottomSheetState
+    extends State<_CustomerSearchBottomSheet> {
   final _searchController = TextEditingController();
   List<AccountModel> _filteredCustomers = [];
   bool _isLoadingCustomers = false;
@@ -238,7 +248,7 @@ class _CustomerSearchBottomSheetState extends State<_CustomerSearchBottomSheet> 
     try {
       final dataSource = AccountRemoteDataSource();
       final customer = await dataSource.getAccountByPhone(phone);
-      
+
       setState(() {
         if (customer != null && customer.isCustomer) {
           _filteredCustomers = [customer];
@@ -270,7 +280,9 @@ class _CustomerSearchBottomSheetState extends State<_CustomerSearchBottomSheet> 
     final scale = widget.scale;
     return SafeArea(
       child: Container(
-        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.82),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.82,
+        ),
         decoration: BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(22 * scale)),
@@ -287,7 +299,12 @@ class _CustomerSearchBottomSheetState extends State<_CustomerSearchBottomSheet> 
               ),
             ),
             Padding(
-              padding: EdgeInsets.fromLTRB(16 * scale, 14 * scale, 16 * scale, 8 * scale),
+              padding: EdgeInsets.fromLTRB(
+                16 * scale,
+                14 * scale,
+                16 * scale,
+                8 * scale,
+              ),
               child: Row(
                 children: [
                   Text(
@@ -308,7 +325,12 @@ class _CustomerSearchBottomSheetState extends State<_CustomerSearchBottomSheet> 
               ),
             ),
             Padding(
-              padding: EdgeInsets.fromLTRB(16 * scale, 0, 16 * scale, 12 * scale),
+              padding: EdgeInsets.fromLTRB(
+                16 * scale,
+                0,
+                16 * scale,
+                12 * scale,
+              ),
               child: TextField(
                 controller: _searchController,
                 onSubmitted: (_) => _searchCustomerByPhone(),
@@ -329,7 +351,10 @@ class _CustomerSearchBottomSheetState extends State<_CustomerSearchBottomSheet> 
                         ),
                       IconButton(
                         onPressed: _searchCustomerByPhone,
-                        icon: const Icon(Icons.arrow_forward_rounded, color: AppColors.primary),
+                        icon: const Icon(
+                          Icons.arrow_forward_rounded,
+                          color: AppColors.primary,
+                        ),
                       ),
                     ],
                   ),
@@ -349,103 +374,118 @@ class _CustomerSearchBottomSheetState extends State<_CustomerSearchBottomSheet> 
             Expanded(
               child: _isLoadingCustomers
                   ? const Center(
-                      child: CircularProgressIndicator(color: AppColors.primary),
+                      child: CircularProgressIndicator(
+                        color: AppColors.primary,
+                      ),
                     )
                   : _filteredCustomers.isEmpty && _searchController.text.isEmpty
-                      ? Center(
-                          child: Text(
-                            'Vui lòng nhập SĐT để tìm khách hàng',
-                            style: AppTextStyles.arimo(
-                              fontSize: 13 * scale,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        )
-                      : _filteredCustomers.isEmpty && _searchController.text.isNotEmpty
-                          ? Center(
-                              child: Text(
-                                'Không tìm thấy khách hàng phù hợp',
-                                style: AppTextStyles.arimo(
-                                  fontSize: 13 * scale,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            )
-                          : ListView.separated(
-                              padding: EdgeInsets.fromLTRB(12 * scale, 0, 12 * scale, 16 * scale),
-                              itemCount: _filteredCustomers.length,
-                              separatorBuilder: (_, __) => SizedBox(height: 6 * scale),
-                              itemBuilder: (context, index) {
-                                final c = _filteredCustomers[index];
-                                final isSelected = widget.selectedCustomer?.id == c.id;
-                                return Material(
-                                  color: isSelected
-                                      ? AppColors.primary.withValues(alpha: 0.08)
-                                      : const Color(0xFFFAFAFA),
-                                  borderRadius: BorderRadius.circular(12 * scale),
-                                  child: InkWell(
-                                    borderRadius: BorderRadius.circular(12 * scale),
-                                    onTap: () => widget.onSelectCustomer(c),
-                                    child: Padding(
-                                      padding: EdgeInsets.all(12 * scale),
-                                      child: Row(
-                                        children: [
-                                          Container(
-                                            width: 36 * scale,
-                                            height: 36 * scale,
-                                            decoration: BoxDecoration(
-                                              color: AppColors.primary.withValues(alpha: 0.14),
-                                              borderRadius: BorderRadius.circular(10 * scale),
-                                            ),
-                                            child: const Icon(
-                                              Icons.person_rounded,
-                                              color: AppColors.primary,
-                                              size: 20,
-                                            ),
-                                          ),
-                                          SizedBox(width: 10 * scale),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  c.displayName,
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
-                                                  style: AppTextStyles.arimo(
-                                                    fontSize: 14 * scale,
-                                                    fontWeight: FontWeight.w700,
-                                                    color: AppColors.textPrimary,
-                                                  ),
-                                                ),
-                                                SizedBox(height: 2 * scale),
-                                                Text(
-                                                  [
-                                                    c.email,
-                                                    if (c.phone != null && c.phone!.isNotEmpty) c.phone!,
-                                                  ].join(' • '),
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
-                                                  style: AppTextStyles.arimo(
-                                                    fontSize: 12 * scale,
-                                                    color: AppColors.textSecondary,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          if (isSelected)
-                                            const Icon(
-                                              Icons.check_circle_rounded,
-                                              color: AppColors.primary,
-                                            ),
-                                        ],
+                  ? Center(
+                      child: Text(
+                        'Vui lòng nhập SĐT để tìm khách hàng',
+                        style: AppTextStyles.arimo(
+                          fontSize: 13 * scale,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    )
+                  : _filteredCustomers.isEmpty &&
+                        _searchController.text.isNotEmpty
+                  ? Center(
+                      child: Text(
+                        'Không tìm thấy khách hàng phù hợp',
+                        style: AppTextStyles.arimo(
+                          fontSize: 13 * scale,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    )
+                  : ListView.separated(
+                      padding: EdgeInsets.fromLTRB(
+                        12 * scale,
+                        0,
+                        12 * scale,
+                        16 * scale,
+                      ),
+                      itemCount: _filteredCustomers.length,
+                      separatorBuilder: (_, __) => SizedBox(height: 6 * scale),
+                      itemBuilder: (context, index) {
+                        final c = _filteredCustomers[index];
+                        final isSelected = widget.selectedCustomer?.id == c.id;
+                        return Material(
+                          color: isSelected
+                              ? AppColors.primary.withValues(alpha: 0.08)
+                              : const Color(0xFFFAFAFA),
+                          borderRadius: BorderRadius.circular(12 * scale),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(12 * scale),
+                            onTap: () => widget.onSelectCustomer(c),
+                            child: Padding(
+                              padding: EdgeInsets.all(12 * scale),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 36 * scale,
+                                    height: 36 * scale,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary.withValues(
+                                        alpha: 0.14,
+                                      ),
+                                      borderRadius: BorderRadius.circular(
+                                        10 * scale,
                                       ),
                                     ),
+                                    child: const Icon(
+                                      Icons.person_rounded,
+                                      color: AppColors.primary,
+                                      size: 20,
+                                    ),
                                   ),
-                                );
-                              },
+                                  SizedBox(width: 10 * scale),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          c.displayName,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: AppTextStyles.arimo(
+                                            fontSize: 14 * scale,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.textPrimary,
+                                          ),
+                                        ),
+                                        SizedBox(height: 2 * scale),
+                                        Text(
+                                          [
+                                            c.email,
+                                            if (c.phone != null &&
+                                                c.phone!.isNotEmpty)
+                                              c.phone!,
+                                          ].join(' • '),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: AppTextStyles.arimo(
+                                            fontSize: 12 * scale,
+                                            color: AppColors.textSecondary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (isSelected)
+                                    const Icon(
+                                      Icons.check_circle_rounded,
+                                      color: AppColors.primary,
+                                    ),
+                                ],
+                              ),
                             ),
+                          ),
+                        );
+                      },
+                    ),
             ),
           ],
         ),

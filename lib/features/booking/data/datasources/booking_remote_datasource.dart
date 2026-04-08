@@ -30,6 +30,9 @@ abstract class BookingRemoteDataSource {
   /// Staff/Admin: Get all bookings in system
   Future<List<BookingModel>> getAllBookings();
 
+  /// Home Staff: Get bookings assigned to current home staff
+  Future<List<BookingModel>> getBookingsByHomeStaff();
+
   /// Staff/Admin: Confirm booking
   Future<String> confirmBooking(int id);
 
@@ -196,6 +199,45 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
 
       if (_allBookingsCache != null) {
         return _allBookingsCache!;
+      }
+
+      throw _handleError(e);
+    }
+  }
+
+  @override
+  Future<List<BookingModel>> getBookingsByHomeStaff() async {
+    Future<Response<dynamic>> requestOnce() {
+      return dio.get(
+        ApiEndpoints.getBookingsByHomeStaff,
+        options: Options(
+          receiveTimeout: const Duration(seconds: 90),
+          sendTimeout: const Duration(seconds: 90),
+        ),
+      );
+    }
+
+    try {
+      final response = await requestOnce();
+      final List<dynamic> data = response.data as List<dynamic>;
+      return data
+          .map((json) => BookingModel.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      final isTimeout =
+          e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout;
+
+      if (isTimeout) {
+        try {
+          final retryResponse = await requestOnce();
+          final List<dynamic> retryData = retryResponse.data as List<dynamic>;
+          return retryData
+              .map((json) => BookingModel.fromJson(json as Map<String, dynamic>))
+              .toList();
+        } on DioException {
+          throw Exception('Kết nối tới máy chủ chậm. Vui lòng thử lại sau ít phút.');
+        }
       }
 
       throw _handleError(e);

@@ -20,12 +20,14 @@ class ServicesBookingFlow extends StatefulWidget {
   final ServiceLocationType? locationType;
   final VoidCallback onBackToLocationSelection;
   final VoidCallback? onConfirmOverride;
+  final String? familyProfilesAccountId;
 
   const ServicesBookingFlow({
     super.key,
     this.locationType,
     required this.onBackToLocationSelection,
     this.onConfirmOverride,
+    this.familyProfilesAccountId,
   });
 
   @override
@@ -83,7 +85,11 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
           _profilesLoadRequested = true;
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted) {
-              context.read<BookingBloc>().add(const BookingLoadFamilyProfiles());
+              context.read<BookingBloc>().add(
+                    BookingLoadFamilyProfiles(
+                      accountId: widget.familyProfilesAccountId,
+                    ),
+                  );
             }
           });
         }
@@ -234,7 +240,11 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
                 if (_currentStep == 1) {
                   context
                       .read<BookingBloc>()
-                      .add(const BookingLoadFamilyProfiles());
+                      .add(
+                        BookingLoadFamilyProfiles(
+                          accountId: widget.familyProfilesAccountId,
+                        ),
+                      );
                 }
 
                 if (_currentStep == 3) {

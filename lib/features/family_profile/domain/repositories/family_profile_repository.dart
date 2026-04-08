@@ -9,6 +9,9 @@ abstract class FamilyProfileRepository {
   Future<List<FamilyProfileEntity>> getFamilyProfilesByCustomerId(
     String customerId,
   );
+  Future<List<FamilyProfileEntity>> getFamilyProfilesByAccountId(
+    String accountId,
+  );
   Future<List<MemberTypeModel>> getMemberTypes();
   Future<MemberTypeModel> getMemberTypeById(int id);
   Future<FamilyProfileEntity> createFamilyProfile(

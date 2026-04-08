@@ -4,10 +4,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../../../core/constants/app_colors.dart';
-import '../../../../../core/di/injection_container.dart';
 import '../../../../../core/routing/app_router.dart';
 import '../../../../../core/routing/app_routes.dart';
 import '../../../../../core/utils/app_text_styles.dart';
+import '../../../../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../../../../features/auth/presentation/bloc/auth_state.dart';
 import '../../../../../features/employee/account/presentation/screens/employee_profile_screen.dart';
 import '../../../../../features/employee/shell/presentation/widgets/employee_quick_menu.dart';
@@ -16,11 +16,19 @@ class EmployeeMoreSheet {
   EmployeeMoreSheet._();
 
   static void show(BuildContext context) {
-    final authBloc = InjectionContainer.authBloc;
+    final authBloc = context.read<AuthBloc>();
     final authState = authBloc.state;
     String? memberType;
     if (authState is AuthCurrentAccountLoaded) {
-      memberType = (authState.account as dynamic).memberType;
+      final account = authState.account;
+      memberType = (account as dynamic).memberType;
+
+      // Resilience: check ownerProfile if memberType is null at root
+      if (memberType == null) {
+        try {
+          memberType = (account as dynamic).ownerProfile?.memberTypeName;
+        } catch (_) {}
+      }
     }
     final allItems = EmployeeQuickMenuPresets.allItems(memberType);
 
@@ -193,7 +201,7 @@ class EmployeeMoreSheet {
   static void _handleAction(
     BuildContext context,
     EmployeeQuickMenuExtraAction action,
-    dynamic authBloc,
+    AuthBloc authBloc,
   ) {
     switch (action) {
       case EmployeeQuickMenuExtraAction.appointments:
@@ -235,7 +243,7 @@ class EmployeeMoreSheet {
       case EmployeeQuickMenuExtraAction.staffProfile:
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => BlocProvider.value(
+            builder: (_) => BlocProvider<AuthBloc>.value(
               value: authBloc,
               child: const EmployeeProfileScreen(),
             ),
@@ -244,6 +252,9 @@ class EmployeeMoreSheet {
         break;
       case EmployeeQuickMenuExtraAction.wallet:
         AppRouter.push(context, AppRoutes.employeeWallet);
+        break;
+      case EmployeeQuickMenuExtraAction.myBookings:
+        AppRouter.push(context, AppRoutes.employeeMyBookings);
         break;
       case EmployeeQuickMenuExtraAction.supportRequests:
         AppRouter.push(context, AppRoutes.employeeSupportRequests);
@@ -291,6 +302,9 @@ List<_MenuGroup> _buildGroupedItems(List<EmployeeQuickMenuItem> items) {
       case EmployeeQuickMenuExtraAction.contracts:
       case EmployeeQuickMenuExtraAction.wallet:
         finance.add(item);
+        break;
+      case EmployeeQuickMenuExtraAction.myBookings:
+        operations.add(item);
         break;
       case EmployeeQuickMenuExtraAction.supportRequests:
         customerCare.add(item);

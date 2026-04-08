@@ -91,6 +91,8 @@ class ApiEndpoints {
   static String updateFamilyProfile(int id) => '/FamilyProfile/Update/$id';
   static String getFamilyProfilesByCustomerId(String customerId) =>
       '/FamilyProfile/GetByCustomerId/$customerId';
+  static String getFamilyProfilesByAccountId(String accountId) =>
+      '/FamilyProfile/GetByAccountId/$accountId';
   static const String getMemberTypes = '/member-types';
   static String getMemberTypeById(int id) => '/member-types/$id';
 
@@ -110,6 +112,7 @@ class ApiEndpoints {
   static String getBookingById(int id) => '/Booking/$id';
   static const String getBookings = '/Booking';
   static const String getAllBookings = '/Booking/all';
+  static const String getBookingsByHomeStaff = '/Booking/by-home-staff';
   static String confirmBooking(int id) => '/Booking/$id/confirm';
   static String completeBooking(int id) => '/Booking/$id/complete';
   static String checkInBooking(int id) => '/Booking/$id/check-in';

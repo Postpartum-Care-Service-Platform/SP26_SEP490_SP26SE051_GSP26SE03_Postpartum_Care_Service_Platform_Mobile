@@ -12,7 +12,12 @@ import '../../../../../features/chat/presentation/bloc/chat_state.dart';
 import '../../../../../features/employee/shell/presentation/widgets/employee_scaffold.dart';
 
 class EmployeeSupportRequestScreen extends StatefulWidget {
-  const EmployeeSupportRequestScreen({super.key});
+  final VoidCallback? onBackToDefaultStaffPage;
+
+  const EmployeeSupportRequestScreen({
+    super.key,
+    this.onBackToDefaultStaffPage,
+  });
 
   @override
   State<EmployeeSupportRequestScreen> createState() => _EmployeeSupportRequestScreenState();
@@ -53,6 +58,11 @@ class _EmployeeSupportRequestScreenState extends State<EmployeeSupportRequestScr
               length: 2,
               child: EmployeeScaffold(
                 appBar: AppBar(
+                  leading: IconButton(
+                    onPressed: widget.onBackToDefaultStaffPage ??
+                        () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.arrow_back_rounded),
+                  ),
                   title: const Text('Yêu cầu hỗ trợ'),
                   backgroundColor: AppColors.primary,
                   foregroundColor: AppColors.white,

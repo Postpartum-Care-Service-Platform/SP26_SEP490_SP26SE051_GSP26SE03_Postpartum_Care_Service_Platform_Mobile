@@ -25,7 +25,12 @@ class BookingSelectPackage extends BookingEvent {
 
 /// Load family profiles for selection
 class BookingLoadFamilyProfiles extends BookingEvent {
-  const BookingLoadFamilyProfiles();
+  final String? accountId;
+
+  const BookingLoadFamilyProfiles({this.accountId});
+
+  @override
+  List<Object?> get props => [accountId];
 }
 
 /// Select family profiles

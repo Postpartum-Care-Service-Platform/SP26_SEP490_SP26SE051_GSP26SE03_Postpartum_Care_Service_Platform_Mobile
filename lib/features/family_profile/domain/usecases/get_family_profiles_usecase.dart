@@ -10,5 +10,9 @@ class GetFamilyProfilesUsecase {
   Future<List<FamilyProfileEntity>> call() {
     return repository.getMyFamilyProfiles();
   }
+
+  Future<List<FamilyProfileEntity>> byAccountId(String accountId) {
+    return repository.getFamilyProfilesByAccountId(accountId);
+  }
 }
 

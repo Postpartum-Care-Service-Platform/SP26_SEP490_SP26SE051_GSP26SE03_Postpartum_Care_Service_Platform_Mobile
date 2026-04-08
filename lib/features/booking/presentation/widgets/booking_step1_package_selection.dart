@@ -51,7 +51,7 @@ class BookingStep1PackageSelection extends StatelessWidget {
         // The bloc itself will prevent duplicate API calls
         return existingPackageBloc != null
             ? BlocProvider.value(
-                value: existingPackageBloc,
+                value: existingPackageBloc..add(const PackageLoadRequested()),
                 child: _buildPackageContent(context, bookingState, selectedPackageId, scale),
               )
             : BlocProvider(

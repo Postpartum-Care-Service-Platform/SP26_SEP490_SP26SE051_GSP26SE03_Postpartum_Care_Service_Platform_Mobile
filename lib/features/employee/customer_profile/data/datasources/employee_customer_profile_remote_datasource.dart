@@ -5,6 +5,8 @@ import '../../../../../core/apis/api_endpoints.dart';
 import '../../../../../features/auth/data/models/current_account_model.dart';
 import '../../../../../features/services/data/models/menu_record_model.dart';
 import '../../../../../features/services/data/models/menu_model.dart';
+import '../../../../../features/family_profile/domain/entities/family_profile_entity.dart';
+import '../../../../../features/family_profile/data/models/family_profile_model.dart';
 
 class EmployeeCustomerProfileRemoteDataSource {
   final Dio _dio;
@@ -228,6 +230,23 @@ class EmployeeCustomerProfileRemoteDataSource {
     try {
       final response = await _dio.get(ApiEndpoints.getAccountById(customerId));
       return CurrentAccountModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<List<FamilyProfileEntity>> getFamilyProfilesByAccountId(String accountId) async {
+    try {
+      final response = await _dio.get(ApiEndpoints.getFamilyProfilesByAccountId(accountId));
+      final data = response.data;
+
+      if (data is! List) {
+        throw Exception('Dữ liệu hồ sơ gia đình không hợp lệ');
+      }
+
+      return data
+          .map((item) => FamilyProfileModel.fromJson(item as Map<String, dynamic>).toEntity())
+          .toList();
     } on DioException catch (e) {
       throw _handleError(e);
     }

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/di/injection_container.dart';
 import '../../../../../core/utils/app_responsive.dart';
+import '../../../../../core/widgets/app_app_bar.dart';
 import '../../../../../features/chat/presentation/bloc/chat_bloc.dart';
 import '../../../../../features/chat/presentation/bloc/chat_event.dart';
 import '../../../../../features/chat/presentation/bloc/chat_state.dart';
@@ -14,7 +15,12 @@ import '../widgets/employee_scaffold.dart';
 /// Nghiệp vụ: Staff chỉ nhận và trả lời tin nhắn từ khách hàng,
 /// không được tạo cuộc trò chuyện mới.
 class EmployeeChatScreen extends StatefulWidget {
-  const EmployeeChatScreen({super.key});
+  final VoidCallback? onBackToDefaultStaffPage;
+
+  const EmployeeChatScreen({
+    super.key,
+    this.onBackToDefaultStaffPage,
+  });
 
   @override
   State<EmployeeChatScreen> createState() => _EmployeeChatScreenState();
@@ -80,11 +86,12 @@ class _EmployeeChatScreenState extends State<EmployeeChatScreen> {
             final scale = AppResponsive.scaleFactor(context);
 
             return EmployeeScaffold(
-              appBar: AppBar(
-                title: const Text('Trao đổi'),
+              appBar: AppAppBar(
+                title: 'Trao đổi',
+                centerTitle: true,
                 backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.white,
-                elevation: 0,
+                titleColor: AppColors.white,
+                onBackPressed: widget.onBackToDefaultStaffPage,
               ),
               body: SafeArea(
                 child: Padding(
