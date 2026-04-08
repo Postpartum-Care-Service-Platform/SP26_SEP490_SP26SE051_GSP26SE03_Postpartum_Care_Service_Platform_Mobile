@@ -35,6 +35,19 @@ class FamilyProfileRepositoryImpl implements FamilyProfileRepository {
   }
 
   @override
+  Future<List<FamilyProfileEntity>> getFamilyProfilesByAccountId(
+    String accountId,
+  ) async {
+    try {
+      final models =
+          await remoteDataSource.getFamilyProfilesByAccountId(accountId);
+      return models.map((model) => model.toEntity()).toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
   Future<List<MemberTypeModel>> getMemberTypes() async {
     try {
       return await remoteDataSource.getMemberTypes();

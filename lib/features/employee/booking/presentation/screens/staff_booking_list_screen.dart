@@ -13,7 +13,12 @@ import '../../../../../core/di/injection_container.dart';
 import '../../../../../features/employee/booking/presentation/screens/employee_offline_payment_screen.dart';
 
 class StaffBookingListScreen extends StatefulWidget {
-  const StaffBookingListScreen({super.key});
+  final bool useHomeStaffBookings;
+
+  const StaffBookingListScreen({
+    super.key,
+    this.useHomeStaffBookings = false,
+  });
 
   @override
   State<StaffBookingListScreen> createState() => _StaffBookingListScreenState();
@@ -36,7 +41,9 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
   bool _showFilters = false;
 
   Future<List<BookingModel>> _loadBookings() async {
-    final all = await _dataSource.getAllBookings();
+    final all = widget.useHomeStaffBookings
+        ? await _dataSource.getBookingsByHomeStaff()
+        : await _dataSource.getAllBookings();
     all.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return all;
   }
@@ -412,7 +419,9 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppAppBar(
-        title: 'Danh sách Booking',
+        title: widget.useHomeStaffBookings
+            ? 'Booking của tôi'
+            : 'Danh sách Booking',
         centerTitle: true,
         actions: [
           Stack(
@@ -534,23 +543,25 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
                           onCheckIn: booking.status.toLowerCase() == 'confirmed'
                               ? () => _handleCheckIn(booking)
                               : null,
-                          onRecordOfflinePayment: () async {
-                            final bookingBloc = InjectionContainer.bookingBloc;
-                            final entity = booking.toEntity();
-                            final result = await Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => BlocProvider.value(
-                                  value: bookingBloc,
-                                  child: EmployeeOfflinePaymentScreen(
-                                    booking: entity,
-                                  ),
-                                ),
-                              ),
-                            );
-                            if (result == true) {
-                              await _refresh();
-                            }
-                          },
+                           onRecordOfflinePayment: !['completed', 'cancelled'].contains(booking.status.toLowerCase())
+                              ? () async {
+                                  final bookingBloc = InjectionContainer.bookingBloc;
+                                  final entity = booking.toEntity();
+                                  final result = await Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => BlocProvider.value(
+                                        value: bookingBloc,
+                                        child: EmployeeOfflinePaymentScreen(
+                                          booking: entity,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                  if (result == true) {
+                                    await _refresh();
+                                  }
+                                }
+                              : null,
                           onViewContract:
                               ['confirmed', 'in_progress', 'active', 'checked_in', 'completed'].contains(booking.status.toLowerCase())
                               ? () {

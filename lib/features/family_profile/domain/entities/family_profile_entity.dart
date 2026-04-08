@@ -13,6 +13,7 @@ class FamilyProfileEntity extends Equatable {
   final String? avatarUrl;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String? memberTypeName;
   final bool isOwner;
 
   const FamilyProfileEntity({
@@ -27,6 +28,7 @@ class FamilyProfileEntity extends Equatable {
     this.avatarUrl,
     required this.createdAt,
     required this.updatedAt,
+    this.memberTypeName,
     required this.isOwner,
   });
 
@@ -43,6 +45,7 @@ class FamilyProfileEntity extends Equatable {
         avatarUrl,
         createdAt,
         updatedAt,
+        memberTypeName,
         isOwner,
       ];
 }

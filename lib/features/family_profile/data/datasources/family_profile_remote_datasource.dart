@@ -13,6 +13,9 @@ abstract class FamilyProfileRemoteDataSource {
   Future<List<FamilyProfileModel>> getFamilyProfilesByCustomerId(
     String customerId,
   );
+  Future<List<FamilyProfileModel>> getFamilyProfilesByAccountId(
+    String accountId,
+  );
   Future<List<MemberTypeModel>> getMemberTypes();
   Future<MemberTypeModel> getMemberTypeById(int id);
   Future<FamilyProfileModel> createFamilyProfile(
@@ -89,6 +92,50 @@ class FamilyProfileRemoteDataSourceImpl
       } else {
         throw Exception('Network error: ${e.message}');
       }
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  @override
+  Future<List<FamilyProfileModel>> getFamilyProfilesByAccountId(
+    String accountId,
+  ) async {
+    if (accountId.trim().isEmpty) {
+      return [];
+    }
+
+    try {
+      final response = await dio.get(
+        ApiEndpoints.getFamilyProfilesByAccountId(accountId),
+      );
+
+      final raw = response.data;
+      final List<dynamic> data = raw is List<dynamic>
+          ? raw
+          : (raw is Map<String, dynamic> && raw['data'] is List<dynamic>)
+              ? raw['data'] as List<dynamic>
+              : const [];
+
+      return data
+          .map(
+            (json) => FamilyProfileModel.fromJson(
+              json as Map<String, dynamic>,
+            ),
+          )
+          .toList();
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      if (status == 404) {
+        return [];
+      }
+
+      if (e.response != null) {
+        throw Exception(
+          'Failed to load family profiles by account: ${e.response?.statusCode}',
+        );
+      }
+      throw Exception('Network error: ${e.message}');
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }

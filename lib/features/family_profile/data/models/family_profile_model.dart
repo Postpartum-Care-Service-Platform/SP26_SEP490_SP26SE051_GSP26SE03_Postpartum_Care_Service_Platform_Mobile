@@ -14,6 +14,7 @@ class FamilyProfileModel extends Equatable {
   final String? avatarUrl;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String? memberTypeName;
   final bool isOwner;
 
   const FamilyProfileModel({
@@ -28,6 +29,7 @@ class FamilyProfileModel extends Equatable {
     this.avatarUrl,
     required this.createdAt,
     required this.updatedAt,
+    this.memberTypeName,
     required this.isOwner,
   });
 
@@ -46,6 +48,7 @@ class FamilyProfileModel extends Equatable {
         avatarUrl: json['avatarUrl'] as String?,
         createdAt: DateTime.parse(json['createdAt'] as String),
         updatedAt: DateTime.parse(json['updatedAt'] as String),
+        memberTypeName: json['memberTypeName'] as String?,
         isOwner: json['isOwner'] as bool,
       );
 
@@ -61,6 +64,7 @@ class FamilyProfileModel extends Equatable {
         'avatarUrl': avatarUrl,
         'createdAt': createdAt.toIso8601String(),
         'updatedAt': updatedAt.toIso8601String(),
+        'memberTypeName': memberTypeName,
         'isOwner': isOwner,
       };
 
@@ -76,6 +80,7 @@ class FamilyProfileModel extends Equatable {
         avatarUrl: avatarUrl,
         createdAt: createdAt,
         updatedAt: updatedAt,
+        memberTypeName: memberTypeName,
         isOwner: isOwner,
       );
 
@@ -92,6 +97,7 @@ class FamilyProfileModel extends Equatable {
         avatarUrl,
         createdAt,
         updatedAt,
+        memberTypeName,
         isOwner,
       ];
 }

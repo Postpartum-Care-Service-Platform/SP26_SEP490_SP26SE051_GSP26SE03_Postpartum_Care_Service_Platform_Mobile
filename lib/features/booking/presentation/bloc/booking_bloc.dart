@@ -149,7 +149,10 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   ) async {
     emit(const BookingLoading());
     try {
-      final profiles = await getFamilyProfilesUsecase();
+      final accountId = event.accountId?.trim();
+      final profiles = (accountId != null && accountId.isNotEmpty)
+          ? await getFamilyProfilesUsecase.byAccountId(accountId)
+          : await getFamilyProfilesUsecase();
       _familyProfiles = profiles;
 
       if (_selectedFamilyProfileIds.isEmpty && profiles.isNotEmpty) {

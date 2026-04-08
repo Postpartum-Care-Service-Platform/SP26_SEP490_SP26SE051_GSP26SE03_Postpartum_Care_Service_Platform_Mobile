@@ -35,7 +35,9 @@ import '../../../../../features/wallet/presentation/bloc/wallet_state.dart';
 /// Employee Dashboard Screen - Trang chính sau khi staff đăng nhập
 /// Hiển thị tổng quan thống kê, quick menu và danh sách appointment gần nhất
 class EmployeeScheduleScreenNew extends StatelessWidget {
-  const EmployeeScheduleScreenNew({super.key});
+  final ValueChanged<AppBottomTab>? onBottomTabSelected;
+
+  const EmployeeScheduleScreenNew({super.key, this.onBottomTabSelected});
 
   @override
   Widget build(BuildContext context) {
@@ -43,81 +45,83 @@ class EmployeeScheduleScreenNew extends StatelessWidget {
       create: (context) =>
           InjectionContainer.employeeAppointmentBloc
             ..add(const LoadMyAssignedAppointments()),
-      child: const _EmployeeScheduleContent(),
+      child: _EmployeeScheduleContent(onBottomTabSelected: onBottomTabSelected),
     );
   }
 }
 
 class _EmployeeScheduleContent extends StatelessWidget {
-  const _EmployeeScheduleContent();
+  final ValueChanged<AppBottomTab>? onBottomTabSelected;
+
+  const _EmployeeScheduleContent({this.onBottomTabSelected});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<AuthBloc>(
-      create: (_) =>
-          InjectionContainer.authBloc..add(const AuthLoadCurrentAccount()),
-      child: EmployeeScaffold(
-        body: SafeArea(
-          child: Column(
-            children: [
-              const EmployeeHeaderBar(
-                title: 'Portal Nhân viên',
-                subtitle: 'Quản lý công việc',
-              ),
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: () async {
-                    // Reload appointments
-                    context.read<AppointmentBloc>().add(
-                      const LoadMyAssignedAppointments(),
-                    );
-                    // Reload current account silently
-                    context.read<AuthBloc>().add(
-                      const AuthLoadCurrentAccount(),
-                    );
+    return EmployeeScaffold(
+      body: SafeArea(
+        child: Column(
+          children: [
+            const EmployeeHeaderBar(
+              title: 'Portal Nhân viên',
+              subtitle: 'Quản lý công việc',
+            ),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  // Reload appointments
+                  context.read<AppointmentBloc>().add(
+                    const LoadMyAssignedAppointments(),
+                  );
+                  // Reload current account silently
+                  context.read<AuthBloc>().add(const AuthLoadCurrentAccount());
+                },
+                child: BlocConsumer<AppointmentBloc, AppointmentState>(
+                  listener: (context, state) {
+                    if (state is AppointmentError) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(state.message),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    } else if (state is AppointmentActionSuccess) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(state.message),
+                          backgroundColor: AppColors.primary,
+                        ),
+                      );
+                    }
                   },
-                  child: BlocConsumer<AppointmentBloc, AppointmentState>(
-                    listener: (context, state) {
-                      if (state is AppointmentError) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(state.message),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                      } else if (state is AppointmentActionSuccess) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(state.message),
-                            backgroundColor: AppColors.primary,
-                          ),
-                        );
-                      }
-                    },
-                    builder: (context, state) {
-                      if (state is AppointmentLoading) {
-                        return const _AppointmentsLoadingSkeleton();
-                      }
+                  builder: (context, state) {
+                    if (state is AppointmentLoading) {
+                      return const _AppointmentsLoadingSkeleton();
+                    }
 
-                      if (state is AppointmentLoaded) {
-                        return _LoadedContent(appointments: state.appointments);
-                      }
+                    if (state is AppointmentLoaded) {
+                      return _LoadedContent(
+                        appointments: state.appointments,
+                        onBottomTabSelected: onBottomTabSelected,
+                      );
+                    }
 
-                      if (state is AppointmentEmpty) {
-                        return const _LoadedContent(appointments: []);
-                      }
+                    if (state is AppointmentEmpty) {
+                      return _LoadedContent(
+                        appointments: const [],
+                        onBottomTabSelected: onBottomTabSelected,
+                      );
+                    }
 
-                      if (state is AppointmentError) {
-                        return _ErrorState(message: state.message);
-                      }
+                    if (state is AppointmentError) {
+                      return _ErrorState(message: state.message);
+                    }
 
-                      return const SizedBox();
-                    },
-                  ),
+                    return const SizedBox();
+                  },
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -171,8 +175,9 @@ class _ErrorState extends StatelessWidget {
 /// Loaded content with appointments
 class _LoadedContent extends StatefulWidget {
   final List<AppointmentEntity> appointments;
+  final ValueChanged<AppBottomTab>? onBottomTabSelected;
 
-  const _LoadedContent({required this.appointments});
+  const _LoadedContent({required this.appointments, this.onBottomTabSelected});
 
   @override
   State<_LoadedContent> createState() => _LoadedContentState();
@@ -261,16 +266,19 @@ class _LoadedContentState extends State<_LoadedContent> {
     if (authState is AuthCurrentAccountLoaded) {
       final account = authState.account;
       memberType = (account as dynamic).memberType;
-      
+
       // Resilience: check ownerProfile if memberType is null at root
       if (memberType == null) {
         try {
           memberType = (account as dynamic).ownerProfile?.memberTypeName;
         } catch (_) {}
       }
-      
+
       final typeLower = memberType?.toLowerCase().trim() ?? '';
-      isHomeStaff = typeLower == 'home-staff' || typeLower == 'homestaff' || typeLower == 'home nurse';
+      isHomeStaff =
+          typeLower == 'home-staff' ||
+          typeLower == 'homestaff' ||
+          typeLower == 'home nurse';
     }
 
     // Tính toán stats
@@ -285,7 +293,6 @@ class _LoadedContentState extends State<_LoadedContent> {
               a.status != AppointmentStatus.cancelled,
         )
         .length;
-
 
     // Lấy 5 appointment gần nhất (chưa hoàn thành, sắp xếp theo thời gian)
     final upcomingAppointments =
@@ -355,6 +362,11 @@ class _LoadedContentState extends State<_LoadedContent> {
                 allItems: EmployeeQuickMenuPresets.allItems(memberType),
                 currentTab: AppBottomTab.appointment,
                 onBottomTabSelected: (tab) {
+                  if (widget.onBottomTabSelected != null) {
+                    widget.onBottomTabSelected!(tab);
+                    return;
+                  }
+
                   switch (tab) {
                     case AppBottomTab.services:
                       AppRouter.push(context, AppRoutes.employeePackageBooking);
@@ -363,7 +375,10 @@ class _LoadedContentState extends State<_LoadedContent> {
                       AppRouter.push(context, AppRoutes.employeeChat);
                       break;
                     case AppBottomTab.supportRequests:
-                      AppRouter.push(context, AppRoutes.employeeSupportRequests);
+                      AppRouter.push(
+                        context,
+                        AppRoutes.employeeSupportRequests,
+                      );
                       break;
                     case AppBottomTab.appointment:
                     case AppBottomTab.home:
@@ -419,18 +434,24 @@ class _LoadedContentState extends State<_LoadedContent> {
                       AppRouter.push(context, AppRoutes.employeeWallet);
                       break;
                     case EmployeeQuickMenuExtraAction.staffProfile:
-                      final authBloc = InjectionContainer.authBloc;
+                      final authBloc = context.read<AuthBloc>();
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => BlocProvider.value(
+                          builder: (_) => BlocProvider<AuthBloc>.value(
                             value: authBloc,
                             child: const EmployeeProfileScreen(),
                           ),
                         ),
                       );
                       break;
+                    case EmployeeQuickMenuExtraAction.myBookings:
+                      AppRouter.push(context, AppRoutes.employeeMyBookings);
+                      break;
                     case EmployeeQuickMenuExtraAction.supportRequests:
-                      AppRouter.push(context, AppRoutes.employeeSupportRequests);
+                      AppRouter.push(
+                        context,
+                        AppRoutes.employeeSupportRequests,
+                      );
                       break;
                   }
                 },
@@ -1019,8 +1040,6 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-
-
 // Removed: _SectionTitle, _AppointmentCard, _CompletedAppointmentCard, _StatusBadge, _InfoRow, _ActionButton moved to EmployeeAppointmentListScreen
 
 /// Loading skeleton when appointments are being fetched
@@ -1412,23 +1431,26 @@ class _RecentBookingsSectionState extends State<_RecentBookingsSection> {
             ),
             if (bookings.length >= _pageSize) ...[
               SizedBox(height: 4 * scale),
-              _BookingPaginationControls(
-                currentPage: safeCurrentPage,
-                totalPages: totalPages,
-                onPrevious: safeCurrentPage > 0
-                    ? () {
-                        setState(() {
-                          _currentPage = safeCurrentPage - 1;
-                        });
-                      }
-                    : null,
-                onNext: safeCurrentPage < totalPages - 1
-                    ? () {
-                        setState(() {
-                          _currentPage = safeCurrentPage + 1;
-                        });
-                      }
-                    : null,
+              Align(
+                alignment: Alignment.centerLeft,
+                child: _BookingPaginationControls(
+                  currentPage: safeCurrentPage,
+                  totalPages: totalPages,
+                  onPrevious: safeCurrentPage > 0
+                      ? () {
+                          setState(() {
+                            _currentPage = safeCurrentPage - 1;
+                          });
+                        }
+                      : null,
+                  onNext: safeCurrentPage < totalPages - 1
+                      ? () {
+                          setState(() {
+                            _currentPage = safeCurrentPage + 1;
+                          });
+                        }
+                      : null,
+                ),
               ),
             ],
           ],
@@ -1457,19 +1479,17 @@ class _BookingPaginationControls extends StatelessWidget {
     const accentOrange = Color(0xFFF59E0B);
 
     return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: 12 * scale,
-        vertical: 10 * scale,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: 8 * scale, vertical: 6 * scale),
       decoration: BoxDecoration(
         color: accentOrange.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12 * scale),
         border: Border.all(color: accentOrange.withValues(alpha: 0.35)),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          FilledButton.icon(
+          FilledButton(
             onPressed: onPrevious,
             style: FilledButton.styleFrom(
               backgroundColor: accentOrange,
@@ -1477,23 +1497,30 @@ class _BookingPaginationControls extends StatelessWidget {
               disabledBackgroundColor: accentOrange.withValues(alpha: 0.35),
               disabledForegroundColor: Colors.white.withValues(alpha: 0.9),
               padding: EdgeInsets.symmetric(
-                horizontal: 10 * scale,
+                horizontal: 12 * scale,
                 vertical: 8 * scale,
               ),
               visualDensity: VisualDensity.compact,
             ),
-            icon: const Icon(Icons.chevron_left, size: 18),
-            label: Text(
-              'Trước',
-              style: AppTextStyles.arimo(
-                fontSize: 12 * scale,
-                fontWeight: FontWeight.w700,
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.chevron_left, size: 16),
+                SizedBox(width: 2 * scale),
+                Text(
+                  'Trước',
+                  style: AppTextStyles.arimo(
+                    fontSize: 11 * scale,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
             ),
           ),
+          SizedBox(width: 6 * scale),
           Container(
             padding: EdgeInsets.symmetric(
-              horizontal: 10 * scale,
+              horizontal: 12 * scale,
               vertical: 6 * scale,
             ),
             decoration: BoxDecoration(
@@ -1504,13 +1531,14 @@ class _BookingPaginationControls extends StatelessWidget {
             child: Text(
               'Trang ${currentPage + 1}/$totalPages',
               style: AppTextStyles.arimo(
-                fontSize: 12 * scale,
+                fontSize: 11 * scale,
                 fontWeight: FontWeight.w700,
                 color: accentOrange,
               ),
             ),
           ),
-          FilledButton.icon(
+          SizedBox(width: 6 * scale),
+          FilledButton(
             onPressed: onNext,
             style: FilledButton.styleFrom(
               backgroundColor: accentOrange,
@@ -1518,18 +1546,24 @@ class _BookingPaginationControls extends StatelessWidget {
               disabledBackgroundColor: accentOrange.withValues(alpha: 0.35),
               disabledForegroundColor: Colors.white.withValues(alpha: 0.9),
               padding: EdgeInsets.symmetric(
-                horizontal: 10 * scale,
+                horizontal: 12 * scale,
                 vertical: 8 * scale,
               ),
               visualDensity: VisualDensity.compact,
             ),
-            icon: const Icon(Icons.chevron_right, size: 18),
-            label: Text(
-              'Sau',
-              style: AppTextStyles.arimo(
-                fontSize: 12 * scale,
-                fontWeight: FontWeight.w700,
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Sau',
+                  style: AppTextStyles.arimo(
+                    fontSize: 11 * scale,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                SizedBox(width: 2 * scale),
+                const Icon(Icons.chevron_right, size: 16),
+              ],
             ),
           ),
         ],
@@ -1825,7 +1859,8 @@ class _HomeStaffWalletSection extends StatefulWidget {
   const _HomeStaffWalletSection();
 
   @override
-  State<_HomeStaffWalletSection> createState() => _HomeStaffWalletSectionState();
+  State<_HomeStaffWalletSection> createState() =>
+      _HomeStaffWalletSectionState();
 }
 
 class _HomeStaffWalletSectionState extends State<_HomeStaffWalletSection> {
@@ -1858,9 +1893,10 @@ class _HomeStaffWalletSectionState extends State<_HomeStaffWalletSection> {
             balance = state.wallet.balance.toDouble();
           }
 
-          final formattedBalance =
-              NumberFormat.currency(locale: 'vi_VN', symbol: 'đ')
-                  .format(balance);
+          final formattedBalance = NumberFormat.currency(
+            locale: 'vi_VN',
+            symbol: 'đ',
+          ).format(balance);
 
           return Container(
             margin: const EdgeInsets.symmetric(vertical: 8),
@@ -1920,7 +1956,7 @@ class _HomeStaffWalletSectionState extends State<_HomeStaffWalletSection> {
                           ),
                         ),
                       ),
-                      
+
                       Padding(
                         padding: const EdgeInsets.all(24),
                         child: Column(
@@ -1934,7 +1970,9 @@ class _HomeStaffWalletSectionState extends State<_HomeStaffWalletSection> {
                                     Container(
                                       padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withValues(alpha: 0.2),
+                                        color: Colors.white.withValues(
+                                          alpha: 0.2,
+                                        ),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: const Icon(
@@ -1945,17 +1983,22 @@ class _HomeStaffWalletSectionState extends State<_HomeStaffWalletSection> {
                                     ),
                                     const SizedBox(width: 12),
                                     Text(
-                                      'Số dư Ví nhân viên',
+                                      'Số dư Ví',
                                       style: AppTextStyles.arimo(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w600,
-                                        color: Colors.white.withValues(alpha: 0.9),
+                                        color: Colors.white.withValues(
+                                          alpha: 0.9,
+                                        ),
                                       ),
                                     ),
                                   ],
                                 ),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: Colors.white24,
                                     borderRadius: BorderRadius.circular(100),
@@ -2025,4 +2068,3 @@ class _HomeStaffWalletSectionState extends State<_HomeStaffWalletSection> {
     );
   }
 }
-

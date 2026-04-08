@@ -396,6 +396,13 @@ class AppRouter {
           ),
         );
 
+      case AppRoutes.employeeMyBookings:
+        return MaterialPageRoute(
+          builder: (_) => const StaffBookingListScreen(
+            useHomeStaffBookings: true,
+          ),
+        );
+
       // Employee Routes - Legacy/Mock screens
       case AppRoutes.employeeTasks:
         return MaterialPageRoute(builder: (_) => const TasksScreenNew());

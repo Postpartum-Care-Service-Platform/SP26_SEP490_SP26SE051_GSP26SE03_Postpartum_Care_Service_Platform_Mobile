@@ -4,7 +4,6 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../domain/entities/notification_entity.dart';
 import '../bloc/notification_bloc.dart';
-import '../bloc/notification_event.dart';
 import '../bloc/notification_state.dart';
 import '../widgets/notification_loading_state.dart';
 import '../widgets/notification_error_state.dart';

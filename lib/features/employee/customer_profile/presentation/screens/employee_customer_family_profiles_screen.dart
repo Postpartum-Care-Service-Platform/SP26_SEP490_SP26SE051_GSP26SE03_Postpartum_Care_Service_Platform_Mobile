@@ -1,21 +1,22 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/constants/app_colors.dart';
-import '../../../../../core/di/injection_container.dart';
-import '../../../../../core/routing/app_router.dart';
-import '../../../../../core/routing/app_routes.dart';
 import '../../../../../core/utils/app_responsive.dart';
 import '../../../../../core/utils/app_text_styles.dart';
 import '../../../../../core/widgets/app_toast.dart';
 import '../../../../../features/auth/data/models/current_account_model.dart';
 import '../../../../../features/booking/data/datasources/booking_remote_datasource.dart';
 import '../../../../../features/family_profile/domain/entities/family_profile_entity.dart';
-import '../../../../../features/family_profile/presentation/widgets/family_member_card.dart';
 import '../../../../../features/services/data/datasources/family_schedule_remote_datasource.dart';
 import '../../../../../features/services/data/models/menu_record_model.dart';
 import '../../../../../features/services/data/models/menu_model.dart';
 import '../../../../../features/employee/customer_profile/data/datasources/employee_customer_profile_remote_datasource.dart';
-
+import '../widgets/tabs/customer_profile_family_tab.dart';
+import '../widgets/tabs/customer_profile_menu_tab.dart';
+import '../widgets/tabs/customer_profile_bookings_tab.dart';
+import '../widgets/tabs/customer_profile_appointments_tab.dart';
+import '../widgets/tabs/customer_profile_transactions_tab.dart';
+import '../widgets/tabs/customer_profile_account_tab.dart';
 class EmployeeCustomerFamilyProfilesScreen extends StatefulWidget {
   final String customerId;
   final String customerName;
@@ -41,8 +42,6 @@ class _EmployeeCustomerFamilyProfilesScreenState
       _loadFamilyProfiles(widget.customerId);
   late Future<List<MenuRecordModel>> _menuRecordsFuture =
       _loadMenuRecordsByCurrentFilter();
-  late Future<List<Map<String, dynamic>>> _medicalRecordsFuture =
-      _profileDs.getMedicalRecordsByCustomer(widget.customerId);
   late Future<List<Map<String, dynamic>>> _bookingsFuture =
       _profileDs.getBookingsByCustomer(widget.customerId);
   late Future<List<Map<String, dynamic>>> _appointmentsFuture =
@@ -58,9 +57,8 @@ class _EmployeeCustomerFamilyProfilesScreenState
   DateTime? _rangeFrom;
   DateTime? _rangeTo;
 
-  Future<List<FamilyProfileEntity>> _loadFamilyProfiles(String customerId) {
-    return InjectionContainer.familyProfileRepository
-        .getFamilyProfilesByCustomerId(customerId);
+  Future<List<FamilyProfileEntity>> _loadFamilyProfiles(String accountId) {
+    return _profileDs.getFamilyProfilesByAccountId(accountId);
   }
 
   Future<List<MenuRecordModel>> _loadMenuRecordsByCurrentFilter() {
@@ -583,7 +581,6 @@ class _EmployeeCustomerFamilyProfilesScreenState
     setState(() {
       _familyProfilesFuture = _loadFamilyProfiles(widget.customerId);
       _menuRecordsFuture = _loadMenuRecordsByCurrentFilter();
-      _medicalRecordsFuture = _profileDs.getMedicalRecordsByCustomer(widget.customerId);
       _bookingsFuture = _profileDs.getBookingsByCustomer(widget.customerId);
       _appointmentsFuture = _profileDs.getAppointmentsByCustomer(widget.customerId);
       _transactionsFuture = _profileDs.getTransactionsByCustomer(widget.customerId);
@@ -596,7 +593,7 @@ class _EmployeeCustomerFamilyProfilesScreenState
     final scale = AppResponsive.scaleFactor(context);
 
     return DefaultTabController(
-      length: 7,
+      length: 6,
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
@@ -649,8 +646,7 @@ class _EmployeeCustomerFamilyProfilesScreenState
             ),
             tabs: const [
               Tab(text: 'Hồ sơ gia đình'),
-              Tab(text: 'Menu Record'),
-              Tab(text: 'Hồ sơ y tế'),
+              Tab(text: 'Thực đơn khách hàng'),
               Tab(text: 'Booking'),
               Tab(text: 'Lịch hẹn'),
               Tab(text: 'Giao dịch'),
@@ -660,610 +656,88 @@ class _EmployeeCustomerFamilyProfilesScreenState
         ),
         body: TabBarView(
           children: [
-            _buildFamilyProfilesTab(scale),
-            _buildMenuRecordsTab(scale),
-            _buildMedicalRecordsTab(scale),
-            _buildBookingsTab(scale),
-            _buildAppointmentsTab(scale),
-            _buildTransactionsTab(scale),
-            _buildAccountInfoTab(scale),
+            CustomerProfileFamilyTab(
+              future: _familyProfilesFuture,
+              customerId: widget.customerId,
+              customerName: widget.customerName,
+              scale: scale,
+            ),
+            CustomerProfileMenuTab(
+              future: _menuRecordsFuture,
+              scale: scale,
+              fmtDate: _fmtDate,
+              filterWidget: _buildMenuFilterBar(scale),
+              onViewDetails: _viewMenuDetails,
+              onEdit: _updateMenuRecordByStaff,
+              onDelete: _deleteMenuRecordByStaff,
+            ),
+            CustomerProfileBookingsTab(
+              future: _bookingsFuture,
+              scale: scale,
+              fmtDate: _fmtDate,
+            ),
+            CustomerProfileAppointmentsTab(
+              future: _appointmentsFuture,
+              scale: scale,
+              fmtDate: _fmtDate,
+            ),
+            CustomerProfileTransactionsTab(
+              future: _transactionsFuture,
+              scale: scale,
+              fmtDate: _fmtDate,
+            ),
+            CustomerProfileAccountTab(
+              future: _accountFuture,
+              scale: scale,
+              fmtDate: _fmtDate,
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildFamilyProfilesTab(double scale) {
-    return FutureBuilder<List<FamilyProfileEntity>>(
-      future: _familyProfilesFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(color: AppColors.primary),
-          );
-        }
-
-        if (snapshot.hasError) {
-          return _errorText(scale, 'Tải dữ liệu thất bại: ${snapshot.error}');
-        }
-
-        final members = snapshot.data ?? const [];
-        if (members.isEmpty) {
-          return _emptyText(scale, 'Chưa có hồ sơ gia đình cho khách hàng này.');
-        }
-
-        final owner = members.where((m) => m.isOwner).toList();
-        final others = members.where((m) => !m.isOwner).toList();
-        final ordered = [...owner, ...others];
-
-        return ListView(
-          padding: EdgeInsets.symmetric(vertical: 8 * scale),
-          children: [
-            Padding(
-              padding: EdgeInsets.fromLTRB(16 * scale, 10 * scale, 16 * scale, 6 * scale),
-              child: Text(
-                widget.customerName,
-                style: AppTextStyles.tinos(
-                  fontSize: 18 * scale,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(16 * scale, 0, 16 * scale, 10 * scale),
-              child: Text(
-                'CustomerId: ${widget.customerId}',
-                style: AppTextStyles.arimo(
-                  fontSize: 12 * scale,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ),
-            for (final m in ordered)
-              FamilyMemberCard(member: m, showActions: false, onTap: null),
-            SizedBox(height: 18 * scale),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildMenuRecordsTab(double scale) {
+  Widget _buildMenuFilterBar(double scale) {
     final selectedDateText = _fmtDate(_selectedDate);
     final rangeText = (_rangeFrom != null && _rangeTo != null)
         ? '${_fmtDate(_rangeFrom!)} → ${_fmtDate(_rangeTo!)}'
         : 'Chưa chọn khoảng ngày';
 
-    return Column(
-      children: [
-        Padding(
-          padding: EdgeInsets.fromLTRB(12 * scale, 10 * scale, 12 * scale, 6 * scale),
-          child: Wrap(
-            spacing: 8 * scale,
-            runSpacing: 8 * scale,
-            children: [
-              ChoiceChip(
-                label: const Text('Tất cả'),
-                selected: _menuFilterMode == _MenuFilterMode.all,
-                onSelected: (_) {
-                  setState(() {
-                    _menuFilterMode = _MenuFilterMode.all;
-                    _menuRecordsFuture = _loadMenuRecordsByCurrentFilter();
-                  });
-                },
-              ),
-              ChoiceChip(
-                label: Text('Theo ngày: $selectedDateText'),
-                selected: _menuFilterMode == _MenuFilterMode.date,
-                onSelected: (_) => _pickSingleDate(),
-              ),
-              ChoiceChip(
-                label: Text('Khoảng ngày: $rangeText'),
-                selected: _menuFilterMode == _MenuFilterMode.range,
-                onSelected: (_) => _pickDateRange(),
-              ),
-              ActionChip(
-                avatar: const Icon(Icons.add_rounded, size: 18),
-                label: const Text('Thêm record'),
-                onPressed: _createMenuRecordByStaff,
-              ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: FutureBuilder<List<MenuRecordModel>>(
-            future: _menuRecordsFuture,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(
-                  child: CircularProgressIndicator(color: AppColors.primary),
-                );
-              }
-
-              if (snapshot.hasError) {
-                return _errorText(
-                  scale,
-                  'Không tải được Menu Record: ${snapshot.error}',
-                );
-              }
-
-              final records = snapshot.data ?? const [];
-              if (records.isEmpty) {
-                return _emptyText(scale, 'Không có Menu Record theo bộ lọc hiện tại.');
-              }
-
-              records.sort((a, b) => b.date.compareTo(a.date));
-
-              return ListView.separated(
-                padding: EdgeInsets.all(16 * scale),
-                itemCount: records.length,
-                separatorBuilder: (_, __) => SizedBox(height: 10 * scale),
-                itemBuilder: (context, index) {
-                  final r = records[index];
-                  return InkWell(
-                    onTap: () => _viewMenuDetails(r.menuId),
-                    borderRadius: BorderRadius.circular(12 * scale),
-                    child: Container(
-                      padding: EdgeInsets.all(12 * scale),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12 * scale),
-                        border: Border.all(color: AppColors.borderLight),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                        Text(
-                          r.name,
-                          style: AppTextStyles.arimo(
-                            fontSize: 14 * scale,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        SizedBox(height: 6 * scale),
-                        Text(
-                          'Ngày: ${_fmtDate(r.date)}',
-                          style: AppTextStyles.arimo(
-                            fontSize: 12 * scale,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                'MenuId: ${r.menuId} • AccountId: ${r.accountId}',
-                                style: AppTextStyles.arimo(
-                                  fontSize: 12 * scale,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ),
-                            IconButton(
-                              tooltip: 'Sửa',
-                              onPressed: () => _updateMenuRecordByStaff(r),
-                              icon: const Icon(Icons.edit_rounded),
-                            ),
-                            IconButton(
-                              tooltip: 'Xóa',
-                              onPressed: () => _deleteMenuRecordByStaff(r),
-                              icon: const Icon(Icons.delete_outline_rounded),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMedicalRecordsTab(double scale) {
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      future: _medicalRecordsFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(color: AppColors.primary),
-          );
-        }
-
-        if (snapshot.hasError) {
-          return _errorText(scale, 'Không tải được hồ sơ y tế: ${snapshot.error}');
-        }
-
-        final records = snapshot.data ?? const [];
-        if (records.isEmpty) {
-          return _emptyText(scale, 'Khách hàng chưa có hồ sơ y tế.');
-        }
-
-        return ListView.separated(
-          padding: EdgeInsets.all(16 * scale),
-          itemCount: records.length,
-          separatorBuilder: (_, __) => SizedBox(height: 10 * scale),
-          itemBuilder: (context, index) {
-            final r = records[index];
-            final id = r['id']?.toString() ?? 'N/A';
-            final updatedAt = (r['updatedAt'] ?? '').toString();
-            final notes = (r['notes'] ?? r['description'] ?? r['diagnosis'] ?? '-')
-                .toString();
-
-            return Container(
-              padding: EdgeInsets.all(12 * scale),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12 * scale),
-                border: Border.all(color: AppColors.borderLight),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Medical Record #$id',
-                    style: AppTextStyles.arimo(
-                      fontSize: 14 * scale,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  SizedBox(height: 6 * scale),
-                  Text(
-                    'Ghi chú: $notes',
-                    style: AppTextStyles.arimo(
-                      fontSize: 12 * scale,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  if (updatedAt.isNotEmpty)
-                    Text(
-                      'Cập nhật: $updatedAt',
-                      style: AppTextStyles.arimo(
-                        fontSize: 12 * scale,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildBookingsTab(double scale) {
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      future: _bookingsFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(color: AppColors.primary),
-          );
-        }
-
-        if (snapshot.hasError) {
-          return _errorText(scale, 'Không tải được Booking: ${snapshot.error}');
-        }
-
-        final records = snapshot.data ?? const [];
-        if (records.isEmpty) {
-          return _emptyText(scale, 'Không có booking của khách hàng này.');
-        }
-
-        return _buildGenericMapList(
-          scale: scale,
-          records: records,
-          titleBuilder: (item) => 'Booking #${item['id'] ?? 'N/A'}',
-          subtitleBuilder: (item) {
-            final status = item['status']?.toString() ?? 'Unknown';
-            final startDate = item['startDate']?.toString() ?? '-';
-            return 'Trạng thái: $status • Bắt đầu: $startDate';
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildAppointmentsTab(double scale) {
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      future: _appointmentsFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(color: AppColors.primary),
-          );
-        }
-
-        if (snapshot.hasError) {
-          return _errorText(scale, 'Không tải được Appointment: ${snapshot.error}');
-        }
-
-        final records = snapshot.data ?? const [];
-        if (records.isEmpty) {
-          return _emptyText(scale, 'Không có lịch hẹn của khách hàng này.');
-        }
-
-        return _buildGenericMapList(
-          scale: scale,
-          records: records,
-          titleBuilder: (item) => 'Appointment #${item['id'] ?? 'N/A'}',
-          subtitleBuilder: (item) {
-            final status = item['status']?.toString() ?? 'Unknown';
-            final date = item['appointmentDate']?.toString() ?? '-';
-            return 'Trạng thái: $status • Ngày hẹn: $date';
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildTransactionsTab(double scale) {
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      future: _transactionsFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(color: AppColors.primary),
-          );
-        }
-
-        if (snapshot.hasError) {
-          return _errorText(scale, 'Không tải được giao dịch: ${snapshot.error}');
-        }
-
-        final records = snapshot.data ?? const [];
-        if (records.isEmpty) {
-          return _TransactionEmptyState(
-            scale: scale,
-            onCreateTransaction: () {
-              AppRouter.push(context, AppRoutes.staffTransactionList);
-            },
-          );
-        }
-
-        return _buildGenericMapList(
-          scale: scale,
-          records: records,
-          titleBuilder: (item) =>
-              'Transaction #${item['id'] ?? item['transactionId'] ?? 'N/A'}',
-          subtitleBuilder: (item) {
-            final amount = item['amount']?.toString() ?? '0';
-            final status = item['status']?.toString() ??
-                item['transactionStatus']?.toString() ??
-                'Unknown';
-            return 'Số tiền: $amount • Trạng thái: $status';
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildGenericMapList({
-    required double scale,
-    required List<Map<String, dynamic>> records,
-    required String Function(Map<String, dynamic>) titleBuilder,
-    required String Function(Map<String, dynamic>) subtitleBuilder,
-  }) {
-    return ListView.separated(
-      padding: EdgeInsets.all(16 * scale),
-      itemCount: records.length,
-      separatorBuilder: (_, __) => SizedBox(height: 10 * scale),
-      itemBuilder: (context, index) {
-        final item = records[index];
-        return Container(
-          padding: EdgeInsets.all(12 * scale),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12 * scale),
-            border: Border.all(color: AppColors.borderLight),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                titleBuilder(item),
-                style: AppTextStyles.arimo(
-                  fontSize: 14 * scale,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              SizedBox(height: 6 * scale),
-              Text(
-                subtitleBuilder(item),
-                style: AppTextStyles.arimo(
-                  fontSize: 12 * scale,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildAccountInfoTab(double scale) {
-    return FutureBuilder<CurrentAccountModel>(
-      future: _accountFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(color: AppColors.primary),
-          );
-        }
-
-        if (snapshot.hasError) {
-          return _errorText(
-            scale,
-            'Không tải được thông tin tài khoản: ${snapshot.error}',
-          );
-        }
-
-        final acc = snapshot.data;
-        if (acc == null) {
-          return _emptyText(scale, 'Không có dữ liệu tài khoản.');
-        }
-
-        final displayName = acc.ownerProfile?.fullName ?? acc.username;
-        final status = acc.isActive ? 'Hoạt động' : 'Ngưng hoạt động';
-
-        return ListView(
-          padding: EdgeInsets.all(16 * scale),
-          children: [
-            _infoTile(scale, 'Họ tên', displayName),
-            _infoTile(scale, 'Email', acc.email),
-            _infoTile(scale, 'Số điện thoại', acc.phone),
-            _infoTile(scale, 'Username', acc.username),
-            _infoTile(scale, 'Vai trò', acc.roleName),
-            _infoTile(scale, 'Trạng thái', status),
-            _infoTile(scale, 'Đã xác minh email', acc.isEmailVerified ? 'Có' : 'Chưa'),
-            if (acc.ownerProfile?.address != null)
-              _infoTile(scale, 'Địa chỉ', acc.ownerProfile!.address!),
-            if (acc.ownerProfile?.gender != null)
-              _infoTile(scale, 'Giới tính', acc.ownerProfile!.gender!),
-            if (acc.ownerProfile?.dateOfBirth != null)
-              _infoTile(scale, 'Ngày sinh', _fmtDate(acc.ownerProfile!.dateOfBirth!)),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _infoTile(double scale, String label, String value) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 10 * scale),
-      padding: EdgeInsets.all(12 * scale),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12 * scale),
-        border: Border.all(color: AppColors.borderLight),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16 * scale, 12 * scale, 16 * scale, 4 * scale),
+      child: Wrap(
+        spacing: 8 * scale,
+        runSpacing: 8 * scale,
         children: [
-          Text(
-            label,
-            style: AppTextStyles.arimo(
-              fontSize: 12 * scale,
-              color: AppColors.textSecondary,
-            ),
+          ChoiceChip(
+            label: const Text('Tất cả'),
+            selected: _menuFilterMode == _MenuFilterMode.all,
+            onSelected: (_) {
+              setState(() {
+                _menuFilterMode = _MenuFilterMode.all;
+                _menuRecordsFuture = _loadMenuRecordsByCurrentFilter();
+              });
+            },
           ),
-          SizedBox(height: 4 * scale),
-          Text(
-            value,
-            style: AppTextStyles.arimo(
-              fontSize: 14 * scale,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
+          ChoiceChip(
+            label: Text('Theo ngày: $selectedDateText'),
+            selected: _menuFilterMode == _MenuFilterMode.date,
+            onSelected: (_) => _pickSingleDate(),
+          ),
+          ChoiceChip(
+            label: Text('Khoảng ngày: $rangeText'),
+            selected: _menuFilterMode == _MenuFilterMode.range,
+            onSelected: (_) => _pickDateRange(),
+          ),
+          ActionChip(
+            avatar: const Icon(Icons.add_rounded, size: 18),
+            label: const Text('Thêm Thực Đơn'),
+            onPressed: _createMenuRecordByStaff,
           ),
         ],
       ),
     );
   }
 
-  Widget _errorText(double scale, String text) {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(24 * scale),
-        child: Text(
-          text,
-          textAlign: TextAlign.center,
-          style: AppTextStyles.arimo(
-            fontSize: 13 * scale,
-            color: AppColors.textSecondary,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _emptyText(double scale, String text) {
-    return Center(
-      child: Text(
-        text,
-        textAlign: TextAlign.center,
-        style: AppTextStyles.arimo(
-          fontSize: 13 * scale,
-          color: AppColors.textSecondary,
-        ),
-      ),
-    );
-  }
-
   String _fmtDate(DateTime value) => value.toIso8601String().split('T').first;
-}
-
-class _TransactionEmptyState extends StatelessWidget {
-  final double scale;
-  final VoidCallback onCreateTransaction;
-
-  const _TransactionEmptyState({
-    required this.scale,
-    required this.onCreateTransaction,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 28 * scale),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 72 * scale,
-              height: 72 * scale,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.receipt_long_rounded,
-                size: 34 * scale,
-                color: AppColors.primary,
-              ),
-            ),
-            SizedBox(height: 14 * scale),
-            Text(
-              'Chưa có giao dịch',
-              style: AppTextStyles.arimo(
-                fontSize: 15 * scale,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            SizedBox(height: 6 * scale),
-            Text(
-              'Khách hàng này chưa phát sinh giao dịch nào.',
-              textAlign: TextAlign.center,
-              style: AppTextStyles.arimo(
-                fontSize: 12.5 * scale,
-                color: AppColors.textSecondary,
-              ),
-            ),
-            SizedBox(height: 14 * scale),
-            FilledButton.icon(
-              onPressed: onCreateTransaction,
-              icon: const Icon(Icons.add_card_rounded),
-              label: const Text('Tạo giao dịch mới'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).maybePop(),
-              child: const Text('Quay lại'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
