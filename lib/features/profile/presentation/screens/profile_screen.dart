@@ -175,6 +175,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               );
                             },
                           ),
+                          ProfileMenuItem(
+                            svgIcon: AppAssets.notificationBell,
+                            title: AppStrings.notifications,
+                            onTap: () {
+                              AppRouter.push(context, AppRoutes.notifications);
+                            },
+                          ),
                         ],
                       ),
 

@@ -6,34 +6,50 @@ class FamilyScheduleEntity extends Equatable {
   final int id;
   final String customerId;
   final String? customerName;
+  final String? customerAvatar;
   final int packageId;
   final String? packageName;
+  final int? roomId;
+  final String? roomName;
   final DateTime workDate;
   final String startTime; // Format: "HH:mm:ss"
   final String endTime; // Format: "HH:mm:ss"
   final int dayNo;
   final String activity;
+  final String? title;
+  final String? description;
   final String target; // "Mom", "Baby", or "Both"
   final String status; // "Scheduled", "Completed", etc.
   final String? note;
   final int? contractId;
+  final int? amenityTicketId;
+  final int? amenityServiceId;
+  final String? amenityServiceName;
   final List<StaffScheduleEntity> staffSchedules; // Can be empty list
 
   const FamilyScheduleEntity({
     required this.id,
     required this.customerId,
     required this.customerName,
+    this.customerAvatar,
     required this.packageId,
     required this.packageName,
+    this.roomId,
+    this.roomName,
     required this.workDate,
     required this.startTime,
     required this.endTime,
     required this.dayNo,
     required this.activity,
+    this.title,
+    this.description,
     required this.target,
     required this.status,
     this.note,
     this.contractId,
+    this.amenityTicketId,
+    this.amenityServiceId,
+    this.amenityServiceName,
     this.staffSchedules = const [],
   });
 
@@ -75,17 +91,25 @@ class FamilyScheduleEntity extends Equatable {
         id,
         customerId,
         customerName,
+        customerAvatar,
         packageId,
         packageName,
+        roomId,
+        roomName,
         workDate,
         startTime,
         endTime,
         dayNo,
         activity,
+        title,
+        description,
         target,
         status,
         note,
         contractId,
+        amenityTicketId,
+        amenityServiceId,
+        amenityServiceName,
         staffSchedules,
       ];
 }

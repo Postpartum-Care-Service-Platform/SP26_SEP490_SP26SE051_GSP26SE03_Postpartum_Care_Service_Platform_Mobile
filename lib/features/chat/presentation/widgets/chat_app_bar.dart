@@ -136,12 +136,20 @@ class ChatAppBar extends StatelessWidget {
   }
 
   String _getCustomerName(Map<String, dynamic> customerInfo) {
-    // Thử các key phổ biến cho customer name
-    return customerInfo['name']?.toString() ??
-        customerInfo['displayName']?.toString() ??
-        customerInfo['fullName']?.toString() ??
-        customerInfo['customerName']?.toString() ??
-        'Khách hàng';
+    String? pickValid(dynamic value) {
+      final text = value?.toString().trim();
+      if (text == null || text.isEmpty || text.toLowerCase() == 'null') {
+        return null;
+      }
+      return text;
+    }
+
+    return pickValid(customerInfo['name']) ??
+        pickValid(customerInfo['displayName']) ??
+        pickValid(customerInfo['fullName']) ??
+        pickValid(customerInfo['customerName']) ??
+        pickValid(title) ??
+        'Cuộc hội thoại';
   }
 }
 

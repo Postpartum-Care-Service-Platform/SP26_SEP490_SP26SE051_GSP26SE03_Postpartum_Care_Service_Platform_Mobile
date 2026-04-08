@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/utils/app_date_time_utils.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
-import '../../../../core/utils/app_date_time_utils.dart';
 import '../../domain/entities/family_schedule_entity.dart';
 import '../../domain/entities/staff_schedule_entity.dart';
 
 /// Schedule Activity Detail Bottom Sheet
-/// Displays staff information and notes when long pressing an activity
+/// Displays activity, staff and note information with user-friendly layout.
 class ScheduleActivityDetailSheet extends StatelessWidget {
   final FamilyScheduleEntity schedule;
 
@@ -39,126 +39,51 @@ class ScheduleActivityDetailSheet extends StatelessWidget {
         ),
       ),
       child: DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        minChildSize: 0.4,
+        initialChildSize: 0.72,
+        minChildSize: 0.45,
         maxChildSize: 0.95,
         expand: false,
         builder: (context, scrollController) {
-          return Column(
+          return ListView(
+            controller: scrollController,
+            padding: EdgeInsets.fromLTRB(
+              18 * scale,
+              10 * scale,
+              18 * scale,
+              24 * scale,
+            ),
             children: [
-              // Handle bar
-              Container(
-                margin: EdgeInsets.symmetric(vertical: 12 * scale),
-                width: 40 * scale,
-                height: 4 * scale,
-                decoration: BoxDecoration(
-                  color: AppColors.textSecondary.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2 * scale),
+              _buildHandle(scale),
+              SizedBox(height: 8 * scale),
+              _buildHeader(context, scale),
+              SizedBox(height: 14 * scale),
+              _buildMetaSummary(scale),
+              SizedBox(height: 18 * scale),
+              if (schedule.description?.trim().isNotEmpty ?? false) ...[
+                _buildSectionTitle(
+                  title: 'Mô tả công việc',
+                  icon: Icons.article_outlined,
+                  scale: scale,
                 ),
+                SizedBox(height: 10 * scale),
+                _buildDescriptionCard(schedule.description!.trim(), scale),
+                SizedBox(height: 18 * scale),
+              ],
+              _buildSectionTitle(
+                title: AppStrings.scheduleStaffAssigned,
+                icon: Icons.groups_2_outlined,
+                scale: scale,
               ),
-              // Header
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20 * scale),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                schedule.activity,
-                                style: AppTextStyles.tinos(
-                                  fontSize: 20 * scale,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                              SizedBox(height: 4 * scale),
-                              Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 10 * scale,
-                                  vertical: 4 * scale,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary.withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(6 * scale),
-                                ),
-                                child: Text(
-                                  schedule.timeRange,
-                                  style: AppTextStyles.arimo(
-                                    fontSize: 12 * scale,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        IconButton(
-                          icon: Icon(
-                            Icons.close,
-                            size: 24 * scale,
-                            color: AppColors.textSecondary,
-                          ),
-                          onPressed: () => Navigator.of(context).pop(),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 16 * scale),
-                  ],
-                ),
+              SizedBox(height: 10 * scale),
+              _buildStaffSection(scale),
+              SizedBox(height: 18 * scale),
+              _buildSectionTitle(
+                title: AppStrings.scheduleNote,
+                icon: Icons.sticky_note_2_outlined,
+                scale: scale,
               ),
-              // Content
-              Expanded(
-                child: ListView(
-                  controller: scrollController,
-                  padding: EdgeInsets.symmetric(horizontal: 20 * scale),
-                  children: [
-                    // Staff Section
-                    if (schedule.hasStaff) ...[
-                      _buildSectionHeader(
-                        AppStrings.scheduleStaffAssigned,
-                        Icons.people_outline,
-                        scale,
-                      ),
-                      SizedBox(height: 12 * scale),
-                      ...schedule.staffSchedules.map((staff) => _buildStaffCard(staff, scale)),
-                      SizedBox(height: 24 * scale),
-                    ] else ...[
-                      _buildEmptyState(
-                        AppStrings.scheduleNoStaffAssigned,
-                        Icons.people_outline,
-                        scale,
-                      ),
-                      SizedBox(height: 24 * scale),
-                    ],
-                    // Note Section
-                    if (schedule.note != null && schedule.note!.isNotEmpty) ...[
-                      _buildSectionHeader(
-                        AppStrings.scheduleNote,
-                        Icons.note_outlined,
-                        scale,
-                      ),
-                      SizedBox(height: 12 * scale),
-                      _buildNoteCard(schedule.note!, scale),
-                      SizedBox(height: 24 * scale),
-                    ],
-                    // Activity Note Section (if exists)
-                    if (schedule.note == null || schedule.note!.isEmpty) ...[
-                      _buildEmptyState(
-                        AppStrings.scheduleNoNote,
-                        Icons.note_outlined,
-                        scale,
-                      ),
-                      SizedBox(height: 24 * scale),
-                    ],
-                  ],
-                ),
-              ),
+              SizedBox(height: 10 * scale),
+              _buildNoteSection(scale),
             ],
           );
         },
@@ -166,19 +91,163 @@ class ScheduleActivityDetailSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionHeader(String title, IconData icon, double scale) {
+  Widget _buildHandle(double scale) {
+    return Center(
+      child: Container(
+        width: 46 * scale,
+        height: 5 * scale,
+        decoration: BoxDecoration(
+          color: AppColors.textSecondary.withValues(alpha: 0.25),
+          borderRadius: BorderRadius.circular(999),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, double scale) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                (schedule.title?.trim().isNotEmpty ?? false)
+                    ? schedule.title!.trim()
+                    : schedule.activity,
+                style: AppTextStyles.tinos(
+                  fontSize: 24 * scale,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              SizedBox(height: 8 * scale),
+              Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 10 * scale,
+                  vertical: 5 * scale,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(8 * scale),
+                ),
+                child: Text(
+                  schedule.timeRange,
+                  style: AppTextStyles.arimo(
+                    fontSize: 13 * scale,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        IconButton(
+          onPressed: () => Navigator.of(context).pop(),
+          icon: Icon(
+            Icons.close,
+            size: 24 * scale,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMetaSummary(double scale) {
+    final items = <_MetaItem>[
+      _MetaItem(
+        icon: Icons.track_changes_outlined,
+        label: 'Đối tượng',
+        value: _targetText,
+      ),
+      _MetaItem(
+        icon: Icons.flag_outlined,
+        label: 'Trạng thái',
+        value: _statusText,
+      ),
+      _MetaItem(
+        icon: Icons.calendar_today_outlined,
+        label: AppStrings.scheduleDay,
+        value: 'Ngày ${schedule.dayNo}',
+      ),
+      if (schedule.amenityServiceName?.trim().isNotEmpty ?? false)
+        _MetaItem(
+          icon: Icons.miscellaneous_services_outlined,
+          label: 'Tiện ích',
+          value: schedule.amenityServiceName!.trim(),
+        ),
+      if (schedule.roomName?.trim().isNotEmpty ?? false)
+        _MetaItem(
+          icon: Icons.meeting_room_outlined,
+          label: 'Phòng',
+          value: schedule.roomName!.trim(),
+        ),
+    ];
+
+    return Container(
+      padding: EdgeInsets.all(12 * scale),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(14 * scale),
+        border: Border.all(
+          color: AppColors.textSecondary.withValues(alpha: 0.12),
+        ),
+      ),
+      child: Column(
+        children: items
+            .map(
+              (item) => Padding(
+                padding: EdgeInsets.symmetric(vertical: 6 * scale),
+                child: Row(
+                  children: [
+                    Icon(
+                      item.icon,
+                      size: 16 * scale,
+                      color: AppColors.textSecondary,
+                    ),
+                    SizedBox(width: 8 * scale),
+                    Text(
+                      '${item.label}: ',
+                      style: AppTextStyles.arimo(
+                        fontSize: 13 * scale,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        item.value,
+                        style: AppTextStyles.arimo(
+                          fontSize: 13 * scale,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+            .toList(),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle({
+    required String title,
+    required IconData icon,
+    required double scale,
+  }) {
     return Row(
       children: [
-        Icon(
-          icon,
-          size: 20 * scale,
-          color: AppColors.primary,
-        ),
+        Icon(icon, size: 20 * scale, color: AppColors.primary),
         SizedBox(width: 8 * scale),
         Text(
           title,
           style: AppTextStyles.tinos(
-            fontSize: 18 * scale,
+            fontSize: 22 * scale,
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
           ),
@@ -187,48 +256,55 @@ class ScheduleActivityDetailSheet extends StatelessWidget {
     );
   }
 
+  Widget _buildStaffSection(double scale) {
+    if (!schedule.hasStaff) {
+      return _buildEmptyCard(
+        icon: Icons.group_off_outlined,
+        message: AppStrings.scheduleNoStaffAssigned,
+        scale: scale,
+      );
+    }
+
+    return Column(
+      children: schedule.staffSchedules
+          .map((staff) => _buildStaffCard(staff, scale))
+          .toList(),
+    );
+  }
+
   Widget _buildStaffCard(StaffScheduleEntity staff, double scale) {
+    final statusColor = staff.isChecked
+        ? AppColors.verified
+        : AppColors.textSecondary.withValues(alpha: 0.8);
+
     return Container(
-      margin: EdgeInsets.only(bottom: 12 * scale),
-      padding: EdgeInsets.all(16 * scale),
+      margin: EdgeInsets.only(bottom: 10 * scale),
+      padding: EdgeInsets.all(12 * scale),
       decoration: BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.circular(12 * scale),
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(14 * scale),
         border: Border.all(
           color: staff.isChecked
-              ? AppColors.verified.withValues(alpha: 0.3)
-              : AppColors.primary.withValues(alpha: 0.2),
-          width: 1.5,
+              ? AppColors.verified.withValues(alpha: 0.35)
+              : AppColors.textSecondary.withValues(alpha: 0.2),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadowLight,
+            blurRadius: 6 * scale,
+            offset: Offset(0, 2 * scale),
+          ),
+        ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              // Status indicator
-              Container(
-                width: 12 * scale,
-                height: 12 * scale,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: staff.isChecked ? AppColors.verified : AppColors.textSecondary,
-                ),
-                child: staff.isChecked
-                    ? Icon(
-                        Icons.check,
-                        size: 8 * scale,
-                        color: AppColors.white,
-                      )
-                    : null,
-              ),
-              SizedBox(width: 10 * scale),
               CircleAvatar(
-                radius: 16 * scale,
+                radius: 18 * scale,
                 backgroundColor: AppColors.borderLight,
-                backgroundImage: staff.staffAvatar != null
-                    ? NetworkImage(staff.staffAvatar!)
-                    : null,
+                backgroundImage:
+                    staff.staffAvatar != null ? NetworkImage(staff.staffAvatar!) : null,
                 child: staff.staffAvatar == null
                     ? Icon(
                         Icons.person,
@@ -237,127 +313,91 @@ class ScheduleActivityDetailSheet extends StatelessWidget {
                       )
                     : null,
               ),
-              SizedBox(width: 12 * scale),
+              SizedBox(width: 10 * scale),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      staff.staffName ?? AppStrings.scheduleStaff,
-                      style: AppTextStyles.arimo(
-                        fontSize: 16 * scale,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    if (staff.staffName == null) ...[
-                      SizedBox(height: 2 * scale),
-                      Text(
-                        'ID: ${staff.staffId.substring(0, 8)}...',
-                        style: AppTextStyles.arimo(
-                          fontSize: 12 * scale,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ],
+                child: Text(
+                  staff.staffName ?? AppStrings.scheduleStaff,
+                  style: AppTextStyles.arimo(
+                    fontSize: 15 * scale,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ),
-              // Check status badge
               Container(
                 padding: EdgeInsets.symmetric(
                   horizontal: 10 * scale,
                   vertical: 4 * scale,
                 ),
                 decoration: BoxDecoration(
-                  color: staff.isChecked
-                      ? AppColors.verified.withValues(alpha: 0.15)
-                      : AppColors.textSecondary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6 * scale),
+                  color: statusColor.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
-                  staff.isChecked ? AppStrings.scheduleCompleted : AppStrings.scheduleNotCompleted,
+                  staff.isChecked
+                      ? AppStrings.scheduleCompleted
+                      : AppStrings.scheduleNotCompleted,
                   style: AppTextStyles.arimo(
                     fontSize: 11 * scale,
-                    fontWeight: FontWeight.w600,
-                    color: staff.isChecked ? AppColors.verified : AppColors.textSecondary,
+                    fontWeight: FontWeight.w700,
+                    color: statusColor,
                   ),
                 ),
               ),
             ],
           ),
-          if (staff.managerName != null) ...[
-            SizedBox(height: 12 * scale),
-            Row(
-              children: [
-                Icon(
-                  Icons.supervisor_account_outlined,
-                  size: 16 * scale,
-                  color: AppColors.textSecondary,
-                ),
-                SizedBox(width: 6 * scale),
-                Text(
-                  '${AppStrings.scheduleManager}: ${staff.managerName}',
-                  style: AppTextStyles.arimo(
-                    fontSize: 13 * scale,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
+          SizedBox(height: 10 * scale),
+          if (staff.managerName != null)
+            _buildInfoRow(
+              icon: Icons.supervisor_account_outlined,
+              text: '${AppStrings.scheduleManager}: ${staff.managerName}',
+              scale: scale,
             ),
-          ],
-          if (staff.checkedAt != null) ...[
-            SizedBox(height: 8 * scale),
-            Row(
-              children: [
-                Icon(
-                  Icons.access_time,
-                  size: 14 * scale,
-                  color: AppColors.textSecondary,
-                ),
-                SizedBox(width: 6 * scale),
-                Text(
+          if (staff.checkedAt != null)
+            _buildInfoRow(
+              icon: Icons.history_toggle_off,
+              text:
                   '${AppStrings.scheduleCompletedAt}: ${_formatDateTime(staff.checkedAt!)}',
-                  style: AppTextStyles.arimo(
-                    fontSize: 12 * scale,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
+              scale: scale,
             ),
-          ],
+          if (staff.staffName == null)
+            _buildInfoRow(
+              icon: Icons.badge_outlined,
+              text: 'ID: ${staff.staffId.substring(0, 8)}...',
+              scale: scale,
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildNoteCard(String note, double scale) {
+  Widget _buildDescriptionCard(String description, double scale) {
     return Container(
-      padding: EdgeInsets.all(16 * scale),
+      width: double.infinity,
+      padding: EdgeInsets.all(14 * scale),
       decoration: BoxDecoration(
         color: AppColors.background,
-        borderRadius: BorderRadius.circular(12 * scale),
+        borderRadius: BorderRadius.circular(14 * scale),
         border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.2),
-          width: 1.5,
+          color: AppColors.textSecondary.withValues(alpha: 0.2),
         ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
-            Icons.note_outlined,
-            size: 20 * scale,
-            color: AppColors.primary,
+            Icons.description_outlined,
+            size: 18 * scale,
+            color: AppColors.textSecondary,
           ),
-          SizedBox(width: 12 * scale),
+          SizedBox(width: 10 * scale),
           Expanded(
             child: Text(
-              note,
+              description,
               style: AppTextStyles.arimo(
                 fontSize: 14 * scale,
                 color: AppColors.textPrimary,
-              ).copyWith(height: 1.5),
+              ).copyWith(height: 1.45),
             ),
           ),
         ],
@@ -365,21 +405,74 @@ class ScheduleActivityDetailSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyState(String message, IconData icon, double scale) {
+  Widget _buildNoteSection(double scale) {
+    final note = schedule.note?.trim() ?? '';
+    if (note.isEmpty) {
+      return _buildEmptyCard(
+        icon: Icons.note_alt_outlined,
+        message: AppStrings.scheduleNoNote,
+        scale: scale,
+      );
+    }
+
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 32 * scale),
+      width: double.infinity,
+      padding: EdgeInsets.all(14 * scale),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(14 * scale),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.24),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.sticky_note_2_outlined,
+            size: 18 * scale,
+            color: AppColors.primary,
+          ),
+          SizedBox(width: 10 * scale),
+          Expanded(
+            child: Text(
+              note,
+              style: AppTextStyles.arimo(
+                fontSize: 14 * scale,
+                color: AppColors.textPrimary,
+              ).copyWith(height: 1.45),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyCard({
+    required IconData icon,
+    required String message,
+    required double scale,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(vertical: 20 * scale, horizontal: 12 * scale),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(14 * scale),
+        border: Border.all(color: AppColors.textSecondary.withValues(alpha: 0.15)),
+      ),
       child: Column(
         children: [
           Icon(
             icon,
-            size: 48 * scale,
-            color: AppColors.textSecondary.withValues(alpha: 0.5),
+            size: 24 * scale,
+            color: AppColors.textSecondary.withValues(alpha: 0.7),
           ),
-          SizedBox(height: 12 * scale),
+          SizedBox(height: 8 * scale),
           Text(
             message,
             style: AppTextStyles.arimo(
-              fontSize: 14 * scale,
+              fontSize: 13 * scale,
               color: AppColors.textSecondary,
             ),
             textAlign: TextAlign.center,
@@ -389,7 +482,58 @@ class ScheduleActivityDetailSheet extends StatelessWidget {
     );
   }
 
+  Widget _buildInfoRow({
+    required IconData icon,
+    required String text,
+    required double scale,
+  }) {
+    return Padding(
+      padding: EdgeInsets.only(top: 6 * scale),
+      child: Row(
+        children: [
+          Icon(icon, size: 14 * scale, color: AppColors.textSecondary),
+          SizedBox(width: 6 * scale),
+          Expanded(
+            child: Text(
+              text,
+              style: AppTextStyles.arimo(
+                fontSize: 12 * scale,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String get _targetText {
+    if (schedule.isForBoth) return 'Mẹ và bé';
+    if (schedule.isForMom) return 'Mẹ';
+    if (schedule.isForBaby) return 'Bé';
+    return schedule.target;
+  }
+
+  String get _statusText {
+    if (schedule.isCompleted) return AppStrings.scheduleCompleted;
+    if (schedule.isMissed) return AppStrings.scheduleMissed;
+    if (schedule.isCancelled) return AppStrings.scheduleCancelled;
+    return schedule.status;
+  }
+
   String _formatDateTime(DateTime dateTime) {
     return AppDateTimeUtils.formatVietnamDateTime(dateTime);
   }
+}
+
+class _MetaItem {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _MetaItem({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
 }

@@ -165,7 +165,9 @@ class ScheduleActivityItem extends StatelessWidget {
                 SizedBox(height: 10 * scale),
                 // Activity name - smaller
                 Text(
-                  schedule.activity,
+                  (schedule.title?.trim().isNotEmpty ?? false)
+                      ? schedule.title!.trim()
+                      : schedule.activity,
                   style: AppTextStyles.arimo(
                     fontSize: 15 * scale,
                     fontWeight: FontWeight.bold,
@@ -182,39 +184,8 @@ class ScheduleActivityItem extends StatelessWidget {
                         : null,
                   ),
                 ),
-                // Note (if exists)
-                if (schedule.note != null && schedule.note!.isNotEmpty) ...[
-                  SizedBox(height: 8 * scale),
-                  Container(
-                    padding: EdgeInsets.all(12 * scale),
-                    decoration: BoxDecoration(
-                      color: AppColors.background,
-                      borderRadius: BorderRadius.circular(8 * scale),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.note_outlined,
-                          size: 16 * scale,
-                          color: AppColors.textSecondary,
-                        ),
-                        SizedBox(width: 8 * scale),
-                        Expanded(
-                          child: Text(
-                            schedule.note!,
-                            style: AppTextStyles.tinos(
-                              fontSize: 13 * scale,
-                              color: AppColors.textSecondary,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                // Note is intentionally hidden on item card.
+                // User can tap this activity to view note in detail sheet.
               ],
             ),
             ),

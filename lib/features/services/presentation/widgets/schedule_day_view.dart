@@ -53,23 +53,24 @@ class ScheduleDayView extends StatelessWidget {
 
     if (sortedSchedules.isEmpty) {
       return Container(
-        margin: margin ?? EdgeInsets.symmetric(horizontal: 12 * scale, vertical: 8 * scale),
+        width: double.infinity,
+        margin: margin ?? EdgeInsets.symmetric(horizontal: 20 * scale, vertical: 8 * scale),
         padding: EdgeInsets.symmetric(
           horizontal: 48 * scale,
           vertical: 48 * scale,
         ),
         decoration: BoxDecoration(
           color: AppColors.white,
-          borderRadius: BorderRadius.circular(24 * scale),
+          borderRadius: BorderRadius.circular(20 * scale),
           border: Border.all(
             color: AppColors.borderLight,
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.shadowMedium,
-              blurRadius: 20 * scale,
-              offset: Offset(0, 6 * scale),
+              color: AppColors.shadowLight,
+              blurRadius: 16 * scale,
+              offset: Offset(0, 4 * scale),
             ),
           ],
         ),
@@ -123,6 +124,7 @@ class ScheduleDayView extends StatelessWidget {
     }
 
     return Container(
+      width: double.infinity,
       margin: margin ?? EdgeInsets.symmetric(horizontal: 20 * scale, vertical: 8 * scale),
       padding: EdgeInsets.all(20 * scale),
       decoration: BoxDecoration(
