@@ -16,10 +16,10 @@ class RoomInfoModel {
 
   factory RoomInfoModel.fromJson(Map<String, dynamic> json) {
     return RoomInfoModel(
-      id: json['id'] as int,
-      name: json['name'] as String,
-      floor: json['floor'] as int?,
-      roomTypeName: json['roomTypeName'] as String,
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      name: (json['name'] as String?) ?? '',
+      floor: (json['floor'] as num?)?.toInt(),
+      roomTypeName: (json['roomTypeName'] as String?) ?? '',
     );
   }
 

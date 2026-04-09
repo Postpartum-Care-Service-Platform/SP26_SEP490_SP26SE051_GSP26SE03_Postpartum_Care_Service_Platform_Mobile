@@ -308,7 +308,7 @@ class ApiEndpoints {
   static const String feedbackTypes = '/FeedbackType';
 
   /// Get my feedbacks
-  static const String myFeedbacks = '/Feedback/my-feedback';
+  static const String myFeedbacks = '/Feedback/my-full-feedback';
 
   /// Create feedback
   static const String createFeedback = '/Feedback';
