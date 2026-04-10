@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 
+import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/utils/app_responsive.dart';
 import '../../../../../core/utils/app_text_styles.dart';
 import '../../../../../core/widgets/app_toast.dart';
 import '../../../../../features/auth/data/models/current_account_model.dart';
+import '../../../../../features/auth/presentation/bloc/auth_bloc.dart';
+import '../../../../../features/auth/presentation/bloc/auth_state.dart';
 import '../../../../../features/booking/data/datasources/booking_remote_datasource.dart';
 import '../../../../../features/family_profile/domain/entities/family_profile_entity.dart';
 import '../../../../../features/services/data/datasources/family_schedule_remote_datasource.dart';
@@ -592,8 +596,31 @@ class _EmployeeCustomerFamilyProfilesScreenState
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
 
+    final authBloc = context.read<AuthBloc>();
+    final authState = authBloc.state;
+    String? memberType;
+    if (authState is AuthCurrentAccountLoaded) {
+      final account = authState.account;
+      memberType = (account as dynamic).memberType;
+
+      if (memberType == null) {
+        try {
+          memberType = (account as dynamic).ownerProfile?.memberTypeName;
+        } catch (_) {}
+      }
+    }
+
+    final raw = memberType?.toLowerCase().trim() ?? '';
+    final isHomeNurse = raw == 'home-staff' || 
+                        raw == 'homestaff' || 
+                        raw == 'hoemstaff' || 
+                        raw == 'home nurse' || 
+                        raw.contains('tại nhà') || 
+                        raw.contains('tai nha') || 
+                        raw.contains('homecare');
+
     return DefaultTabController(
-      length: 6,
+      length: isHomeNurse ? 5 : 6,
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
@@ -644,13 +671,13 @@ class _EmployeeCustomerFamilyProfilesScreenState
               fontSize: 13 * scale,
               fontWeight: FontWeight.w700,
             ),
-            tabs: const [
-              Tab(text: 'Hồ sơ gia đình'),
-              Tab(text: 'Thực đơn khách hàng'),
-              Tab(text: 'Booking'),
-              Tab(text: 'Lịch hẹn'),
-              Tab(text: 'Giao dịch'),
-              Tab(text: 'Tài khoản'),
+            tabs: [
+              const Tab(text: 'Hồ sơ gia đình'),
+              if (!isHomeNurse) const Tab(text: 'Thực đơn khách hàng'),
+              const Tab(text: 'Booking'),
+              const Tab(text: 'Lịch hẹn'),
+              const Tab(text: 'Giao dịch'),
+              const Tab(text: 'Tài khoản'),
             ],
           ),
         ),
@@ -662,15 +689,16 @@ class _EmployeeCustomerFamilyProfilesScreenState
               customerName: widget.customerName,
               scale: scale,
             ),
-            CustomerProfileMenuTab(
-              future: _menuRecordsFuture,
-              scale: scale,
-              fmtDate: _fmtDate,
-              filterWidget: _buildMenuFilterBar(scale),
-              onViewDetails: _viewMenuDetails,
-              onEdit: _updateMenuRecordByStaff,
-              onDelete: _deleteMenuRecordByStaff,
-            ),
+            if (!isHomeNurse)
+              CustomerProfileMenuTab(
+                future: _menuRecordsFuture,
+                scale: scale,
+                fmtDate: _fmtDate,
+                filterWidget: _buildMenuFilterBar(scale),
+                onViewDetails: _viewMenuDetails,
+                onEdit: _updateMenuRecordByStaff,
+                onDelete: _deleteMenuRecordByStaff,
+              ),
             CustomerProfileBookingsTab(
               future: _bookingsFuture,
               scale: scale,

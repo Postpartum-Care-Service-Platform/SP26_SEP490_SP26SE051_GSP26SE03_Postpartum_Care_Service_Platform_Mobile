@@ -272,16 +272,74 @@ class _EmployeeAssignedFamiliesScreenState
                       child: SingleChildScrollView(
                         padding: EdgeInsets.fromLTRB(
                           16 * scale,
-                          0,
+                          12 * scale,
                           16 * scale,
                           16 * scale,
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _CalendarGrid(
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: () {
+                                  Navigator.of(sheetContext).pop();
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => EmployeeCustomerFamilyProfilesScreen(
+                                        customerId: customer.customerId,
+                                        customerName: customer.displayName,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                icon: Icon(Icons.open_in_new_rounded, size: 18 * scale),
+                                label: Text(
+                                  'Mở hồ sơ gia đình',
+                                  style: AppTextStyles.arimo(
+                                    fontSize: 14 * scale,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  padding: EdgeInsets.symmetric(vertical: 12 * scale),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10 * scale),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 16 * scale),
+                            _ActivitiesVerticalList(
                               days: calendarDays,
                               onCheckPressed: (activity) async {
+                                final now = DateTime.now();
+                                final status = activity.status.toLowerCase();
+
+                                // Check for missed tasks: Status is 'missed' or time has already ended
+                                final isMissedByTime = activity.endAt != null && now.isAfter(activity.endAt!);
+                                if (status == 'missed' || isMissedByTime) {
+                                  _showStatusNotice(
+                                    sheetContext,
+                                    'Lịch đã lỡ',
+                                    'Bạn không thể cập nhật hoàn tất cho hoạt động đã quá thời gian thực hiện.',
+                                    isError: true,
+                                  );
+                                  return;
+                                }
+
+                                // Check for future tasks: e.g., if now is before startAt - 15 minutes
+                                if (activity.startAt != null &&
+                                    now.isBefore(activity.startAt!.subtract(const Duration(minutes: 15)))) {
+                                  final timeStr = DateFormat('HH:mm').format(activity.startAt!);
+                                  _showStatusNotice(
+                                    sheetContext,
+                                    'Chưa đến giờ',
+                                    'Hoạt động này dự kiến bắt đầu vào lúc $timeStr. Vui lòng quay lại khi đến giờ thực hiện.',
+                                  );
+                                  return;
+                                }
+
                                 final checkData = await _askForCheckInDetails(sheetContext);
                                 if (!sheetContext.mounted || checkData == null) {
                                   return;
@@ -312,22 +370,6 @@ class _EmployeeAssignedFamiliesScreenState
                                   _futureCustomers = _loadAssignedCustomers();
                                 });
                               },
-                            ),
-                            SizedBox(height: 12 * scale),
-                            OutlinedButton.icon(
-                              onPressed: () {
-                                Navigator.of(sheetContext).pop();
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => EmployeeCustomerFamilyProfilesScreen(
-                                      customerId: customer.customerId,
-                                      customerName: customer.displayName,
-                                    ),
-                                  ),
-                                );
-                              },
-                              icon: const Icon(Icons.open_in_new_rounded),
-                              label: const Text('Mở hồ sơ gia đình'),
                             ),
                           ],
                         ),
@@ -538,6 +580,43 @@ class _EmployeeAssignedFamiliesScreenState
     return result;
   }
 
+  void _showStatusNotice(
+    BuildContext context,
+    String title,
+    String message, {
+    bool isError = false,
+  }) {
+    final scale = AppResponsive.scaleFactor(context);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.white,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16 * scale)),
+        title: Row(
+          children: [
+            Icon(
+              isError ? Icons.error_outline_rounded : Icons.info_outline_rounded,
+              color: isError ? AppColors.red : AppColors.primary,
+            ),
+            SizedBox(width: 8 * scale),
+            Text(title, style: AppTextStyles.arimo(fontWeight: FontWeight.w800, fontSize: 18 * scale)),
+          ],
+        ),
+        content: Text(
+          message,
+          style: AppTextStyles.arimo(fontSize: 14 * scale, color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Đã hiểu'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<bool> _checkSchedule(
     int staffScheduleId,
     String? note,
@@ -579,9 +658,23 @@ class _EmployeeAssignedFamiliesScreenState
         return false;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Cập nhật thất bại: $e')),
+      String errorMessage = e.toString();
+      if (e is DioException) {
+        final data = e.response?.data;
+        if (data is Map && data.containsKey('error')) {
+          errorMessage = data['error'].toString();
+        } else if (data is Map && data.containsKey('message')) {
+          errorMessage = data['message'].toString();
+        }
+      }
+
+      _showStatusNotice(
+        context,
+        'Cập nhật thất bại',
+        errorMessage,
+        isError: true,
       );
+
       return false;
     }
   }
@@ -613,11 +706,7 @@ class _EmployeeAssignedFamiliesScreenState
 
   List<_CalendarDay> _buildCalendarDays(List<_AssignedActivity> activities) {
     if (activities.isEmpty) {
-      final today = DateTime.now();
-      return List.generate(4, (index) {
-        final day = today.add(Duration(days: index));
-        return _CalendarDay(date: day, activities: const []);
-      });
+      return const [];
     }
 
     final sorted = [...activities]
@@ -627,20 +716,17 @@ class _EmployeeAssignedFamiliesScreenState
         return aTime.compareTo(bTime);
       });
 
-    final anchor = sorted.first.startAt ?? DateTime.now();
-    return List.generate(4, (index) {
-      final day = DateTime(anchor.year, anchor.month, anchor.day + index);
-      final dayActivities = activities.where((activity) {
-        final start = activity.startAt;
-        if (start == null) {
-          return false;
-        }
-        return start.year == day.year &&
-            start.month == day.month &&
-            start.day == day.day;
-      }).toList();
-      return _CalendarDay(date: day, activities: dayActivities);
-    });
+    final daysMap = <DateTime, List<_AssignedActivity>>{};
+    for (final act in sorted) {
+      final start = act.startAt;
+      if (start == null) continue;
+      final date = DateTime(start.year, start.month, start.day);
+      daysMap.putIfAbsent(date, () => []).add(act);
+    }
+
+    final result = daysMap.entries.map((e) => _CalendarDay(date: e.key, activities: e.value)).toList();
+    result.sort((a, b) => a.date.compareTo(b.date));
+    return result;
   }
 
   @override
@@ -963,223 +1049,88 @@ class _CalendarDay {
   const _CalendarDay({required this.date, required this.activities});
 }
 
-class _CalendarGrid extends StatelessWidget {
+class _ActivitiesVerticalList extends StatelessWidget {
   final List<_CalendarDay> days;
   final ValueChanged<_AssignedActivity> onCheckPressed;
 
-  const _CalendarGrid({required this.days, required this.onCheckPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    final scale = AppResponsive.scaleFactor(context);
-    final labelWidth = 56 * scale;
-    final dayWidth = 132 * scale;
-    final dayGap = 8 * scale;
-
-    return Container(
-      padding: EdgeInsets.all(12 * scale),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16 * scale),
-        border: Border.all(color: AppColors.borderLight),
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final calculatedWidth =
-              labelWidth + (days.length * dayWidth) + ((days.length - 1) * dayGap);
-          final contentWidth =
-              calculatedWidth < constraints.maxWidth ? constraints.maxWidth : calculatedWidth;
-
-          return SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: SizedBox(
-              width: contentWidth,
-              child: Column(
-                children: [
-                  _CalendarHeaderRow(
-                    days: days,
-                    labelWidth: labelWidth,
-                    dayWidth: dayWidth,
-                    dayGap: dayGap,
-                  ),
-                  SizedBox(height: 8 * scale),
-                  _CalendarSessionRow(
-                    label: 'Sáng',
-                    days: days,
-                    onCheckPressed: onCheckPressed,
-                    isMorning: true,
-                    labelWidth: labelWidth,
-                    dayWidth: dayWidth,
-                    dayGap: dayGap,
-                  ),
-                  SizedBox(height: 8 * scale),
-                  _CalendarSessionRow(
-                    label: 'Chiều',
-                    days: days,
-                    onCheckPressed: onCheckPressed,
-                    isMorning: false,
-                    labelWidth: labelWidth,
-                    dayWidth: dayWidth,
-                    dayGap: dayGap,
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _CalendarHeaderRow extends StatelessWidget {
-  final List<_CalendarDay> days;
-  final double labelWidth;
-  final double dayWidth;
-  final double dayGap;
-
-  const _CalendarHeaderRow({
-    required this.days,
-    required this.labelWidth,
-    required this.dayWidth,
-    required this.dayGap,
-  });
+  const _ActivitiesVerticalList({required this.days, required this.onCheckPressed});
 
   @override
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
 
-    return Row(
-      children: [
-        SizedBox(width: labelWidth),
-        for (final entry in days.asMap().entries) ...[
-          SizedBox(
-            width: dayWidth,
-            child: Column(
-              children: [
-                Text(
-                  DateFormat('EEE').format(entry.value.date),
-                  style: AppTextStyles.arimo(
-                    fontSize: 11 * scale,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                SizedBox(height: 2 * scale),
-                Text(
-                  DateFormat('dd/MM').format(entry.value.date),
-                  style: AppTextStyles.arimo(
-                    fontSize: 13 * scale,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (entry.key != days.length - 1) SizedBox(width: dayGap),
-        ],
-      ],
-    );
-  }
-}
-
-class _CalendarSessionRow extends StatelessWidget {
-  final String label;
-  final List<_CalendarDay> days;
-  final ValueChanged<_AssignedActivity> onCheckPressed;
-  final bool isMorning;
-  final double labelWidth;
-  final double dayWidth;
-  final double dayGap;
-
-  const _CalendarSessionRow({
-    required this.label,
-    required this.days,
-    required this.onCheckPressed,
-    required this.isMorning,
-    required this.labelWidth,
-    required this.dayWidth,
-    required this.dayGap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final scale = AppResponsive.scaleFactor(context);
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: labelWidth,
-          child: Text(
-            label,
-            style: AppTextStyles.arimo(
-              fontSize: 12 * scale,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textSecondary,
-            ),
-          ),
+    if (days.isEmpty) {
+      return Container(
+        padding: EdgeInsets.all(24 * scale),
+        alignment: Alignment.center,
+        child: Text(
+          'Không có hoạt động nào',
+          style: AppTextStyles.arimo(color: AppColors.textSecondary, fontSize: 14 * scale),
         ),
-        for (final entry in days.asMap().entries) ...[
-          SizedBox(
-            width: dayWidth,
-            child: Container(
-              padding: EdgeInsets.all(6 * scale),
-              decoration: BoxDecoration(
-                color: AppColors.background,
-                borderRadius: BorderRadius.circular(12 * scale),
-                border: Border.all(color: AppColors.borderLight),
-              ),
-              child: Column(children: _buildSessionActivities(entry.value)),
-            ),
-          ),
-          if (entry.key != days.length - 1) SizedBox(width: dayGap),
-        ],
-      ],
-    );
-  }
-
-  List<Widget> _buildSessionActivities(_CalendarDay day) {
-    final activities = day.activities.where((activity) {
-      final start = activity.startAt;
-      if (start == null) {
-        return false;
-      }
-      if (isMorning) {
-        return start.hour < 12;
-      }
-      return start.hour >= 12;
-    }).toList();
-
-    if (activities.isEmpty) {
-      return [
-        Text(
-          'Trống',
-          style: AppTextStyles.arimo(
-            fontSize: 11,
-            color: AppColors.textSecondary,
-          ),
-        ),
-      ];
+      );
     }
 
-    return activities
-        .map(
-          (activity) => _CalendarActivityCard(
-            activity: activity,
-            onCheckPressed: onCheckPressed,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: days.map((day) {
+        final weekdayFormat = DateFormat('EEEE', 'en_US').format(day.date);
+        String vnWeekday = '';
+        switch(weekdayFormat) {
+          case 'Monday': vnWeekday = 'Thứ Hai'; break;
+          case 'Tuesday': vnWeekday = 'Thứ Ba'; break;
+          case 'Wednesday': vnWeekday = 'Thứ Tư'; break;
+          case 'Thursday': vnWeekday = 'Thứ Năm'; break;
+          case 'Friday': vnWeekday = 'Thứ Sáu'; break;
+          case 'Saturday': vnWeekday = 'Thứ Bảy'; break;
+          case 'Sunday': vnWeekday = 'Chủ Nhật'; break;
+        }
+
+        return Padding(
+          padding: EdgeInsets.only(bottom: 12 * scale),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: EdgeInsets.only(bottom: 12 * scale, left: 4 * scale, top: 4 * scale),
+                child: Row(
+                  children: [
+                    Text(
+                      vnWeekday,
+                      style: AppTextStyles.arimo(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15 * scale,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    SizedBox(width: 8 * scale),
+                    Text(
+                      DateFormat('dd/MM/yyyy').format(day.date),
+                      style: AppTextStyles.arimo(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13 * scale,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              ...day.activities.map((activity) => _TimelineActivityCard(
+                activity: activity,
+                onCheckPressed: onCheckPressed,
+              )),
+            ],
           ),
-        )
-        .toList();
+        );
+      }).toList(),
+    );
   }
 }
 
-class _CalendarActivityCard extends StatelessWidget {
+class _TimelineActivityCard extends StatelessWidget {
   final _AssignedActivity activity;
   final ValueChanged<_AssignedActivity> onCheckPressed;
 
-  const _CalendarActivityCard({
+  const _TimelineActivityCard({
     required this.activity,
     required this.onCheckPressed,
   });
@@ -1211,73 +1162,158 @@ class _CalendarActivityCard extends StatelessWidget {
     final endLabel = activity.endAt != null
         ? DateFormat('HH:mm').format(activity.endAt!)
         : '--:--';
+    
     final canCheck = !(activity.status.toLowerCase() == 'done' ||
         activity.status.toLowerCase() == 'completed' ||
         activity.status.toLowerCase() == 'staffdone' ||
         activity.status.toLowerCase() == 'staff_done');
 
-    return Container(
-      width: double.infinity,
-      margin: EdgeInsets.only(bottom: 6 * scale),
-      padding: EdgeInsets.all(8 * scale),
-      decoration: BoxDecoration(
-        color: statusColor.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(10 * scale),
-        border: Border.all(color: statusColor.withValues(alpha: 0.4)),
-      ),
-      child: Column(
+    return Padding(
+      padding: EdgeInsets.only(bottom: 10 * scale),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '$startLabel - $endLabel',
-            style: AppTextStyles.arimo(
-              fontSize: 11 * scale,
-              fontWeight: FontWeight.w700,
-              color: statusColor,
-            ),
-          ),
-          SizedBox(height: 4 * scale),
-          Text(
-            activity.activity,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: AppTextStyles.arimo(
-              fontSize: 12 * scale,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          SizedBox(height: 6 * scale),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  _getStatusDisplayText(activity.status),
-                  style: AppTextStyles.arimo(
-                    fontSize: 10 * scale,
-                    fontWeight: FontWeight.w600,
-                    color: statusColor,
-                  ),
-                ),
-              ),
-              if (canCheck)
-                TextButton(
-                  onPressed: () => onCheckPressed(activity),
-                  style: TextButton.styleFrom(
-                    padding: EdgeInsets.symmetric(horizontal: 12 * scale),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: Text(
-                    'Làm xong',
+          SizedBox(
+            width: 48 * scale,
+            child: Padding(
+              padding: EdgeInsets.only(top: 2 * scale),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    startLabel,
                     style: AppTextStyles.arimo(
-                      fontSize: 11 * scale,
+                      fontSize: 14 * scale,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
+                      color: AppColors.textPrimary,
                     ),
                   ),
+                  SizedBox(height: 2 * scale),
+                  Text(
+                    endLabel,
+                    style: AppTextStyles.arimo(
+                      fontSize: 12 * scale,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SizedBox(width: 12 * scale),
+          Expanded(
+            child: Container(
+              padding: EdgeInsets.fromLTRB(14 * scale, 12 * scale, 12 * scale, 10 * scale),
+              decoration: BoxDecoration(
+                color: statusColor.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.only(
+                  topRight: Radius.circular(10 * scale),
+                  bottomRight: Radius.circular(10 * scale),
+                  bottomLeft: Radius.circular(4 * scale),
+                  topLeft: Radius.circular(4 * scale),
                 ),
-            ],
+                border: Border(
+                  left: BorderSide(color: statusColor, width: 4 * scale),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          activity.activity,
+                          style: AppTextStyles.arimo(
+                            fontSize: 15 * scale,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 8 * scale),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 6 * scale, vertical: 3 * scale),
+                        decoration: BoxDecoration(
+                          color: statusColor.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(4 * scale),
+                        ),
+                        child: Text(
+                          _getStatusDisplayText(activity.status),
+                          style: AppTextStyles.arimo(
+                            fontSize: 10 * scale,
+                            fontWeight: FontWeight.w800,
+                            color: statusColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (activity.note.isNotEmpty) ...[
+                    SizedBox(height: 6 * scale),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.notes_rounded, size: 14 * scale, color: AppColors.textSecondary),
+                        SizedBox(width: 4 * scale),
+                        Expanded(
+                          child: Text(
+                            'Ghi chú: ${activity.note}',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.arimo(
+                              fontSize: 12 * scale,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  if (canCheck) ...[
+                    SizedBox(height: 10 * scale),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: GestureDetector(
+                        onTap: () => onCheckPressed(activity),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 14 * scale, vertical: 6 * scale),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(6 * scale),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primary.withValues(alpha: 0.2),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              )
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.check_circle_outline_rounded, size: 14 * scale, color: AppColors.white),
+                              SizedBox(width: 4 * scale),
+                              Text(
+                                'Hoàn tất',
+                                style: AppTextStyles.arimo(
+                                  fontSize: 12 * scale,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
           ),
         ],
       ),
