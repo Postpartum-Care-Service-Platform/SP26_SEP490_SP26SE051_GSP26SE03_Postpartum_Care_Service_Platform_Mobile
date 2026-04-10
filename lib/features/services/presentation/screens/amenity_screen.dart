@@ -209,7 +209,7 @@ class _AmenityScreenState extends State<AmenityScreen> {
     }
 
     return SizedBox(
-      height: 240 * scale, // Fixed height for horizontal scroll
+      height: 197 * scale, // Fixed height for horizontal scroll
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.symmetric(vertical: 4 * scale),

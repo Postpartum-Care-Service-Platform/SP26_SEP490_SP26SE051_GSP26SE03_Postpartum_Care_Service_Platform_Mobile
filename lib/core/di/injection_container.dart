@@ -164,6 +164,12 @@ import '../../features/home_service/domain/usecases/create_home_service_payment_
 import '../../features/home_service/domain/usecases/check_payment_status_usecase.dart'
     as home_service;
 import '../../features/home_service/presentation/bloc/home_service_bloc.dart';
+import '../../features/services/data/datasources/refund_request_remote_datasource.dart';
+import '../../features/services/data/repositories/refund_request_repository_impl.dart';
+import '../../features/services/domain/repositories/refund_request_repository.dart';
+import '../../features/services/domain/usecases/create_refund_request_usecase.dart';
+import '../../features/services/domain/usecases/get_my_refund_requests_usecase.dart';
+import '../../features/services/presentation/bloc/refund_request/refund_request_bloc.dart';
 import '../apis/api_client.dart';
 
 /// Centralized dependency injection container
@@ -313,6 +319,12 @@ class InjectionContainer {
 
   static HomeServiceRepository get homeServiceRepository =>
       HomeServiceRepositoryImpl(remoteDataSource: _homeServiceRemoteDataSource);
+
+  static RefundRequestRemoteDataSource get _refundRequestRemoteDataSource =>
+      RefundRequestRemoteDataSourceImpl(dio: ApiClient.dio);
+
+  static RefundRequestRepository get refundRequestRepository =>
+      RefundRequestRepositoryImpl(remoteDataSource: _refundRequestRemoteDataSource);
 
   // ==================== Use Cases ====================
 
@@ -507,6 +519,11 @@ class InjectionContainer {
   get _checkHomeServicePaymentStatusUsecase =>
       home_service.CheckPaymentStatusUsecase(homeServiceRepository);
 
+  static CreateRefundRequestUsecase get _createRefundRequestUsecase =>
+      CreateRefundRequestUsecase(refundRequestRepository);
+  static GetMyRefundRequestsUsecase get _getMyRefundRequestsUsecase =>
+      GetMyRefundRequestsUsecase(refundRequestRepository);
+
   // ==================== Blocs ====================
 
   static AuthBloc get authBloc => AuthBloc(
@@ -652,6 +669,11 @@ class InjectionContainer {
     bookHomeServiceUsecase: _getBookHomeServiceUsecase,
     createPaymentLinkUsecase: _createHomeServicePaymentLinkUsecase,
     checkPaymentStatusUsecase: _checkHomeServicePaymentStatusUsecase,
+  );
+
+  static RefundRequestBloc get refundRequestBloc => RefundRequestBloc(
+    createRefundRequestUsecase: _createRefundRequestUsecase,
+    getMyRefundRequestsUsecase: _getMyRefundRequestsUsecase,
   );
 
   // ==================== Reset ====================

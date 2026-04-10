@@ -912,4 +912,39 @@ class AppStrings {
   static const String cannotSetAppointmentInPast = 'Không thể đặt lịch hẹn vào thời gian quá khứ';
   static const String canOnlySetAppointmentDuringBusinessHours = 'Chỉ có thể đặt lịch trong giờ hành chính (8:00 - 17:00)';
 
+  // Refund Request
+  static const String refundRequestTitle = 'Yêu cầu hoàn tiền';
+  static const String refundRequestHistoryTitle = 'Lịch sử yêu cầu hoàn tiền';
+  static const String refundRequestCreate = 'Gửi yêu cầu hoàn tiền';
+  static const String refundRequestBankName = 'Tên ngân hàng';
+  static const String refundRequestBankNamePlaceholder = 'VD: Vietcombank, TPBank, MB Bank...';
+  static const String refundRequestAccountNumber = 'Số tài khoản';
+  static const String refundRequestAccountNumberPlaceholder = 'Nhập số tài khoản ngân hàng';
+  static const String refundRequestAccountHolder = 'Chủ tài khoản';
+  static const String refundRequestAccountHolderPlaceholder = 'Nhập tên chủ tài khoản';
+  static const String refundRequestReason = 'Lý do hoàn tiền';
+  static const String refundRequestReasonPlaceholder = 'Mô tả lý do bạn muốn hoàn tiền...';
+  static const String refundRequestConfirmTitle = 'Xác nhận gửi yêu cầu?';
+  static const String refundRequestConfirmMessage =
+      'Bạn có chắc chắn muốn gửi yêu cầu hoàn tiền? Yêu cầu sẽ được xem xét bởi quản trị viên.';
+  static const String refundRequestConfirmButton = 'Gửi yêu cầu';
+  static const String refundRequestSuccess = 'Đã gửi yêu cầu hoàn tiền thành công';
+  static const String refundRequestError = 'Không thể gửi yêu cầu hoàn tiền';
+  static const String refundRequestLoadError = 'Không thể tải lịch sử yêu cầu hoàn tiền';
+  static const String refundRequestNoRequests = 'Chưa có yêu cầu hoàn tiền nào';
+  static const String refundRequestStatusPending = 'Đang chờ xử lý';
+  static const String refundRequestStatusApproved = 'Đã duyệt';
+  static const String refundRequestStatusRejected = 'Đã từ chối';
+  static const String refundRequestStatusProcessed = 'Đã xử lý';
+  static const String refundRequestAmount = 'Số tiền yêu cầu';
+  static const String refundRequestApprovedAmount = 'Số tiền được duyệt';
+  static const String refundRequestAdminNote = 'Ghi chú quản trị';
+  static const String refundRequestCreatedAt = 'Ngày tạo';
+  static const String refundRequestApprovedAt = 'Ngày duyệt';
+  static const String refundRequestProcessedAt = 'Ngày xử lý';
+  static const String refundRequestViewHistory = 'Xem lịch sử hoàn tiền';
+  static const String refundRequestCancelPackage = 'Yêu cầu hoàn tiền';
+  static const String refundRequestFillAllFields = 'Vui lòng điền đầy đủ thông tin';
+  static const String refundRequestBookingId = 'Mã booking';
+
 }

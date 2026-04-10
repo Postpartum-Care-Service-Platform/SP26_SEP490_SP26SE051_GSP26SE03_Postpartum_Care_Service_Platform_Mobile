@@ -12,6 +12,7 @@ class AppDrawerForm extends StatelessWidget {
   final bool isLoading;
   final bool isDisabled;
   final String? saveButtonText;
+  final IconData? saveButtonIcon;
   final bool isCompact;
 
   const AppDrawerForm({
@@ -22,6 +23,7 @@ class AppDrawerForm extends StatelessWidget {
     this.isLoading = false,
     this.isDisabled = false,
     this.saveButtonText,
+    this.saveButtonIcon,
     this.isCompact = false,
   });
 
@@ -30,7 +32,6 @@ class AppDrawerForm extends StatelessWidget {
     final scale = AppResponsive.scaleFactor(context);
     
     // Pre-calculate values to avoid recalculation during rebuilds
-    final handleBarColor = AppColors.textSecondary.withValues(alpha: 0.3);
     final borderRadius = 24 * scale;
     final shadowBlur = 24 * scale;
     final shadowOffset = -8 * scale;
@@ -96,6 +97,7 @@ class AppDrawerForm extends StatelessWidget {
                   isLoading: isLoading,
                   isDisabled: isDisabled,
                   saveButtonText: saveButtonText,
+                  saveButtonIcon: saveButtonIcon,
                   scale: scale,
                 ),
             ],
@@ -106,33 +108,6 @@ class AppDrawerForm extends StatelessWidget {
   }
 }
 
-/// Handle bar widget - optimized with const and RepaintBoundary
-class _HandleBar extends StatelessWidget {
-  final double scale;
-  final Color color;
-
-  const _HandleBar({
-    required this.scale,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return RepaintBoundary(
-      child: Padding(
-              padding: EdgeInsets.only(top: 12 * scale, bottom: 8 * scale),
-              child: Container(
-                width: 48 * scale,
-                height: 5 * scale,
-                decoration: BoxDecoration(
-            color: color,
-                  borderRadius: BorderRadius.circular(12 * scale),
-                ),
-              ),
-            ),
-    );
-  }
-}
 
 /// Header widget - optimized with RepaintBoundary
 class _Header extends StatelessWidget {
@@ -150,12 +125,12 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     return RepaintBoundary(
       child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: 16 * scale,
-                vertical: 8 * scale,
-              ),
-              child: Row(
-                children: [
+        padding: EdgeInsets.symmetric(
+          horizontal: 16 * scale,
+          vertical: 8 * scale,
+        ),
+        child: Row(
+          children: [
             // Close button - optimized tap target
             Material(
               color: Colors.transparent,
@@ -167,69 +142,31 @@ class _Header extends StatelessWidget {
                   height: 40 * scale,
                   alignment: Alignment.center,
                   child: Icon(
-                      Icons.close_rounded,
-                      color: AppColors.textPrimary,
-                      size: 20 * scale,
-                    ),
+                    Icons.close_rounded,
+                    color: AppColors.textPrimary,
+                    size: 20 * scale,
+                  ),
                 ),
-                    ),
-                  ),
-            // Title - centered
-                  Expanded(
-                    child: Text(
-                      title,
-                      textAlign: TextAlign.center,
-                      style: AppTextStyles.tinos(
-                        fontSize: 18 * scale,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-            // Balance spacer
-            SizedBox(width: 40 * scale),
-                ],
               ),
             ),
-    );
-  }
-}
-
-/// Content widget - optimized scroll performance
-/// Always allows scrolling to prevent overflow
-class _Content extends StatelessWidget {
-  final ScrollController scrollController;
-  final List<Widget> children;
-  final double scale;
-  final bool isCompact;
-
-  const _Content({
-    required this.scrollController,
-    required this.children,
-    required this.scale,
-    required this.isCompact,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // Always use SingleChildScrollView to prevent overflow
-    // Use ClampingScrollPhysics to allow scroll when content exceeds available space
-    return SingleChildScrollView(
-      controller: scrollController,
-      physics: const ClampingScrollPhysics(
-        parent: BouncingScrollPhysics(),
-      ),
-      padding: EdgeInsets.symmetric(
-        horizontal: 16 * scale,
-        vertical: 8 * scale,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        // Cho phép content chiếm tối đa chiều cao còn lại bên trong vùng scroll
-        mainAxisSize: MainAxisSize.max,
-        children: children,
+            // Title - centered
+            Expanded(
+              child: Text(
+                title,
+                textAlign: TextAlign.center,
+                style: AppTextStyles.tinos(
+                  fontSize: 18 * scale,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            // Balance spacer
+            SizedBox(width: 40 * scale),
+          ],
+        ),
       ),
     );
   }
@@ -241,6 +178,7 @@ class _Footer extends StatelessWidget {
   final bool isLoading;
   final bool isDisabled;
   final String? saveButtonText;
+  final IconData? saveButtonIcon;
   final double scale;
 
   const _Footer({
@@ -248,6 +186,7 @@ class _Footer extends StatelessWidget {
     required this.isLoading,
     required this.isDisabled,
     required this.saveButtonText,
+    required this.saveButtonIcon,
     required this.scale,
   });
 
@@ -280,6 +219,7 @@ class _Footer extends StatelessWidget {
               onPressed: (isLoading || isDisabled) ? null : onSave,
               isLoading: isLoading,
               text: saveButtonText ?? 'Lưu',
+              icon: saveButtonIcon,
               scale: scale,
             ),
           ),
@@ -294,12 +234,14 @@ class _OptimizedButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool isLoading;
   final String text;
+  final IconData? icon;
   final double scale;
 
   const _OptimizedButton({
     required this.onPressed,
     required this.isLoading,
     required this.text,
+    this.icon,
     required this.scale,
   });
 
@@ -339,13 +281,26 @@ class _OptimizedButton extends StatelessWidget {
                               ),
                             ),
                           )
-                        : Text(
-                    text,
-                            style: AppTextStyles.arimo(
-                              fontSize: 17 * scale,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.white,
-                            ),
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              if (icon != null) ...[
+                                Icon(
+                                  icon,
+                                  size: 20 * scale,
+                                  color: AppColors.white,
+                                ),
+                                SizedBox(width: 8 * scale),
+                              ],
+                              Text(
+                                text,
+                                style: AppTextStyles.arimo(
+                                  fontSize: 17 * scale,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.white,
+                                ),
+                              ),
+                            ],
                           ),
           ),
         ),

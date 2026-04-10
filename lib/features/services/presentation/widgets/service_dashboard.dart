@@ -20,6 +20,7 @@ import 'resort_key_card.dart';
 import 'schedule_calendar_picker.dart';
 import 'schedule_day_view.dart';
 import 'service_action_card.dart';
+import 'create_refund_request_sheet.dart';
 
 class ServiceDashboard extends StatelessWidget {
   final NowPackageModel nowPackage;
@@ -58,28 +59,48 @@ class ServiceDashboard extends StatelessWidget {
             colors: [AppColors.background, AppColors.background],
           ),
         ),
-        child: SingleChildScrollView(
-          padding: basePadding.copyWith(top: 10 * scale, bottom: 24 * scale),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Welcome Section
-              _buildWelcomeSection(context, scale),
-              SizedBox(height: 8 * scale),
-              if (isHomeService) ...[
-                _HomeServiceDashboard(nowPackage: nowPackage),
-              ] else ...[
-                // Key Card - First element after header
-                ResortKeyCard(nowPackage: nowPackage),
-                SizedBox(height: 18 * scale),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Sticky Header
+            Padding(
+              padding: EdgeInsets.only(
+                left: basePadding.left,
+                right: basePadding.right,
+                top: 10 * scale,
+              ),
+              child: _buildWelcomeSection(context, scale),
+            ),
+            
+            // Scrollable Content
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.only(
+                  left: basePadding.left,
+                  right: basePadding.right,
+                  top: 8 * scale,
+                  bottom: 24 * scale,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (isHomeService) ...[
+                      _HomeServiceDashboard(nowPackage: nowPackage),
+                    ] else ...[
+                      // Key Card - First element after header
+                      ResortKeyCard(nowPackage: nowPackage),
+                      SizedBox(height: 18 * scale),
 
-                if (_isCheckoutExpired)
-                  _buildCheckoutExpiredBanner(context, scale)
-                else
-                  _buildServicesSection(context, scale),
-              ],
-            ],
-          ),
+                      if (_isCheckoutExpired)
+                        _buildCheckoutExpiredBanner(context, scale)
+                      else
+                        _buildServicesSection(context, scale),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -597,6 +618,9 @@ class _HomeServiceDashboardContentState
               AppStrings.homeServiceBookingStatusLabel,
               nowPackage.bookingStatus,
             ),
+            SizedBox(height: 14 * scale),
+            // Refund request button
+            _buildRefundRequestButton(context, scale, nowPackage.bookingId),
           ],
         ],
       ),
@@ -629,6 +653,37 @@ class _HomeServiceDashboardContentState
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildRefundRequestButton(BuildContext context, double scale, int bookingId) {
+    return Center(
+      child: TextButton.icon(
+        onPressed: () {
+          CreateRefundRequestSheet.show(context, bookingId: bookingId);
+        },
+        icon: Icon(
+          Icons.assignment_return_rounded,
+          size: 14 * scale,
+          color: AppColors.red,
+        ),
+        label: Text(
+          AppStrings.refundRequestCancelPackage,
+          style: AppTextStyles.arimo(
+            fontSize: 12 * scale,
+            fontWeight: FontWeight.w500,
+            color: AppColors.red,
+          ).copyWith(
+            decoration: TextDecoration.underline,
+            decorationColor: AppColors.red,
+          ),
+        ),
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 8 * scale),
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+      ),
     );
   }
 

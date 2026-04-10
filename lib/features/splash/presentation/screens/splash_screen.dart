@@ -88,13 +88,20 @@ class _SplashScreenState extends State<SplashScreen>
     } else {
       // Try to read cached account to decide portal
       final cached = await CurrentAccountCacheService.getCurrentAccount();
+      
+      if (!mounted) return;
+      
       final role = cached?.roleName.toLowerCase();
       final isEmployee =
           role == 'staff' || role == 'manager' || role == 'admin';
       if (isEmployee) {
         AppRouter.pushReplacement(context, AppRoutes.employeePortal);
       } else {
-        AppRouter.pushReplacement(context, AppRoutes.home);
+        if (cached?.nowPackage != null) {
+          AppRouter.pushReplacement(context, AppRoutes.services);
+        } else {
+          AppRouter.pushReplacement(context, AppRoutes.home);
+        }
       }
     }
   }

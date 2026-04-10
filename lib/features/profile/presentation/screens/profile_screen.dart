@@ -165,6 +165,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             },
                           ),
                           ProfileMenuItem(
+                            icon: Icons.receipt_long_rounded,
+                            title: AppStrings.refundRequestHistoryTitle,
+                            onTap: () {
+                              AppRouter.push(context, AppRoutes.refundHistory);
+                            },
+                          ),
+                          ProfileMenuItem(
                             svgIcon: AppAssets.menuSecond,
                             title: AppStrings.feedbackTitleProfile,
                             onTap: () {

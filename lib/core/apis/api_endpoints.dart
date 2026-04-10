@@ -336,6 +336,16 @@ class ApiEndpoints {
   static const String createHomeServicePaymentLink = '/Transaction/create-home-service-payment-link';
 
   // ==========================================
+  // Refund Request endpoints
+  // ==========================================
+
+  /// Create a refund request
+  static const String createRefundRequest = '/RefundRequest/create';
+
+  /// Get my refund requests
+  static const String myRefundRequests = '/RefundRequest/my-requests';
+
+  // ==========================================
   // Wallet endpoints
   // ==========================================
   

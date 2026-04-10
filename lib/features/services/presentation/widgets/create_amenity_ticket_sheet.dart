@@ -106,6 +106,22 @@ class _CreateAmenityTicketSheetState extends State<CreateAmenityTicketSheet> {
   }
 
   void _onTimeSelected(TimeOfDay time) {
+    if (_selectedDate != null) {
+      final now = DateTime.now();
+      final selectedDateTime = DateTime(
+        _selectedDate!.year,
+        _selectedDate!.month,
+        _selectedDate!.day,
+        time.hour,
+        time.minute,
+      );
+      
+      if (selectedDateTime.isBefore(now)) {
+        AppToast.showError(context, message: 'Bạn không thể chọn thời gian trong quá khứ');
+        return;
+      }
+    }
+
     setState(() {
       _selectedTime = time;
       if (_selectedService != null && _selectedDate != null) {
@@ -303,6 +319,7 @@ class _CreateAmenityTicketSheetState extends State<CreateAmenityTicketSheet> {
         isLoading: context.watch<AmenityBloc>().state is AmenityLoaded &&
             (context.watch<AmenityBloc>().state as AmenityLoaded).isCreatingTicket,
         isDisabled: _selectedService == null || _hasConflict(),
+        saveButtonIcon: Icons.check_circle_outline,
         onSave: _handleSubmit,
         children: [
           // Service Selection
@@ -313,25 +330,11 @@ class _CreateAmenityTicketSheetState extends State<CreateAmenityTicketSheet> {
           _buildDateSelection(context, scale),
           SizedBox(height: 20 * scale),
 
-          // Time Selection - Only show when service is selected
-          if (_selectedService != null) ...[
-            _buildTimeSelection(context, scale),
-            SizedBox(height: 20 * scale),
+          // Time Selection
+          _buildTimeSelection(context, scale),
+          SizedBox(height: 20 * scale),
 
-            // Calculated End Time
-            if (_calculatedEndTime != null) ...[
-              _buildEndTimeDisplay(context, scale),
-              SizedBox(height: 20 * scale),
-            ],
-
-            // Schedule Conflict Warning
-            if (_hasConflict()) ...[
-              _buildConflictWarning(context, scale),
-              SizedBox(height: 20 * scale),
-            ],
-          ],
-
-          // Current Schedule Preview - Show when date is selected (even without service)
+          // Schedule Preview (always show when date is selected)
           if (_selectedDate != null) ...[
             _buildSchedulePreview(context, scale),
             SizedBox(height: 20 * scale),
@@ -425,7 +428,7 @@ class _CreateAmenityTicketSheetState extends State<CreateAmenityTicketSheet> {
                 crossAxisCount: 2,
                 crossAxisSpacing: 12 * scale,
                 mainAxisSpacing: 12 * scale,
-                childAspectRatio: 0.7, // Card height/width ratio (image 100 + padding/content ~40)
+                mainAxisExtent: 190 * scale, // Fixed height specifically for image + 2 lines text
               ),
               itemCount: activeServices.length,
               itemBuilder: (context, index) {
@@ -643,439 +646,188 @@ class _CreateAmenityTicketSheetState extends State<CreateAmenityTicketSheet> {
     );
   }
 
-  /// Get suggested time slots based on selected service and current schedules
-  List<TimeOfDay> _getSuggestedTimeSlots() {
-    if (_selectedService == null || _selectedDate == null) {
-      return [];
-    }
 
-    final duration = _selectedService!.duration;
-    final scheduleState = context.read<FamilyScheduleBloc>().state;
-    final schedules = scheduleState is FamilyScheduleLoaded 
-        ? scheduleState.schedules 
-        : <FamilyScheduleEntity>[];
-
-    // Filter schedules for the selected date
-    final daySchedules = schedules.where((schedule) {
-      return schedule.workDate.year == _selectedDate!.year &&
-          schedule.workDate.month == _selectedDate!.month &&
-          schedule.workDate.day == _selectedDate!.day;
-    }).toList();
-
-    // Sort schedules by start time
-    daySchedules.sort((a, b) {
-      final aStart = a.startTime.split(':');
-      final bStart = b.startTime.split(':');
-      final aHour = int.parse(aStart[0]);
-      final aMin = int.parse(aStart[1]);
-      final bHour = int.parse(bStart[0]);
-      final bMin = int.parse(bStart[1]);
-      if (aHour != bHour) return aHour.compareTo(bHour);
-      return aMin.compareTo(bMin);
-    });
-
-    final suggestions = <TimeOfDay>[];
-    final now = DateTime.now();
-    final isToday = _selectedDate!.year == now.year &&
-        _selectedDate!.month == now.month &&
-        _selectedDate!.day == now.day;
-
-    // Start from 8:00 AM or current time if today
-    int startHour = 8;
-    int startMinute = 0;
-    if (isToday) {
-      startHour = now.hour;
-      startMinute = (now.minute ~/ 15) * 15 + 15; // Round up to next 15 minutes
-      if (startMinute >= 60) {
-        startHour++;
-        startMinute = 0;
-      }
-    }
-
-    // Find gaps between schedules
-    for (int hour = startHour; hour < 22; hour++) {
-      for (int minute = (hour == startHour ? startMinute : 0); minute < 60; minute += 15) {
-        final slotStart = TimeOfDay(hour: hour, minute: minute);
-        final slotStartDateTime = DateTime(
-          _selectedDate!.year,
-          _selectedDate!.month,
-          _selectedDate!.day,
-          hour,
-          minute,
-        );
-        final slotEndDateTime = slotStartDateTime.add(Duration(minutes: duration));
-
-        // Check if this slot fits before any schedule or in a gap
-        bool fits = true;
-        for (final schedule in daySchedules) {
-          final scheduleStartParts = schedule.startTime.split(':');
-          final scheduleEndParts = schedule.endTime.split(':');
-          if (scheduleStartParts.length >= 2 && scheduleEndParts.length >= 2) {
-            final scheduleStart = DateTime(
-              schedule.workDate.year,
-              schedule.workDate.month,
-              schedule.workDate.day,
-              int.parse(scheduleStartParts[0]),
-              int.parse(scheduleStartParts[1]),
-            );
-            final scheduleEnd = DateTime(
-              schedule.workDate.year,
-              schedule.workDate.month,
-              schedule.workDate.day,
-              int.parse(scheduleEndParts[0]),
-              int.parse(scheduleEndParts[1]),
-            );
-
-            // Check overlap
-            if (slotStartDateTime.isBefore(scheduleEnd) && 
-                slotEndDateTime.isAfter(scheduleStart)) {
-              fits = false;
-              break;
-            }
-          }
-        }
-
-        if (fits) {
-          suggestions.add(slotStart);
-          // Limit to 6 suggestions
-          if (suggestions.length >= 6) break;
-        }
-      }
-      if (suggestions.length >= 6) break;
-    }
-
-    return suggestions;
-  }
 
   Widget _buildTimeSelection(BuildContext context, double scale) {
-    final suggestions = _getSuggestedTimeSlots();
-    final hasSuggestions = suggestions.isNotEmpty && 
-        _selectedService != null && 
-        _selectedDate != null;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          AppStrings.amenityStartTime,
-          style: AppTextStyles.arimo(
-            fontSize: 14 * scale,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        SizedBox(height: 12 * scale),
-        GestureDetector(
-          onTap: () async {
-            final picked = await showTimePicker(
-              context: context,
-              initialTime: _selectedTime ?? TimeOfDay.now(),
-              builder: (context, child) {
-                return MediaQuery(
-                  data: MediaQuery.of(context).copyWith(
-                    alwaysUse24HourFormat: true,
+        Row(
+          children: [
+            // Start Time Input
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppStrings.amenityStartTime,
+                    style: AppTextStyles.arimo(
+                      fontSize: 14 * scale,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
-                  child: child!,
-                );
-              },
-            );
-            if (picked != null) {
-              _onTimeSelected(picked);
-            }
-          },
-          child: Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: 16 * scale,
-              vertical: 16 * scale,
-            ),
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(16 * scale),
-              border: Border.all(
-                color: _selectedTime == null
-                    ? AppColors.red
-                    : AppColors.borderLight,
-                width: 1.5,
+                  SizedBox(height: 12 * scale),
+                  GestureDetector(
+                    onTap: () async {
+                      final picked = await showTimePicker(
+                        context: context,
+                        initialTime: _selectedTime ?? TimeOfDay.now(),
+                        builder: (context, child) {
+                          return MediaQuery(
+                            data: MediaQuery.of(context).copyWith(
+                              alwaysUse24HourFormat: true,
+                            ),
+                            child: child!,
+                          );
+                        },
+                      );
+                      if (picked != null) {
+                        _onTimeSelected(picked);
+                      }
+                    },
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16 * scale,
+                        vertical: 16 * scale,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        borderRadius: BorderRadius.circular(16 * scale),
+                        border: Border.all(
+                          color: _selectedTime == null
+                              ? AppColors.red
+                              : AppColors.borderLight,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _selectedTime != null
+                                  ? '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}'
+                                  : AppStrings.selectTime,
+                              style: AppTextStyles.arimo(
+                                fontSize: 14 * scale,
+                                color: _selectedTime != null
+                                    ? AppColors.textPrimary
+                                    : AppColors.textSecondary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Icon(
+                            Icons.access_time,
+                            size: 20 * scale,
+                            color: AppColors.textSecondary,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  // Placeholder to keep alignment with End Time column
+                  SizedBox(height: 25 * scale),
+                ],
               ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  _selectedTime != null
-                      ? '${_selectedTime!.hour.toString().padLeft(2, '0')}:${_selectedTime!.minute.toString().padLeft(2, '0')}'
-                      : AppStrings.selectTime,
-                  style: AppTextStyles.arimo(
-                    fontSize: 14 * scale,
-                    color: _selectedTime != null
-                        ? AppColors.textPrimary
-                        : AppColors.textSecondary,
+            SizedBox(width: 12 * scale),
+            // End Time Display
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppStrings.amenityEndTime,
+                    style: AppTextStyles.arimo(
+                      fontSize: 14 * scale,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
-                ),
-                Icon(
-                  Icons.access_time,
-                  size: 20 * scale,
-                  color: AppColors.textSecondary,
-                ),
-              ],
-            ),
-          ),
-        ),
-        // Suggested time slots
-        if (hasSuggestions) ...[
-          SizedBox(height: 12 * scale),
-          Text(
-            'Gợi ý thời gian phù hợp:',
-            style: AppTextStyles.arimo(
-              fontSize: 12 * scale,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          SizedBox(height: 8 * scale),
-          Wrap(
-            spacing: 8 * scale,
-            runSpacing: 8 * scale,
-            children: [
-              ...suggestions.map((time) {
-                final isSelected = _selectedTime?.hour == time.hour &&
-                    _selectedTime?.minute == time.minute;
-                return GestureDetector(
-                  onTap: () => _onTimeSelected(time),
-                  child: Container(
+                  SizedBox(height: 12 * scale),
+                  Container(
                     padding: EdgeInsets.symmetric(
                       horizontal: 16 * scale,
-                      vertical: 10 * scale,
+                      vertical: 16 * scale,
                     ),
                     decoration: BoxDecoration(
-                      color: isSelected
-                          ? AppColors.primary
-                          : AppColors.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12 * scale),
+                      color: _hasConflict()
+                          ? AppColors.red.withValues(alpha: 0.05)
+                          : _calculatedEndTime != null 
+                              ? AppColors.primary.withValues(alpha: 0.05)
+                              : AppColors.background,
+                      borderRadius: BorderRadius.circular(16 * scale),
                       border: Border.all(
-                        color: isSelected
-                            ? AppColors.primary
-                            : AppColors.primary.withValues(alpha: 0.3),
+                        color: _hasConflict()
+                            ? AppColors.red
+                            : _calculatedEndTime != null
+                                ? AppColors.primary.withValues(alpha: 0.2)
+                                : AppColors.borderLight,
                         width: 1.5,
                       ),
                     ),
-                    child: Text(
-                      '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}',
-                      style: AppTextStyles.arimo(
-                        fontSize: 13 * scale,
-                        fontWeight: FontWeight.w600,
-                        color: isSelected
-                            ? AppColors.white
-                            : AppColors.primary,
-                      ),
-                    ),
-                  ),
-                );
-              }),
-              // Custom time option
-              GestureDetector(
-                onTap: () async {
-                  final picked = await showTimePicker(
-                    context: context,
-                    initialTime: _selectedTime ?? TimeOfDay.now(),
-                    builder: (context, child) {
-                      return MediaQuery(
-                        data: MediaQuery.of(context).copyWith(
-                          alwaysUse24HourFormat: true,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _calculatedEndTime != null
+                                ? DateFormat('HH:mm', 'vi').format(_calculatedEndTime!)
+                                : '--:--',
+                            style: AppTextStyles.arimo(
+                              fontSize: 14 * scale,
+                              fontWeight: _calculatedEndTime != null ? FontWeight.w600 : FontWeight.normal,
+                              color: _hasConflict()
+                                  ? AppColors.red
+                                  : _calculatedEndTime != null
+                                      ? AppColors.primary
+                                      : AppColors.textSecondary,
+                            ),
+                          ),
                         ),
-                        child: child!,
-                      );
-                    },
-                  );
-                  if (picked != null) {
-                    _onTimeSelected(picked);
-                  }
-                },
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 16 * scale,
-                    vertical: 10 * scale,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.circular(12 * scale),
-                    border: Border.all(
-                      color: AppColors.borderLight,
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.schedule,
-                        size: 16 * scale,
-                        color: AppColors.textSecondary,
-                      ),
-                      SizedBox(width: 4 * scale),
-                      Text(
-                        'Tùy chọn',
-                        style: AppTextStyles.arimo(
-                          fontSize: 13 * scale,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.textSecondary,
+                        Icon(
+                          Icons.schedule,
+                          size: 20 * scale,
+                          color: _hasConflict()
+                              ? AppColors.red
+                              : _calculatedEndTime != null
+                                  ? AppColors.primary
+                                  : AppColors.textSecondary,
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildEndTimeDisplay(BuildContext context, double scale) {
-    return Container(
-      padding: EdgeInsets.all(16 * scale),
-      decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(16 * scale),
-        border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.2),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.schedule,
-            size: 20 * scale,
-            color: AppColors.primary,
-          ),
-          SizedBox(width: 12 * scale),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  AppStrings.amenityEndTime,
-                  style: AppTextStyles.arimo(
-                    fontSize: 12 * scale,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                SizedBox(height: 4 * scale),
-                Text(
-                  DateFormat('HH:mm', 'vi').format(_calculatedEndTime!),
-                  style: AppTextStyles.arimo(
-                    fontSize: 16 * scale,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildConflictWarning(BuildContext context, double scale) {
-    final conflictingSchedule = _getConflictingSchedule();
-    
-    return Container(
-      padding: EdgeInsets.all(16 * scale),
-      decoration: BoxDecoration(
-        color: AppColors.red.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16 * scale),
-        border: Border.all(
-          color: AppColors.red.withValues(alpha: 0.3),
-          width: 1.5,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.warning_amber_rounded,
-                size: 24 * scale,
-                color: AppColors.red,
-              ),
-              SizedBox(width: 12 * scale),
-              Expanded(
-                child: Text(
-                  'Thời gian đã chọn bị trùng với lịch trình hiện có',
-                  style: AppTextStyles.arimo(
-                    fontSize: 14 * scale,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.red,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          if (conflictingSchedule != null) ...[
-            SizedBox(height: 12 * scale),
-            Container(
-              padding: EdgeInsets.all(12 * scale),
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(12 * scale),
-                border: Border.all(
-                  color: AppColors.red.withValues(alpha: 0.2),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 8 * scale,
-                      vertical: 4 * scale,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.red.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8 * scale),
-                    ),
-                    child: Text(
-                      conflictingSchedule.timeRange,
-                      style: AppTextStyles.arimo(
-                        fontSize: 11 * scale,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.red,
-                      ),
+                      ],
                     ),
                   ),
-                  SizedBox(width: 12 * scale),
-                  Expanded(
-                    child: Text(
-                      conflictingSchedule.activity,
-                      style: AppTextStyles.arimo(
-                        fontSize: 13 * scale,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.textPrimary,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                  // Reserve space for error message to avoid layout shift
+                  SizedBox(
+                    height: 25 * scale, // Enough space for one line of text + padding
+                    child: _hasConflict()
+                        ? Padding(
+                            padding: EdgeInsets.only(top: 6 * scale),
+                            child: Text(
+                              'Trùng: ${_getConflictingSchedule()?.activity ?? ""}',
+                              style: AppTextStyles.arimo(
+                                fontSize: 12 * scale,
+                                color: AppColors.red,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          )
+                        : const SizedBox.shrink(),
                   ),
                 ],
               ),
             ),
-            SizedBox(height: 8 * scale),
-            Text(
-              'Vui lòng chọn thời gian khác để tránh trùng lịch.',
-              style: AppTextStyles.arimo(
-                fontSize: 12 * scale,
-                color: AppColors.textSecondary,
-              ),
-            ),
           ],
-        ],
-      ),
+        ),
+      ],
     );
   }
+
+
 
   Widget _buildSchedulePreview(BuildContext context, double scale) {
     // Use selectedDate as key to force rebuild when date changes
@@ -1086,12 +838,26 @@ class _CreateAmenityTicketSheetState extends State<CreateAmenityTicketSheet> {
       builder: (context, scheduleState) {
         final isLoading = scheduleState is FamilyScheduleLoading;
         // Always use schedules from state if available
-        final schedules = scheduleState is FamilyScheduleLoaded 
-            ? scheduleState.schedules 
-            : <FamilyScheduleEntity>[];
+        List<FamilyScheduleEntity> schedules = [];
+        if (scheduleState is FamilyScheduleLoaded) {
+          final now = DateTime.now();
+          schedules = scheduleState.schedules.where((schedule) {
+            final endParts = schedule.endTime.split(':');
+            if (endParts.length >= 2) {
+              final scheduleEnd = DateTime(
+                schedule.workDate.year,
+                schedule.workDate.month,
+                schedule.workDate.day,
+                int.parse(endParts[0]),
+                int.parse(endParts[1]),
+              );
+              return scheduleEnd.isAfter(now);
+            }
+            return true;
+          }).toList();
+        }
         
-        // Debug: Print schedules count
-        print('SchedulePreview: isLoading=$isLoading, schedulesCount=${schedules.length}, dateKey=$dateKey');
+
 
         return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1121,7 +887,6 @@ class _CreateAmenityTicketSheetState extends State<CreateAmenityTicketSheet> {
         ),
         SizedBox(height: 12 * scale),
         Container(
-          constraints: BoxConstraints(maxHeight: 200 * scale),
           decoration: BoxDecoration(
             color: AppColors.white,
             borderRadius: BorderRadius.circular(16 * scale),
@@ -1167,6 +932,7 @@ class _CreateAmenityTicketSheetState extends State<CreateAmenityTicketSheet> {
                     )
                   : ListView.builder(
                       shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
                       itemCount: schedules.length,
                       itemBuilder: (context, index) {
                         final schedule = schedules[index];

@@ -114,7 +114,9 @@ class SavedMenuRecordsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Menu sections by meal type
-          ...sortedMenuTypes.map((menuType) {
+          ...sortedMenuTypes.asMap().entries.map((entry) {
+            final index = entry.key;
+            final menuType = entry.value;
             final record = _getRecordForMenuType(menuType.id);
             final menu = record != null ? _getMenu(record.menuId) : null;
             final hasMenu = record != null && menu != null;
@@ -124,12 +126,24 @@ class SavedMenuRecordsCard extends StatelessWidget {
               return const SizedBox.shrink();
             }
 
-            return _MenuSection(
-              menuType: menuType,
-              menu: menu,
-              record: record,
-              hasMenu: hasMenu,
-              scale: scale,
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _MenuSection(
+                  menuType: menuType,
+                  menu: menu,
+                  record: record,
+                  hasMenu: hasMenu,
+                  scale: scale,
+                ),
+                if (index < sortedMenuTypes.length - 1) ...[
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 2 * scale),
+                    child: _BrandDivider(scale: scale),
+                  ),
+                  SizedBox(height: 8 * scale),
+                ],
+              ],
             );
           }),
         ],
@@ -180,7 +194,7 @@ class _MenuSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.only(bottom: 20 * scale),
+      margin: EdgeInsets.only(bottom: 4 * scale),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -448,5 +462,106 @@ class _FoodItem extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _BrandDivider extends StatelessWidget {
+  final double scale;
+
+  const _BrandDivider({required this.scale});
+
+  @override
+  Widget build(BuildContext context) {
+    final stroke = 1.0 * scale;
+    final waveHeight = 8 * scale;
+    final iconSize = 20 * scale;
+
+    return SizedBox(
+      height: 20 * scale,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: SizedBox(
+              height: waveHeight,
+              child: CustomPaint(
+                painter: _BrandSideWavePainter(
+                  color: AppColors.primary.withValues(alpha: 0.3),
+                  strokeWidth: stroke,
+                ),
+              ),
+            ),
+          ),
+          SizedBox(width: 10 * scale),
+          SvgPicture.asset(
+            AppAssets.appIconFourth,
+            width: iconSize,
+            height: iconSize,
+            fit: BoxFit.contain,
+          ),
+          SizedBox(width: 10 * scale),
+          Expanded(
+            child: Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.identity()..rotateY(3.141592653589793),
+              child: SizedBox(
+                height: waveHeight,
+                child: CustomPaint(
+                  painter: _BrandSideWavePainter(
+                    color: AppColors.primary.withValues(alpha: 0.3),
+                    strokeWidth: stroke,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BrandSideWavePainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+
+  const _BrandSideWavePainter({required this.color, required this.strokeWidth});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round
+      ..isAntiAlias = true;
+
+    final centerY = size.height / 2;
+
+    final path = Path()
+      ..moveTo(0, centerY)
+      ..cubicTo(
+        size.width * 0.18,
+        centerY - size.height * 0.60,
+        size.width * 0.38,
+        centerY + size.height * 0.65,
+        size.width * 0.56,
+        centerY,
+      )
+      ..cubicTo(
+        size.width * 0.74,
+        centerY - size.height * 0.65,
+        size.width * 0.88,
+        centerY + size.height * 0.45,
+        size.width,
+        centerY,
+      );
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _BrandSideWavePainter oldDelegate) {
+    return oldDelegate.color != color || oldDelegate.strokeWidth != strokeWidth;
   }
 }

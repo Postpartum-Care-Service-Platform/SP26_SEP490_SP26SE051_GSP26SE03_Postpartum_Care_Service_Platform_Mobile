@@ -32,13 +32,47 @@ class ScheduleActivityItem extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Time representation (prominent on the left)
+        SizedBox(
+          width: 46 * scale,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              SizedBox(height: 10 * scale), // adjust vertical alignment
+              Text(
+                schedule.startTime.substring(0, 5),
+                style: AppTextStyles.arimo(
+                  fontSize: 13 * scale,
+                  fontWeight: FontWeight.w700,
+                  color: isCompleted
+                      ? AppColors.verified
+                      : isStaffDone
+                          ? AppColors.primary
+                          : AppColors.textPrimary,
+                ),
+              ),
+              SizedBox(height: 2 * scale),
+              Text(
+                schedule.endTime.substring(0, 5),
+                style: AppTextStyles.arimo(
+                  fontSize: 11 * scale,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(width: 10 * scale),
+
         // Timeline indicator
         Column(
           children: [
+            SizedBox(height: 12 * scale), // line up dot with first time text
             // Dot - simple indicator without background
             Container(
-              width: 12 * scale,
-              height: 12 * scale,
+              width: 14 * scale, // slightly larger dot
+              height: 14 * scale,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: isCompleted
@@ -50,14 +84,30 @@ class ScheduleActivityItem extends StatelessWidget {
                             : isCancelled
                                 ? AppColors.scheduleCancelled
                                 : AppColors.textSecondary,
+                border: Border.all(
+                  color: AppColors.white,
+                  width: 2 * scale, // Inner white ring effect to make it pop
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: (isCompleted
+                            ? AppColors.verified
+                            : isStaffDone
+                                ? AppColors.primary
+                                : AppColors.textSecondary)
+                        .withValues(alpha: 0.3),
+                    blurRadius: 4 * scale,
+                    spreadRadius: 1 * scale,
+                  ),
+                ],
               ),
             ),
-            // Line (if not last) - shorter
+            // Line (if not last)
             if (!isLast)
               Container(
                 width: 2 * scale,
-                height: 50 * scale,
-                margin: EdgeInsets.symmetric(vertical: 3 * scale),
+                height: 56 * scale, // slightly longer line to accommodate larger dot
+                margin: EdgeInsets.symmetric(vertical: 4 * scale),
                 decoration: BoxDecoration(
                   color: AppColors.textSecondary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(1 * scale),
@@ -110,100 +160,69 @@ class ScheduleActivityItem extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Time badge and Target icon - same row
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // Time badge - more compact
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 8 * scale,
-                        vertical: 4 * scale,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isCompleted
-                            ? AppColors.verified.withValues(alpha: 0.12)
-                            : isStaffDone
-                                ? AppColors.primary.withValues(alpha: 0.12)
-                                : AppColors.textSecondary.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(6 * scale),
-                      ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Activity name
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(top: 4 * scale),
                       child: Text(
-                        schedule.timeRange,
+                        (schedule.title?.trim().isNotEmpty ?? false)
+                            ? schedule.title!.trim()
+                            : schedule.activity,
                         style: AppTextStyles.arimo(
-                          fontSize: 11 * scale,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 15 * scale,
+                          fontWeight: FontWeight.bold,
                           color: isCompleted
                               ? AppColors.verified
                               : isStaffDone
                                   ? AppColors.primary
-                                  : AppColors.textSecondary,
+                                  : isMissed
+                                      ? AppColors.scheduleMissed
+                                      : isCancelled
+                                          ? AppColors.scheduleCancelled
+                                          : AppColors.textPrimary,
+                        ).copyWith(
+                          decoration: (isMissed || isCancelled)
+                              ? TextDecoration.lineThrough
+                              : null,
                         ),
                       ),
                     ),
-                    const Spacer(),
-                    // Target icon(s) - smaller
-                    if (isForBoth)
-                      // Show both icons when target is "both"
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _buildTargetIcon(
-                            AppAssets.appIconFirst,
-                            isCompleted,
-                            isStaffDone,
-                            scale,
-                          ),
-                          SizedBox(width: 4 * scale),
-                          _buildTargetIcon(
-                            AppAssets.appIconSecond,
-                            isCompleted,
-                            isStaffDone,
-                            scale,
-                          ),
-                        ],
-                      )
-                    else
-                      // Show single icon for Mom or Baby
-                      _buildTargetIcon(
-                        isForMom ? AppAssets.appIconFirst : AppAssets.appIconSecond,
-                        isCompleted,
-                        isStaffDone,
-                        scale,
-                      ),
-                  ],
-                ),
-                SizedBox(height: 10 * scale),
-                // Activity name - smaller
-                Text(
-                  (schedule.title?.trim().isNotEmpty ?? false)
-                      ? schedule.title!.trim()
-                      : schedule.activity,
-                  style: AppTextStyles.arimo(
-                    fontSize: 15 * scale,
-                    fontWeight: FontWeight.bold,
-                    color: isCompleted
-                        ? AppColors.verified
-                        : isStaffDone
-                            ? AppColors.primary
-                            : isMissed
-                                ? AppColors.scheduleMissed
-                                : isCancelled
-                                    ? AppColors.scheduleCancelled
-                                    : AppColors.textPrimary,
-                  ).copyWith(
-                    decoration: (isMissed || isCancelled)
-                        ? TextDecoration.lineThrough
-                        : null,
                   ),
-                ),
-                // Note is intentionally hidden on item card.
-                // User can tap this activity to view note in detail sheet.
-              ],
-            ),
+                  SizedBox(width: 8 * scale),
+                  // Target icon(s)
+                  if (isForBoth)
+                    // Show both icons when target is "both"
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildTargetIcon(
+                          AppAssets.appIconFirst,
+                          isCompleted,
+                          isStaffDone,
+                          scale,
+                        ),
+                        SizedBox(width: 4 * scale),
+                        _buildTargetIcon(
+                          AppAssets.appIconSecond,
+                          isCompleted,
+                          isStaffDone,
+                          scale,
+                        ),
+                      ],
+                    )
+                  else
+                    // Show single icon for Mom or Baby
+                    _buildTargetIcon(
+                      isForMom ? AppAssets.appIconFirst : AppAssets.appIconSecond,
+                      isCompleted,
+                      isStaffDone,
+                      scale,
+                    ),
+                ],
+              ),
             ),
           ),
         ),
