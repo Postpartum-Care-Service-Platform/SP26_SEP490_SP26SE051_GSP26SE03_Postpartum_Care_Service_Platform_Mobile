@@ -40,21 +40,34 @@ class _HomeScreenState extends State<HomeScreen> {
 
           return SafeArea(
             bottom: false,
-            child: SingleChildScrollView(
-              padding: AppResponsive.pagePadding(context),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(height: 4 * scale),
-                  const HomeHeader(),
-                  SizedBox(height: 2 * scale),
-                  _ArtDivider(scale: scale),
-                  SizedBox(height: 18 * scale),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Sticky Header Section
+                Container(
+                  color: AppColors.background, // Ensure the header naturally masks the content below
+                  padding: AppResponsive.pagePadding(context),
+                  child: Column(
+                    children: [
+                      SizedBox(height: 4 * scale),
+                      const HomeHeader(),
+                      SizedBox(height: 2 * scale),
+                      _ArtDivider(scale: scale),
+                      SizedBox(height: 8 * scale),
+                    ],
+                  ),
+                ),
+                // Scrollable Content Section
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: AppResponsive.pagePadding(context).copyWith(top: 10 * scale),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const HomeWelcomeSection(),
+                        SizedBox(height: 28 * scale),
 
-                  const HomeWelcomeSection(),
-                  SizedBox(height: 28 * scale),
-
-                  Builder(
+                        Builder(
                     builder: (homeContext) => SectionHeader(
                       title: AppStrings.promotions,
                       actionText: AppStrings.viewAll,
@@ -150,8 +163,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
-          );
-        },
+          ),
+        ],
+      ),
+    );
+  },
       ),
     );
   }

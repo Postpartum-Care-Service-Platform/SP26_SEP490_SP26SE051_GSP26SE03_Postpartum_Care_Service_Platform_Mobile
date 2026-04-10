@@ -25,15 +25,6 @@ class HomeWelcomeSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          AppStrings.homeWelcomeTitle,
-          style: AppTextStyles.tinos(
-            fontSize: 21 * scale,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        SizedBox(height: 8 * scale),
-        Text(
           AppStrings.homeWelcomeSubtitle,
           style: AppTextStyles.arimo(
             fontSize: 13 * scale,

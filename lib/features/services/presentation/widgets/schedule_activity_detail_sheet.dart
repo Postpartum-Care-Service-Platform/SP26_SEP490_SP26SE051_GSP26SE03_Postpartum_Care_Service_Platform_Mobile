@@ -146,7 +146,7 @@ class ScheduleActivityDetailSheet extends StatelessWidget {
                     : schedule.activity,
                 style: AppTextStyles.tinos(
                   fontSize: 22 * scale,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
                 ),
               ),
@@ -420,8 +420,8 @@ class ScheduleActivityDetailSheet extends StatelessWidget {
         Text(
           title,
           style: AppTextStyles.tinos(
-            fontSize: 20 * scale,
-            fontWeight: FontWeight.bold,
+            fontSize: 18 * scale,
+            fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
           ),
         ),

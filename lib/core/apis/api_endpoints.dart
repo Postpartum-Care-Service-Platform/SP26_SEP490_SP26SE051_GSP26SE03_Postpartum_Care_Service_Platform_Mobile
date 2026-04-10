@@ -308,7 +308,7 @@ class ApiEndpoints {
   static const String feedbackTypes = '/FeedbackType';
 
   /// Get my feedbacks
-  static const String myFeedbacks = '/Feedback/my-feedback';
+  static const String myFeedbacks = '/Feedback/my-full-feedback';
 
   /// Create feedback
   static const String createFeedback = '/Feedback';
@@ -334,6 +334,16 @@ class ApiEndpoints {
   
   /// Create home service payment link
   static const String createHomeServicePaymentLink = '/Transaction/create-home-service-payment-link';
+
+  // ==========================================
+  // Refund Request endpoints
+  // ==========================================
+
+  /// Create a refund request
+  static const String createRefundRequest = '/RefundRequest/create';
+
+  /// Get my refund requests
+  static const String myRefundRequests = '/RefundRequest/my-requests';
 
   // ==========================================
   // Wallet endpoints

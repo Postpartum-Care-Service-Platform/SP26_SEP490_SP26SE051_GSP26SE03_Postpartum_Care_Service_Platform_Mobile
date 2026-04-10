@@ -52,9 +52,13 @@ import '../../features/services/presentation/screens/my_menu_screen.dart';
 import '../../features/services/presentation/screens/family_schedule_screen.dart';
 import '../../features/services/presentation/screens/feedback_screen.dart';
 import '../../features/services/presentation/screens/amenity_screen.dart';
+import '../../features/services/presentation/screens/refund_request_history_screen.dart';
+import '../../features/services/presentation/bloc/refund_request/refund_request_bloc.dart';
+import '../../features/services/presentation/bloc/refund_request/refund_request_event.dart';
 import '../../features/services/presentation/bloc/menu_event.dart';
 import '../../features/services/presentation/bloc/family_schedule_event.dart';
 import '../../core/widgets/app_scaffold.dart';
+import '../../core/widgets/app_bottom_navigation_bar.dart';
 import '../../core/di/injection_container.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/booking/domain/entities/booking_entity.dart';
@@ -126,13 +130,23 @@ class AppRouter {
 
       // Main App Routes
       case AppRoutes.home:
+        return MaterialPageRoute(
+            builder: (_) => const AppScaffold(initialTab: AppBottomTab.home));
       case AppRoutes.appointment:
+        return MaterialPageRoute(
+            builder: (_) =>
+                const AppScaffold(initialTab: AppBottomTab.appointment));
       case AppRoutes.services:
+        return MaterialPageRoute(
+            builder: (_) =>
+                const AppScaffold(initialTab: AppBottomTab.services));
       case AppRoutes.chat:
+        return MaterialPageRoute(
+            builder: (_) => const AppScaffold(initialTab: AppBottomTab.chat));
       case AppRoutes.profile:
-        // These are handled by AppScaffold, not individual routes
-        // Return AppScaffold as fallback
-        return MaterialPageRoute(builder: (_) => const AppScaffold());
+        return MaterialPageRoute(
+            builder: (_) =>
+                const AppScaffold(initialTab: AppBottomTab.profile));
 
       // Profile Routes
       case AppRoutes.accountDetails:
@@ -496,6 +510,17 @@ class AppRouter {
               ),
             ],
             child: const AmenityScreen(),
+          ),
+        );
+
+      // Refund History Routes
+      case AppRoutes.refundHistory:
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (_) =>
+                InjectionContainer.refundRequestBloc
+                  ..add(const RefundRequestLoadMyRequests()),
+            child: const RefundRequestHistoryScreen(),
           ),
         );
 

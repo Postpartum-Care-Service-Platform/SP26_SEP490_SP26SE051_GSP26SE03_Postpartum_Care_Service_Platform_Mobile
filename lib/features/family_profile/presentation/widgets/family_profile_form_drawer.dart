@@ -317,6 +317,7 @@ class _FamilyProfileFormDrawerState extends State<FamilyProfileFormDrawer> {
           : AppStrings.addFamilyMember,
       onSave: _isEditing ? _handleSave : null,
       saveButtonText: widget.member != null ? AppStrings.save : AppStrings.add,
+      saveButtonIcon: widget.member != null ? Icons.save_rounded : Icons.add_circle_outline,
       children: [
         // Only show view/edit toggle when editing existing member
         if (widget.member != null) ...[

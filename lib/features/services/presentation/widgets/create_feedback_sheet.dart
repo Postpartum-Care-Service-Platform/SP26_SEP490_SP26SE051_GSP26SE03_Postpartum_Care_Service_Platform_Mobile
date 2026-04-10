@@ -405,6 +405,11 @@ class _CreateFeedbackSheetState extends State<CreateFeedbackSheet> {
                             final isLoading = state is FeedbackLoading;
                             return AppWidgets.primaryButton(
                               text: 'Gửi feedback',
+                              icon: Icon(
+                                Icons.send_rounded,
+                                size: 20 * scale,
+                                color: AppColors.white,
+                              ),
                               onPressed: isLoading ? () {} : _handleSubmit,
                               isEnabled: !isLoading,
                             );

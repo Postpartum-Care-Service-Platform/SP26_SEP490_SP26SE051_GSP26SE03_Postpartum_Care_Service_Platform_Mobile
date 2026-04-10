@@ -18,6 +18,7 @@ import '../../../../core/widgets/app_toast.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/config/app_config.dart';
+import '../../../../core/services/current_account_cache_service.dart';
 
 // Google Sign-In configuration using Web Client ID from AppConfig
 // AppConfig loads the value from .env file
@@ -46,7 +47,15 @@ class LoginScreen extends StatelessWidget {
             if (isEmployee) {
               AppRouter.pushReplacement(context, AppRoutes.employeePortal);
             } else {
-              AppRouter.pushReplacement(context, AppRoutes.home);
+              CurrentAccountCacheService.getCurrentAccount().then((cached) {
+                if (!context.mounted) return;
+                
+                if (cached?.nowPackage != null) {
+                  AppRouter.pushReplacement(context, AppRoutes.services);
+                } else {
+                  AppRouter.pushReplacement(context, AppRoutes.home);
+                }
+              });
             }
           } else if (state is AuthError) {
             AppLoading.hide(context);

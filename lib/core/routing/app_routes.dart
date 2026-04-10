@@ -104,4 +104,7 @@ class AppRoutes {
       '/employee-customer-family-profile';
 
   static const String employeeSupportRequests = '/employee-support-requests';
+
+  // Refund Request Routes
+  static const String refundHistory = '/refund-history';
 }

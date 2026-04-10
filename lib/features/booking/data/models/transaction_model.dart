@@ -20,12 +20,14 @@ class TransactionModel {
 
   factory TransactionModel.fromJson(Map<String, dynamic> json) {
     return TransactionModel(
-      id: json['id'] as String,
-      amount: (json['amount'] as num).toDouble(),
-      type: json['type'] as String,
-      status: json['status'] as String,
-      paymentMethod: json['paymentMethod'] as String,
-      transactionDate: DateTime.parse(json['transactionDate'] as String),
+      id: (json['id'] as String?) ?? '',
+      amount: ((json['amount'] as num?) ?? 0).toDouble(),
+      type: (json['type'] as String?) ?? '',
+      status: (json['status'] as String?) ?? '',
+      paymentMethod: (json['paymentMethod'] as String?) ?? '',
+      transactionDate:
+          DateTime.tryParse((json['transactionDate'] as String?) ?? '') ??
+          DateTime.fromMillisecondsSinceEpoch(0),
     );
   }
 
