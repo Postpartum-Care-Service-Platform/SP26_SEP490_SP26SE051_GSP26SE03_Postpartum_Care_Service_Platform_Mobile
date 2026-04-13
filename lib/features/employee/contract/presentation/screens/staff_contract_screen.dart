@@ -41,7 +41,8 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
   final _bookingRemote = BookingRemoteDataSourceImpl();
 
   ContractModel? _contract;
-  /// Customer fetched from /api/Booking/{id} when contract.customer is null
+  /// Booking fetched from /api/Booking/{id} when needed
+  BookingModel? _fullBooking;
   CustomerModel? _bookingCustomer;
   bool _isLoading = false;
   bool _isSending = false;
@@ -86,8 +87,8 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
           _contract = created;
         });
       }
-      // Nếu contract.customer == null, fetch booking để lấy thông tin khách hàng
-      await _fetchBookingCustomerIfNeeded();
+      // Fetch booking để lấy thông tin giá cả & khách hàng nếu cần
+      await _fetchInitialDataIfNeeded();
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -102,23 +103,25 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
     }
   }
 
-  /// Nếu hợp đồng không có customer, gọi /api/Booking/{bookingId} để lấy thông tin khách.
-  Future<void> _fetchBookingCustomerIfNeeded() async {
+  /// Fetch /api/Booking/{bookingId} để lấy thông tin khách & giá cả.
+  Future<void> _fetchInitialDataIfNeeded() async {
     final contract = _contract;
     if (contract == null) return;
-    // Đã có customer từ contract — không cần fetch thêm
-    if (contract.customer != null) return;
+    
+    // Luôn fetch nếu chưa có _fullBooking để đảm bảo lấy đầy đủ các fields (prices, full customer info)
+    if (_fullBooking != null) return;
 
     final bookingId = contract.bookingId;
 
     try {
       final booking = await _bookingRemote.getBookingById(bookingId);
       if (!mounted) return;
-      if (booking.customer != null) {
-        setState(() {
+      setState(() {
+        _fullBooking = booking;
+        if (booking.customer != null) {
           _bookingCustomer = booking.customer;
-        });
-      }
+        }
+      });
     } catch (_) {
       // Không làm gián đoạn UI nếu fetch booking thất bại
     }
@@ -977,27 +980,61 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
     final contract = _contract;
     if (contract == null) return;
 
-    final currentCustomerName =
-        (contract.customer?.username ?? _bookingCustomer?.username ?? '').trim();
-    final currentCustomerPhone =
-        (contract.customer?.phone ?? _bookingCustomer?.phone ?? '').trim();
+    final booking = _fullBooking ?? widget.booking;
 
-    final customerNameController = TextEditingController();
-    final customerPhoneController = TextEditingController();
-    final customerAddressController = TextEditingController();
-    final totalController = TextEditingController();
-    final discountController = TextEditingController();
-    final finalController = TextEditingController();
+    final nameFromContract = contract.customer?.username?.trim() ?? '';
+    final nameFromBooking = booking?.customer?.username?.trim() ?? _bookingCustomer?.username?.trim() ?? '';
+    final currentCustomerName = nameFromContract.isNotEmpty ? nameFromContract : nameFromBooking;
+        
+    final phoneFromContract = contract.customer?.phone?.trim() ?? '';
+    final phoneFromBooking = booking?.customer?.phone?.trim() ?? _bookingCustomer?.phone?.trim() ?? '';
+    final currentCustomerPhone = phoneFromContract.isNotEmpty ? phoneFromContract : phoneFromBooking;
 
-    DateTime? effectiveFrom = contract.effectiveFrom;
-    DateTime? effectiveTo = contract.effectiveTo;
-    DateTime? checkinDate = contract.checkinDate;
-    DateTime? checkoutDate = contract.checkoutDate;
+    // Address fallback (if any)
+    final currentCustomerAddress = ''; // Vẫn để chờ nếu có source địa chỉ
+
+    String formatMoney(double value) {
+      final text = value.round().toString();
+      final buffer = StringBuffer();
+      for (int i = 0; i < text.length; i++) {
+        final reverseIndex = text.length - i;
+        buffer.write(text[i]);
+        if (reverseIndex > 1 && reverseIndex % 3 == 1) {
+          buffer.write('.');
+        }
+      }
+      return buffer.toString();
+    }
+
+    final customerNameController = TextEditingController(text: currentCustomerName);
+    final customerPhoneController = TextEditingController(text: currentCustomerPhone);
+    final customerAddressController = TextEditingController(text: currentCustomerAddress); 
+    
+    final totalController = TextEditingController(
+      text: booking != null ? formatMoney(booking.totalPrice) : '',
+    );
+    final discountController = TextEditingController(
+      text: booking != null ? formatMoney(booking.discountAmount) : '',
+    );
+    final finalController = TextEditingController(
+      text: booking != null ? formatMoney(booking.finalAmount) : '',
+    );
+
+    DateTime? effectiveFrom = contract.effectiveFrom ?? booking?.startDate;
+    DateTime? effectiveTo = contract.effectiveTo ?? booking?.endDate;
+    DateTime? checkinDate = contract.checkinDate ?? booking?.startDate;
+    DateTime? checkoutDate = contract.checkoutDate ?? booking?.endDate;
 
     final originalEffectiveFrom = contract.effectiveFrom;
     final originalEffectiveTo = contract.effectiveTo;
     final originalCheckinDate = contract.checkinDate;
     final originalCheckoutDate = contract.checkoutDate;
+    
+    final originalTotalPrice = booking?.totalPrice;
+    final originalDiscountAmount = booking?.discountAmount;
+    final originalFinalAmount = booking?.finalAmount;
+
+    debugPrint('ContractScreen: Pre-filling with Name=$currentCustomerName, Phone=$currentCustomerPhone, BookingID=${booking?.id}');
 
     bool finalAmountManualOverride = false;
 
@@ -1192,8 +1229,8 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                 final discountAmount = parseMoney(discountController.text);
                 final finalAmount = parseMoney(finalController.text);
 
-                if (customerName.isNotEmpty) changedItems.add('Tên khách hàng');
-                if (customerPhone.isNotEmpty) changedItems.add('Số điện thoại');
+                if (customerName != currentCustomerName) changedItems.add('Tên khách hàng');
+                if (customerPhone != currentCustomerPhone) changedItems.add('Số điện thoại');
                 if (customerAddress.isNotEmpty) changedItems.add('Địa chỉ');
                 if (effectiveFrom != originalEffectiveFrom) {
                   changedItems.add('Hiệu lực từ');
@@ -1205,9 +1242,9 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                 if (checkoutDate != originalCheckoutDate) {
                   changedItems.add('Check-out');
                 }
-                if (totalPrice != null) changedItems.add('Tổng tiền');
-                if (discountAmount != null) changedItems.add('Giảm giá');
-                if (finalAmount != null) changedItems.add('Thành tiền');
+                if (totalPrice != originalTotalPrice) changedItems.add('Tổng tiền');
+                if (discountAmount != originalDiscountAmount) changedItems.add('Giảm giá');
+                if (finalAmount != originalFinalAmount) changedItems.add('Thành tiền');
 
                 if (changedItems.isEmpty) {
                   AppToast.showError(
@@ -1273,9 +1310,9 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                     checkoutDate: checkoutDate != originalCheckoutDate
                         ? checkoutDate
                         : null,
-                    totalPrice: totalPrice,
-                    discountAmount: discountAmount,
-                    finalAmount: finalAmount,
+                    totalPrice: totalPrice != originalTotalPrice ? totalPrice : null,
+                    discountAmount: discountAmount != originalDiscountAmount ? discountAmount : null,
+                    finalAmount: finalAmount != originalFinalAmount ? finalAmount : null,
                   );
 
                   if (!mounted) return;
@@ -1333,10 +1370,7 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                       controller: customerNameController,
                       decoration: buildFieldDecoration(
                         label: 'Tên khách hàng',
-                        hint: 'Để trống nếu giữ nguyên',
-                        helper: currentCustomerName.isNotEmpty
-                            ? 'Hiện tại: $currentCustomerName'
-                            : null,
+                        hint: 'Nhập tên khách hàng',
                       ),
                     ),
                     SizedBox(height: 10 * scale),
@@ -1345,10 +1379,7 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                       keyboardType: TextInputType.phone,
                       decoration: buildFieldDecoration(
                         label: 'Số điện thoại',
-                        hint: 'Để trống nếu giữ nguyên',
-                        helper: currentCustomerPhone.isNotEmpty
-                            ? 'Hiện tại: $currentCustomerPhone'
-                            : null,
+                        hint: 'Nhập số điện thoại',
                       ),
                     ),
                     SizedBox(height: 10 * scale),
@@ -1356,7 +1387,7 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                       controller: customerAddressController,
                       decoration: buildFieldDecoration(
                         label: 'Địa chỉ',
-                        hint: 'Để trống nếu giữ nguyên',
+                        hint: 'Nhập địa chỉ khách hàng',
                       ),
                     ),
 
