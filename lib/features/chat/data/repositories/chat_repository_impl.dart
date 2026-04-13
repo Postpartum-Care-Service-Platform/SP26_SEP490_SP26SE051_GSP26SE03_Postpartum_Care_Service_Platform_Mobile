@@ -45,11 +45,13 @@ class ChatRepositoryImpl implements ChatRepository {
     required int conversationId,
     required String content,
     bool toStaffChannel = false,
+    bool isStaff = false,
   }) {
     return remoteDataSource.sendMessage(
       conversationId: conversationId,
       content: content,
       toStaffChannel: toStaffChannel,
+      isStaff: isStaff,
     );
   }
 

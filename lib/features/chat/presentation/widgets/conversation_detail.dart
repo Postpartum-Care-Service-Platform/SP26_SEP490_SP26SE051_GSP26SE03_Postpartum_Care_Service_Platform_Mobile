@@ -10,6 +10,8 @@ import '../../../../core/widgets/app_loading.dart';
 import '../../../../core/constants/app_assets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../domain/entities/chat_message.dart';
+import '../../domain/entities/chat_conversation.dart';
+import '../../domain/entities/support_request.dart';
 import '../bloc/chat_bloc.dart';
 import '../bloc/chat_event.dart';
 import '../bloc/chat_state.dart';
@@ -75,10 +77,12 @@ class ConversationDetail extends StatelessWidget {
               );
             }
             if (conversation == null) {
-              return const EmptyPlaceholder(
+              return EmptyPlaceholder(
                 icon: Icons.chat_bubble_outline_rounded,
                 title: AppStrings.chatEmptyMessage,
-                subtitle: AppStrings.chatTypingHint,
+                subtitle: isStaff 
+                  ? 'Hãy chọn một cuộc hội thoại để bắt đầu hỗ trợ'
+                  : AppStrings.chatTypingHint,
               );
             }
 
@@ -102,9 +106,11 @@ class ConversationDetail extends StatelessWidget {
                     customerInfo: conversation.customerInfo,
                     onSupport: onSupport,
                     onBack: onBack,
+                    isStaff: isStaff,
                   ),
                 if (!messengerStyle)
                   const Divider(height: 1, color: AppColors.borderLight),
+                if (isStaff) _buildSupportBanner(context, state, conversation, scale),
                 Expanded(
                   child: Padding(
                     padding: EdgeInsets.symmetric(
@@ -113,17 +119,17 @@ class ConversationDetail extends StatelessWidget {
                     ),
                     child: ListView.builder(
                       controller: scrollController,
-                      itemCount: 1 + messages.length + (showTyping ? 1 : 0),
+                      itemCount: (isStaff ? 0 : 1) + messages.length + (showTyping ? 1 : 0),
                       itemBuilder: (context, index) {
-                        // Intro banner (scrolls with messages)
-                        if (index == 0) {
+                        // Intro banner (scrolls with messages) - Hide for staff
+                        if (!isStaff && index == 0) {
                           return Padding(
                             padding: EdgeInsets.only(bottom: 12 * scale),
                             child: const _AiIntroBanner(),
                           );
                         }
 
-                        final messageIndex = index - 1;
+                        final messageIndex = isStaff ? index : index - 1;
 
                         if (showTyping && messageIndex == messages.length) {
                           return Padding(
@@ -197,18 +203,22 @@ class ConversationDetail extends StatelessWidget {
                         final isFirstInGroup = prevMessage == null || isDifferentGroup(message, prevMessage);
                         final isLastInGroup = nextMessage == null || isDifferentGroup(message, nextMessage);
 
-                        final isMine = sender == 'customer';
                         final isAI = sender == 'ai';
-                        final isStaff =
+                        final isStaffMessage =
                             sender == 'staff' ||
                             sender == 'employee' ||
                             sender == 'nurse' ||
                             sender == 'consultant';
 
+                        // Logic isMine: So sánh senderId của tin nhắn với ID của tài khoản hiện tại
+                        final isMine = message.senderId != null && 
+                                      currentAccount != null && 
+                                      message.senderId == currentAccount.id;
+
                         // Force initials per requirement: AI => "AI", staff => "NV"
                         final displayName = isAI
                             ? 'AI'
-                            : (isStaff
+                            : (isStaffMessage
                                   ? 'NV'
                                   : (isMine
                                         ? (currentAccount?.displayName ?? 'Bạn')
@@ -279,6 +289,92 @@ class ConversationDetail extends StatelessWidget {
         );
       },
     );
+  }
+
+  Widget _buildSupportBanner(
+    BuildContext context,
+    ChatState state,
+    ChatConversation conversation,
+    double scale,
+  ) {
+    // Tìm yêu cầu hỗ trợ cho cuộc trò chuyện này
+    final myRequest = state.mySupportRequests.where(
+      (r) => r.conversationId == conversation.id && r.status.toLowerCase() != 'resolved',
+    ).firstOrNull;
+
+    if (myRequest != null) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        color: Colors.green[50],
+        child: Row(
+          children: [
+            const Icon(Icons.support_agent, color: Colors.green),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Bạn đang hỗ trợ yêu cầu này',
+                style: TextStyle(
+                  fontSize: 13 * scale,
+                  color: Colors.green[800],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                context.read<ChatBloc>().add(
+                  ChatResolveSupportRequestSubmitted(myRequest.id),
+                );
+              },
+              child: const Text('Hoàn thành'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final pendingRequest = state.supportRequests.where(
+      (r) => r.conversationId == conversation.id,
+    ).firstOrNull;
+
+    if (pendingRequest != null) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        color: Colors.orange[50],
+        child: Row(
+          children: [
+            const Icon(Icons.help_outline, color: Colors.orange),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Khách hàng đang chờ hỗ trợ',
+                style: TextStyle(
+                  fontSize: 13 * scale,
+                  color: Colors.orange[800],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                context.read<ChatBloc>().add(
+                  ChatAcceptSupportRequestSubmitted(pendingRequest.id),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                visualDensity: VisualDensity.compact,
+              ),
+              child: const Text('Nhận hỗ trợ'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
   }
 }
 

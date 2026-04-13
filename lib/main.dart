@@ -11,6 +11,7 @@ import 'core/config/app_config.dart';
 import 'core/utils/bad_cert_http_override.dart';
 import 'core/routing/app_router.dart';
 import 'core/routing/app_routes.dart';
+import 'features/auth/presentation/bloc/auth_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,6 +37,9 @@ class MyApp extends StatelessWidget {
         BlocProvider<NotificationBloc>(
           create: (_) => InjectionContainer.notificationBloc
             ..add(const NotificationLoadRequested()),
+        ),
+        BlocProvider<AuthBloc>(
+          create: (_) => InjectionContainer.authBloc,
         ),
       ],
       child: MaterialApp(

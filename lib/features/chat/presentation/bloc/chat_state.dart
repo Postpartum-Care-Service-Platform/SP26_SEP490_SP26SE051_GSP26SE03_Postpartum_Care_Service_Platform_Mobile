@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import '../../domain/entities/chat_conversation.dart';
 import '../../domain/entities/support_request.dart';
 import '../../domain/entities/ai_structured_data.dart';
+import '../../../auth/data/models/current_account_model.dart';
 
 enum ChatStatus { initial, loading, success, failure }
 
@@ -29,6 +30,7 @@ class ChatState extends Equatable {
   final ChatStatus supportRequestsStatus;
   final ChatStatus mySupportRequestsStatus;
   final ChatSupportRequestActionStatus supportRequestActionStatus;
+  final Map<String, CurrentAccountModel> customerProfiles;
 
   const ChatState({
     this.conversations = const [],
@@ -47,6 +49,7 @@ class ChatState extends Equatable {
     this.supportRequestsStatus = ChatStatus.initial,
     this.mySupportRequestsStatus = ChatStatus.initial,
     this.supportRequestActionStatus = ChatSupportRequestActionStatus.idle,
+    this.customerProfiles = const {},
   });
 
   ChatState copyWith({
@@ -66,6 +69,7 @@ class ChatState extends Equatable {
     ChatStatus? supportRequestsStatus,
     ChatStatus? mySupportRequestsStatus,
     ChatSupportRequestActionStatus? supportRequestActionStatus,
+    Map<String, CurrentAccountModel>? customerProfiles,
   }) {
     return ChatState(
       conversations: conversations ?? this.conversations,
@@ -86,6 +90,7 @@ class ChatState extends Equatable {
       supportRequestsStatus: supportRequestsStatus ?? this.supportRequestsStatus,
       mySupportRequestsStatus: mySupportRequestsStatus ?? this.mySupportRequestsStatus,
       supportRequestActionStatus: supportRequestActionStatus ?? this.supportRequestActionStatus,
+      customerProfiles: customerProfiles ?? this.customerProfiles,
     );
   }
 
@@ -107,6 +112,7 @@ class ChatState extends Equatable {
         supportRequestsStatus,
         mySupportRequestsStatus,
         supportRequestActionStatus,
+        customerProfiles,
       ];
 }
 

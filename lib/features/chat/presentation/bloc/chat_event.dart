@@ -151,3 +151,12 @@ class ChatResolveSupportRequestSubmitted extends ChatEvent {
   @override
   List<Object?> get props => [supportRequestId];
 }
+
+class ChatAccountDetailRequested extends ChatEvent {
+  final String accountId;
+
+  const ChatAccountDetailRequested(this.accountId);
+
+  @override
+  List<Object?> get props => [accountId];
+}

@@ -337,9 +337,13 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
 
     // Status filter
     if (_statusFilter != 'all') {
-      filtered = filtered
-          .where((b) => b.status.toLowerCase() == _statusFilter)
-          .toList();
+      filtered = filtered.where((b) {
+        final st = b.status.toLowerCase();
+        if (_statusFilter == 'inprogress') {
+          return st == 'inprogress' || st == 'in_progress';
+        }
+        return st == _statusFilter;
+      }).toList();
     }
 
     // Search filter
@@ -547,14 +551,13 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
                           onConfirm: booking.status.toLowerCase() == 'pending'
                               ? () => _handleConfirm(booking)
                               : null,
-                          onComplete:
-                              [
+                          onComplete: [
                                     'confirmed',
                                     'in_progress',
+                                    'inprogress',
                                     'active',
                                     'checked_in',
-                                  ].contains(booking.status.toLowerCase()) &&
-                                  booking.remainingAmount <= 0
+                                  ].contains(booking.status.toLowerCase())
                               ? () => _handleComplete(booking)
                               : null,
                           onCheckIn: booking.status.toLowerCase() == 'confirmed'
@@ -832,7 +835,7 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
       {'value': 'all', 'label': 'Tất cả'},
       {'value': 'pending', 'label': 'Chờ xử lý'},
       {'value': 'confirmed', 'label': 'Đã xác nhận'},
-      {'value': 'in_progress', 'label': 'Đang thực hiện'},
+      {'value': 'inprogress', 'label': 'Đang thực hiện'},
       {'value': 'completed', 'label': 'Đã hoàn thành'},
       {'value': 'cancelled', 'label': 'Đã hủy'},
     ];
@@ -929,6 +932,7 @@ class _BookingItem extends StatelessWidget {
         statusIcon = 'check';
         break;
       case 'in_progress':
+      case 'inprogress':
         statusColor = const Color(0xFF0D9488); // teal
         statusIcon = 'in_progress';
         break;
@@ -1215,6 +1219,7 @@ class _BookingItem extends StatelessWidget {
       case 'confirmed':
         return 'ĐÃ XÁC NHẬN';
       case 'in_progress':
+      case 'inprogress':
         return 'ĐANG THỰC HIỆN';
       case 'completed':
         return 'HOÀN THÀNH';

@@ -16,6 +16,8 @@ import '../../domain/usecases/get_my_support_requests_usecase.dart';
 import '../../domain/usecases/accept_support_request_usecase.dart';
 import '../../domain/usecases/resolve_support_request_usecase.dart';
 import '../../domain/entities/support_request.dart';
+import '../../../auth/domain/usecases/get_account_by_id_usecase.dart';
+import '../../../auth/data/models/current_account_model.dart';
 import 'chat_event.dart';
 import 'chat_state.dart';
 import '../services/chat_hub_service.dart';
@@ -33,6 +35,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     required GetMySupportRequestsUsecase getMySupportRequestsUsecase,
     required AcceptSupportRequestUsecase acceptSupportRequestUsecase,
     required ResolveSupportRequestUsecase resolveSupportRequestUsecase,
+    required GetAccountByIdUsecase getAccountByIdUsecase,
     required ChatHubService chatHubService,
   })  : _getConversationsUsecase = getConversationsUsecase,
         _getAllConversationsUsecase = getAllConversationsUsecase,
@@ -45,6 +48,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         _getMySupportRequestsUsecase = getMySupportRequestsUsecase,
         _acceptSupportRequestUsecase = acceptSupportRequestUsecase,
         _resolveSupportRequestUsecase = resolveSupportRequestUsecase,
+        _getAccountByIdUsecase = getAccountByIdUsecase,
         _chatHubService = chatHubService,
         super(const ChatState()) {
     on<ChatStarted>(_onStarted);
@@ -66,6 +70,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     on<ChatLoadMySupportRequestsRequested>(_onLoadMySupportRequests);
     on<ChatAcceptSupportRequestSubmitted>(_onAcceptSupportRequest);
     on<ChatResolveSupportRequestSubmitted>(_onResolveSupportRequest);
+    on<ChatAccountDetailRequested>(_onAccountDetailRequested);
   }
 
   final GetConversationsUsecase _getConversationsUsecase;
@@ -79,6 +84,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   final GetMySupportRequestsUsecase _getMySupportRequestsUsecase;
   final AcceptSupportRequestUsecase _acceptSupportRequestUsecase;
   final ResolveSupportRequestUsecase _resolveSupportRequestUsecase;
+  final GetAccountByIdUsecase _getAccountByIdUsecase;
   final ChatHubService _chatHubService;
 
   bool _hubStarted = false;
@@ -309,6 +315,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         conversationId: selected.id,
         content: event.content,
         toStaffChannel: event.isStaff || selected.hasActiveSupport,
+        isStaff: event.isStaff,
       );
       
       // Use current state to get the latest conversation (may have been updated by Hub)
@@ -735,17 +742,22 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
     try {
       final updatedRequest = await _acceptSupportRequestUsecase(event.supportRequestId);
+      _setConversationActiveSupport(updatedRequest.conversationId, true, emit);
       
-      // Cập nhật trong danh sách support requests
-      final updatedSupportRequests = state.supportRequests.map((req) {
-        return req.id == event.supportRequestId ? updatedRequest : req;
-      }).toList();
+      // Xóa khỏi danh sách chờ xử lý
+      final updatedSupportRequests = state.supportRequests
+          .where((req) => req.id != event.supportRequestId)
+          .toList();
       
-      // Thêm vào mySupportRequests
-      final updatedMySupportRequests = [
-        ...state.mySupportRequests,
-        updatedRequest,
-      ];
+      // Thêm hoặc cập nhật trong mySupportRequests
+      final existingMyIndex = state.mySupportRequests.indexWhere((req) => req.id == event.supportRequestId);
+      final updatedMySupportRequests = List<SupportRequest>.from(state.mySupportRequests);
+      
+      if (existingMyIndex != -1) {
+        updatedMySupportRequests[existingMyIndex] = updatedRequest;
+      } else {
+        updatedMySupportRequests.add(updatedRequest);
+      }
 
       emit(state.copyWith(
         supportRequests: updatedSupportRequests,
@@ -771,6 +783,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
     try {
       final updatedRequest = await _resolveSupportRequestUsecase(event.supportRequestId);
+      _setConversationActiveSupport(updatedRequest.conversationId, false, emit);
       
       // Cập nhật trong mySupportRequests
       final updatedMySupportRequests = state.mySupportRequests.map((req) {
@@ -822,6 +835,24 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     await _errorSub?.cancel();
     await _chatHubService.stop();
     return super.close();
+  }
+
+  Future<void> _onAccountDetailRequested(
+    ChatAccountDetailRequested event,
+    Emitter<ChatState> emit,
+  ) async {
+    if (state.customerProfiles.containsKey(event.accountId)) return;
+
+    try {
+      final account = await _getAccountByIdUsecase(id: event.accountId);
+      
+      final updatedProfiles = Map<String, CurrentAccountModel>.from(state.customerProfiles);
+      updatedProfiles[event.accountId] = account;
+
+      emit(state.copyWith(customerProfiles: updatedProfiles));
+    } catch (_) {
+      // Ignore individual profile fetch errors
+    }
   }
 }
 

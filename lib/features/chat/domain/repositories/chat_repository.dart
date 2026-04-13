@@ -10,6 +10,7 @@ abstract class ChatRepository {
     required int conversationId,
     required String content,
     bool toStaffChannel,
+    bool isStaff,
   });
   Future<ChatConversation> createConversation(String name);
   Future<void> markMessagesRead(int conversationId);

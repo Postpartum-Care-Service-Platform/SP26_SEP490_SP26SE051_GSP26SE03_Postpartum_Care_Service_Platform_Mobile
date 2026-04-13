@@ -218,17 +218,20 @@ class _LoadedContentState extends State<_LoadedContent> {
     try {
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
-      // Fast-fix: bỏ request StaffSchedule tại đây vì không dùng dữ liệu trả về
-      // (tránh phát sinh 1 API call dư thừa khi vào Home).
+      
+      // Load both my requests and all pending requests
       final mySupportList = await _chatRemote.getMySupportRequests();
-      final noScheduleContracts = await _contractRemote
-          .getNoScheduleContracts();
+      final allSupportList = await _chatRemote.getSupportRequests();
+      
+      final noScheduleContracts = await _contractRemote.getNoScheduleContracts();
       final bookings = await _bookingRemote.getAllBookings();
       final notifications = await _notificationRemote.getNotifications();
       final unreadNotificationCount = notifications.where((n) => !n.isRead).length;
 
-      final mySupportRequests = mySupportList.length;
+      final mySupportCount = mySupportList.length;
+      final pendingSupportCount = allSupportList.length;
       final unscheduledContracts = noScheduleContracts.length;
+      
       // Đếm booking cần xử lý (status Pending)
       final pendingBookingsCount = bookings.where((b) {
         return b.status.toLowerCase() == 'pending';
@@ -236,7 +239,8 @@ class _LoadedContentState extends State<_LoadedContent> {
       final unreadNotifications = unreadNotificationCount;
 
       return _DashboardSummary(
-        mySupportRequests: mySupportRequests,
+        mySupportRequests: mySupportCount,
+        pendingSupportRequests: pendingSupportCount,
         unscheduledContracts: unscheduledContracts,
         todaysBookings: pendingBookingsCount,
         unreadNotifications: unreadNotifications,
@@ -696,12 +700,14 @@ class _StatsGrid extends StatelessWidget {
 
 class _DashboardSummary {
   final int mySupportRequests;
+  final int pendingSupportRequests;
   final int unscheduledContracts;
   final int todaysBookings;
   final int unreadNotifications;
 
   const _DashboardSummary({
     required this.mySupportRequests,
+    required this.pendingSupportRequests,
     required this.unscheduledContracts,
     required this.todaysBookings,
     required this.unreadNotifications,
@@ -709,12 +715,14 @@ class _DashboardSummary {
 
   const _DashboardSummary.empty()
     : mySupportRequests = 0,
+      pendingSupportRequests = 0,
       unscheduledContracts = 0,
       todaysBookings = 0,
       unreadNotifications = 0;
 
   bool get isAllZero =>
       mySupportRequests == 0 &&
+      pendingSupportRequests == 0 &&
       unscheduledContracts == 0 &&
       todaysBookings == 0 &&
       unreadNotifications == 0;
@@ -764,7 +772,7 @@ class _DashboardSummaryRow extends StatelessWidget {
                 child: _DashboardMiniCard(
                   icon: Icons.support_agent,
                   title: 'Hỗ trợ',
-                  value: isLoading ? null : '${summary?.mySupportRequests ?? 0}',
+                  value: isLoading ? null : '${summary?.pendingSupportRequests ?? 0}',
                   color: const Color(0xFF2563EB),
                   scale: scale,
                   onTap: onSupportRequestsTap,
@@ -793,7 +801,7 @@ class _DashboardSummaryRow extends StatelessWidget {
                   child: _DashboardMiniCard(
                     icon: Icons.support_agent,
                     title: 'Yêu cầu hỗ trợ',
-                    value: isLoading ? null : '${summary?.mySupportRequests ?? 0}',
+                    value: isLoading ? null : '${summary?.pendingSupportRequests ?? 0}',
                     color: const Color(0xFF2563EB),
                     scale: scale,
                     onTap: onSupportRequestsTap,

@@ -30,6 +30,7 @@ import '../../features/employee/room/presentation/screens/employee_rooms_screen.
 import '../../features/employee/operations/presentation/screens/requests_screen.dart';
 import '../../features/employee/customer_profile/presentation/screens/employee_meal_plan_screen.dart';
 import '../../features/employee/shell/presentation/screens/employee_chat_screen.dart';
+import '../../features/employee/shell/presentation/screens/employee_chat_detail_screen.dart';
 import '../../features/employee/amenity_ticket/presentation/screens/service_booking_screen.dart';
 import '../../features/employee/customer_profile/presentation/screens/employee_create_customer_screen.dart';
 import '../../features/employee/booking/presentation/screens/employee_package_booking_screen.dart';
@@ -423,6 +424,13 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const EmployeePortalScreen());
 
       case AppRoutes.employeeChat:
+        if (args is Map<String, dynamic>) {
+          return MaterialPageRoute(
+            builder: (_) => EmployeeChatDetailScreen(
+              conversationId: args['conversationId'] as int,
+            ),
+          );
+        }
         return MaterialPageRoute(builder: (_) => const EmployeeChatScreen());
 
       case AppRoutes.employeeRequests:

@@ -610,7 +610,8 @@ class InjectionContainer {
     cancelAppointmentUsecase: _cancelAppointmentUsecase,
   );
 
-  static ChatBloc get chatBloc => ChatBloc(
+  static ChatBloc? _chatBloc;
+  static ChatBloc get chatBloc => _chatBloc ??= ChatBloc(
     getConversationsUsecase: _getConversationsUsecase,
     getAllConversationsUsecase: _getAllConversationsUsecase,
     getConversationDetailUsecase: _getConversationDetailUsecase,
@@ -622,6 +623,7 @@ class InjectionContainer {
     getMySupportRequestsUsecase: _getMySupportRequestsUsecase,
     acceptSupportRequestUsecase: _acceptSupportRequestUsecase,
     resolveSupportRequestUsecase: _resolveSupportRequestUsecase,
+    getAccountByIdUsecase: _getAccountByIdUsecase,
     chatHubService: chatHubService,
   );
 
@@ -693,6 +695,8 @@ class InjectionContainer {
 
   /// Reset all dependencies (useful for testing or logout)
   static void reset() {
+    _chatBloc = null;
+    _chatHubService = null;
     ApiClient.reset();
   }
 }
