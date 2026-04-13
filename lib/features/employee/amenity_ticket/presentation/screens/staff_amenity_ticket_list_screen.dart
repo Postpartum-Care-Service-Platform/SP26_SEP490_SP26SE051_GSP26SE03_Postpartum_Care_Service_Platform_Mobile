@@ -7,6 +7,7 @@ import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/di/injection_container.dart';
 import '../../../../../core/utils/app_responsive.dart';
 import '../../../../../core/utils/app_text_styles.dart';
+import '../../../../../features/employee/account/data/datasources/account_remote_datasource.dart';
 import '../../../../../features/employee/account/data/models/account_model.dart';
 import '../../../../../features/employee/amenity_ticket/domain/entities/amenity_ticket_entity.dart';
 import '../../domain/entities/amenity_ticket_status.dart';
@@ -115,124 +116,228 @@ class _StaffAmenityTicketListScreenState
   }
 
   void _showCustomerSelectionBottomSheet() {
+    bool isSearching = false;
+    final TextEditingController searchController = TextEditingController();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Container(
-          height: MediaQuery.of(context).size.height * 0.6,
-          decoration: const BoxDecoration(
-            color: AppColors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
-            children: [
-              // Handle
-              Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.borderLight,
-                  borderRadius: BorderRadius.circular(2),
-                ),
+      builder: (bottomSheetContext) {
+        return StatefulBuilder(
+          builder: (context, setBottomSheetState) {
+            
+            Future<void> searchCustomerByPhone(String phone) async {
+              if (phone.trim().isEmpty) return;
+              
+              String formattedPhone = phone.trim();
+              if (formattedPhone.startsWith('0')) {
+                formattedPhone = '+84${formattedPhone.substring(1)}';
+              }
+
+              setBottomSheetState(() => isSearching = true);
+              
+              try {
+                final dataSource = AccountRemoteDataSource();
+                final account = await dataSource.getAccountByPhone(formattedPhone);
+                
+                if (account != null) {
+                  // Check if this customer is already in the global _customers list
+                  final index = _customers.indexWhere((c) => c.id == account.id);
+                  if (index == -1) {
+                    setState(() {
+                      _customers.insert(0, account);
+                    });
+                  } else {
+                    setState(() {
+                      _customers[index] = account; // update in case
+                    });
+                  }
+                  
+                  _selectCustomer(account);
+                  if (mounted) {
+                    Navigator.pop(context);
+                  }
+                } else {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Không tìm thấy khách hàng với số điện thoại này'),
+                        backgroundColor: Colors.orange,
+                      ),
+                    );
+                  }
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Không tìm thấy khách hàng hoặc có lỗi xảy ra'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              } finally {
+                if (mounted) {
+                  setBottomSheetState(() => isSearching = false);
+                }
+              }
+            }
+
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.7,
+              decoration: const BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 12, 16),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Chọn khách hàng',
-                        style: AppTextStyles.arimo(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary,
+              child: Column(
+                children: [
+                  // Handle
+                  Container(
+                    margin: const EdgeInsets.only(top: 12),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.borderLight,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 12, 16),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Chọn khách hàng',
+                            style: AppTextStyles.arimo(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  // Search Bar
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+                    child: TextField(
+                      controller: searchController,
+                      keyboardType: TextInputType.phone,
+                      textInputAction: TextInputAction.search,
+                      onSubmitted: (value) => searchCustomerByPhone(value),
+                      decoration: InputDecoration(
+                        hintText: 'Nhập / dán SĐT (vd: 0912345678)',
+                        hintStyle: AppTextStyles.arimo(color: AppColors.textSecondary),
+                        prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.primary),
+                          onPressed: () => searchCustomerByPhone(searchController.text),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: AppColors.borderLight),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: AppColors.borderLight),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppColors.primary),
                         ),
                       ),
                     ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: _isLoadingCustomers
-                    ? const Center(child: CircularProgressIndicator())
-                    : _customers.isEmpty
-                        ? Center(
-                            child: Text(
-                              'Không có khách hàng',
-                              style: AppTextStyles.arimo(
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          )
-                        : ListView.builder(
-                            itemCount: _customers.length,
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            itemBuilder: (context, index) {
-                              final customer = _customers[index];
-                              final isSelected =
-                                  _selectedCustomer?.id == customer.id;
+                  ),
+                  const SizedBox(height: 8),
 
-                              return Container(
-                                margin: const EdgeInsets.only(bottom: 8),
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? AppColors.primary.withValues(alpha: 0.05)
-                                      : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: ListTile(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
+                  Expanded(
+                    child: isSearching || _isLoadingCustomers
+                        ? const Center(child: CircularProgressIndicator())
+                        : _customers.isEmpty
+                            ? Center(
+                                child: Text(
+                                  'Không có khách hàng',
+                                  style: AppTextStyles.arimo(
+                                    color: AppColors.textSecondary,
                                   ),
-                                  leading: CircleAvatar(
-                                    backgroundColor: AppColors.primary
-                                        .withValues(alpha: 0.1),
-                                    child: Text(
-                                      customer.displayName[0].toUpperCase(),
-                                      style: AppTextStyles.arimo(
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.primary,
+                                ),
+                              )
+                            : ListView.builder(
+                                itemCount: _customers.length,
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                                itemBuilder: (context, index) {
+                                  final customer = _customers[index];
+                                  final isSelected =
+                                      _selectedCustomer?.id == customer.id;
+
+                                  return Container(
+                                    margin: const EdgeInsets.only(bottom: 8),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? AppColors.primary.withValues(alpha: 0.05)
+                                          : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: isSelected ? AppColors.primary : AppColors.borderLight,
+                                        width: isSelected ? 1 : 0.5,
+                                      )
+                                    ),
+                                    child: ListTile(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
                                       ),
+                                      leading: CircleAvatar(
+                                        backgroundColor: AppColors.primary
+                                            .withValues(alpha: 0.1),
+                                        child: Text(
+                                          customer.displayName.isNotEmpty ? customer.displayName[0].toUpperCase() : 'K',
+                                          style: AppTextStyles.arimo(
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.primary,
+                                          ),
+                                        ),
+                                      ),
+                                      title: Text(
+                                        customer.displayName,
+                                        style: AppTextStyles.arimo(
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                      ),
+                                      subtitle: Text(
+                                        customer.phone ?? customer.email,
+                                        style: AppTextStyles.arimo(
+                                          fontSize: 12,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                      trailing: isSelected
+                                          ? const Icon(
+                                              Icons.check_circle,
+                                              color: AppColors.primary,
+                                            )
+                                          : null,
+                                      onTap: () {
+                                        _selectCustomer(customer);
+                                        Navigator.pop(context);
+                                      },
                                     ),
-                                  ),
-                                  title: Text(
-                                    customer.displayName,
-                                    style: AppTextStyles.arimo(
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                  ),
-                                  subtitle: Text(
-                                    customer.email,
-                                    style: AppTextStyles.arimo(
-                                      fontSize: 12,
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                  trailing: isSelected
-                                      ? const Icon(
-                                          Icons.check_circle,
-                                          color: AppColors.primary,
-                                        )
-                                      : null,
-                                  onTap: () {
-                                    _selectCustomer(customer);
-                                    Navigator.pop(context);
-                                  },
-                                ),
-                              );
-                            },
-                          ),
+                                  );
+                                },
+                              ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          }
         );
       },
     );

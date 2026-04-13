@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:open_filex/open_filex.dart';
 
 import '../../../../../core/apis/api_client.dart';
 import '../../../../../core/constants/app_colors.dart';
@@ -123,7 +124,8 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
     }
   }
 
-  String _formatDate(DateTime date) {
+  String _formatDate(DateTime? date) {
+    if (date == null) return 'N/A';
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
   }
 
@@ -168,13 +170,19 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
     setState(() => _isLoading = true);
     try {
       final bytes = await _remote.exportContractPdf(contract.id);
-      final directory = await getApplicationDocumentsDirectory();
+      // Use external storage directory so users can find the file more easily on Android
+      final directory = await getExternalStorageDirectory() ?? await getApplicationDocumentsDirectory();
       final file = File('${directory.path}/contract_${contract.id}.pdf');
       await file.writeAsBytes(bytes);
 
-      final uri = Uri.file(file.path);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      // Open the file using open_filex instead of url_launcher to avoid FileUriExposedException
+      final result = await OpenFilex.open(file.path);
+      
+      if (result.type != ResultType.done && mounted) {
+        AppToast.showError(
+          context,
+          message: 'Không thể mở file: ${result.message}',
+        );
       }
 
       if (mounted) {

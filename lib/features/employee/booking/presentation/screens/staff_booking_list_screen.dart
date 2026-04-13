@@ -34,9 +34,14 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
   bool _showFilters = false;
 
   Future<List<BookingModel>> _loadBookings() async {
-    final all = widget.useHomeStaffBookings
+    var all = widget.useHomeStaffBookings
         ? await _dataSource.getBookingsByHomeStaff()
         : await _dataSource.getAllBookings();
+        
+    if (!widget.useHomeStaffBookings) {
+      all = all.where((b) => b.homeStaffId == null).toList();
+    }
+    
     all.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return all;
   }
@@ -555,14 +560,13 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
                           onCheckIn: booking.status.toLowerCase() == 'confirmed'
                               ? () => _handleCheckIn(booking)
                               : null,
-                          onViewContract:
-                              [
-                                'confirmed',
-                                'in_progress',
-                                'active',
-                                'checked_in',
-                                'completed',
-                              ].contains(booking.status.toLowerCase())
+                          onViewContract: !widget.useHomeStaffBookings &&
+                                  [
+                                    'in_progress',
+                                    'active',
+                                    'checked_in',
+                                    'completed',
+                                  ].contains(booking.status.toLowerCase())
                               ? () {
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
@@ -1071,6 +1075,7 @@ class _BookingItem extends StatelessWidget {
                   SizedBox(height: 14 * scale),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1092,56 +1097,62 @@ class _BookingItem extends StatelessWidget {
                           ),
                         ],
                       ),
-                      // Collapsed action buttons logic
+                      SizedBox(width: 12 * scale),
+                      // Action buttons wrapped to prevent overflow
                       if (onConfirm != null ||
                           onComplete != null ||
                           onCheckIn != null ||
-                          onViewContract != null)
-                        Row(
-                          children: [
-                            if (onCancel != null)
-                              _CircularActionButton(
-                                icon: Icons.close_rounded,
-                                color: const Color(0xFFDC2626),
-                                onTap: onCancel!,
-                                scale: scale,
-                                tooltip: 'Hủy',
-                              ),
-                            if (onConfirm != null) ...[
-                              SizedBox(width: 10 * scale),
-                              _CircularActionButton(
-                                icon: Icons.check_rounded,
-                                color: const Color(0xFF2563EB),
-                                onTap: onConfirm!,
-                                scale: scale,
-                                tooltip: 'Xác nhận',
-                              ),
+                          onViewContract != null ||
+                          onCancel != null)
+                        Expanded(
+                          child: Wrap(
+                            spacing: 8 * scale,
+                            runSpacing: 8 * scale,
+                            alignment: WrapAlignment.end,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              if (onCancel != null)
+                                _ActionButton(
+                                  icon: Icons.close_rounded,
+                                  color: const Color(0xFFDC2626),
+                                  onTap: onCancel!,
+                                  scale: scale,
+                                  text: 'Hủy',
+                                ),
+                              if (onConfirm != null)
+                                _ActionButton(
+                                  icon: Icons.check_rounded,
+                                  color: const Color(0xFF2563EB),
+                                  onTap: onConfirm!,
+                                  scale: scale,
+                                  text: 'Xác nhận',
+                                ),
+                              if (onCheckIn != null)
+                                _ActionButton(
+                                  icon: Icons.login_rounded,
+                                  color: const Color(0xFF0D9488),
+                                  onTap: onCheckIn!,
+                                  scale: scale,
+                                  text: 'Check-in',
+                                ),
+                              if (onComplete != null)
+                                _ActionButton(
+                                  icon: Icons.done_all_rounded,
+                                  color: const Color(0xFF16A34A),
+                                  onTap: onComplete!,
+                                  scale: scale,
+                                  text: 'Hoàn thành',
+                                ),
+                              if (onViewContract != null)
+                                _ActionButton(
+                                  icon: Icons.description_outlined,
+                                  color: const Color(0xFF6366F1), // Indigo
+                                  onTap: onViewContract!,
+                                  scale: scale,
+                                  text: 'Hợp đồng',
+                                ),
                             ],
-                            if (onCheckIn != null) ...[
-                              SizedBox(width: 10 * scale),
-                              _CircularActionButton(
-                                icon: Icons.login_rounded,
-                                color: const Color(0xFF0D9488),
-                                onTap: onCheckIn!,
-                                scale: scale,
-                                tooltip: 'Check-in',
-                              ),
-                            ],
-                            if (onComplete != null) ...[
-                              SizedBox(width: 10 * scale),
-                              _CircularActionButton(
-                                icon: Icons.done_all_rounded,
-                                color: const Color(0xFF16A34A),
-                                onTap: onComplete!,
-                                scale: scale,
-                                tooltip: 'Hoàn thành',
-                              ),
-                            ],
-                            if (onViewContract != null) ...[
-                              SizedBox(width: 10 * scale),
-                              _buildMoreActions(context, scale),
-                            ],
-                          ],
+                          ),
                         ),
                     ],
                   ),
@@ -1154,40 +1165,6 @@ class _BookingItem extends StatelessWidget {
     );
   }
 
-  Widget _buildMoreActions(BuildContext context, double scale) {
-    return PopupMenuButton<String>(
-      onSelected: (value) {
-        if (value == 'contract' && onViewContract != null) {
-          onViewContract!();
-        }
-      },
-      icon: Container(
-        padding: EdgeInsets.all(8 * scale),
-        decoration: BoxDecoration(
-          color: AppColors.textSecondary.withValues(alpha: 0.1),
-          shape: BoxShape.circle,
-        ),
-        child: Icon(
-          Icons.more_vert_rounded,
-          size: 20 * scale,
-          color: AppColors.textSecondary,
-        ),
-      ),
-      itemBuilder: (context) => [
-        if (onViewContract != null)
-          const PopupMenuItem(
-            value: 'contract',
-            child: Row(
-              children: [
-                Icon(Icons.description_outlined, size: 20),
-                SizedBox(width: 8),
-                Text('Hợp đồng'),
-              ],
-            ),
-          ),
-      ],
-    );
-  }
 
   Widget _buildInfoItem({
     required IconData icon,
@@ -1249,19 +1226,19 @@ class _BookingItem extends StatelessWidget {
   }
 }
 
-class _CircularActionButton extends StatelessWidget {
+class _ActionButton extends StatelessWidget {
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
   final double scale;
-  final String tooltip;
+  final String text;
 
-  const _CircularActionButton({
+  const _ActionButton({
     required this.icon,
     required this.color,
     required this.onTap,
     required this.scale,
-    required this.tooltip,
+    required this.text,
   });
 
   @override
@@ -1272,13 +1249,28 @@ class _CircularActionButton extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(12 * scale),
         child: Container(
-          padding: EdgeInsets.all(10 * scale),
+          padding: EdgeInsets.symmetric(
+              horizontal: 12 * scale, vertical: 8 * scale),
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12 * scale),
             border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
           ),
-          child: Icon(icon, size: 20 * scale, color: color),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 16 * scale, color: color),
+              SizedBox(width: 6 * scale),
+              Text(
+                text,
+                style: AppTextStyles.arimo(
+                  fontSize: 12 * scale,
+                  fontWeight: FontWeight.w700,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
