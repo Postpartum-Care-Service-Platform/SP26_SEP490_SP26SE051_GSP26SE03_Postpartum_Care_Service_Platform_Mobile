@@ -8,8 +8,8 @@ class ContractModel extends ContractEntity {
     required super.bookingId,
     required super.contractCode,
     required super.contractDate,
-    required super.effectiveFrom,
-    required super.effectiveTo,
+    super.effectiveFrom,
+    super.effectiveTo,
     super.signedDate,
     super.sentAt,
     super.fileUrl,
@@ -29,8 +29,12 @@ class ContractModel extends ContractEntity {
       bookingId: json['bookingId'] as int,
       contractCode: json['contractCode'] as String,
       contractDate: DateTime.parse(json['contractDate'] as String),
-      effectiveFrom: DateTime.parse(json['effectiveFrom'] as String),
-      effectiveTo: DateTime.parse(json['effectiveTo'] as String),
+      effectiveFrom: json['effectiveFrom'] != null
+          ? DateTime.parse(json['effectiveFrom'] as String)
+          : null,
+      effectiveTo: json['effectiveTo'] != null
+          ? DateTime.parse(json['effectiveTo'] as String)
+          : null,
       signedDate: json['signedDate'] != null
           ? DateTime.parse(json['signedDate'] as String)
           : null,
@@ -63,8 +67,8 @@ class ContractModel extends ContractEntity {
       'bookingId': bookingId,
       'contractCode': contractCode,
       'contractDate': contractDate.toIso8601String(),
-      'effectiveFrom': effectiveFrom.toIso8601String(),
-      'effectiveTo': effectiveTo.toIso8601String(),
+      'effectiveFrom': effectiveFrom?.toIso8601String(),
+      'effectiveTo': effectiveTo?.toIso8601String(),
       'signedDate': signedDate?.toIso8601String(),
       'sentAt': sentAt?.toIso8601String(),
       'fileUrl': fileUrl,
