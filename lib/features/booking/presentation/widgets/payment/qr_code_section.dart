@@ -62,73 +62,46 @@ class _QRCodeSectionState extends State<QRCodeSection> {
   }
 
   Future<void> _openBankApp(VietQrBank app) async {
-    // 1. Parse QR data
     final qrData = widget.paymentLink.qrCode;
+    
+    // 1. Parse QR data to get account and name for the requested parameters
     final parsed = VietQrParser.parse(qrData);
     final recipient = VietQrParser.getRecipientInfo(parsed);
-    final beneficiaryName = VietQrParser.getBeneficiaryName(parsed);
-    final descriptionFromQr = VietQrParser.getDescription(parsed);
-    
-    // 2. Prepare parameters
+    final account = recipient?['account'] ?? '';
+    final bin = recipient?['bin'] ?? '';
+    final name = VietQrParser.getBeneficiaryName(parsed) ?? 'VO MINH TIEN';
     final amount = widget.paymentLink.amount.toInt();
-    final description = Uri.encodeComponent(descriptionFromQr ?? widget.paymentLink.orderCode);
-    final name = Uri.encodeComponent(beneficiaryName ?? '');
+    final description = widget.paymentLink.orderCode;
+    final returnUrl = 'thejoyfulnest://payment-callback';
     
-    // 3. Resolve recipient bank code from BIN
-    String recipientId = '';
-    if (recipient != null) {
-      final bin = recipient['bin'];
-      final account = recipient['account'];
-      
-      // Look up bank code from our allBanks list
-      String bankCode = '';
-      if (_allBanks != null) {
-        try {
-          final bank = _allBanks!.firstWhere((b) => b.bin == bin);
-          bankCode = bank.code.toLowerCase();
-        } catch (_) {
-          // Fallback to BIN if code not found
-          bankCode = bin ?? '';
-        }
-      } else {
-        bankCode = bin ?? '';
-      }
-      
-      recipientId = '$account@$bankCode';
-    }
+    // 2. Construct the Smart URL Bridge with exactly 6 parameters
+    // ba: account@bank, am: amount, tn: description, app: appId, bn: name, url: returnUrl
+    final smartUrl = 'https://dl.vietqr.io/pay?app=${app.appId}' 
+                    '&ba=$account@$bin'
+                    '&am=$amount'
+                    '&tn=${Uri.encodeComponent(description)}'
+                    '&bn=${Uri.encodeComponent(name)}'
+                    '&url=${Uri.encodeComponent(returnUrl)}';
+    
+    final uri = Uri.parse(smartUrl);
 
-    // 4. Construct standard vietqr:// deeplink
-    // Format: vietqr://pay?ba=ACC@BANK&am=AMOUNT&tn=DESC&bn=NAME&app=APP_ID&url=RETURN_URL
-    final returnUrl = Uri.encodeComponent('thejoyfulnest://payment-callback'); 
-    final vietQrUri = Uri.parse(
-      'vietqr://pay?ba=$recipientId&am=$amount&tn=$description&bn=$name&app=${app.appId ?? ''}&url=$returnUrl'
-    );
-    
     // Debug logging
-    debugPrint('--- VIETQR DEEPLINK DEBUG ---');
-    debugPrint('ba (Tài khoản & Ngân hàng): $recipientId');
-    debugPrint('am (Số tiền): $amount');
-    debugPrint('tn (Nội dung): ${Uri.decodeComponent(description)}');
-    debugPrint('bn (Tên người nhận): ${Uri.decodeComponent(name)}');
-    debugPrint('url (Quay lại app): ${Uri.decodeComponent(returnUrl)}');
-    debugPrint('Full Deeplink: $vietQrUri');
-    debugPrint('-----------------------------');
+    debugPrint('--- VIETQR DEEPLINK (6 PARAMETERS) ---');
+    debugPrint('ba: $account@$bin');
+    debugPrint('am: $amount');
+    debugPrint('tn: $description');
+    debugPrint('app: ${app.appId}');
+    debugPrint('bn: $name');
+    debugPrint('url: $returnUrl');
+    debugPrint('---------------------------------------');
 
-    // 5. Construct fallback URL (the current one)
-    final fallbackBaseUrl = app.deeplink ?? 'https://dl.vietqr.io/pay?app=${app.appId}';
-    final fallbackUrl = '$fallbackBaseUrl&am=$amount&tn=$description';
-    final fallbackUri = Uri.parse(fallbackUrl);
-
-    // 6. Launch with preference for vietqr://
-    if (await canLaunchUrl(vietQrUri)) {
-      await launchUrl(vietQrUri, mode: LaunchMode.externalApplication);
-    } else if (await canLaunchUrl(fallbackUri)) {
-      await launchUrl(fallbackUri, mode: LaunchMode.externalApplication);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
-      // Final fallback to the base app link
-      final appUri = Uri.parse(fallbackBaseUrl);
-      if (await canLaunchUrl(appUri)) {
-        await launchUrl(appUri, mode: LaunchMode.externalApplication);
+      // Final fallback to the web payment URL
+      final fallbackUri = Uri.parse(widget.paymentLink.paymentUrl);
+      if (await canLaunchUrl(fallbackUri)) {
+        await launchUrl(fallbackUri, mode: LaunchMode.externalApplication);
       }
     }
   }
