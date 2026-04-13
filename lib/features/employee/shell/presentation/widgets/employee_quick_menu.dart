@@ -20,7 +20,6 @@ enum EmployeeQuickMenuExtraAction {
   mealPlan,
   requests,
   tasks,
-  checkInOut,
   staffProfile,
   familyProfile,
   createCustomer,
@@ -354,7 +353,6 @@ List<_QuickMenuGroup> _buildQuickMenuGroups(List<EmployeeQuickMenuItem> items) {
     }
 
     switch (item.extraAction) {
-      case EmployeeQuickMenuExtraAction.checkInOut:
       case EmployeeQuickMenuExtraAction.tasks:
       case EmployeeQuickMenuExtraAction.appointments:
       case EmployeeQuickMenuExtraAction.room:
@@ -665,17 +663,18 @@ class _EmployeeQuickMenuIconTile extends StatelessWidget {
 class EmployeeQuickMenuPresets {
   static List<EmployeeQuickMenuItem> primaryItems(String? memberType) {
     final raw = memberType?.toLowerCase().trim() ?? '';
-    final isHomeNurse = raw == 'home-staff' || 
-                        raw == 'homestaff' || 
-                        raw == 'hoemstaff' || 
-                        raw == 'home nurse' || 
-                        raw.contains('tại nhà') || 
-                        raw.contains('tai nha') || 
-                        raw.contains('homecare');
+    final isHomeNurse =
+        raw == 'home-staff' ||
+        raw == 'homestaff' ||
+        raw == 'hoemstaff' ||
+        raw == 'home nurse' ||
+        raw.contains('tại nhà') ||
+        raw.contains('tai nha') ||
+        raw.contains('homecare');
     return [
       EmployeeQuickMenuItem.bottom(
         id: 'schedule',
-        label: 'Lịch làm việc',
+        label: 'Trang chủ',
         iconAsset: AppAssets.calendar,
         tab: AppBottomTab.appointment,
       ),
@@ -710,19 +709,20 @@ class EmployeeQuickMenuPresets {
 
   static List<EmployeeQuickMenuItem> allItems(String? memberType) {
     final raw = memberType?.toLowerCase().trim() ?? '';
-    final isHomeNurse = raw == 'home-staff' || 
-                        raw == 'homestaff' || 
-                        raw == 'hoemstaff' || 
-                        raw == 'home nurse' || 
-                        raw.contains('tại nhà') || 
-                        raw.contains('tai nha') || 
-                        raw.contains('homecare');
+    final isHomeNurse =
+        raw == 'home-staff' ||
+        raw == 'homestaff' ||
+        raw == 'hoemstaff' ||
+        raw == 'home nurse' ||
+        raw.contains('tại nhà') ||
+        raw.contains('tai nha') ||
+        raw.contains('homecare');
 
     final items = <EmployeeQuickMenuItem>[
       // Tabs chính
       EmployeeQuickMenuItem.bottom(
         id: 'schedule',
-        label: 'Lịch làm việc',
+        label: 'Trang chủ',
         iconAsset: AppAssets.calendar,
         tab: AppBottomTab.appointment,
       ),
@@ -741,12 +741,6 @@ class EmployeeQuickMenuPresets {
 
       // Nhóm vận hành
       if (!isHomeNurse) ...[
-        EmployeeQuickMenuItem.extra(
-          id: 'check_in_out',
-          label: 'Check-in/out',
-          iconAsset: AppAssets.calendarBold,
-          action: EmployeeQuickMenuExtraAction.checkInOut,
-        ),
         EmployeeQuickMenuItem.extra(
           id: 'appointments',
           label: 'Lịch hẹn',
@@ -790,12 +784,13 @@ class EmployeeQuickMenuPresets {
       ],
 
       // Nhóm tài chính
-      EmployeeQuickMenuItem.extra(
-        id: 'wallet',
-        label: 'Ví tiền',
-        iconAsset: AppAssets.menuFirst,
-        action: EmployeeQuickMenuExtraAction.wallet,
-      ),
+      if (isHomeNurse)
+        EmployeeQuickMenuItem.extra(
+          id: 'wallet',
+          label: 'Ví tiền',
+          iconAsset: AppAssets.menuFirst,
+          action: EmployeeQuickMenuExtraAction.wallet,
+        ),
       if (isHomeNurse)
         EmployeeQuickMenuItem.extra(
           id: 'my_bookings',
@@ -826,7 +821,7 @@ class EmployeeQuickMenuPresets {
         action: EmployeeQuickMenuExtraAction.staffProfile,
       ),
     ];
-    
+
     return items;
   }
 }

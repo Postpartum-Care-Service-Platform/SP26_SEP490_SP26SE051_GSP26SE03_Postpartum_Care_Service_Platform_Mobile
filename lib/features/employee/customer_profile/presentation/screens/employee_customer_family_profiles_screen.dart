@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 
-import 'package:flutter_bloc/flutter_bloc.dart';
-
+import '../../../../../core/apis/api_client.dart';
+import '../../../../../core/apis/api_endpoints.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/utils/app_responsive.dart';
 import '../../../../../core/utils/app_text_styles.dart';
 import '../../../../../core/widgets/app_toast.dart';
 import '../../../../../features/auth/data/models/current_account_model.dart';
-import '../../../../../features/auth/presentation/bloc/auth_bloc.dart';
-import '../../../../../features/auth/presentation/bloc/auth_state.dart';
 import '../../../../../features/booking/data/datasources/booking_remote_datasource.dart';
 import '../../../../../features/family_profile/domain/entities/family_profile_entity.dart';
 import '../../../../../features/services/data/datasources/family_schedule_remote_datasource.dart';
@@ -18,8 +16,8 @@ import '../../../../../features/employee/customer_profile/data/datasources/emplo
 import '../widgets/tabs/customer_profile_family_tab.dart';
 import '../widgets/tabs/customer_profile_menu_tab.dart';
 import '../widgets/tabs/customer_profile_bookings_tab.dart';
-import '../widgets/tabs/customer_profile_appointments_tab.dart';
-import '../widgets/tabs/customer_profile_transactions_tab.dart';
+
+
 import '../widgets/tabs/customer_profile_account_tab.dart';
 class EmployeeCustomerFamilyProfilesScreen extends StatefulWidget {
   final String customerId;
@@ -48,10 +46,8 @@ class _EmployeeCustomerFamilyProfilesScreenState
       _loadMenuRecordsByCurrentFilter();
   late Future<List<Map<String, dynamic>>> _bookingsFuture =
       _profileDs.getBookingsByCustomer(widget.customerId);
-  late Future<List<Map<String, dynamic>>> _appointmentsFuture =
-      _profileDs.getAppointmentsByCustomer(widget.customerId);
-  late Future<List<Map<String, dynamic>>> _transactionsFuture =
-      _profileDs.getTransactionsByCustomer(widget.customerId);
+
+
   late Future<CurrentAccountModel> _accountFuture =
       _profileDs.getAccountById(widget.customerId);
 
@@ -60,6 +56,46 @@ class _EmployeeCustomerFamilyProfilesScreenState
   DateTime _selectedDate = DateTime.now();
   DateTime? _rangeFrom;
   DateTime? _rangeTo;
+
+  /// Whether the current logged-in staff is a Home Staff (hide menu tab)
+  bool _isHomeNurse = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _detectHomeStaffRole();
+  }
+
+  Future<void> _detectHomeStaffRole() async {
+    try {
+      final response = await ApiClient.dio.get(ApiEndpoints.getCurrentAccount);
+      final data = response.data as Map<String, dynamic>?;
+      if (data == null || !mounted) return;
+
+      String? memberType = data['memberType'] as String?;
+      if (memberType == null) {
+        final ownerProfile = data['ownerProfile'] as Map<String, dynamic>?;
+        memberType = ownerProfile?['memberTypeName'] as String?;
+      }
+
+      final raw = memberType?.toLowerCase().trim() ?? '';
+      final isHome = raw == 'home-staff' ||
+          raw == 'homestaff' ||
+          raw == 'hoemstaff' ||
+          raw == 'home nurse' ||
+          raw.contains('tại nhà') ||
+          raw.contains('tai nha') ||
+          raw.contains('homecare');
+
+      if (isHome && mounted) {
+        setState(() {
+          _isHomeNurse = true;
+        });
+      }
+    } catch (_) {
+      // Fail silently – default to showing all tabs
+    }
+  }
 
   Future<List<FamilyProfileEntity>> _loadFamilyProfiles(String accountId) {
     return _profileDs.getFamilyProfilesByAccountId(accountId);
@@ -586,8 +622,8 @@ class _EmployeeCustomerFamilyProfilesScreenState
       _familyProfilesFuture = _loadFamilyProfiles(widget.customerId);
       _menuRecordsFuture = _loadMenuRecordsByCurrentFilter();
       _bookingsFuture = _profileDs.getBookingsByCustomer(widget.customerId);
-      _appointmentsFuture = _profileDs.getAppointmentsByCustomer(widget.customerId);
-      _transactionsFuture = _profileDs.getTransactionsByCustomer(widget.customerId);
+
+
       _accountFuture = _profileDs.getAccountById(widget.customerId);
     });
   }
@@ -596,31 +632,10 @@ class _EmployeeCustomerFamilyProfilesScreenState
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
 
-    final authBloc = context.read<AuthBloc>();
-    final authState = authBloc.state;
-    String? memberType;
-    if (authState is AuthCurrentAccountLoaded) {
-      final account = authState.account;
-      memberType = (account as dynamic).memberType;
-
-      if (memberType == null) {
-        try {
-          memberType = (account as dynamic).ownerProfile?.memberTypeName;
-        } catch (_) {}
-      }
-    }
-
-    final raw = memberType?.toLowerCase().trim() ?? '';
-    final isHomeNurse = raw == 'home-staff' || 
-                        raw == 'homestaff' || 
-                        raw == 'hoemstaff' || 
-                        raw == 'home nurse' || 
-                        raw.contains('tại nhà') || 
-                        raw.contains('tai nha') || 
-                        raw.contains('homecare');
+    final isHomeNurse = _isHomeNurse;
 
     return DefaultTabController(
-      length: isHomeNurse ? 5 : 6,
+      length: isHomeNurse ? 3 : 4,
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
@@ -675,8 +690,8 @@ class _EmployeeCustomerFamilyProfilesScreenState
               const Tab(text: 'Hồ sơ gia đình'),
               if (!isHomeNurse) const Tab(text: 'Thực đơn khách hàng'),
               const Tab(text: 'Booking'),
-              const Tab(text: 'Lịch hẹn'),
-              const Tab(text: 'Giao dịch'),
+
+
               const Tab(text: 'Tài khoản'),
             ],
           ),
@@ -704,16 +719,8 @@ class _EmployeeCustomerFamilyProfilesScreenState
               scale: scale,
               fmtDate: _fmtDate,
             ),
-            CustomerProfileAppointmentsTab(
-              future: _appointmentsFuture,
-              scale: scale,
-              fmtDate: _fmtDate,
-            ),
-            CustomerProfileTransactionsTab(
-              future: _transactionsFuture,
-              scale: scale,
-              fmtDate: _fmtDate,
-            ),
+
+
             CustomerProfileAccountTab(
               future: _accountFuture,
               scale: scale,

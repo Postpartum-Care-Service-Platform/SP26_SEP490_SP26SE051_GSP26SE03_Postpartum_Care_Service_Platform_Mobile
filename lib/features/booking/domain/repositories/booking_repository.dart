@@ -49,12 +49,4 @@ abstract class BookingRepository {
   /// Staff/Admin: Complete booking
   Future<String> completeBooking(int id);
 
-  /// Staff ghi nhận thanh toán offline cho booking.
-  Future<PaymentStatusEntity> createOfflinePayment({
-    required int bookingId,
-    required String customerId,
-    required double amount,
-    required String paymentMethod,
-    String? note,
-  });
 }

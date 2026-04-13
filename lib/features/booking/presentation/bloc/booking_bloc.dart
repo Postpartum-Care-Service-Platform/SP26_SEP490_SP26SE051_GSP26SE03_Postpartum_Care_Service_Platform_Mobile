@@ -6,7 +6,6 @@ import '../../domain/usecases/get_booking_by_id_usecase.dart';
 import '../../domain/usecases/get_bookings_usecase.dart';
 import '../../domain/usecases/create_payment_link_usecase.dart';
 import '../../domain/usecases/check_payment_status_usecase.dart';
-import '../../domain/usecases/create_offline_payment_usecase.dart';
 import '../../../package/domain/usecases/get_packages_usecase.dart';
 import '../../../package/domain/entities/package_entity.dart';
 import '../../../../../features/employee/room/domain/usecases/get_rooms_by_package.dart';
@@ -28,7 +27,6 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   final GetPackagesUsecase getPackagesUsecase;
   final GetFamilyProfilesUsecase getFamilyProfilesUsecase;
   final GetRoomsByPackage getRoomsByPackage;
-  final CreateOfflinePaymentUsecase createOfflinePaymentUsecase;
 
   // Current selection state
   int? _selectedPackageId;
@@ -67,7 +65,6 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     required this.getPackagesUsecase,
     required this.getFamilyProfilesUsecase,
     required this.getRoomsByPackage,
-    required this.createOfflinePaymentUsecase,
   }) : super(const BookingInitial()) {
     on<BookingLoadPackages>(_onLoadPackages);
     on<BookingSelectPackage>(_onSelectPackage);
@@ -79,7 +76,6 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     on<BookingCreateBooking>(_onCreateBooking);
     on<BookingCreateBookingForCustomer>(_onCreateBookingForCustomer);
     on<BookingCreatePaymentLink>(_onCreatePaymentLink);
-    on<BookingCreateOfflinePayment>(_onCreateOfflinePayment);
     on<BookingCheckPaymentStatus>(_onCheckPaymentStatus);
     on<BookingLoadById>(_onLoadById);
     on<BookingLoadAll>(_onLoadAll);
@@ -358,25 +354,6 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         staffId: event.staffId,
       );
       emit(BookingPaymentLinkCreated(paymentLink));
-    } catch (e) {
-      emit(BookingError(e.toString()));
-    }
-  }
-
-  Future<void> _onCreateOfflinePayment(
-    BookingCreateOfflinePayment event,
-    Emitter<BookingState> emit,
-  ) async {
-    emit(const BookingLoading());
-    try {
-      final status = await createOfflinePaymentUsecase(
-        bookingId: event.bookingId,
-        customerId: event.customerId,
-        amount: event.amount,
-        paymentMethod: event.paymentMethod,
-        note: event.note,
-      );
-      emit(BookingPaymentStatusChecked(status));
     } catch (e) {
       emit(BookingError(e.toString()));
     }

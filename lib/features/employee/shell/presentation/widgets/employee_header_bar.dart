@@ -17,10 +17,13 @@ class EmployeeHeaderBar extends StatefulWidget {
   final String title;
   final String subtitle;
 
+  final bool showBackButton;
+
   const EmployeeHeaderBar({
     super.key,
     required this.title,
     required this.subtitle,
+    this.showBackButton = false,
   });
 
   @override
@@ -108,6 +111,22 @@ class _EmployeeHeaderBarState extends State<EmployeeHeaderBar> {
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
       child: Row(
         children: [
+          if (widget.showBackButton) ...[
+            InkWell(
+              borderRadius: BorderRadius.circular(24),
+              onTap: () => Navigator.of(context).pop(),
+              child: SizedBox(
+                width: 44,
+                height: 44,
+                child: Icon(
+                  Icons.arrow_back_rounded,
+                  color: AppColors.textPrimary,
+                  size: 24,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
