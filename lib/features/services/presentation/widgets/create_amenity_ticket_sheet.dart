@@ -23,37 +23,59 @@ class CreateAmenityTicketSheet extends StatefulWidget {
   final List<AmenityServiceEntity> services;
   final AmenityServiceEntity? preselectedService;
   final BuildContext parentContext;
+  final List<FamilyScheduleEntity>? predefinedSchedules;
+  final void Function(AmenityServiceEntity service, DateTime date, TimeOfDay startTime, DateTime endTime)? onStaffSubmit;
 
   const CreateAmenityTicketSheet({
     super.key,
     required this.services,
     this.preselectedService,
     required this.parentContext,
+    this.predefinedSchedules,
+    this.onStaffSubmit,
   });
 
   static void show(
     BuildContext context,
     List<AmenityServiceEntity> services, {
     AmenityServiceEntity? preselectedService,
+    List<FamilyScheduleEntity>? predefinedSchedules,
+    void Function(AmenityServiceEntity service, DateTime date, TimeOfDay startTime, DateTime endTime)? onStaffSubmit,
   }) {
     final amenityBloc = context.read<AmenityBloc>();
-    final familyScheduleBloc = context.read<FamilyScheduleBloc>();
+    final familyScheduleBloc = onStaffSubmit == null ? context.read<FamilyScheduleBloc>() : null;
     
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (sheetContext) => MultiBlocProvider(
-        providers: [
-          BlocProvider.value(value: amenityBloc),
-          BlocProvider.value(value: familyScheduleBloc),
-        ],
-        child: CreateAmenityTicketSheet(
+      builder: (sheetContext) {
+        final child = CreateAmenityTicketSheet(
           services: services,
           preselectedService: preselectedService,
           parentContext: context,
-        ),
-      ),
+          predefinedSchedules: predefinedSchedules,
+          onStaffSubmit: onStaffSubmit,
+        );
+
+        if (onStaffSubmit != null) {
+          // Khi staff tạo, ta sẽ tự quản lý submit nên không cung cấp Bloc làm gì nếu ko có
+          return MultiBlocProvider(
+            providers: [
+              BlocProvider.value(value: amenityBloc),
+            ],
+            child: child,
+          );
+        }
+
+        return MultiBlocProvider(
+          providers: [
+            BlocProvider.value(value: amenityBloc),
+            if (familyScheduleBloc != null) BlocProvider.value(value: familyScheduleBloc),
+          ],
+          child: child,
+        );
+      },
     );
   }
 
@@ -79,6 +101,12 @@ class _CreateAmenityTicketSheetState extends State<CreateAmenityTicketSheet> {
   }
 
   void _loadSchedulesForDate(DateTime date) {
+    if (widget.predefinedSchedules != null) {
+      // Dùng lịch truyền từ parent, không cần gọi API (đây là staff tạo ticket cho khách)
+      setState(() {});
+      return;
+    }
+
     // Format date as YYYY-MM-DD
     final dateString = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
     context.read<FamilyScheduleBloc>().add(
@@ -168,11 +196,16 @@ class _CreateAmenityTicketSheetState extends State<CreateAmenityTicketSheet> {
       _selectedTime!.minute,
     );
 
-    // Get current schedules from bloc state
-    final scheduleState = context.read<FamilyScheduleBloc>().state;
-    final schedules = scheduleState is FamilyScheduleLoaded 
-        ? scheduleState.schedules 
-        : <FamilyScheduleEntity>[];
+    List<FamilyScheduleEntity> schedules = [];
+    if (widget.predefinedSchedules != null) {
+      schedules = widget.predefinedSchedules!;
+    } else {
+      // Get current schedules from bloc state
+      final scheduleState = context.read<FamilyScheduleBloc>().state;
+      schedules = scheduleState is FamilyScheduleLoaded 
+          ? scheduleState.schedules 
+          : <FamilyScheduleEntity>[];
+    }
 
     for (final schedule in schedules) {
       // Only check schedules on the same date
@@ -268,6 +301,16 @@ class _CreateAmenityTicketSheetState extends State<CreateAmenityTicketSheet> {
       _selectedTime!.hour,
       _selectedTime!.minute,
     );
+
+    if (widget.onStaffSubmit != null) {
+      widget.onStaffSubmit!(
+        _selectedService!,
+        _selectedDate!,
+        _selectedTime!,
+        _calculatedEndTime!,
+      );
+      return;
+    }
 
     // Use parent context to show full screen loading
     AppLoading.show(widget.parentContext, message: AppStrings.processing);
@@ -833,11 +876,43 @@ class _CreateAmenityTicketSheetState extends State<CreateAmenityTicketSheet> {
     // Use selectedDate as key to force rebuild when date changes
     final dateKey = _selectedDate?.toIso8601String() ?? '';
     
+    if (widget.predefinedSchedules != null) {
+      final now = DateTime.now();
+      final schedules = widget.predefinedSchedules!.where((schedule) {
+        if (_selectedDate != null && 
+           (schedule.workDate.year != _selectedDate!.year ||
+            schedule.workDate.month != _selectedDate!.month ||
+            schedule.workDate.day != _selectedDate!.day)) {
+          return false;
+        }
+
+        final endParts = schedule.endTime.split(':');
+        if (endParts.length >= 2) {
+          final scheduleEnd = DateTime(
+            schedule.workDate.year,
+            schedule.workDate.month,
+            schedule.workDate.day,
+            int.parse(endParts[0]),
+            int.parse(endParts[1]),
+          );
+          // If the selected date is today, only show upcoming schedules
+          if (schedule.workDate.year == now.year &&
+              schedule.workDate.month == now.month &&
+              schedule.workDate.day == now.day) {
+             return scheduleEnd.isAfter(now);
+          }
+          return true;
+        }
+        return true;
+      }).toList();
+
+      return _buildSchedulePreviewContent(context, scale, schedules, false);
+    }
+
     return BlocBuilder<FamilyScheduleBloc, FamilyScheduleState>(
       key: ValueKey('schedule_preview_$dateKey'),
       builder: (context, scheduleState) {
         final isLoading = scheduleState is FamilyScheduleLoading;
-        // Always use schedules from state if available
         List<FamilyScheduleEntity> schedules = [];
         if (scheduleState is FamilyScheduleLoaded) {
           final now = DateTime.now();
@@ -856,10 +931,13 @@ class _CreateAmenityTicketSheetState extends State<CreateAmenityTicketSheet> {
             return true;
           }).toList();
         }
-        
+        return _buildSchedulePreviewContent(context, scale, schedules, isLoading);
+      },
+    );
+  }
 
-
-        return Column(
+  Widget _buildSchedulePreviewContent(BuildContext context, double scale, List<FamilyScheduleEntity> schedules, bool isLoading) {
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
@@ -985,8 +1063,6 @@ class _CreateAmenityTicketSheetState extends State<CreateAmenityTicketSheet> {
                     ),
         ),
       ],
-    );
-      },
     );
   }
 }

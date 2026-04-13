@@ -4,10 +4,7 @@ import '../../../../core/apis/api_client.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
-import '../../../../core/widgets/app_toast.dart';
-import '../../../booking/data/datasources/booking_remote_datasource.dart';
 import '../../../../../features/employee/shell/presentation/widgets/employee_scaffold.dart';
-import '../../../services/data/datasources/family_schedule_remote_datasource.dart';
 import '../../data/datasources/transaction_remote_datasource.dart';
 import '../../data/models/transaction_with_customer_model.dart';
 
@@ -22,10 +19,6 @@ class StaffTransactionListScreen extends StatefulWidget {
 class _StaffTransactionListScreenState
     extends State<StaffTransactionListScreen> {
   final _dataSource = TransactionRemoteDataSourceImpl(dio: ApiClient.dio);
-  final _bookingDataSource = BookingRemoteDataSourceImpl(dio: ApiClient.dio);
-  final _familyScheduleDataSource = FamilyScheduleRemoteDataSourceImpl(
-    dio: ApiClient.dio,
-  );
   late Future<List<TransactionWithCustomerModel>> _future = _loadTransactions();
   String _typeFilter = 'all'; // all, Deposit, Remaining, Full
   String _statusFilter = 'all'; // all, Pending, Paid, Failed
@@ -75,97 +68,6 @@ class _StaffTransactionListScreenState
         return 'Thanh toán toàn bộ';
       default:
         return type ?? '-';
-    }
-  }
-
-  Future<void> _handleCreateFamilySchedule(
-    TransactionWithCustomerModel transaction,
-  ) async {
-    final customerId = transaction.customerId;
-    final bookingId = transaction.bookingId;
-
-    if (customerId == null || customerId.trim().isEmpty) {
-      if (!mounted) return;
-      AppToast.showError(
-        context,
-        message: 'Giao dịch này không có customerId để tạo lịch sinh hoạt.',
-      );
-      return;
-    }
-
-    if (bookingId == null) {
-      if (!mounted) return;
-      AppToast.showError(
-        context,
-        message: 'Giao dịch này không gắn bookingId.',
-      );
-      return;
-    }
-
-    try {
-      final booking = await _bookingDataSource.getBookingById(bookingId);
-      if (booking.customer?.id != customerId) {
-        if (!mounted) return;
-        AppToast.showError(
-          context,
-          message: 'Booking không thuộc đúng khách hàng của giao dịch.',
-        );
-        return;
-      }
-
-      if (booking.remainingAmount > 0) {
-        if (!mounted) return;
-        AppToast.showError(
-          context,
-          message: 'Booking chưa thanh toán đủ. Không thể tạo lịch sinh hoạt.',
-        );
-        return;
-      }
-
-      final contract = booking.contract;
-      if (contract == null) {
-        if (!mounted) return;
-        AppToast.showError(
-          context,
-          message: 'Booking chưa có hợp đồng. Không thể tạo lịch sinh hoạt.',
-        );
-        return;
-      }
-
-      if (!mounted) return;
-      final confirm = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Tạo lịch sinh hoạt gia đình'),
-          content: Text(
-            'Tạo lịch cho khách ${transaction.customerUsername ?? transaction.customerEmail ?? customerId}\n'
-            'Booking #$bookingId • Contract #${contract.id}?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('Hủy'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text('Tạo lịch'),
-            ),
-          ],
-        ),
-      );
-
-      if (confirm != true) return;
-
-      final message = await _familyScheduleDataSource.createFamilySchedule(
-        customerId: customerId,
-        contractId: contract.id,
-      );
-
-      if (!mounted) return;
-      AppToast.showSuccess(context, message: message);
-    } catch (e) {
-      if (!mounted) return;
-      AppToast.showError(context, message: 'Không thể tạo lịch sinh hoạt: $e');
     }
   }
 
@@ -402,8 +304,6 @@ class _StaffTransactionListScreenState
                           transaction: t,
                           statusLabel: _statusLabel(t.status),
                           typeLabel: _typeLabel(t.type),
-                          onCreateFamilySchedule: () =>
-                              _handleCreateFamilySchedule(t),
                         );
                       },
                     ),
@@ -859,13 +759,11 @@ class _TransactionItem extends StatelessWidget {
   final TransactionWithCustomerModel transaction;
   final String statusLabel;
   final String typeLabel;
-  final VoidCallback onCreateFamilySchedule;
 
   const _TransactionItem({
     required this.transaction,
     required this.statusLabel,
     required this.typeLabel,
-    required this.onCreateFamilySchedule,
   });
 
   Color _statusColor(String status) {
@@ -1025,15 +923,6 @@ class _TransactionItem extends StatelessWidget {
               ),
             ),
           ],
-          SizedBox(height: 10 * scale),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: onCreateFamilySchedule,
-              icon: const Icon(Icons.event_available_rounded),
-              label: const Text('Tạo lịch sinh hoạt từ giao dịch này'),
-            ),
-          ),
         ],
       ),
     );

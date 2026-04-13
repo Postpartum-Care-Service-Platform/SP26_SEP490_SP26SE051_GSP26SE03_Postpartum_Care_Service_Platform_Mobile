@@ -19,6 +19,7 @@ class BookingEntity extends Equatable {
   final String status; // Pending, Confirmed, Cancelled
   final DateTime bookingDate;
   final DateTime createdAt;
+  final String? homeStaffId;
   final CustomerEntity? customer;
   final PackageInfoEntity? package;
   final RoomInfoEntity? room;
@@ -38,6 +39,7 @@ class BookingEntity extends Equatable {
     required this.status,
     required this.bookingDate,
     required this.createdAt,
+    this.homeStaffId,
     this.customer,
     this.package,
     this.room,
@@ -59,6 +61,7 @@ class BookingEntity extends Equatable {
         status,
         bookingDate,
         createdAt,
+        homeStaffId,
         customer,
         package,
         room,

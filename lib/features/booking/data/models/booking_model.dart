@@ -19,6 +19,7 @@ class BookingModel {
   final String status;
   final DateTime bookingDate;
   final DateTime createdAt;
+  final String? homeStaffId;
   final CustomerModel? customer;
   final PackageInfoModel? package;
   final RoomInfoModel? room;
@@ -38,6 +39,7 @@ class BookingModel {
     required this.status,
     required this.bookingDate,
     required this.createdAt,
+    this.homeStaffId,
     this.customer,
     this.package,
     this.room,
@@ -81,6 +83,7 @@ class BookingModel {
       status: (json['status'] as String?) ?? '',
       bookingDate: DateTime.parse(json['bookingDate'] as String),
       createdAt: DateTime.parse(json['createdAt'] as String),
+      homeStaffId: json['homeStaffId'] as String?,
       customer: json['customer'] != null
           ? CustomerModel.fromJson(json['customer'] as Map<String, dynamic>)
           : null,
@@ -111,6 +114,7 @@ class BookingModel {
       'status': status,
       'bookingDate': bookingDate.toIso8601String(),
       'createdAt': createdAt.toIso8601String(),
+      'homeStaffId': homeStaffId,
       'customer': customer?.toJson(),
       'package': package?.toJson(),
       'room': room?.toJson(),
@@ -133,6 +137,7 @@ class BookingModel {
       status: status,
       bookingDate: bookingDate,
       createdAt: createdAt,
+      homeStaffId: homeStaffId,
       customer: customer?.toEntity(),
       package: package?.toEntity(),
       room: room?.toEntity(),

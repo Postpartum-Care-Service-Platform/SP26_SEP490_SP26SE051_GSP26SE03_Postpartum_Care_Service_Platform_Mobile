@@ -7,8 +7,8 @@ class ContractEntity extends Equatable {
   final int bookingId;
   final String contractCode;
   final DateTime contractDate;
-  final DateTime effectiveFrom;
-  final DateTime effectiveTo;
+  final DateTime? effectiveFrom;
+  final DateTime? effectiveTo;
   final DateTime? signedDate;
   final DateTime? sentAt;
   final String? fileUrl;
@@ -26,8 +26,8 @@ class ContractEntity extends Equatable {
     required this.bookingId,
     required this.contractCode,
     required this.contractDate,
-    required this.effectiveFrom,
-    required this.effectiveTo,
+    this.effectiveFrom,
+    this.effectiveTo,
     this.signedDate,
     this.sentAt,
     this.fileUrl,

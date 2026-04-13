@@ -224,32 +224,21 @@ class _LoadedContentState extends State<_LoadedContent> {
       final noScheduleContracts = await _contractRemote
           .getNoScheduleContracts();
       final bookings = await _bookingRemote.getAllBookings();
-      final unreadNotificationCount = await _notificationRemote
-          .getUnreadCount();
+      final notifications = await _notificationRemote.getNotifications();
+      final unreadNotificationCount = notifications.where((n) => !n.isRead).length;
 
       final mySupportRequests = mySupportList.length;
       final unscheduledContracts = noScheduleContracts.length;
-      // Đếm booking cần xử lý hôm nay (status Pending và startDate = hôm nay)
-      final todaysBookings = bookings.where((b) {
-        final d = DateTime(
-          b.startDate.year,
-          b.startDate.month,
-          b.startDate.day,
-        );
-        final isToday =
-            d.year == today.year &&
-            d.month == today.month &&
-            d.day == today.day;
-        final status = b.status.toLowerCase();
-        final isPending = status == 'pending';
-        return isToday && isPending;
+      // Đếm booking cần xử lý (status Pending)
+      final pendingBookingsCount = bookings.where((b) {
+        return b.status.toLowerCase() == 'pending';
       }).length;
       final unreadNotifications = unreadNotificationCount;
 
       return _DashboardSummary(
         mySupportRequests: mySupportRequests,
         unscheduledContracts: unscheduledContracts,
-        todaysBookings: todaysBookings,
+        todaysBookings: pendingBookingsCount,
         unreadNotifications: unreadNotifications,
       );
     } catch (_) {
