@@ -64,20 +64,34 @@ class _QRCodeSectionState extends State<QRCodeSection> {
   Future<void> _openBankApp(VietQrBank app) async {
     final qrData = widget.paymentLink.qrCode;
     
-    // 1. Parse QR data to get account and name for the requested parameters
+    // 1. Parse QR data to get account and bank info for the requested parameters
     final parsed = VietQrParser.parse(qrData);
     final recipient = VietQrParser.getRecipientInfo(parsed);
     final account = recipient?['account'] ?? '';
     final bin = recipient?['bin'] ?? '';
+    
+    // Look up short code (e.g. mb, vcb) from BIN (970422, 970436)
+    String bankShortCode = bin; // Fallback to BIN if not found
+    if (_allBanks != null) {
+      try {
+        final bank = _allBanks!.firstWhere((b) => b.bin == bin);
+        bankShortCode = bank.code.toLowerCase();
+      } catch (_) {}
+    }
+
     final name = VietQrParser.getBeneficiaryName(parsed) ?? 'VO MINH TIEN';
     final amount = widget.paymentLink.amount.toInt();
     final description = widget.paymentLink.orderCode;
-    final returnUrl = 'thejoyfulnest://payment-callback';
+    
+    // Use a standard HTTPS URL for the return path to ensure compatibility with all bank apps
+    final returnUrl = 'https://payos.vn';
     
     // 2. Construct the Smart URL Bridge with exactly 6 parameters
-    // ba: account@bank, am: amount, tn: description, app: appId, bn: name, url: returnUrl
+    // Fully encode the 'ba' parameter (especially the @ symbol) for standard compliance
+    final encodedBa = Uri.encodeComponent('$account@$bankShortCode');
+    
     final smartUrl = 'https://dl.vietqr.io/pay?app=${app.appId}' 
-                    '&ba=$account@$bin'
+                    '&ba=$encodedBa'
                     '&am=$amount'
                     '&tn=${Uri.encodeComponent(description)}'
                     '&bn=${Uri.encodeComponent(name)}'
