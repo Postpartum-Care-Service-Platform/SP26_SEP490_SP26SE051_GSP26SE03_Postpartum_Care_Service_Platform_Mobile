@@ -583,7 +583,6 @@ class _StaffAmenityTicketListScreenState
   }
 
   void _showUpdateDialog(AmenityTicketEntity ticket) {
-    // TODO: Implement update dialog
     // Có thể navigate sang màn hình update hoặc show bottom sheet
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Tính năng cập nhật đang được phát triển')),

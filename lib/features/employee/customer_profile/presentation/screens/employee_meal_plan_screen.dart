@@ -271,7 +271,7 @@ class _EmployeeMealPlanScreenState extends State<EmployeeMealPlanScreen> {
               child: Column(
                 children: [
                   Icon(Icons.restaurant_menu_outlined, 
-                    size: 64 * scale, color: AppColors.textSecondary.withOpacity(0.3)),
+                    size: 64 * scale, color: AppColors.textSecondary.withValues(alpha: 0.3)),
                   SizedBox(height: 16 * scale),
                   Text(
                     'Gia đình này chưa có bản ghi suất ăn nào.',
@@ -341,7 +341,7 @@ class _EmployeeMealPlanScreenState extends State<EmployeeMealPlanScreen> {
                         borderRadius: BorderRadius.circular(16 * scale),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.04),
+                            color: Colors.black.withValues(alpha: 0.04),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -358,7 +358,7 @@ class _EmployeeMealPlanScreenState extends State<EmployeeMealPlanScreen> {
                               Container(
                                 padding: EdgeInsets.all(10 * scale),
                                 decoration: BoxDecoration(
-                                  color: (isBreakfast ? Colors.orange : (isLunch ? Colors.blue : (isDinner ? Colors.indigo : AppColors.primary))).withOpacity(0.1),
+                                  color: (isBreakfast ? Colors.orange : (isLunch ? Colors.blue : (isDinner ? Colors.indigo : AppColors.primary))).withValues(alpha: 0.1),
                                   shape: BoxShape.circle,
                                 ),
                                 child: Icon(
@@ -394,7 +394,7 @@ class _EmployeeMealPlanScreenState extends State<EmployeeMealPlanScreen> {
                               Container(
                                 padding: EdgeInsets.symmetric(horizontal: 12 * scale, vertical: 6 * scale),
                                 decoration: BoxDecoration(
-                                  color: AppColors.primary.withOpacity(0.08),
+                                  color: AppColors.primary.withValues(alpha: 0.08),
                                   borderRadius: BorderRadius.circular(20 * scale),
                                 ),
                                 child: Text(
@@ -490,7 +490,7 @@ class _EmployeeMealPlanScreenState extends State<EmployeeMealPlanScreen> {
                         Container(
                           padding: EdgeInsets.all(12 * scale),
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.1),
+                            color: AppColors.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(16 * scale),
                           ),
                           child: Icon(Icons.restaurant_rounded, 
@@ -594,7 +594,7 @@ class _EmployeeMealPlanScreenState extends State<EmployeeMealPlanScreen> {
                               border: Border.all(color: AppColors.borderLight),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.04),
+                                  color: Colors.black.withValues(alpha: 0.04),
                                   blurRadius: 8,
                                   offset: const Offset(0, 2),
                                 ),

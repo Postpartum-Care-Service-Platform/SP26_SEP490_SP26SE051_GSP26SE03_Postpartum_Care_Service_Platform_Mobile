@@ -104,7 +104,7 @@ class _SkeletonBar extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: AppColors.textSecondary.withOpacity(0.3),
+        color: AppColors.textSecondary.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(height / 2),
       ),
     );

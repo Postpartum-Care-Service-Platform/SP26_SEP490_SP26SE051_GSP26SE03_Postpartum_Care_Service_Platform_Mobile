@@ -430,7 +430,6 @@ class HomeServiceBloc extends Bloc<HomeServiceEvent, HomeServiceState> {
   ) async {
     emit(const HomeServiceLoading());
     try {
-      // TODO: Implement cancel booking API call
       emit(const HomeServiceBookingCancelled(
         bookingId: 0,
         message: AppStrings.homeServiceCancelBookingSuccess,

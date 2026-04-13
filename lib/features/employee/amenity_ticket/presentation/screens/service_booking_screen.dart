@@ -390,7 +390,6 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                             _selectedCustomer = null;
                             _selectedService = null;
                             _selectedDate = null;
-                            _selectedDateRangeEnd = null;
                             _selectedTime = null;
                             _notesController.clear();
                             _availableFamilySchedules = [];

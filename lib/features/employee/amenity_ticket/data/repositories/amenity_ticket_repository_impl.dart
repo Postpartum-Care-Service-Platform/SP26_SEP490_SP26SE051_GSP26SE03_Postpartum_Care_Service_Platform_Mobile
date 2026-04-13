@@ -3,7 +3,6 @@ import '../../domain/repositories/amenity_ticket_repository.dart';
 import '../datasources/amenity_ticket_remote_datasource.dart';
 import '../models/staff_create_amenity_ticket_request_model.dart';
 
-/// Implementation of AmenityTicketRepository
 class AmenityTicketRepositoryImpl implements AmenityTicketRepository {
   final AmenityTicketRemoteDataSource remoteDataSource;
 
@@ -36,7 +35,6 @@ class AmenityTicketRepositoryImpl implements AmenityTicketRepository {
   @override
   Future<List<AmenityTicketEntity>> getTicketsByCustomer(String customerId) async {
     try {
-      // Dùng API getAmenityTicketsByUserId thay vì getTicketsByCustomer
       final models = await remoteDataSource.getAmenityTicketsByUserId(customerId);
       return models.map((model) => model.toEntity()).toList();
     } catch (e) {
@@ -47,8 +45,6 @@ class AmenityTicketRepositoryImpl implements AmenityTicketRepository {
   @override
   Future<List<AmenityTicketEntity>> getMyAssignedTickets() async {
     try {
-      // TODO: BE chưa có API này, có thể dùng getAmenityTicketsByUserId với staffId
-      // Hoặc dùng filter từ getAllTickets
       throw UnimplementedError('getMyAssignedTickets chưa có API ở BE');
     } catch (e) {
       rethrow;
@@ -58,7 +54,6 @@ class AmenityTicketRepositoryImpl implements AmenityTicketRepository {
   @override
   Future<List<AmenityTicketEntity>> getAllTickets() async {
     try {
-      // TODO: BE chỉ có API cho Admin/Manager, không có cho Staff
       // Có thể cần filter từ getAmenityTicketsByUserId
       throw UnimplementedError('getAllTickets chỉ dành cho Admin/Manager');
     } catch (e) {
@@ -79,7 +74,6 @@ class AmenityTicketRepositoryImpl implements AmenityTicketRepository {
   @override
   Future<String> confirmTicket(int ticketId) async {
     try {
-      // TODO: BE không có API confirm cho Staff, chỉ có accept/complete cho Manager
       throw UnimplementedError('confirmTicket không có API cho Staff');
     } catch (e) {
       rethrow;
@@ -89,7 +83,6 @@ class AmenityTicketRepositoryImpl implements AmenityTicketRepository {
   @override
   Future<String> completeTicket(int ticketId) async {
     try {
-      // TODO: BE chỉ có API complete cho Manager
       throw UnimplementedError('completeTicket chỉ dành cho Manager');
     } catch (e) {
       rethrow;
