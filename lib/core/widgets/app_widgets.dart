@@ -599,6 +599,7 @@ class AppWidgets {
 
   /// OTP Input Row - Reusable 1-line OTP input with fixed-length boxes
   static Widget otpInputRow({
+    required BuildContext context,
     required int length,
     required List<TextEditingController> controllers,
     required List<FocusNode> focusNodes,
@@ -610,14 +611,19 @@ class AppWidgets {
     assert(controllers.length >= length, 'controllers length must be >= length');
     assert(focusNodes.length >= length, 'focusNodes length must be >= length');
 
+    final scale = AppResponsive.scaleFactor(context);
+    final scaledBoxWidth = boxWidth * scale;
+    final scaledBoxHeight = boxHeight * scale;
+    final scaledSpacing = spacing * scale;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(
         length,
         (index) => Container(
-          width: boxWidth,
-          height: boxHeight,
-          margin: EdgeInsets.symmetric(horizontal: spacing),
+          width: scaledBoxWidth,
+          height: scaledBoxHeight,
+          margin: EdgeInsets.symmetric(horizontal: scaledSpacing),
           child: TextField(
             controller: controllers[index],
             focusNode: focusNodes[index],
@@ -625,24 +631,24 @@ class AppWidgets {
             keyboardType: TextInputType.number,
             maxLength: 1,
             style: AppTextStyles.arimo(
-              fontSize: 24,
+              fontSize: 24 * scale,
               fontWeight: FontWeight.bold,
             ),
             decoration: InputDecoration(
               counterText: '',
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(8 * scale),
                 borderSide: const BorderSide(color: AppColors.border),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(8 * scale),
                 borderSide: const BorderSide(color: AppColors.border),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(
+                borderRadius: BorderRadius.circular(8 * scale),
+                borderSide: BorderSide(
                   color: AppColors.primary,
-                  width: 2,
+                  width: 2 * scale,
                 ),
               ),
             ),

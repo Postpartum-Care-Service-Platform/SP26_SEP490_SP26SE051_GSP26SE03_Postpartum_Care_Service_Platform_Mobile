@@ -174,6 +174,7 @@ import '../../features/services/data/datasources/vietqr_remote_datasource.dart';
 import '../../features/services/data/repositories/vietqr_repository_impl.dart';
 import '../../features/services/domain/repositories/vietqr_repository.dart';
 import '../../features/services/domain/usecases/get_vietqr_banks.dart';
+import '../../features/services/domain/usecases/get_vietqr_deeplink_apps.dart';
 import '../apis/api_client.dart';
 
 /// Centralized dependency injection container
@@ -536,6 +537,9 @@ class InjectionContainer {
 
   static GetVietQrBanks get getVietQrBanks =>
       GetVietQrBanks(vietQrRepository);
+
+  static GetVietQrDeeplinkApps get getVietQrDeeplinkApps =>
+      GetVietQrDeeplinkApps(vietQrRepository);
 
   // ==================== Blocs ====================
 

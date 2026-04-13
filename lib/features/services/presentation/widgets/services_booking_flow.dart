@@ -271,7 +271,7 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            _currentStep == 3
+            _currentStep == 4
                 ? AppStrings.homeServicePay
                 : AppStrings.bookingNext,
             style: AppTextStyles.arimo(

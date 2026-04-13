@@ -539,6 +539,9 @@ class AppStrings {
   static const String paymentScanQR = 'Quét mã QR để thanh toán';
   static const String paymentOr = 'Hoặc';
   static const String paymentOpenLink = 'Mở link thanh toán';
+  static const String paymentOpenBankApp = 'Mở ứng dụng Ngân hàng';
+  static const String paymentSelectBankTitle = 'Chọn ứng dụng Ngân hàng';
+  static const String paymentNoBankApps = 'Không tìm thấy ứng dụng ngân hàng nào hỗ trợ';
   static const String paymentChecking =
       'Đang kiểm tra trạng thái thanh toán...';
   static const String paymentSuccess = 'Thanh toán thành công';

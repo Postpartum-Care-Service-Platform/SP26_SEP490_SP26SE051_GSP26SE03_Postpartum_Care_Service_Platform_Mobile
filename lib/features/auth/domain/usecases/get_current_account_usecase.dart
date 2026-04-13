@@ -7,7 +7,7 @@ class GetCurrentAccountUsecase {
 
   GetCurrentAccountUsecase(this.repository);
 
-  Future<CurrentAccountModel> call() async {
-    return await repository.getCurrentAccount();
+  Future<CurrentAccountModel> call({bool useCache = true}) async {
+    return await repository.getCurrentAccount(useCache: useCache);
   }
 }

@@ -198,15 +198,18 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<CurrentAccountModel> getCurrentAccount() async {
+  Future<CurrentAccountModel> getCurrentAccount({bool useCache = true}) async {
     try {
-      // Try to get from cache first
-      final cachedAccount = await CurrentAccountCacheService.getCurrentAccount();
-      if (cachedAccount != null) {
-        // Return cached account immediately for better UX
-        // Then refresh in background
-        _refreshCurrentAccountInBackground();
-        return cachedAccount;
+      // Try to get from cache first (if allowed)
+      if (useCache) {
+        final cachedAccount =
+            await CurrentAccountCacheService.getCurrentAccount();
+        if (cachedAccount != null) {
+          // Return cached account immediately for better UX
+          // Then refresh in background
+          _refreshCurrentAccountInBackground();
+          return cachedAccount;
+        }
       }
 
       // No cache, fetch from API

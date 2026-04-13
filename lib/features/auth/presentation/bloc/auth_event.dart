@@ -156,7 +156,12 @@ class AuthChangePassword extends AuthEvent {
 
 /// Event to load current account
 class AuthLoadCurrentAccount extends AuthEvent {
-  const AuthLoadCurrentAccount();
+  final bool forceRefresh;
+
+  const AuthLoadCurrentAccount({this.forceRefresh = false});
+
+  @override
+  List<Object?> get props => [forceRefresh];
 }
 
 /// Event to restore current account from cache (without API call)

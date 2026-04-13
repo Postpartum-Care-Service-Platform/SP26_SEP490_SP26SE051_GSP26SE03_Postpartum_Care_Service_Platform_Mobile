@@ -149,13 +149,14 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
   Widget _buildOtpInputs(double scale) {
     return AppWidgets.otpInputRow(
+      context: context,
       length: 6,
       controllers: _controllers,
       focusNodes: _focusNodes,
       onChanged: _onOtpChanged,
-      boxWidth: 48 * scale,
-      boxHeight: 56 * scale,
-      spacing: 4 * scale,
+      boxWidth: 48,
+      boxHeight: 56,
+      spacing: 4,
     );
   }
 }

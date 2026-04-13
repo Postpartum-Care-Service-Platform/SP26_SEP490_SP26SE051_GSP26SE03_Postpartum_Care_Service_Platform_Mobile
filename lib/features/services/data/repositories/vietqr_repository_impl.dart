@@ -11,4 +11,14 @@ class VietQrRepositoryImpl implements VietQrRepository {
   Future<List<VietQrBank>> getBanks() async {
     return await remoteDataSource.getBanks();
   }
+
+  @override
+  Future<List<VietQrBank>> getAndroidDeeplinkApps() async {
+    return await remoteDataSource.getAndroidDeeplinkApps();
+  }
+
+  @override
+  Future<List<VietQrBank>> getIosDeeplinkApps() async {
+    return await remoteDataSource.getIosDeeplinkApps();
+  }
 }

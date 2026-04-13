@@ -419,7 +419,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading(isPasswordObscured: state.isPasswordObscured));
 
     try {
-      final account = await getCurrentAccountUsecase();
+      final account = await getCurrentAccountUsecase(
+        useCache: !event.forceRefresh,
+      );
       final enrichedAccount = await _enrichAccountMemberType(account);
 
       emit(AuthCurrentAccountLoaded(

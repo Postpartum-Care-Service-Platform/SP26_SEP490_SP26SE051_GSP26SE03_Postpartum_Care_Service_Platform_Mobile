@@ -47,7 +47,7 @@ abstract class AuthRepository {
     required String idToken,
   });
 
-  Future<CurrentAccountModel> getCurrentAccount();
+  Future<CurrentAccountModel> getCurrentAccount({bool useCache = true});
 
   Future<CurrentAccountModel> getAccountById(String id);
 

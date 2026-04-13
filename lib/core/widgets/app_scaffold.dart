@@ -69,16 +69,21 @@ class _AppScaffoldState extends State<AppScaffold> {
   void _onTabSelected(AppBottomTab tab, BuildContext context) {
     final index = _customerTabs.indexOf(tab);
     if (index < 0 || index >= _screens.length) return;
-    if (tab == _currentTab) return;
+
+    // Special handling for Services tab: always refresh even if current tab
+    if (tab == AppBottomTab.services) {
+      context
+          .read<AuthBloc>()
+          .add(const AuthLoadCurrentAccount(forceRefresh: true));
+
+      if (tab == _currentTab) return; // Still skip PageView jump if same tab
+    } else {
+      if (tab == _currentTab) return;
+    }
 
     setState(() {
       _currentTab = tab;
     });
-
-    // Silently reload current account when switching to services tab
-    if (tab == AppBottomTab.services) {
-      context.read<AuthBloc>().add(const AuthLoadCurrentAccount());
-    }
 
     _pageController.jumpToPage(index);
   }
@@ -100,9 +105,11 @@ class _AppScaffoldState extends State<AppScaffold> {
                 _currentTab = newTab;
               });
               
-              // Silently reload current account when switching to services tab
+              // Silently reload current account when switching to services tab (forced reload)
               if (newTab == AppBottomTab.services) {
-                blocContext.read<AuthBloc>().add(const AuthLoadCurrentAccount());
+                blocContext
+                    .read<AuthBloc>()
+                    .add(const AuthLoadCurrentAccount(forceRefresh: true));
               }
             },
             children: _screens,

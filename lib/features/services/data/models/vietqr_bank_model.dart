@@ -8,6 +8,8 @@ class VietQrBankModel extends VietQrBank {
     required super.bin,
     required super.shortName,
     required super.logo,
+    super.appId,
+    super.deeplink,
   });
 
   factory VietQrBankModel.fromJson(Map<String, dynamic> json) {
@@ -17,7 +19,9 @@ class VietQrBankModel extends VietQrBank {
       code: (json['code'] as String?) ?? '',
       bin: (json['bin'] as String?) ?? '',
       shortName: (json['shortName'] as String?) ?? '',
-      logo: (json['logo'] as String?) ?? '',
+      logo: (json['logo'] as String?) ?? (json['appLogo'] as String?) ?? '',
+      appId: (json['appId'] as String?),
+      deeplink: (json['deeplink'] as String?),
     );
   }
 
@@ -29,6 +33,8 @@ class VietQrBankModel extends VietQrBank {
       'bin': bin,
       'shortName': shortName,
       'logo': logo,
+      'appId': appId,
+      'deeplink': deeplink,
     };
   }
 }
