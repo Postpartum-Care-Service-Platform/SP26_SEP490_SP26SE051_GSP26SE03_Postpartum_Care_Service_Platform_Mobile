@@ -79,6 +79,9 @@ dependencies:
   # HTML rendering for contract preview
   flutter_widget_from_html: ^0.15.0
   cached_network_image: ^3.4.1
+  
+  # Opening files
+  open_filex: ^4.5.1
 
 dev_dependencies:
   flutter_test:
