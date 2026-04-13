@@ -675,7 +675,7 @@ class EmployeeQuickMenuPresets {
     return [
       EmployeeQuickMenuItem.bottom(
         id: 'schedule',
-        label: 'Lịch làm việc',
+        label: 'Trang chủ',
         iconAsset: AppAssets.calendar,
         tab: AppBottomTab.appointment,
       ),
@@ -722,7 +722,7 @@ class EmployeeQuickMenuPresets {
       // Tabs chính
       EmployeeQuickMenuItem.bottom(
         id: 'schedule',
-        label: 'Lịch làm việc',
+        label: 'Trang chủ',
         iconAsset: AppAssets.calendar,
         tab: AppBottomTab.appointment,
       ),

@@ -759,25 +759,15 @@ class _DashboardSummaryRow extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
+    // Luôn hiển thị layout card, chỉ giá trị bên trong mới cần chờ load
     return FutureBuilder<_DashboardSummary>(
       future: summaryFuture,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Row(
-            children: [
-              Expanded(child: _DashboardMiniCard.loading(scale: scale)),
-              SizedBox(width: 8 * scale),
-              Expanded(child: _DashboardMiniCard.loading(scale: scale)),
-            ],
-          );
-        }
+        final isLoading = snapshot.connectionState == ConnectionState.waiting;
+        final summary = snapshot.data;
 
-        if (!snapshot.hasData || snapshot.data == null) {
-          return const SizedBox.shrink();
-        }
-
-        final summary = snapshot.data!;
-        if (summary.isAllZero) {
+        // Sau khi load xong, nếu tất cả đều 0 thì ẩn
+        if (!isLoading && summary != null && summary.isAllZero) {
           return const SizedBox.shrink();
         }
 
@@ -788,7 +778,7 @@ class _DashboardSummaryRow extends StatelessWidget {
                 child: _DashboardMiniCard(
                   icon: Icons.support_agent,
                   title: 'Hỗ trợ',
-                  value: '${summary.mySupportRequests}',
+                  value: isLoading ? null : '${summary?.mySupportRequests ?? 0}',
                   color: const Color(0xFF2563EB),
                   scale: scale,
                   onTap: onSupportRequestsTap,
@@ -799,7 +789,7 @@ class _DashboardSummaryRow extends StatelessWidget {
                 child: _DashboardMiniCard(
                   icon: Icons.notifications_active_outlined,
                   title: 'Thông báo',
-                  value: '${summary.unreadNotifications}',
+                  value: isLoading ? null : '${summary?.unreadNotifications ?? 0}',
                   color: const Color(0xFFF97316),
                   scale: scale,
                   onTap: onNotificationsTap,
@@ -817,7 +807,7 @@ class _DashboardSummaryRow extends StatelessWidget {
                   child: _DashboardMiniCard(
                     icon: Icons.support_agent,
                     title: 'Yêu cầu hỗ trợ',
-                    value: '${summary.mySupportRequests}',
+                    value: isLoading ? null : '${summary?.mySupportRequests ?? 0}',
                     color: const Color(0xFF2563EB),
                     scale: scale,
                     onTap: onSupportRequestsTap,
@@ -828,7 +818,7 @@ class _DashboardSummaryRow extends StatelessWidget {
                   child: _DashboardMiniCard(
                     icon: Icons.article_outlined,
                     title: 'HĐ chưa lên lịch',
-                    value: '${summary.unscheduledContracts}',
+                    value: isLoading ? null : '${summary?.unscheduledContracts ?? 0}',
                     color: const Color(0xFF9333EA),
                     scale: scale,
                     onTap: onContractsTap,
@@ -843,7 +833,7 @@ class _DashboardSummaryRow extends StatelessWidget {
                   child: _DashboardMiniCard(
                     icon: Icons.book_online,
                     title: 'Booking cần xử lý',
-                    value: '${summary.todaysBookings}',
+                    value: isLoading ? null : '${summary?.todaysBookings ?? 0}',
                     color: const Color(0xFF0EA5E9),
                     scale: scale,
                     onTap: onBookingsTap,
@@ -854,7 +844,7 @@ class _DashboardSummaryRow extends StatelessWidget {
                   child: _DashboardMiniCard(
                     icon: Icons.notifications_active_outlined,
                     title: 'Thông báo chưa đọc',
-                    value: '${summary.unreadNotifications}',
+                    value: isLoading ? null : '${summary?.unreadNotifications ?? 0}',
                     color: const Color(0xFFF97316),
                     scale: scale,
                     onTap: onNotificationsTap,
@@ -872,10 +862,9 @@ class _DashboardSummaryRow extends StatelessWidget {
 class _DashboardMiniCard extends StatelessWidget {
   final IconData icon;
   final String title;
-  final String value;
+  final String? value;
   final Color color;
   final double scale;
-  final bool isLoading;
   final VoidCallback? onTap;
 
   const _DashboardMiniCard({
@@ -885,28 +874,10 @@ class _DashboardMiniCard extends StatelessWidget {
     required this.color,
     required this.scale,
     this.onTap,
-  }) : isLoading = false;
-
-  const _DashboardMiniCard.loading({required this.scale})
-    : icon = Icons.hourglass_empty,
-      title = '',
-      value = '',
-      color = AppColors.background,
-      isLoading = true,
-      onTap = null;
+  });
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-      return Container(
-        height: 72 * scale,
-        decoration: BoxDecoration(
-          color: AppColors.background,
-          borderRadius: BorderRadius.circular(16 * scale),
-        ),
-      );
-    }
-
     Widget card = Container(
       height: 72 * scale,
       padding: EdgeInsets.all(12 * scale),
@@ -943,14 +914,28 @@ class _DashboardMiniCard extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 4 * scale),
-                Text(
-                  value,
-                  style: AppTextStyles.arimo(
-                    fontSize: 18 * scale,
-                    fontWeight: FontWeight.w700,
-                    color: color,
+                if (value != null)
+                  Center(
+                    child: Text(
+                      value!,
+                      style: AppTextStyles.arimo(
+                        fontSize: 18 * scale,
+                        fontWeight: FontWeight.w700,
+                        color: color,
+                      ),
+                    ),
+                  )
+                else
+                  Center(
+                    child: SizedBox(
+                      width: 16 * scale,
+                      height: 16 * scale,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2 * scale,
+                        color: color.withValues(alpha: 0.5),
+                      ),
+                    ),
                   ),
-                ),
               ],
             ),
           ),
@@ -1026,12 +1011,14 @@ class _StatCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 6),
-          Text(
-            value,
-            style: AppTextStyles.arimo(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: valueColor,
+          Center(
+            child: Text(
+              value,
+              style: AppTextStyles.arimo(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: valueColor,
+              ),
             ),
           ),
         ],
