@@ -225,9 +225,6 @@ class EmployeeMoreSheet {
       case EmployeeQuickMenuExtraAction.tasks:
         AppRouter.push(context, AppRoutes.employeeTasks);
         break;
-      case EmployeeQuickMenuExtraAction.checkInOut:
-        AppRouter.push(context, AppRoutes.employeeCheckInOut);
-        break;
       case EmployeeQuickMenuExtraAction.familyProfile:
         AppRouter.push(context, AppRoutes.employeeAssignedFamilies);
         break;
@@ -284,7 +281,6 @@ List<_MenuGroup> _buildGroupedItems(List<EmployeeQuickMenuItem> items) {
 
   for (final item in items) {
     switch (item.extraAction) {
-      case EmployeeQuickMenuExtraAction.checkInOut:
       case EmployeeQuickMenuExtraAction.tasks:
       case EmployeeQuickMenuExtraAction.appointments:
       case EmployeeQuickMenuExtraAction.room:
@@ -448,7 +444,6 @@ class _GroupSectionState extends State<_GroupSection> {
               itemBuilder: (context, index) {
                 final item = group.items[index];
                 final isPriority =
-                    item.extraAction == EmployeeQuickMenuExtraAction.checkInOut ||
                     item.extraAction == EmployeeQuickMenuExtraAction.tasks;
                 return _ModernSheetItem(
                   item: item,

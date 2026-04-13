@@ -138,26 +138,4 @@ class BookingRepositoryImpl implements BookingRepository {
       throw Exception(e.toString());
     }
   }
-
-  @override
-  Future<PaymentStatusEntity> createOfflinePayment({
-    required int bookingId,
-    required String customerId,
-    required double amount,
-    required String paymentMethod,
-    String? note,
-  }) async {
-    try {
-      final model = await remoteDataSource.createOfflinePayment(
-        bookingId: bookingId,
-        customerId: customerId,
-        amount: amount,
-        paymentMethod: paymentMethod,
-        note: note,
-      );
-      return model.toEntity();
-    } catch (e) {
-      throw Exception(e.toString());
-    }
-  }
 }

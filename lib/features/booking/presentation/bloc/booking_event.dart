@@ -90,32 +90,6 @@ class BookingCreateBookingForCustomer extends BookingEvent {
   List<Object?> get props => [customerId, discountAmount];
 }
 
-/// Staff: Ghi nhận thanh toán offline cho booking
-class BookingCreateOfflinePayment extends BookingEvent {
-  final int bookingId;
-  final String customerId;
-  final double amount;
-  final String paymentMethod;
-  final String? note;
-
-  const BookingCreateOfflinePayment({
-    required this.bookingId,
-    required this.customerId,
-    required this.amount,
-    required this.paymentMethod,
-    this.note,
-  });
-
-  @override
-  List<Object?> get props => [
-    bookingId,
-    customerId,
-    amount,
-    paymentMethod,
-    note,
-  ];
-}
-
 /// Create payment link
 class BookingCreatePaymentLink extends BookingEvent {
   final String type; // Deposit or Remaining or Full

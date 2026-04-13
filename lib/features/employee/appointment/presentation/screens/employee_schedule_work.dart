@@ -406,9 +406,6 @@ class _LoadedContentState extends State<_LoadedContent> {
                     case EmployeeQuickMenuExtraAction.tasks:
                       AppRouter.push(context, AppRoutes.employeeTasks);
                       break;
-                    case EmployeeQuickMenuExtraAction.checkInOut:
-                      AppRouter.push(context, AppRoutes.employeeCheckInOut);
-                      break;
                     case EmployeeQuickMenuExtraAction.familyProfile:
                       AppRouter.push(
                         context,
