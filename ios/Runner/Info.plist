@@ -58,5 +58,13 @@
 			</array>
 		</dict>
 	</array>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>vietqr</string>
+		<string>vcb</string>
+		<string>tcb</string>
+		<string>mbbank</string>
+		<string>ocb</string>
+	</array>
 </dict>
 </plist>

@@ -103,6 +103,16 @@ class _QRCodeSectionState extends State<QRCodeSection> {
     final vietQrUri = Uri.parse(
       'vietqr://pay?ba=$recipientId&am=$amount&tn=$description&bn=$name&app=${app.appId ?? ''}&url=$returnUrl'
     );
+    
+    // Debug logging
+    debugPrint('--- VIETQR DEEPLINK DEBUG ---');
+    debugPrint('ba (Tài khoản & Ngân hàng): $recipientId');
+    debugPrint('am (Số tiền): $amount');
+    debugPrint('tn (Nội dung): ${Uri.decodeComponent(description)}');
+    debugPrint('bn (Tên người nhận): ${Uri.decodeComponent(name)}');
+    debugPrint('url (Quay lại app): ${Uri.decodeComponent(returnUrl)}');
+    debugPrint('Full Deeplink: $vietQrUri');
+    debugPrint('-----------------------------');
 
     // 5. Construct fallback URL (the current one)
     final fallbackBaseUrl = app.deeplink ?? 'https://dl.vietqr.io/pay?app=${app.appId}';
