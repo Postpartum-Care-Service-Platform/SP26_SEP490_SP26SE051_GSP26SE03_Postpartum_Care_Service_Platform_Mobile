@@ -932,6 +932,7 @@ class AppStrings {
   static const String refundRequestError = 'Không thể gửi yêu cầu hoàn tiền';
   static const String refundRequestLoadError = 'Không thể tải lịch sử yêu cầu hoàn tiền';
   static const String refundRequestNoRequests = 'Chưa có yêu cầu hoàn tiền nào';
+  static const String refundRequestEmptyHint = 'Bạn chưa gửi yêu cầu hoàn tiền nào';
   static const String refundRequestStatusPending = 'Đang chờ xử lý';
   static const String refundRequestStatusApproved = 'Đã duyệt';
   static const String refundRequestStatusRejected = 'Đã từ chối';

@@ -170,6 +170,10 @@ import '../../features/services/domain/repositories/refund_request_repository.da
 import '../../features/services/domain/usecases/create_refund_request_usecase.dart';
 import '../../features/services/domain/usecases/get_my_refund_requests_usecase.dart';
 import '../../features/services/presentation/bloc/refund_request/refund_request_bloc.dart';
+import '../../features/services/data/datasources/vietqr_remote_datasource.dart';
+import '../../features/services/data/repositories/vietqr_repository_impl.dart';
+import '../../features/services/domain/repositories/vietqr_repository.dart';
+import '../../features/services/domain/usecases/get_vietqr_banks.dart';
 import '../apis/api_client.dart';
 
 /// Centralized dependency injection container
@@ -236,6 +240,9 @@ class InjectionContainer {
 
   static FeedbackRemoteDataSource get _feedbackRemoteDataSource =>
       FeedbackRemoteDataSourceImpl(dio: ApiClient.dio);
+
+  static VietQrRemoteDataSource get _vietQrRemoteDataSource =>
+      VietQrRemoteDataSourceImpl(dio: ApiClient.dio);
 
   // ==================== Repositories ====================
 
@@ -325,6 +332,9 @@ class InjectionContainer {
 
   static RefundRequestRepository get refundRequestRepository =>
       RefundRequestRepositoryImpl(remoteDataSource: _refundRequestRemoteDataSource);
+
+  static VietQrRepository get vietQrRepository =>
+      VietQrRepositoryImpl(remoteDataSource: _vietQrRemoteDataSource);
 
   // ==================== Use Cases ====================
 
@@ -523,6 +533,9 @@ class InjectionContainer {
       CreateRefundRequestUsecase(refundRequestRepository);
   static GetMyRefundRequestsUsecase get _getMyRefundRequestsUsecase =>
       GetMyRefundRequestsUsecase(refundRequestRepository);
+
+  static GetVietQrBanks get getVietQrBanks =>
+      GetVietQrBanks(vietQrRepository);
 
   // ==================== Blocs ====================
 
