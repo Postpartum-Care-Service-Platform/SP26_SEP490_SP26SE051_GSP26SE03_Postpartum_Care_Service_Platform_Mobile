@@ -148,7 +148,7 @@ class EmployeeCustomerProfileRemoteDataSource {
     String customerId,
   ) async {
     try {
-      final response = await _dio.get(ApiEndpoints.getAllBookings);
+      final response = await _dio.get(ApiEndpoints.getBookingsByHomeStaff);
       final data = response.data;
 
       if (data is! List) {
