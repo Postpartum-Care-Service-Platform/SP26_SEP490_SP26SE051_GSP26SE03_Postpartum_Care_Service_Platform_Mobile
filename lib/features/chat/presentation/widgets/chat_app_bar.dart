@@ -13,6 +13,8 @@ class ChatAppBar extends StatelessWidget {
   /// null nếu không cho phép gửi yêu cầu hỗ trợ (staff mode).
   final VoidCallback? onSupport;
   final VoidCallback? onBack;
+  /// true nếu đây là staff mode (ẩn AI hint)
+  final bool isStaff;
 
   const ChatAppBar({
     super.key,
@@ -20,6 +22,7 @@ class ChatAppBar extends StatelessWidget {
     this.customerInfo,
     required this.onSupport,
     this.onBack,
+    this.isStaff = false,
   });
 
   @override
@@ -60,7 +63,7 @@ class ChatAppBar extends StatelessWidget {
               SizedBox(width: 6 * scale),
               Flexible(
                 child: Text(
-                  AppStrings.chatTypingHint,
+                  isStaff ? 'Đang trực tuyến' : AppStrings.chatTypingHint,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.arimo(
@@ -88,10 +91,12 @@ class ChatAppBar extends StatelessWidget {
                 ),
                 child: Padding(
                   padding: EdgeInsets.all(4 * scale),
-                  child: SvgPicture.asset(
-                    AppAssets.appIconThird,
-                    fit: BoxFit.contain,
-                  ),
+                  child: isStaff 
+                    ? const Icon(Icons.person_outline_rounded, color: AppColors.primary)
+                    : SvgPicture.asset(
+                        AppAssets.appIconThird,
+                        fit: BoxFit.contain,
+                      ),
                 ),
               ),
               SizedBox(width: 12 * scale),
@@ -152,4 +157,3 @@ class ChatAppBar extends StatelessWidget {
         'Cuộc hội thoại';
   }
 }
-

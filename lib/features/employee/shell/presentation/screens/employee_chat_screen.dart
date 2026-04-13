@@ -4,6 +4,8 @@ import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/di/injection_container.dart';
 import '../../../../../core/utils/app_responsive.dart';
 import '../../../../../core/widgets/app_app_bar.dart';
+import '../../../../../core/routing/app_router.dart';
+import '../../../../../core/routing/app_routes.dart';
 import '../../../../../features/chat/presentation/bloc/chat_bloc.dart';
 import '../../../../../features/chat/presentation/bloc/chat_event.dart';
 import '../../../../../features/chat/presentation/bloc/chat_state.dart';
@@ -27,8 +29,21 @@ class EmployeeChatScreen extends StatefulWidget {
 }
 
 class _EmployeeChatScreenState extends State<EmployeeChatScreen> {
+  late final ChatBloc _chatBloc;
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _messageScrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _chatBloc = InjectionContainer.chatBloc;
+    // Load conversations and support requests on initialization
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _chatBloc.add(const ChatLoadAllConversationsRequested());
+      _chatBloc.add(const ChatLoadSupportRequestsRequested());
+      _chatBloc.add(const ChatLoadMySupportRequestsRequested());
+    });
+  }
 
   @override
   void dispose() {
@@ -50,17 +65,8 @@ class _EmployeeChatScreenState extends State<EmployeeChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) {
-        final bloc = InjectionContainer.chatBloc;
-        // Load tất cả conversations và support requests khi màn hình được khởi tạo
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          bloc.add(const ChatLoadAllConversationsRequested());
-          bloc.add(const ChatLoadSupportRequestsRequested());
-          bloc.add(const ChatLoadMySupportRequestsRequested());
-        });
-        return bloc;
-      },
+    return BlocProvider.value(
+      value: _chatBloc,
       child: BlocListener<ChatBloc, ChatState>(
         listenWhen: (previous, current) =>
             previous.selectedConversation != current.selectedConversation ||
@@ -117,44 +123,38 @@ class _EmployeeChatScreenState extends State<EmployeeChatScreen> {
     bool isDesktop,
     double scale,
   ) {
-    return isDesktop
-        ? Row(
-            children: [
-              SizedBox(
-                width: 320 * scale,
-                child: ConversationList(
-                  onCreate: null, // Staff không được tạo conversation mới
-                ),
-              ),
-              SizedBox(width: 16 * scale),
-              Expanded(
-                child: ConversationDetail(
-                  onSupport: null, // Staff không được gửi yêu cầu hỗ trợ
-                  controller: _messageController,
-                  scrollController: _messageScrollController,
-                  isStaff: true, // Đánh dấu là staff mode
-                ),
-              ),
-            ],
-          )
-        : Column(
-            children: [
-              SizedBox(
-                height: 280 * scale,
-                child: ConversationList(
-                  onCreate: null, // Staff không được tạo conversation mới
-                ),
-              ),
-              SizedBox(height: 12 * scale),
-              Expanded(
-                child: ConversationDetail(
-                  onSupport: null, // Staff không được gửi yêu cầu hỗ trợ
-                  controller: _messageController,
-                  scrollController: _messageScrollController,
-                  isStaff: true, // Đánh dấu là staff mode
-                ),
-              ),
-            ],
-          );
+    if (isDesktop) {
+      return Row(
+        children: [
+          SizedBox(
+            width: 320 * scale,
+            child: ConversationList(
+              onCreate: null, // Staff không được tạo conversation mới
+            ),
+          ),
+          SizedBox(width: 16 * scale),
+          Expanded(
+            child: ConversationDetail(
+              onSupport: null, // Staff không được gửi yêu cầu hỗ trợ
+              controller: _messageController,
+              scrollController: _messageScrollController,
+              isStaff: true, // Đánh dấu là staff mode
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Mobile view: Only show list, tapping navigates to separate detail screen
+    return ConversationList(
+      onCreate: null,
+      onConversationTap: (id) {
+        AppRouter.push(
+          context,
+          AppRoutes.employeeChat,
+          arguments: {'conversationId': id},
+        );
+      },
+    );
   }
 }

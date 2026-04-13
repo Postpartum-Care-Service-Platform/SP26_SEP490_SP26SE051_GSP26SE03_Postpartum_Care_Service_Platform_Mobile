@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import '../../../../core/apis/api_client.dart';
 import '../../../../core/apis/api_endpoints.dart';
 import '../models/chat_conversation_model.dart';
+import '../models/chat_message_model.dart';
 import '../models/chat_send_result_model.dart';
 import '../models/support_request_model.dart';
 
@@ -13,6 +14,7 @@ abstract class ChatRemoteDataSource {
     required int conversationId,
     required String content,
     bool toStaffChannel,
+    bool isStaff,
   });
   Future<ChatConversationModel> createConversation(String name);
   Future<void> markMessagesRead(int conversationId);
@@ -67,9 +69,12 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
     required int conversationId,
     required String content,
     bool toStaffChannel = false,
+    bool isStaff = false,
   }) async {
     try {
-      final endpoint = ApiEndpoints.chatConversationMessages(conversationId);
+      final endpoint = isStaff
+          ? ApiEndpoints.chatStaffMessage(conversationId)
+          : ApiEndpoints.chatConversationMessages(conversationId);
 
       final response = await _dio.post(
         endpoint,
@@ -77,6 +82,15 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
       );
       final data = response.data;
       if (data is Map<String, dynamic>) {
+        if (isStaff && data.containsKey('id') && data.containsKey('content')) {
+          // staff-message endpoint returns a single ChatMessageModel
+          final msg = ChatMessageModel.fromJson(data);
+          return ChatSendResultModel(
+            userMessage: msg,
+            aiMessage: null,
+            aiStructuredData: null,
+          );
+        }
         return ChatSendResultModel.fromJson(data);
       }
       throw Exception('Phản hồi gửi tin không hợp lệ');

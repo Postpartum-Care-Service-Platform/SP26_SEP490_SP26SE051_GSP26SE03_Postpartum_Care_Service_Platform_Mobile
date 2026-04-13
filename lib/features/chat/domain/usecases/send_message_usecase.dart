@@ -10,11 +10,13 @@ class SendMessageUsecase {
     required int conversationId,
     required String content,
     bool toStaffChannel = false,
+    bool isStaff = false,
   }) {
     return repository.sendMessage(
       conversationId: conversationId,
       content: content,
       toStaffChannel: toStaffChannel,
+      isStaff: isStaff,
     );
   }
 }
