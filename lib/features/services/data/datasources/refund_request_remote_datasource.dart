@@ -58,9 +58,17 @@ class RefundRequestRemoteDataSourceImpl
 
       return [];
     } on DioException catch (e) {
-      final message = e.response?.data?['message'] ??
-          e.response?.data?['title'] ??
-          'Không thể tạo yêu cầu hoàn tiền';
+      final errorData = e.response?.data;
+      String message = 'Không thể tạo yêu cầu hoàn tiền';
+      
+      if (errorData is Map<String, dynamic>) {
+        final error = errorData['error'] ?? errorData['message'] ?? errorData['title'];
+        if (error == 'A refund request for this booking already exists') {
+          message = 'Đơn hoàn tiền cho booking này đã tồn tại và đang được chờ xử lý.';
+        } else if (error != null) {
+          message = error.toString();
+        }
+      }
       throw Exception(message);
     } catch (e) {
       throw Exception('Không thể tạo yêu cầu hoàn tiền: $e');

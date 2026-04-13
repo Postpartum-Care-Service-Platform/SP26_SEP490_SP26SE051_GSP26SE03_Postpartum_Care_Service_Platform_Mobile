@@ -36,7 +36,7 @@ class PackageCarouselSkeleton extends StatelessWidget {
               width: 8 * scale,
               height: 8 * scale,
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.3),
+                color: AppColors.primary.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(4 * scale),
               ),
             ),

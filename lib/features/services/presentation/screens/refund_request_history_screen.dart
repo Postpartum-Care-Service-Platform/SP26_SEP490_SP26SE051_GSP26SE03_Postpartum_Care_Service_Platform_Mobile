@@ -91,45 +91,39 @@ class RefundRequestHistoryScreen extends StatelessWidget {
   Widget _buildEmptyView(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
     return Center(
-      child: Container(
-        margin: EdgeInsets.all(20 * scale),
-        constraints: BoxConstraints(
-          minHeight: MediaQuery.of(context).size.height * 0.52,
-        ),
-        padding: EdgeInsets.all(32 * scale),
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(16 * scale),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 12 * scale,
-              offset: Offset(0, 4 * scale),
-            ),
-          ],
-        ),
+      child: Padding(
+        padding: EdgeInsets.all(40 * scale),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: EdgeInsets.all(20 * scale),
+              padding: EdgeInsets.all(24 * scale),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.12),
+                color: AppColors.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.receipt_long_outlined,
-                size: 36 * scale,
+                size: 44 * scale,
                 color: AppColors.primary,
               ),
             ),
-            SizedBox(height: 18 * scale),
+            SizedBox(height: 24 * scale),
             Text(
               AppStrings.refundRequestNoRequests,
               style: AppTextStyles.tinos(
                 fontSize: 22 * scale,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 8 * scale),
+            Text(
+              AppStrings.refundRequestEmptyHint,
+              style: AppTextStyles.arimo(
+                fontSize: 14 * scale,
+                color: AppColors.textSecondary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -173,164 +167,300 @@ class RefundRequestHistoryScreen extends StatelessWidget {
   }
 }
 
-class _RefundRequestCard extends StatelessWidget {
+class _RefundRequestCard extends StatefulWidget {
   final RefundRequestEntity request;
 
   const _RefundRequestCard({required this.request});
 
   @override
+  State<_RefundRequestCard> createState() => _RefundRequestCardState();
+}
+
+class _RefundRequestCardState extends State<_RefundRequestCard> {
+  bool _isExpanded = false;
+
+  @override
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
-    final statusColor = _getStatusColor(request.status);
-    final statusText = _getStatusText(request.status);
+    final statusColor = _getStatusColor(widget.request.status);
+    final statusText = _getStatusText(widget.request.status);
 
-    return Container(
-      padding: EdgeInsets.all(18 * scale),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(20 * scale),
-        border: Border.all(
-          color: AppColors.borderLight.withValues(alpha: 0.8),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 16 * scale,
-            offset: Offset(0, 6 * scale),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header: Request ID and Status
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Yêu cầu #${request.id}',
-                style: AppTextStyles.tinos(
-                  fontSize: 18 * scale,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              _buildStatusBadge(statusText, statusColor, scale),
-            ],
-          ),
-
-          SizedBox(height: 16 * scale),
-          const Divider(height: 1, color: AppColors.borderLight),
-          SizedBox(height: 16 * scale),
-
-          // Main Info Block: Booking ID & Bank details
-          _buildInfoGrid(context, scale),
-
-          SizedBox(height: 16 * scale),
-
-          // Financial Summary
-          _buildFinancialSummary(context, scale),
-
-          SizedBox(height: 16 * scale),
-
-          // Reason Section (Modern accent style)
-          _buildAccentSection(
-            context,
-            label: AppStrings.refundRequestReason,
-            content: request.reason,
-            accentColor: AppColors.primary,
-            scale: scale,
-          ),
-
-          // Admin Note Section
-          if (request.adminNote != null && request.adminNote!.isNotEmpty) ...[
-            SizedBox(height: 12 * scale),
-            _buildAccentSection(
-              context,
-              label: AppStrings.refundRequestAdminNote,
-              content: request.adminNote!,
-              accentColor: AppColors.appointmentScheduled,
-              scale: scale,
-              isSecondary: true,
+    return InkWell(
+      onTap: () => setState(() => _isExpanded = !_isExpanded),
+      borderRadius: BorderRadius.circular(16 * scale),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(16 * scale),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 10 * scale,
+              offset: Offset(0, 4 * scale),
             ),
           ],
+          border: Border.all(
+            color: AppColors.borderLight.withValues(alpha: 0.5),
+            width: 0.8,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Upper Section (Always visible)
+            Padding(
+              padding: EdgeInsets.all(16 * scale),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Yêu cầu #${widget.request.id}',
+                        style: AppTextStyles.arimo(
+                          fontSize: 16 * scale,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      _buildStatusBadge(statusText, statusColor, scale),
+                    ],
+                  ),
+                  SizedBox(height: 16 * scale),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildInfoRow(
+                        'Mã booking',
+                        '#${widget.request.bookingId}',
+                        AppColors.primary,
+                        scale,
+                        icon: Icons.tag_rounded,
+                      ),
+                      Icon(
+                        _isExpanded
+                            ? Icons.keyboard_arrow_up_rounded
+                            : Icons.keyboard_arrow_down_rounded,
+                        size: 20 * scale,
+                        color: AppColors.textSecondary.withValues(alpha: 0.5),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 16 * scale),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.account_balance_outlined,
+                        size: 16 * scale,
+                        color: AppColors.textSecondary.withValues(alpha: 0.7),
+                      ),
+                      SizedBox(width: 10 * scale),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.request.bankName,
+                              style: AppTextStyles.arimo(
+                                fontSize: 13 * scale,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            SizedBox(height: 2 * scale),
+                            Text(
+                              '${widget.request.accountNumber} • ${widget.request.accountHolder}',
+                              style: AppTextStyles.arimo(
+                                fontSize: 12 * scale,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
 
-          SizedBox(height: 18 * scale),
-          // Footer: Minimalist dates
-          _buildCompactFooter(context, scale),
-        ],
+            // Dashed Divider
+            _buildDashedDivider(scale),
+
+            // Lower Section (Partially visible/expandable)
+            Padding(
+              padding: EdgeInsets.all(16 * scale),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Financial Info (Always visible)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildAmountBox(
+                          'Số tiền yêu cầu',
+                          widget.request.requestedAmount ?? 0,
+                          AppColors.textSecondary,
+                          scale,
+                        ),
+                      ),
+                      SizedBox(width: 12 * scale),
+                      Expanded(
+                        child: _buildAmountBox(
+                          'Số tiền được duyệt',
+                          widget.request.approvedAmount ?? 0,
+                          widget.request.approvedAmount != null &&
+                                  widget.request.approvedAmount! > 0
+                              ? AppColors.appointmentCompleted
+                              : AppColors.textSecondary,
+                          scale,
+                          isHighlight: true,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // Expandable Section for Reason and Admin Note
+                  AnimatedCrossFade(
+                    firstChild: const SizedBox.shrink(),
+                    secondChild: Column(
+                      children: [
+                        SizedBox(height: 16 * scale),
+                        // Reason
+                        _buildAccentSection(
+                          label: AppStrings.refundRequestReason,
+                          content: widget.request.reason,
+                          accentColor: AppColors.primary,
+                          scale: scale,
+                        ),
+
+                        // Admin Note
+                        if (widget.request.adminNote != null &&
+                            widget.request.adminNote!.isNotEmpty) ...[
+                          SizedBox(height: 12 * scale),
+                          _buildAccentSection(
+                            label: AppStrings.refundRequestAdminNote,
+                            content: widget.request.adminNote!,
+                            accentColor: AppColors.appointmentScheduled,
+                            scale: scale,
+                            isSecondary: true,
+                          ),
+                        ],
+                      ],
+                    ),
+                    crossFadeState: _isExpanded
+                        ? CrossFadeState.showSecond
+                        : CrossFadeState.showFirst,
+                    duration: const Duration(milliseconds: 300),
+                  ),
+
+                  SizedBox(height: 20 * scale),
+                  // Metadata Footer (Always visible)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildMetaDate('Ngày tạo', widget.request.createdAt, scale),
+                      if (widget.request.processedAt != null)
+                        _buildMetaDate(
+                            'Hoàn thành', widget.request.processedAt, scale),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildStatusBadge(String text, Color color, double scale) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10 * scale, vertical: 4 * scale),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(8 * scale),
-        border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 5 * scale,
-            height: 5 * scale,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          ),
-          SizedBox(width: 6 * scale),
-          Text(
-            text,
-            style: AppTextStyles.arimo(
-              fontSize: 10 * scale,
-              fontWeight: FontWeight.w700,
-              color: color,
+  Widget _buildDashedDivider(double scale) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 8 * scale,
+          height: 16 * scale,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              borderRadius: BorderRadius.only(
+                topRight: Radius.circular(8 * scale),
+                bottomRight: Radius.circular(8 * scale),
+              ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoGrid(BuildContext context, double scale) {
-    return Column(
-      children: [
-        _buildInfoRow(
-          'Mã booking',
-          '#${request.bookingId}',
-          AppColors.primary,
-          scale,
-          icon: Icons.confirmation_number_outlined,
         ),
-        SizedBox(height: 10 * scale),
-        Container(
-          padding: EdgeInsets.all(12 * scale),
-          decoration: BoxDecoration(
-            color: AppColors.background,
-            borderRadius: BorderRadius.circular(12 * scale),
+        Expanded(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              const dashWidth = 4.0;
+              const dashSpace = 4.0;
+              final dashCount =
+                  (constraints.constrainWidth() / (dashWidth + dashSpace))
+                      .floor();
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: List.generate(dashCount, (_) {
+                  return SizedBox(
+                    width: dashWidth,
+                    height: 1,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: AppColors.borderLight.withValues(alpha: 0.6),
+                      ),
+                    ),
+                  );
+                }),
+              );
+            },
           ),
-          child: Column(
-            children: [
-              _buildBankDetail('Ngân hàng', request.bankName, scale),
-              SizedBox(height: 8 * scale),
-              _buildBankDetail('Số tài khoản', request.accountNumber, scale, isBold: true),
-              SizedBox(height: 8 * scale),
-              _buildBankDetail('Chủ tài khoản', request.accountHolder, scale),
-            ],
+        ),
+        SizedBox(
+          width: 8 * scale,
+          height: 16 * scale,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(8 * scale),
+                bottomLeft: Radius.circular(8 * scale),
+              ),
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildInfoRow(String label, String value, Color color, double scale, {IconData? icon}) {
+  Widget _buildStatusBadge(String text, Color color, double scale) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10 * scale, vertical: 5 * scale),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(100),
+        border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
+      ),
+      child: Text(
+        text.toUpperCase(),
+        style: AppTextStyles.arimo(
+          fontSize: 9 * scale,
+          fontWeight: FontWeight.w800,
+          color: color,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value, Color color, double scale,
+      {IconData? icon}) {
     return Row(
       children: [
         if (icon != null) ...[
           Icon(icon, size: 14 * scale, color: color.withValues(alpha: 0.6)),
-          SizedBox(width: 6 * scale),
+          SizedBox(width: 8 * scale),
         ],
         Text(
           '$label: ',
@@ -351,62 +481,39 @@ class _RefundRequestCard extends StatelessWidget {
     );
   }
 
-  Widget _buildBankDetail(String label, String value, double scale, {bool isBold = false}) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: AppTextStyles.arimo(
-            fontSize: 11 * scale,
-            color: AppColors.textSecondary,
-          ),
-        ),
-        Text(
-          value,
-          style: AppTextStyles.arimo(
-            fontSize: 11 * scale,
-            fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
-            color: AppColors.textPrimary,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFinancialSummary(BuildContext context, double scale) {
+  Widget _buildAmountBox(String label, double amount, Color color, double scale,
+      {bool isHighlight = false}) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 14 * scale, vertical: 12 * scale),
+      padding: EdgeInsets.all(12 * scale),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.primary.withValues(alpha: 0.05),
-            AppColors.primary.withValues(alpha: 0.01),
-          ],
-        ),
+        color: isHighlight
+            ? color.withValues(alpha: 0.04)
+            : AppColors.background.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(12 * scale),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
+        border: Border.all(
+          color: isHighlight
+              ? color.withValues(alpha: 0.2)
+              : AppColors.borderLight.withValues(alpha: 0.3),
+        ),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: _buildAmountItem(
-              'Số tiền yêu cầu',
-              request.requestedAmount ?? 0,
-              AppColors.textSecondary,
-              scale,
+          Text(
+            label,
+            style: AppTextStyles.arimo(
+              fontSize: 10 * scale,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          Container(height: 30 * scale, width: 1, color: AppColors.borderLight),
-          Expanded(
-            child: _buildAmountItem(
-              'Số tiền được duyệt',
-              request.approvedAmount ?? 0,
-              request.approvedAmount != null && request.approvedAmount! > 0
-                  ? AppColors.appointmentCompleted
-                  : AppColors.textSecondary,
-              scale,
-              emphasize: true,
+          SizedBox(height: 4 * scale),
+          Text(
+            _formatPrice(amount),
+            style: AppTextStyles.arimo(
+              fontSize: 14 * scale,
+              fontWeight: FontWeight.w800,
+              color: isHighlight ? color : AppColors.textPrimary,
             ),
           ),
         ],
@@ -414,107 +521,79 @@ class _RefundRequestCard extends StatelessWidget {
     );
   }
 
-  Widget _buildAmountItem(String label, double amount, Color color, double scale, {bool emphasize = false}) {
-    return Column(
-      children: [
-        Text(
-          label,
-          style: AppTextStyles.arimo(
-            fontSize: 10 * scale,
-            color: AppColors.textSecondary,
-          ),
-        ),
-        SizedBox(height: 4 * scale),
-        Text(
-          _formatPrice(amount),
-          style: AppTextStyles.arimo(
-            fontSize: emphasize ? 15 * scale : 13 * scale,
-            fontWeight: emphasize ? FontWeight.w800 : FontWeight.w600,
-            color: color,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAccentSection(
-    BuildContext context, {
+  Widget _buildAccentSection({
     required String label,
     required String content,
     required Color accentColor,
     required double scale,
     bool isSecondary = false,
   }) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: isSecondary ? accentColor.withValues(alpha: 0.03) : Colors.transparent,
-        borderRadius: BorderRadius.circular(8 * scale),
-      ),
-      child: IntrinsicHeight(
-        child: Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
           children: [
             Container(
-              width: 3 * scale,
+              width: 12 * scale,
+              height: 2 * scale,
               decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: 0.6),
+                color: accentColor,
                 borderRadius: BorderRadius.circular(2 * scale),
               ),
             ),
-            SizedBox(width: 12 * scale),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label.toUpperCase(),
-                    style: AppTextStyles.arimo(
-                      fontSize: 9 * scale,
-                      fontWeight: FontWeight.w800,
-                      color: accentColor.withValues(alpha: 0.8),
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  SizedBox(height: 4 * scale),
-                  Text(
-                    content,
-                    style: AppTextStyles.arimo(
-                      fontSize: 12 * scale,
-                      color: AppColors.textPrimary,
-                      height: 1.5,
-                    ),
-                  ),
-                ],
+            SizedBox(width: 8 * scale),
+            Text(
+              label.toUpperCase(),
+              style: AppTextStyles.arimo(
+                fontSize: 10 * scale,
+                fontWeight: FontWeight.w800,
+                color: accentColor,
+                letterSpacing: 0.5,
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildCompactFooter(BuildContext context, double scale) {
-    return Column(
-      children: [
-        if (request.createdAt != null)
-          _buildMinimalDate('Đã tạo', request.createdAt!, scale),
-        if (request.processedAt != null) ...[
-          SizedBox(height: 4 * scale),
-          _buildMinimalDate('Đã xử lý', request.processedAt!, scale),
-        ],
+        SizedBox(height: 8 * scale),
+        Container(
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(
+              horizontal: 16 * scale, vertical: 12 * scale),
+          decoration: BoxDecoration(
+            color: isSecondary
+                ? accentColor.withValues(alpha: 0.03)
+                : AppColors.background.withValues(alpha: 0.3),
+            borderRadius: BorderRadius.circular(12 * scale),
+            border: Border.all(
+              color: isSecondary
+                  ? accentColor.withValues(alpha: 0.1)
+                  : AppColors.borderLight.withValues(alpha: 0.2),
+            ),
+          ),
+          child: Text(
+            content,
+            style: AppTextStyles.arimo(
+              fontSize: 12 * scale,
+              color: AppColors.textPrimary,
+              height: 1.6,
+            ),
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildMinimalDate(String label, DateTime date, double scale) {
+  Widget _buildMetaDate(String label, DateTime? date, double scale) {
+    if (date == null) return const SizedBox.shrink();
     return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
       children: [
+        Icon(Icons.access_time_rounded,
+            size: 12 * scale, color: AppColors.textSecondary.withValues(alpha: 0.5)),
+        SizedBox(width: 6 * scale),
         Text(
-          '$label ',
+          '$label: ',
           style: AppTextStyles.arimo(
             fontSize: 10 * scale,
-            color: AppColors.textSecondary.withValues(alpha: 0.7),
+            color: AppColors.textSecondary.withValues(alpha: 0.6),
           ),
         ),
         Text(
@@ -587,4 +666,3 @@ class _RefundRequestCard extends StatelessWidget {
     }
   }
 }
-
