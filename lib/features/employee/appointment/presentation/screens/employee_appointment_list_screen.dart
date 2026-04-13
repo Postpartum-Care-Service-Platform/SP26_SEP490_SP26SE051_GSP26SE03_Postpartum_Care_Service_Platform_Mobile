@@ -41,6 +41,7 @@ class _EmployeeAppointmentListContent extends StatelessWidget {
             const EmployeeHeaderBar(
               title: 'Danh sách Lịch hẹn',
               subtitle: 'Quản lý và theo dõi tất cả lịch hẹn trên hệ thống',
+              showBackButton: true,
             ),
             Expanded(
               child: RefreshIndicator(

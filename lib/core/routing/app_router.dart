@@ -27,7 +27,6 @@ import '../../features/employee/shell/presentation/screens/employee_portal_menu.
 import '../../features/employee/appointment/presentation/screens/tasks_screen_new.dart';
 import '../../features/employee/appointment/presentation/screens/employee_assigned_families_screen.dart';
 import '../../features/employee/room/presentation/screens/employee_rooms_screen.dart';
-import '../../features/employee/operations/presentation/screens/check_in_out_screen.dart';
 import '../../features/employee/operations/presentation/screens/requests_screen.dart';
 import '../../features/employee/customer_profile/presentation/screens/employee_meal_plan_screen.dart';
 import '../../features/employee/shell/presentation/screens/employee_chat_screen.dart';
@@ -421,7 +420,7 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const TasksScreenNew());
 
       case AppRoutes.employeeCheckInOut:
-        return MaterialPageRoute(builder: (_) => const CheckInOutScreen());
+        return MaterialPageRoute(builder: (_) => const EmployeePortalScreen());
 
       case AppRoutes.employeeChat:
         return MaterialPageRoute(builder: (_) => const EmployeeChatScreen());

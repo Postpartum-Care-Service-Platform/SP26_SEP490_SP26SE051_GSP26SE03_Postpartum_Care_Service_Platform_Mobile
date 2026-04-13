@@ -316,13 +316,19 @@ class _EmployeeAssignedFamiliesScreenState
                                 final now = DateTime.now();
                                 final status = activity.status.toLowerCase();
 
-                                // Check for missed tasks: Status is 'missed' or time has already ended
-                                final isMissedByTime = activity.endAt != null && now.isAfter(activity.endAt!);
+                                // Check for missed tasks: passed to a new day or status is explicitly missed
+                                bool isMissedByTime = false;
+                                if (activity.endAt != null) {
+                                  final endDay = DateTime(activity.endAt!.year, activity.endAt!.month, activity.endAt!.day);
+                                  final today = DateTime(now.year, now.month, now.day);
+                                  isMissedByTime = today.isAfter(endDay);
+                                }
+
                                 if (status == 'missed' || isMissedByTime) {
                                   _showStatusNotice(
                                     sheetContext,
                                     'Lịch đã lỡ',
-                                    'Bạn không thể cập nhật hoàn tất cho hoạt động đã quá thời gian thực hiện.',
+                                    'Bạn không thể cập nhật hoàn tất vì hoạt động này đã qua ngày thực hiện.',
                                     isError: true,
                                   );
                                   return;
@@ -1163,10 +1169,21 @@ class _TimelineActivityCard extends StatelessWidget {
         ? DateFormat('HH:mm').format(activity.endAt!)
         : '--:--';
     
-    final canCheck = !(activity.status.toLowerCase() == 'done' ||
+    bool statusAllowsCheck = !(activity.status.toLowerCase() == 'done' ||
         activity.status.toLowerCase() == 'completed' ||
         activity.status.toLowerCase() == 'staffdone' ||
-        activity.status.toLowerCase() == 'staff_done');
+        activity.status.toLowerCase() == 'staff_done' ||
+        activity.status.toLowerCase() == 'missed');
+        
+    bool isToday = false;
+    if (activity.startAt != null) {
+      final now = DateTime.now();
+      isToday = activity.startAt!.year == now.year &&
+                activity.startAt!.month == now.month &&
+                activity.startAt!.day == now.day;
+    }
+
+    final canCheck = statusAllowsCheck && isToday;
 
     return Padding(
       padding: EdgeInsets.only(bottom: 10 * scale),

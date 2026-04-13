@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-
 import '../../../../../core/apis/api_client.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/utils/app_responsive.dart';
@@ -9,16 +7,11 @@ import '../../../../../core/widgets/app_app_bar.dart';
 import '../../../../../features/booking/data/datasources/booking_remote_datasource.dart';
 import '../../../../../features/booking/data/models/booking_model.dart';
 import '../../../../../features/employee/contract/presentation/screens/staff_contract_screen.dart';
-import '../../../../../core/di/injection_container.dart';
-import '../../../../../features/employee/booking/presentation/screens/employee_offline_payment_screen.dart';
 
 class StaffBookingListScreen extends StatefulWidget {
   final bool useHomeStaffBookings;
 
-  const StaffBookingListScreen({
-    super.key,
-    this.useHomeStaffBookings = false,
-  });
+  const StaffBookingListScreen({super.key, this.useHomeStaffBookings = false});
 
   @override
   State<StaffBookingListScreen> createState() => _StaffBookingListScreenState();
@@ -31,7 +24,7 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
 
   String _statusFilter = 'all';
   bool _isActionInProgress = false;
-  
+
   // Search and filter
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -89,11 +82,7 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
                       color: color.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
-                      icon,
-                      size: 40,
-                      color: color,
-                    ),
+                    child: Icon(icon, size: 40, color: color),
                   ),
                   const SizedBox(height: 20),
                   Text(
@@ -170,7 +159,7 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
 
   Future<void> _handleConfirm(BookingModel booking) async {
     if (_isActionInProgress) return;
-    
+
     final confirmed = await _showConfirmDialog(
       title: 'Xác nhận Booking',
       message: 'Bạn có chắc chắn muốn xác nhận gói dịch vụ này?',
@@ -257,7 +246,8 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
 
     final confirmed = await _showConfirmDialog(
       title: 'Hoàn thành Gói',
-      message: 'Bạn xác nhận khách đã sử dụng hết dịch vụ và muốn kết thúc booking này?',
+      message:
+          'Bạn xác nhận khách đã sử dụng hết dịch vụ và muốn kết thúc booking này?',
       color: const Color(0xFF16A34A),
     );
     if (!confirmed) return;
@@ -299,7 +289,8 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
 
     final confirmed = await _showConfirmDialog(
       title: 'Check-in Khách',
-      message: 'Xác nhận khách hàng đã đến trung tâm và bắt đầu sử dụng dịch vụ?',
+      message:
+          'Xác nhận khách hàng đã đến trung tâm và bắt đầu sử dụng dịch vụ?',
       color: const Color(0xFF0D9488), // teal color for check-in
     );
     if (!confirmed) return;
@@ -355,7 +346,7 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
         final customerPhone = b.customer?.phone.toLowerCase() ?? '';
         final packageName = b.package?.packageName.toLowerCase() ?? '';
         final bookingId = '#${b.id}'.toLowerCase();
-        
+
         return customerName.contains(query) ||
             customerEmail.contains(query) ||
             customerPhone.contains(query) ||
@@ -367,24 +358,39 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
     // Date range filter
     if (_dateFrom != null) {
       filtered = filtered.where((b) {
-        final bookingDate = DateTime(b.startDate.year, b.startDate.month, b.startDate.day);
-        return bookingDate.isAfter(_dateFrom!.subtract(const Duration(days: 1))) ||
-            bookingDate.isAtSameMomentAs(DateTime(_dateFrom!.year, _dateFrom!.month, _dateFrom!.day));
+        final bookingDate = DateTime(
+          b.startDate.year,
+          b.startDate.month,
+          b.startDate.day,
+        );
+        return bookingDate.isAfter(
+              _dateFrom!.subtract(const Duration(days: 1)),
+            ) ||
+            bookingDate.isAtSameMomentAs(
+              DateTime(_dateFrom!.year, _dateFrom!.month, _dateFrom!.day),
+            );
       }).toList();
     }
 
     if (_dateTo != null) {
       filtered = filtered.where((b) {
-        final bookingDate = DateTime(b.startDate.year, b.startDate.month, b.startDate.day);
+        final bookingDate = DateTime(
+          b.startDate.year,
+          b.startDate.month,
+          b.startDate.day,
+        );
         return bookingDate.isBefore(_dateTo!.add(const Duration(days: 1))) ||
-            bookingDate.isAtSameMomentAs(DateTime(_dateTo!.year, _dateTo!.month, _dateTo!.day));
+            bookingDate.isAtSameMomentAs(
+              DateTime(_dateTo!.year, _dateTo!.month, _dateTo!.day),
+            );
       }).toList();
     }
 
     // Package filter
     if (_packageFilter != null && _packageFilter!.isNotEmpty) {
       filtered = filtered.where((b) {
-        return b.package?.packageName.toLowerCase() == _packageFilter!.toLowerCase();
+        return b.package?.packageName.toLowerCase() ==
+            _packageFilter!.toLowerCase();
       }).toList();
     }
 
@@ -536,34 +542,27 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
                           onConfirm: booking.status.toLowerCase() == 'pending'
                               ? () => _handleConfirm(booking)
                               : null,
-                          onComplete: ['confirmed', 'in_progress', 'active', 'checked_in'].contains(booking.status.toLowerCase()) &&
+                          onComplete:
+                              [
+                                    'confirmed',
+                                    'in_progress',
+                                    'active',
+                                    'checked_in',
+                                  ].contains(booking.status.toLowerCase()) &&
                                   booking.remainingAmount <= 0
                               ? () => _handleComplete(booking)
                               : null,
                           onCheckIn: booking.status.toLowerCase() == 'confirmed'
                               ? () => _handleCheckIn(booking)
                               : null,
-                           onRecordOfflinePayment: !['completed', 'cancelled'].contains(booking.status.toLowerCase())
-                              ? () async {
-                                  final bookingBloc = InjectionContainer.bookingBloc;
-                                  final entity = booking.toEntity();
-                                  final result = await Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => BlocProvider.value(
-                                        value: bookingBloc,
-                                        child: EmployeeOfflinePaymentScreen(
-                                          booking: entity,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                  if (result == true) {
-                                    await _refresh();
-                                  }
-                                }
-                              : null,
                           onViewContract:
-                              ['confirmed', 'in_progress', 'active', 'checked_in', 'completed'].contains(booking.status.toLowerCase())
+                              [
+                                'confirmed',
+                                'in_progress',
+                                'active',
+                                'checked_in',
+                                'completed',
+                              ].contains(booking.status.toLowerCase())
                               ? () {
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
@@ -844,7 +843,7 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
         itemBuilder: (context, index) {
           final option = statusOptions[index];
           final isSelected = _statusFilter == option['value'];
-          
+
           return Padding(
             padding: EdgeInsets.only(right: 8 * scale),
             child: ChoiceChip(
@@ -870,7 +869,9 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(25 * scale),
                 side: BorderSide(
-                  color: isSelected ? AppColors.primary : AppColors.textSecondary.withValues(alpha: 0.2),
+                  color: isSelected
+                      ? AppColors.primary
+                      : AppColors.textSecondary.withValues(alpha: 0.2),
                   width: 1,
                 ),
               ),
@@ -896,7 +897,6 @@ class _BookingItem extends StatelessWidget {
   final VoidCallback? onConfirm;
   final VoidCallback? onComplete;
   final VoidCallback? onCheckIn;
-  final VoidCallback? onRecordOfflinePayment;
   final VoidCallback? onViewContract;
 
   const _BookingItem({
@@ -905,7 +905,6 @@ class _BookingItem extends StatelessWidget {
     this.onConfirm,
     this.onComplete,
     this.onCheckIn,
-    this.onRecordOfflinePayment,
     this.onViewContract,
   });
 
@@ -946,7 +945,8 @@ class _BookingItem extends StatelessWidget {
         ? booking.customer!.username
         : (booking.customer?.email ?? 'Khách hàng');
     final String packageName = booking.package?.packageName ?? 'Gói dịch vụ';
-    final String bookingDate = '${booking.startDate.day}/${booking.startDate.month}/${booking.startDate.year}';
+    final String bookingDate =
+        '${booking.startDate.day}/${booking.startDate.month}/${booking.startDate.year}';
     final String price = '${booking.finalAmount.toStringAsFixed(0)} đ';
 
     return Container(
@@ -971,7 +971,10 @@ class _BookingItem extends StatelessWidget {
           children: [
             // Header Row
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 12 * scale),
+              padding: EdgeInsets.symmetric(
+                horizontal: 16 * scale,
+                vertical: 12 * scale,
+              ),
               color: statusColor.withValues(alpha: 0.05),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1022,7 +1025,7 @@ class _BookingItem extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             // Body Content
             Padding(
               padding: EdgeInsets.all(16 * scale),
@@ -1090,7 +1093,10 @@ class _BookingItem extends StatelessWidget {
                         ],
                       ),
                       // Collapsed action buttons logic
-                      if (onConfirm != null || onComplete != null || onCheckIn != null || onRecordOfflinePayment != null || onViewContract != null)
+                      if (onConfirm != null ||
+                          onComplete != null ||
+                          onCheckIn != null ||
+                          onViewContract != null)
                         Row(
                           children: [
                             if (onCancel != null)
@@ -1131,10 +1137,10 @@ class _BookingItem extends StatelessWidget {
                                 tooltip: 'Hoàn thành',
                               ),
                             ],
-                            if (onRecordOfflinePayment != null || onViewContract != null) ...[
-                               SizedBox(width: 10 * scale),
-                               _buildMoreActions(context, scale),
-                            ]
+                            if (onViewContract != null) ...[
+                              SizedBox(width: 10 * scale),
+                              _buildMoreActions(context, scale),
+                            ],
                           ],
                         ),
                     ],
@@ -1151,9 +1157,7 @@ class _BookingItem extends StatelessWidget {
   Widget _buildMoreActions(BuildContext context, double scale) {
     return PopupMenuButton<String>(
       onSelected: (value) {
-        if (value == 'payment' && onRecordOfflinePayment != null) {
-          onRecordOfflinePayment!();
-        } else if (value == 'contract' && onViewContract != null) {
+        if (value == 'contract' && onViewContract != null) {
           onViewContract!();
         }
       },
@@ -1163,20 +1167,13 @@ class _BookingItem extends StatelessWidget {
           color: AppColors.textSecondary.withValues(alpha: 0.1),
           shape: BoxShape.circle,
         ),
-        child: Icon(Icons.more_vert_rounded, size: 20 * scale, color: AppColors.textSecondary),
+        child: Icon(
+          Icons.more_vert_rounded,
+          size: 20 * scale,
+          color: AppColors.textSecondary,
+        ),
       ),
       itemBuilder: (context) => [
-        if (onRecordOfflinePayment != null)
-          const PopupMenuItem(
-            value: 'payment',
-            child: Row(
-              children: [
-                Icon(Icons.payments_outlined, size: 20),
-                SizedBox(width: 8),
-                Text('Thanh toán offline'),
-              ],
-            ),
-          ),
         if (onViewContract != null)
           const PopupMenuItem(
             value: 'contract',
@@ -1200,7 +1197,11 @@ class _BookingItem extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 16 * scale, color: AppColors.textSecondary.withValues(alpha: 0.6)),
+        Icon(
+          icon,
+          size: 16 * scale,
+          color: AppColors.textSecondary.withValues(alpha: 0.6),
+        ),
         SizedBox(width: 4 * scale),
         Text(
           label,
@@ -1215,23 +1216,35 @@ class _BookingItem extends StatelessWidget {
 
   IconData _getIconForStatus(String iconKey) {
     switch (iconKey) {
-      case 'wait': return Icons.hourglass_empty_rounded;
-      case 'check': return Icons.check_circle_outline_rounded;
-      case 'in_progress': return Icons.directions_run_rounded;
-      case 'done': return Icons.done_all_rounded;
-      case 'cancel': return Icons.cancel_outlined;
-      default: return Icons.info_outline_rounded;
+      case 'wait':
+        return Icons.hourglass_empty_rounded;
+      case 'check':
+        return Icons.check_circle_outline_rounded;
+      case 'in_progress':
+        return Icons.directions_run_rounded;
+      case 'done':
+        return Icons.done_all_rounded;
+      case 'cancel':
+        return Icons.cancel_outlined;
+      default:
+        return Icons.info_outline_rounded;
     }
   }
 
   String _getStatusDisplayText(String status) {
     switch (status.toLowerCase()) {
-      case 'pending': return 'CHỜ XỬ LÝ';
-      case 'confirmed': return 'ĐÃ XÁC NHẬN';
-      case 'in_progress': return 'ĐANG THỰC HIỆN';
-      case 'completed': return 'HOÀN THÀNH';
-      case 'cancelled': return 'ĐÃ HỦY';
-      default: return status.toUpperCase();
+      case 'pending':
+        return 'CHỜ XỬ LÝ';
+      case 'confirmed':
+        return 'ĐÃ XÁC NHẬN';
+      case 'in_progress':
+        return 'ĐANG THỰC HIỆN';
+      case 'completed':
+        return 'HOÀN THÀNH';
+      case 'cancelled':
+        return 'ĐÃ HỦY';
+      default:
+        return status.toUpperCase();
     }
   }
 }
@@ -1265,11 +1278,7 @@ class _CircularActionButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(12 * scale),
             border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
           ),
-          child: Icon(
-            icon,
-            size: 20 * scale,
-            color: color,
-          ),
+          child: Icon(icon, size: 20 * scale, color: color),
         ),
       ),
     );

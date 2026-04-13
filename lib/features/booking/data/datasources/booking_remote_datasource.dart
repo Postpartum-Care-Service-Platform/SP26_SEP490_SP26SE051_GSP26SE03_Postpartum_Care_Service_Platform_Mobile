@@ -54,14 +54,6 @@ abstract class BookingRemoteDataSource {
 
   Future<PaymentStatusModel> checkPaymentStatus(String orderCode);
 
-  /// Staff ghi nhận thanh toán offline cho booking.
-  Future<PaymentStatusModel> createOfflinePayment({
-    required int bookingId,
-    required String customerId,
-    required double amount,
-    required String paymentMethod,
-    String? note,
-  });
 }
 
 /// Booking Remote Data Source Implementation
@@ -347,31 +339,6 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
     }
   }
 
-  @override
-  Future<PaymentStatusModel> createOfflinePayment({
-    required int bookingId,
-    required String customerId,
-    required double amount,
-    required String paymentMethod,
-    String? note,
-  }) async {
-    try {
-      final response = await dio.post(
-        ApiEndpoints.createOfflinePayment,
-        data: {
-          'bookingId': bookingId,
-          'customerId': customerId,
-          'amount': amount,
-          'paymentMethod': paymentMethod,
-          if (note != null && note.isNotEmpty) 'note': note,
-        },
-      );
-
-      return PaymentStatusModel.fromJson(response.data as Map<String, dynamic>);
-    } on DioException catch (e) {
-      throw _handleError(e);
-    }
-  }
 
   String _handleError(DioException error) {
     if (error.response != null) {
