@@ -220,7 +220,7 @@ class _EmployeeAssignedFamiliesScreenState
       builder: (sheetContext) {
         final scale = AppResponsive.scaleFactor(sheetContext);
         final initialActivities = List<_AssignedActivity>.from(customer.activities);
-        var filter = _ActivityFilter.all;
+        var filter = _ActivityFilter.scheduled;
 
         return StatefulBuilder(
           builder: (context, setSheetState) {
@@ -348,18 +348,36 @@ class _EmployeeAssignedFamiliesScreenState
                                 final now = DateTime.now();
                                 final status = activity.status.toLowerCase();
 
-                                bool isMissedByTime = false;
-                                if (activity.endAt != null) {
-                                  final endDay = DateTime(activity.endAt!.year, activity.endAt!.month, activity.endAt!.day);
-                                  final today = DateTime(now.year, now.month, now.day);
-                                  isMissedByTime = today.isAfter(endDay);
-                                }
+                                final activityDate = activity.startAt != null
+                                    ? DateTime(activity.startAt!.year, activity.startAt!.month, activity.startAt!.day)
+                                    : null;
+                                final today = DateTime(now.year, now.month, now.day);
 
-                                if (status == 'missed' || isMissedByTime) {
+                                if (status != 'scheduled') {
                                   _showStatusNotice(
                                     sheetContext,
-                                    'Lịch đã lỡ',
-                                    'Bạn không thể cập nhật hoàn tất vì hoạt động này đã qua ngày thực hiện.',
+                                    'Trạng thái không hợp lệ',
+                                    'Bạn chỉ có thể cập nhật những hoạt động đang ở trạng thái "Sắp tới".',
+                                    isError: true,
+                                  );
+                                  return;
+                                }
+
+                                if (activityDate == null || !activityDate.isAtSameMomentAs(today)) {
+                                  _showStatusNotice(
+                                    sheetContext,
+                                    'Thời gian không phù hợp',
+                                    'Bạn chỉ được phép cập nhật hoạt động diễn ra trong ngày hôm nay.',
+                                    isError: true,
+                                  );
+                                  return;
+                                }
+
+                                if (activity.startAt != null && now.isBefore(activity.startAt!)) {
+                                  _showStatusNotice(
+                                    sheetContext,
+                                    'Chưa tới giờ',
+                                    'Hoạt động này chưa đến giờ thực hiện. Vui lòng quay lại sau.',
                                     isError: true,
                                   );
                                   return;
@@ -1347,10 +1365,10 @@ class _FilterTabs extends StatelessWidget {
               label = 'Sắp tới';
               break;
             case _ActivityFilter.missed:
-              label = 'Bỏ lỡ';
+              label = 'Đã lỡ';
               break;
             case _ActivityFilter.staffDone:
-              label = 'Đã cập nhật';
+              label = 'Đã làm';
               break;
             case _ActivityFilter.done:
               label = 'Hoàn tất';
@@ -1438,10 +1456,16 @@ class _ActivitiesVerticalList extends StatelessWidget {
                 ],
               ),
             ),
-            ...day.activities.map((act) => _ActivityItem(
-              activity: act,
-              onCheck: () => onCheckPressed(act),
-            )),
+            ...day.activities.asMap().entries.map((entry) {
+              final idx = entry.key;
+              final act = entry.value;
+              final isLast = idx == day.activities.length - 1;
+              return _ActivityItem(
+                activity: act,
+                onCheck: () => onCheckPressed(act),
+                isLast: isLast,
+              );
+            }),
           ],
         );
       }).toList(),
@@ -1452,124 +1476,222 @@ class _ActivitiesVerticalList extends StatelessWidget {
 class _ActivityItem extends StatelessWidget {
   final _AssignedActivity activity;
   final VoidCallback onCheck;
+  final bool isLast;
 
-  const _ActivityItem({required this.activity, required this.onCheck});
+  const _ActivityItem({
+    required this.activity,
+    required this.onCheck,
+    this.isLast = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
     final statusColor = _getStatusColor(activity.status);
     final isDone = activity.status.toLowerCase().contains('done');
+    final startTime = activity.startAt != null ? DateFormat('HH:mm').format(activity.startAt!) : '--:--';
 
-    return Container(
-      margin: EdgeInsets.only(bottom: 12 * scale),
-      padding: EdgeInsets.all(12 * scale),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(12 * scale),
-        border: Border.all(color: AppColors.borderLight.withValues(alpha: 0.5)),
-      ),
+    final isScheduled = activity.status.toLowerCase() == 'scheduled';
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final isToday = activity.startAt != null &&
+        DateTime(activity.startAt!.year, activity.startAt!.month, activity.startAt!.day)
+            .isAtSameMomentAs(today);
+    final hasStarted = activity.startAt != null && now.isAfter(activity.startAt!);
+
+    return IntrinsicHeight(
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
-            padding: EdgeInsets.all(8 * scale),
-            decoration: BoxDecoration(
-              color: statusColor.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              isDone ? Icons.check_circle_rounded : Icons.pending_actions_rounded,
-              size: 18 * scale,
-              color: statusColor,
-            ),
-          ),
-          SizedBox(width: 12 * scale),
-          Expanded(
+          // Left: Time mile stone
+          SizedBox(
+            width: 45 * scale,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        activity.activity,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.arimo(
-                          fontSize: 15 * scale,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 8 * scale),
-                    Text(
-                      _formatTimeRange(activity.startAt, activity.endAt),
-                      style: AppTextStyles.arimo(
-                        fontSize: 13 * scale,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
+                Text(
+                  startTime,
+                  style: AppTextStyles.arimo(
+                    fontSize: 14 * scale,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
-                if (activity.note.isNotEmpty) ...[
+                Text(
+                  'Bắt đầu',
+                  style: AppTextStyles.arimo(
+                    fontSize: 10 * scale,
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                if (!hasStarted && isScheduled && isToday) ...[
                   SizedBox(height: 4 * scale),
                   Text(
-                    activity.note,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    'Chờ tới giờ',
                     style: AppTextStyles.arimo(
-                      fontSize: 13 * scale,
-                      color: AppColors.textSecondary,
-                    ).copyWith(fontStyle: FontStyle.italic),
+                      fontSize: 9 * scale,
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ],
-                SizedBox(height: 10 * scale),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8 * scale, vertical: 4 * scale),
-                      decoration: BoxDecoration(
-                        color: statusColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(6 * scale),
+              ],
+            ),
+          ),
+          // Middle: Timeline line & dot
+          SizedBox(
+            width: 32 * scale,
+            child: Column(
+              children: [
+                Container(
+                  width: 14 * scale,
+                  height: 14 * scale,
+                  margin: EdgeInsets.only(top: 2 * scale),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: statusColor, width: 3 * scale),
+                    boxShadow: [
+                      BoxShadow(
+                        color: statusColor.withValues(alpha: 0.2),
+                        blurRadius: 4,
+                        spreadRadius: 1,
                       ),
-                      child: Text(
-                        _getStatusText(activity.status),
-                        style: AppTextStyles.arimo(
-                          fontSize: 12 * scale,
-                          fontWeight: FontWeight.bold,
-                          color: statusColor,
+                    ],
+                  ),
+                ),
+                if (!isLast)
+                  Expanded(
+                    child: Container(
+                      width: 2 * scale,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            statusColor.withValues(alpha: 0.5),
+                            AppColors.borderLight.withValues(alpha: 0.2),
+                          ],
                         ),
                       ),
                     ),
-                    if (!isDone)
-                      TextButton.icon(
-                        onPressed: onCheck,
-                        style: TextButton.styleFrom(
-                          padding: EdgeInsets.symmetric(horizontal: 10 * scale, vertical: 6 * scale),
-                          backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8 * scale),
-                          ),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        icon: Icon(Icons.add_task_rounded, size: 16 * scale, color: AppColors.primary),
-                        label: Text(
-                          'Cập nhật',
+                  ),
+              ],
+            ),
+          ),
+          // Right: Content Card
+          Expanded(
+            child: Container(
+              margin: EdgeInsets.only(bottom: 24 * scale),
+              padding: EdgeInsets.all(16 * scale),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(16 * scale),
+                border: Border.all(color: AppColors.borderLight.withValues(alpha: 0.4)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          activity.activity,
                           style: AppTextStyles.arimo(
-                            fontSize: 13 * scale,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
+                            fontSize: 16 * scale,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
                           ),
                         ),
                       ),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 8 * scale, vertical: 4 * scale),
+                        decoration: BoxDecoration(
+                          color: statusColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6 * scale),
+                        ),
+                        child: Text(
+                          _getStatusText(activity.status),
+                          style: AppTextStyles.arimo(
+                            fontSize: 11 * scale,
+                            fontWeight: FontWeight.w800,
+                            color: statusColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 6 * scale),
+                  Row(
+                    children: [
+                      Icon(Icons.access_time_rounded, size: 14 * scale, color: AppColors.textSecondary),
+                      SizedBox(width: 4 * scale),
+                      Text(
+                        _formatTimeRange(activity.startAt, activity.endAt),
+                        style: AppTextStyles.arimo(
+                          fontSize: 12 * scale,
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (activity.note.isNotEmpty) ...[
+                    SizedBox(height: 10 * scale),
+                    Container(
+                      padding: EdgeInsets.all(10 * scale),
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: AppColors.borderLight.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8 * scale),
+                        border: Border.all(color: AppColors.borderLight.withValues(alpha: 0.2)),
+                      ),
+                      child: Text(
+                        activity.note,
+                        style: AppTextStyles.arimo(
+                          fontSize: 13 * scale,
+                          color: AppColors.textSecondary,
+                        ).copyWith(fontStyle: FontStyle.italic),
+                      ),
+                    ),
                   ],
-                ),
-              ],
+                  if (isScheduled && isToday && hasStarted) ...[
+                    SizedBox(height: 16 * scale),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: onCheck,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: EdgeInsets.symmetric(vertical: 10 * scale),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10 * scale),
+                          ),
+                        ),
+                        icon: Icon(Icons.check_circle_outline_rounded, size: 18 * scale),
+                        label: Text(
+                          'Xác nhận hoàn tất',
+                          style: AppTextStyles.arimo(
+                            fontSize: 14 * scale,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
           ),
         ],
@@ -1597,12 +1719,12 @@ class _ActivityItem extends StatelessWidget {
   String _getStatusText(String status) {
     switch (status.toLowerCase()) {
       case 'scheduled':
-        return 'Sắp diễn ra';
+        return 'Sắp tới';
       case 'missed':
         return 'Đã lỡ';
       case 'staffdone':
       case 'staff_done':
-        return 'Đã cập nhật';
+        return 'Đã làm';
       case 'done':
       case 'completed':
         return 'Hoàn tất';
