@@ -203,7 +203,10 @@ class NowPackageModel extends Equatable {
       normalizedBookingStatus == 'in_progress' ||
       normalizedBookingStatus == 'in progress';
 
-  bool get isServiceUnlocked => serviceIsActive || isInProgressStatus;
+  bool get isServiceUnlocked =>
+      serviceIsActive ||
+      isInProgressStatus ||
+      (contractStatus == 'Signed' && remainingAmount <= 0);
 
   factory NowPackageModel.fromJson(Map<String, dynamic> json) {
     final rawPaidAmount = json['paidAmount'];

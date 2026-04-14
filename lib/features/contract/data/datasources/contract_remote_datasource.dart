@@ -264,55 +264,42 @@ class ContractRemoteDataSourceImpl implements ContractRemoteDataSource {
     required DateTime signedDate,
   }) async {
     try {
-      final formData = FormData.fromMap({
+      final formDataMap = <String, dynamic>{
         'signedDate': signedDate.toIso8601String().split('T')[0],
-      });
+      };
 
-      for (var path in filePaths) {
-         formData.files.add(MapEntry(
-           'file', 
-           await MultipartFile.fromFile(path),
-         ));
-         // Also add to 'files' array in case the API expects 'files' list
-         formData.files.add(MapEntry(
-           'files', 
-           await MultipartFile.fromFile(path),
-         ));
-      }
-
-      // Ưu tiên endpoint upload-file nếu backend có hỗ trợ.
-      try {
-        final response = await dio.put(
-          '/Contract/$id/upload-signed-file',
-          data: formData,
+      if (filePaths.isNotEmpty) {
+        final multipartFiles = await Future.wait(
+          filePaths.map((path) => MultipartFile.fromFile(
+                path,
+                filename: path.split('/').last,
+              )),
         );
-        final data = response.data;
-        if (data is Map<String, dynamic>) {
-          return data['message'] as String? ?? 'Upload hợp đồng đã ký thành công';
-        }
-        return 'Upload hợp đồng đã ký thành công';
-      } on DioException catch (e) {
-        // Nhiều môi trường chỉ có endpoint /upload-signed.
-        if (e.response?.statusCode != 404) {
-          rethrow;
-        }
+        // Aligning with project pattern (Feedback/StaffSchedule use 'Images')
+        formDataMap['Images'] = multipartFiles;
       }
 
-      // Fallback: thử gửi multipart vào endpoint /upload-signed.
-      final fallbackResponse = await dio.put(
+      final response = await dio.put(
         ApiEndpoints.uploadSignedContract(id),
-        data: formData,
+        data: FormData.fromMap(formDataMap),
       );
-      final fallbackData = fallbackResponse.data;
-      if (fallbackData is Map<String, dynamic>) {
-        return fallbackData['message'] as String? ?? 'Upload hợp đồng đã ký thành công';
+
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        return data['message'] as String? ?? 'Upload hợp đồng đã ký thành công';
       }
       return 'Upload hợp đồng đã ký thành công';
     } on DioException catch (e) {
       if (e.response != null) {
-        throw Exception(
-          'Upload thất bại (${e.response?.statusCode}). Backend có thể chỉ hỗ trợ body JSON fileUrl cho endpoint /upload-signed.',
-        );
+        final status = e.response?.statusCode;
+        final errorData = e.response?.data;
+        String errorMessage = 'Upload thất bại ($status)';
+        
+        if (errorData is Map<String, dynamic>) {
+          errorMessage = errorData['message'] ?? errorData['error'] ?? errorMessage;
+        }
+
+        throw Exception(errorMessage);
       } else {
         throw Exception('Network error: ${e.message}');
       }
