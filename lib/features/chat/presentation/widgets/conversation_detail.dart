@@ -210,10 +210,14 @@ class ConversationDetail extends StatelessWidget {
                             sender == 'nurse' ||
                             sender == 'consultant';
 
-                        // Logic isMine: So sánh senderId của tin nhắn với ID của tài khoản hiện tại
-                        final isMine = message.senderId != null && 
+                        // Logic isMine: 
+                        // 1. So sánh senderId nếu đã được server gán
+                        // 2. Phụ thuộc vào senderType: Nếu ở app Customer và tin là 'Customer' thì gán là của mình
+                        final isMine = (message.senderId != null && 
                                       currentAccount != null && 
-                                      message.senderId == currentAccount.id;
+                                      message.senderId == currentAccount.id) ||
+                                      (!isStaff && (sender == 'customer' || sender == 'user')) ||
+                                      (isStaff && (sender == 'staff' || sender == 'employee'));
 
                         // Force initials per requirement: AI => "AI", staff => "NV"
                         final displayName = isAI

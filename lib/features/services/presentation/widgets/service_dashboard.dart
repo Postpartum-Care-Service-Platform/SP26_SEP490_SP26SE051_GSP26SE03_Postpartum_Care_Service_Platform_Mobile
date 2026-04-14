@@ -353,11 +353,33 @@ class _BrandDivider extends StatelessWidget {
             ),
           ),
           SizedBox(width: 10 * scale),
-          SvgPicture.asset(
-            AppAssets.appIconFourth,
-            width: iconSize,
-            height: iconSize,
-            fit: BoxFit.contain,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Icon 2: Spiral
+              SvgPicture.asset(
+                AppAssets.appIconSecond,
+                width: iconSize,
+                height: iconSize,
+                fit: BoxFit.contain,
+              ),
+              SizedBox(width: 8 * scale),
+              // Icon 4: Square Pattern
+              SvgPicture.asset(
+                AppAssets.appIconFourth,
+                width: iconSize,
+                height: iconSize,
+                fit: BoxFit.contain,
+              ),
+              SizedBox(width: 8 * scale),
+              // Icon 3: Plant/Flower
+              SvgPicture.asset(
+                AppAssets.appIconThird,
+                width: iconSize,
+                height: iconSize,
+                fit: BoxFit.contain,
+              ),
+            ],
           ),
           SizedBox(width: 10 * scale),
           Expanded(

@@ -107,10 +107,9 @@ class _ConversationScreenState extends State<ConversationListScreen> {
     final scale = AppResponsive.scaleFactor(context);
     final isStaff = _isStaff(context);
 
-    return BlocProvider(
-      create: (_) =>
-          InjectionContainer.chatBloc
-            ..add(const ChatStarted(autoSelectFirstConversation: false)),
+    return BlocProvider.value(
+      value: InjectionContainer.chatBloc
+        ..add(const ChatStarted(autoSelectFirstConversation: false)),
       child: Builder(
         builder: (contextWithBloc) {
           return Scaffold(

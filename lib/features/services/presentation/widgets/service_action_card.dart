@@ -100,6 +100,7 @@ class _ServiceActionCardState extends State<ServiceActionCard>
             padding: EdgeInsets.all(20 * scale),
             child: Stack(
               clipBehavior: Clip.none,
+              alignment: Alignment.center,
               children: [
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,

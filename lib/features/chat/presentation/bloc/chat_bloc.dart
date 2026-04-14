@@ -286,7 +286,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     final tempUserMessage = ChatMessage(
       id: -now.millisecondsSinceEpoch,
       content: event.content,
-      senderType: selected.hasActiveSupport ? 'customer' : 'customer',
+      senderType: event.isStaff ? 'staff' : 'customer',
       senderId: null,
       senderName: null,
       createdAt: now,
