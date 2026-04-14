@@ -178,6 +178,7 @@ class ServiceDashboard extends StatelessWidget {
               ),
               title: AppStrings.feedBackForService,
               onTap: () => AppRouter.push(context, AppRoutes.feedback),
+              isEnabled: nowPackage.isInProgressStatus,
             ),
             ServiceActionCard(
               iconWidget: SvgPicture.asset(
@@ -190,6 +191,7 @@ class ServiceDashboard extends StatelessWidget {
               ),
               title: AppStrings.servicesAmenityRequest,
               onTap: () => AppRouter.push(context, AppRoutes.amenity),
+              isEnabled: nowPackage.isInProgressStatus,
             ),
           ],
         ),
