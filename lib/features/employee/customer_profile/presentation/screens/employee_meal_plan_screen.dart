@@ -10,6 +10,7 @@ import '../../../../../features/services/data/datasources/staff_schedule_remote_
 import '../../../../../features/services/data/models/menu_record_model.dart';
 import '../../../../../features/services/data/models/menu_model.dart';
 import '../../../../../core/widgets/app_toast.dart';
+import '../../../../booking/data/datasources/booking_remote_datasource.dart';
 import '../../data/datasources/employee_customer_profile_remote_datasource.dart';
 
 class EmployeeMealPlanScreen extends StatefulWidget {
@@ -19,6 +20,8 @@ class EmployeeMealPlanScreen extends StatefulWidget {
   State<EmployeeMealPlanScreen> createState() => _EmployeeMealPlanScreenState();
 }
 
+enum _MenuFilterMode { all, date, range }
+
 class _EmployeeMealPlanScreenState extends State<EmployeeMealPlanScreen> {
   late final Future<List<_AssignedCustomer>> _futureCustomers =
       _loadAssignedCustomers();
@@ -27,69 +30,91 @@ class _EmployeeMealPlanScreenState extends State<EmployeeMealPlanScreen> {
   String? _selectedCustomerId;
   Future<List<MenuRecordModel>>? _menuRecordsFuture;
 
+  _MenuFilterMode _menuFilterMode = _MenuFilterMode.all;
+  DateTime _selectedDate = DateTime.now();
+  DateTime? _rangeFrom;
+  DateTime? _rangeTo;
+
+
   Future<List<_AssignedCustomer>> _loadAssignedCustomers() async {
     final result = <_AssignedCustomer>[];
     final customerIds = <String>{};
 
-    // 1. Try from appointments
+    // 1. Collect unique Customer IDs from multiple sources
+    
+    // Source A: Appointments
     try {
       final appointments = await InjectionContainer.appointmentEmployeeRepository
           .getMyAssignedAppointments();
-
       for (final a in appointments) {
-        final id = a.customerId.trim();
-        if (id.isEmpty || customerIds.contains(id)) continue;
-
-        final info = a.customer;
-        final email = info?.email ?? '';
-        final displayName = (info?.username?.trim().isNotEmpty == true)
-            ? info!.username!.trim()
-            : (email.isNotEmpty ? email : id);
-
-        result.add(
-          _AssignedCustomer(
-            customerId: id,
-            displayName: displayName,
-            email: email,
-          ),
-        );
-        customerIds.add(id);
+        if (a.customerId.isNotEmpty) customerIds.add(a.customerId);
       }
     } catch (e) {
-      debugPrint('Error loading appointments: $e');
+      debugPrint('Error loading appointments IDs: $e');
     }
 
-    // 2. Try from staff schedule (always merge to find more families)
+    // Source B: Staff Schedules
     try {
       final staffScheduleDs = StaffScheduleRemoteDataSourceImpl();
       final today = DateTime.now();
-      // Look for any assignment in 30 days around today
       final from = today.subtract(const Duration(days: 15)).toIso8601String().split('T')[0];
       final to = today.add(const Duration(days: 15)).toIso8601String().split('T')[0];
 
-      final schedules =
-          await staffScheduleDs.getMySchedulesByDateRange(from: from, to: to);
-
+      final schedules = await staffScheduleDs.getMySchedulesByDateRange(from: from, to: to);
       for (final s in schedules) {
-        final fs = s.familySchedule;
-        if (fs == null) continue;
-
-        final id = fs.customerId.trim();
-        if (id.isEmpty || customerIds.contains(id)) continue;
-
-        result.add(
-          _AssignedCustomer(
-            customerId: id,
-            displayName: fs.customerName?.trim().isNotEmpty == true
-                ? fs.customerName!.trim()
-                : 'Khách hàng #$id',
-            email: '',
-          ),
-        );
-        customerIds.add(id);
+        if (s.familySchedule != null) {
+          customerIds.add(s.familySchedule!.customerId);
+        }
       }
     } catch (e) {
-      debugPrint('Error loading staff schedules: $e');
+      debugPrint('Error loading schedule IDs: $e');
+    }
+
+    // Source C: Bookings
+    try {
+      final bookingDs = BookingRemoteDataSourceImpl();
+      final bookings = await bookingDs.getBookingsByHomeStaff();
+      for (final b in bookings) {
+        if (b.customer?.id != null && b.customer!.id.isNotEmpty) {
+           customerIds.add(b.customer!.id);
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading booking IDs: $e');
+    }
+
+    // 2. For each unique customer ID, fetch Family Profiles to get the "Gia đình" name
+    for (final id in customerIds) {
+      try {
+        final profiles = await _profileDs.getFamilyProfilesByAccountId(id);
+        if (profiles.isNotEmpty) {
+          // Find Head of Family or use the first one
+          final head = profiles.firstWhere(
+            (p) => (p.memberTypeName ?? '').toLowerCase().contains('head'),
+            orElse: () => profiles.first,
+          );
+          
+          result.add(_AssignedCustomer(
+            customerId: id,
+            displayName: 'Gia đình ${head.fullName}',
+            email: '',
+          ));
+        } else {
+          // Fallback if no profiles found
+          result.add(_AssignedCustomer(
+            customerId: id,
+            displayName: 'Gia đình #$id',
+            email: '',
+          ));
+        }
+      } catch (e) {
+        debugPrint('Error loading profiles for $id: $e');
+        result.add(_AssignedCustomer(
+          customerId: id,
+          displayName: 'Gia đình #$id',
+          email: '',
+        ));
+      }
     }
 
     result.sort((a, b) => a.displayName.compareTo(b.displayName));
@@ -195,7 +220,7 @@ class _EmployeeMealPlanScreenState extends State<EmployeeMealPlanScreen> {
                             if (v == null) return;
                             setState(() {
                               _selectedCustomerId = v;
-                              _menuRecordsFuture = _loadMenuRecords(v);
+                              _menuRecordsFuture = _loadMenuRecordsByCurrentFilter();
                             });
                           },
                           decoration: InputDecoration(
@@ -233,16 +258,44 @@ class _EmployeeMealPlanScreenState extends State<EmployeeMealPlanScreen> {
     );
   }
 
-  Future<List<MenuRecordModel>> _loadMenuRecords(String customerId) {
-    return _profileDs.getMenuRecordsByCustomer(customerId);
+  Future<List<MenuRecordModel>> _loadMenuRecordsByCurrentFilter() {
+    if (_selectedCustomerId == null) return Future.value([]);
+    
+    final customerId = _selectedCustomerId!;
+    switch (_menuFilterMode) {
+      case _MenuFilterMode.date:
+        return _profileDs.getMenuRecordsByCustomerDate(
+          customerId: customerId,
+          date: _selectedDate,
+        );
+      case _MenuFilterMode.range:
+        if (_rangeFrom != null && _rangeTo != null) {
+          return _profileDs.getMenuRecordsByCustomerDateRange(
+            customerId: customerId,
+            from: _rangeFrom!,
+            to: _rangeTo!,
+          );
+        }
+        return _profileDs.getMenuRecordsByCustomer(customerId);
+      case _MenuFilterMode.all:
+      default:
+        return _profileDs.getMenuRecordsByCustomer(customerId);
+    }
   }
+
+  String _fmtDateOnly(DateTime date) => date.toIso8601String().split('T').first;
 
   Widget _buildMenuRecordsSection(BuildContext context) {
     if (_selectedCustomerId == null) return const SizedBox.shrink();
-    _menuRecordsFuture ??= _loadMenuRecords(_selectedCustomerId!);
+    _menuRecordsFuture ??= _loadMenuRecordsByCurrentFilter();
     final scale = AppResponsive.scaleFactor(context);
 
-    return FutureBuilder<List<MenuRecordModel>>(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildFilterBar(scale),
+        SizedBox(height: 16 * scale),
+        FutureBuilder<List<MenuRecordModel>>(
       future: _menuRecordsFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -283,90 +336,119 @@ class _EmployeeMealPlanScreenState extends State<EmployeeMealPlanScreen> {
           );
         }
 
-        // Group by date
-        final groupedByDate = <DateTime, List<MenuRecordModel>>{};
-        for (final r in records) {
-          final dateOnly = DateTime(r.date.year, r.date.month, r.date.day);
-          groupedByDate.putIfAbsent(dateOnly, () => []).add(r);
-        }
-        
-        final sortedDates = groupedByDate.keys.toList()..sort((a, b) => b.compareTo(a));
+        // 1. Sort records: Date DESC, Meal ASC
+        final sortedRecords = List<MenuRecordModel>.from(records)..sort((a, b) {
+          // Compare dates first (DESC)
+          final dateA = DateTime(a.date.year, a.date.month, a.date.day);
+          final dateB = DateTime(b.date.year, b.date.month, b.date.day);
+          final dateComp = dateB.compareTo(dateA);
+          if (dateComp != 0) return dateComp;
+
+          // Same date, compare meals (ASC)
+          const mealPriority = {'Sáng': 1, 'Trưa': 2, 'Chiều': 3, 'Tối': 4};
+          
+          String getMeal(String name) {
+            final p = name.split(' - ');
+            if (p.length > 1) {
+              final m = p.last.trim();
+              if (m.contains('Sáng')) return 'Sáng';
+              if (m.contains('Trưa')) return 'Trưa';
+              if (m.contains('Chiều')) return 'Chiều';
+              if (m.contains('Tối')) return 'Tối';
+              return m;
+            }
+            if (name.contains('sáng')) return 'Sáng';
+            if (name.contains('trưa')) return 'Trưa';
+            if (name.contains('chiều')) return 'Chiều';
+            if (name.contains('tối')) return 'Tối';
+            return 'Bữa ăn';
+          }
+
+          int pA = mealPriority[getMeal(a.name)] ?? 99;
+          int pB = mealPriority[getMeal(b.name)] ?? 99;
+          return pA.compareTo(pB);
+        });
 
         return ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: sortedDates.length,
-          itemBuilder: (context, dateIndex) {
-            final date = sortedDates[dateIndex];
-            final dateRecords = groupedByDate[date]!;
-            dateRecords.sort((a, b) => a.name.compareTo(b.name));
+          itemCount: sortedRecords.length,
+          itemBuilder: (context, index) {
+            final r = sortedRecords[index];
+            
+            // Check if we should show a date header
+            bool showHeader = false;
+            if (index == 0) {
+              showHeader = true;
+            } else {
+              final prevDate = sortedRecords[index - 1].date;
+              if (prevDate.year != r.date.year || 
+                  prevDate.month != r.date.month || 
+                  prevDate.day != r.date.day) {
+                showHeader = true;
+              }
+            }
+
+            final mealType = r.name.contains('Sáng') || r.name.contains('sáng') ? 'Sáng' : 
+                            (r.name.contains('Trưa') || r.name.contains('trưa') ? 'Trưa' : 
+                            (r.name.contains('Chiều') || r.name.contains('chiều') ? 'Chiều' : 
+                            (r.name.contains('Tối') || r.name.contains('tối') ? 'Tối' : 'Khác')));
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 4 * scale, vertical: 12 * scale),
-                  child: Row(
-                    children: [
-                      Icon(Icons.calendar_today_rounded, 
-                        size: 14 * scale, color: AppColors.textPrimary),
-                      SizedBox(width: 8 * scale),
-                      Text(
-                        _formatDate(date),
-                        style: AppTextStyles.arimo(
-                          fontSize: 15 * scale,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(child: Divider(color: AppColors.borderLight)),
-                    ],
-                  ),
-                ),
-                ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: dateRecords.length,
-                  separatorBuilder: (_, __) => SizedBox(height: 12 * scale),
-                  itemBuilder: (context, index) {
-                    final r = dateRecords[index];
-                    final isBreakfast = r.name.contains('sáng');
-                    final isLunch = r.name.contains('trưa');
-                    final isDinner = r.name.contains('tối');
-
-                    return Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.white,
-                        borderRadius: BorderRadius.circular(16 * scale),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.04),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
+                if (showHeader) ...[
+                  if (index != 0) SizedBox(height: 24 * scale),
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 12 * scale),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 4 * scale,
+                          height: 18 * scale,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(2),
                           ),
-                        ],
-                        border: Border.all(color: AppColors.borderLight),
+                        ),
+                        SizedBox(width: 10 * scale),
+                        Text(
+                          _formatDate(r.date),
+                          style: AppTextStyles.arimo(
+                            fontSize: 15 * scale,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                Container(
+                  margin: EdgeInsets.only(bottom: 16 * scale),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24 * scale),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 15,
+                        offset: const Offset(0, 8),
                       ),
+                    ],
+                    border: Border.all(color: AppColors.borderLight.withValues(alpha: 0.5)),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(24 * scale),
+                    child: Material(
+                      color: Colors.transparent,
                       child: InkWell(
                         onTap: () => _viewMenuDetails(context, r.menuId),
-                        borderRadius: BorderRadius.circular(16 * scale),
                         child: Padding(
                           padding: EdgeInsets.all(16 * scale),
                           child: Row(
                             children: [
-                              Container(
-                                padding: EdgeInsets.all(10 * scale),
-                                decoration: BoxDecoration(
-                                  color: (isBreakfast ? Colors.orange : (isLunch ? Colors.blue : (isDinner ? Colors.indigo : AppColors.primary))).withValues(alpha: 0.1),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  isBreakfast ? Icons.wb_sunny_rounded : (isLunch ? Icons.light_mode_rounded : (isDinner ? Icons.nightlight_round : Icons.restaurant_rounded)),
-                                  color: isBreakfast ? Colors.orange : (isLunch ? Colors.blue : (isDinner ? Colors.indigo : AppColors.primary)),
-                                  size: 24 * scale,
-                                ),
-                              ),
+                              _buildMealIcon(mealType, scale),
                               SizedBox(width: 16 * scale),
                               Expanded(
                                 child: Column(
@@ -376,49 +458,79 @@ class _EmployeeMealPlanScreenState extends State<EmployeeMealPlanScreen> {
                                       r.name,
                                       style: AppTextStyles.arimo(
                                         fontSize: 16 * scale,
-                                        fontWeight: FontWeight.w700,
+                                        fontWeight: FontWeight.w800,
                                         color: AppColors.textPrimary,
                                       ),
                                     ),
-                                    SizedBox(height: 4 * scale),
-                                    Text(
-                                      'Menu ID: ${r.menuId}',
-                                      style: AppTextStyles.arimo(
-                                        fontSize: 13 * scale,
-                                        color: AppColors.textSecondary,
-                                      ),
+                                    SizedBox(height: 6 * scale),
+                                    Row(
+                                      children: [
+                                        Icon(Icons.restaurant_menu_rounded, size: 12 * scale, color: AppColors.textSecondary),
+                                        SizedBox(width: 4 * scale),
+                                        Text(
+                                          'Thực đơn mẫu #${r.menuId}',
+                                          style: AppTextStyles.arimo(
+                                            fontSize: 12 * scale,
+                                            color: AppColors.textSecondary,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
                               ),
-                              Container(
-                                padding: EdgeInsets.symmetric(horizontal: 12 * scale, vertical: 6 * scale),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary.withValues(alpha: 0.08),
-                                  borderRadius: BorderRadius.circular(20 * scale),
-                                ),
-                                child: Text(
-                                  'Chi tiết',
-                                  style: AppTextStyles.arimo(
-                                    fontSize: 12 * scale,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                              ),
+                              Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary, size: 24 * scale),
                             ],
                           ),
                         ),
                       ),
-                    );
-                  },
+                    ),
+                  ),
                 ),
-                SizedBox(height: 8 * scale),
               ],
             );
           },
         );
       },
+    ),
+      ],
+    );
+  }
+
+  Widget _buildMealIcon(String type, double scale) {
+    Color color;
+    IconData icon;
+    
+    switch (type) {
+      case 'Sáng':
+        color = const Color(0xFFFF9800);
+        icon = Icons.wb_sunny_rounded;
+        break;
+      case 'Trưa':
+        color = const Color(0xFF4CAF50);
+        icon = Icons.light_mode_rounded;
+        break;
+      case 'Chiều':
+        color = const Color(0xFFFF5722);
+        icon = Icons.bakery_dining_rounded;
+        break;
+      case 'Tối':
+        color = const Color(0xFF3F51B5);
+        icon = Icons.nightlight_round;
+        break;
+      default:
+        color = AppColors.primary;
+        icon = Icons.restaurant_rounded;
+    }
+
+    return Container(
+      padding: EdgeInsets.all(12 * scale),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16 * scale),
+      ),
+      child: Icon(icon, color: color, size: 26 * scale),
     );
   }
 
@@ -664,6 +776,143 @@ class _EmployeeMealPlanScreenState extends State<EmployeeMealPlanScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildFilterBar(double scale) {
+    final selectedDateText = _formatDate(_selectedDate);
+    final isAll = _menuFilterMode == _MenuFilterMode.all;
+    final isDate = _menuFilterMode == _MenuFilterMode.date;
+    final isRange = _menuFilterMode == _MenuFilterMode.range;
+
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 8 * scale),
+      child: Row(
+        children: [
+          Text(
+            'Lọc:',
+            style: AppTextStyles.arimo(
+              fontSize: 12 * scale,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          SizedBox(width: 12 * scale),
+          Expanded(
+            child: SizedBox(
+              height: 38 * scale,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: [
+                  _filterChip(
+                    label: 'Tất cả',
+                    icon: Icons.grid_view_rounded,
+                    isSelected: isAll,
+                    onTap: () {
+                      setState(() {
+                        _menuFilterMode = _MenuFilterMode.all;
+                        _menuRecordsFuture = _loadMenuRecordsByCurrentFilter();
+                      });
+                    },
+                    scale: scale,
+                  ),
+                  SizedBox(width: 8 * scale),
+                  _filterChip(
+                    label: selectedDateText,
+                    icon: Icons.calendar_today_rounded,
+                    isSelected: isDate,
+                    onTap: _pickSingleDate,
+                    scale: scale,
+                  ),
+                  SizedBox(width: 8 * scale),
+                  _filterChip(
+                    label: isRange ? '${_formatDate(_rangeFrom!)} → ${_formatDate(_rangeTo!)}' : 'Theo khoảng',
+                    icon: Icons.date_range_rounded,
+                    isSelected: isRange,
+                    onTap: _pickDateRange,
+                    scale: scale,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _filterChip({
+    required String label,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+    required double scale,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12 * scale),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: EdgeInsets.symmetric(horizontal: 12 * scale, vertical: 6 * scale),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : AppColors.background,
+          borderRadius: BorderRadius.circular(12 * scale),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : AppColors.borderLight,
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14 * scale, color: isSelected ? Colors.white : AppColors.textSecondary),
+            SizedBox(width: 6 * scale),
+            Text(
+              label,
+              style: AppTextStyles.arimo(
+                fontSize: 12 * scale,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                color: isSelected ? Colors.white : AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickSingleDate() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+    );
+    if (date != null) {
+      setState(() {
+        _selectedDate = date;
+        _menuFilterMode = _MenuFilterMode.date;
+        _menuRecordsFuture = _loadMenuRecordsByCurrentFilter();
+      });
+    }
+  }
+
+  Future<void> _pickDateRange() async {
+    final range = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+      initialDateRange: (_rangeFrom != null && _rangeTo != null)
+          ? DateTimeRange(start: _rangeFrom!, end: _rangeTo!)
+          : null,
+    );
+    if (range != null) {
+      setState(() {
+        _rangeFrom = range.start;
+        _rangeTo = range.end;
+        _menuFilterMode = _MenuFilterMode.range;
+        _menuRecordsFuture = _loadMenuRecordsByCurrentFilter();
+      });
+    }
   }
 }
 

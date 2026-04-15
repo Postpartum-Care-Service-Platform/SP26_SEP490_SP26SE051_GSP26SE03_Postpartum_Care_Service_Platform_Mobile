@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/apis/api_client.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -7,6 +8,9 @@ import '../../../../core/utils/app_text_styles.dart';
 import '../../../../../features/employee/shell/presentation/widgets/employee_scaffold.dart';
 import '../../data/datasources/transaction_remote_datasource.dart';
 import '../../data/models/transaction_with_customer_model.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../../../core/services/current_account_cache_service.dart';
 
 class StaffTransactionListScreen extends StatefulWidget {
   const StaffTransactionListScreen({super.key});
@@ -31,7 +35,24 @@ class _StaffTransactionListScreenState
   String? _paymentMethodFilter;
   double? _amountFrom;
   double? _amountTo;
-  bool _showFilters = false;
+  String? _cachedRoleName;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchRoleName();
+  }
+
+  Future<void> _fetchRoleName() async {
+    final account = await CurrentAccountCacheService.getCurrentAccount();
+    if (account != null) {
+      if (mounted) {
+        setState(() {
+          _cachedRoleName = account.roleName;
+        });
+      }
+    }
+  }
 
   Future<List<TransactionWithCustomerModel>> _loadTransactions() async {
     final all = await _dataSource.getAllTransactions();
@@ -66,15 +87,38 @@ class _StaffTransactionListScreenState
         return 'Thanh toán còn lại';
       case 'full':
         return 'Thanh toán toàn bộ';
+      case 'platformcommission':
+        return 'Hoa hồng hệ thống';
       default:
         return type ?? '-';
     }
+  }
+
+  String? _getRoleFromBloc() {
+    try {
+      final state = BlocProvider.of<AuthBloc>(context, listen: false).state;
+      if (state is AuthCurrentAccountLoaded) {
+        return state.account.roleName;
+      }
+    } catch (_) {}
+    return null;
   }
 
   List<TransactionWithCustomerModel> _applyFilter(
     List<TransactionWithCustomerModel> items,
   ) {
     var filtered = items;
+
+    // Filter PlatformCommission for centerstaff
+    final roleName = (_cachedRoleName ?? _getRoleFromBloc() ?? '').trim().toLowerCase();
+    
+    // Logic: If it's Center Staff or generic Staff role, hide PlatformCommission.
+    // Home Staff usually has explicit "home" in their role name.
+    if (roleName.contains('center') || roleName == 'staff') {
+      filtered = filtered
+          .where((t) => (t.type ?? '').toLowerCase().trim() != 'platformcommission')
+          .toList();
+    }
 
     // Type filter
     if (_typeFilter != 'all') {
@@ -194,57 +238,29 @@ class _StaffTransactionListScreenState
 
     return EmployeeScaffold(
       appBar: AppBar(
-        title: const Text('Danh sách giao dịch'),
-        actions: [
-          Stack(
-            children: [
-              IconButton(
-                onPressed: () {
-                  setState(() {
-                    _showFilters = !_showFilters;
-                  });
-                },
-                icon: const Icon(Icons.filter_list),
-              ),
-              if (_getActiveFilterCount() > 0)
-                Positioned(
-                  right: 8,
-                  top: 8,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                    ),
-                    constraints: const BoxConstraints(
-                      minWidth: 16,
-                      minHeight: 16,
-                    ),
-                    child: Text(
-                      '${_getActiveFilterCount()}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-            ],
+        title: Text(
+          'Giao dịch',
+          style: AppTextStyles.arimo(
+            fontSize: 18 * scale,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
           ),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
           IconButton(
             onPressed: _refresh,
-            icon: const Icon(Icons.refresh_rounded),
+            icon: Icon(Icons.refresh_rounded, color: AppColors.primary, size: 24 * scale),
           ),
         ],
       ),
       body: SafeArea(
         child: Column(
           children: [
-            _buildSearchBar(scale),
-            if (_showFilters) _buildAdvancedFilters(scale),
-            _buildFilterBar(scale),
+            _buildHeader(scale),
+            _buildFilterChips(scale),
             Expanded(
               child: FutureBuilder<List<TransactionWithCustomerModel>>(
                 future: _future,
@@ -261,13 +277,20 @@ class _StaffTransactionListScreenState
                     return Center(
                       child: Padding(
                         padding: EdgeInsets.all(24 * scale),
-                        child: Text(
-                          'Lỗi tải danh sách giao dịch: ${snapshot.error}',
-                          textAlign: TextAlign.center,
-                          style: AppTextStyles.arimo(
-                            fontSize: 14 * scale,
-                            color: AppColors.textSecondary,
-                          ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.error_outline, size: 48 * scale, color: Colors.red.withOpacity(0.5)),
+                            SizedBox(height: 16 * scale),
+                            Text(
+                              'Lỗi tải danh sách: ${snapshot.error}',
+                              textAlign: TextAlign.center,
+                              style: AppTextStyles.arimo(
+                                fontSize: 14 * scale,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     );
@@ -280,13 +303,28 @@ class _StaffTransactionListScreenState
                     return Center(
                       child: Padding(
                         padding: EdgeInsets.all(24 * scale),
-                        child: Text(
-                          'Không có giao dịch nào.',
-                          textAlign: TextAlign.center,
-                          style: AppTextStyles.arimo(
-                            fontSize: 14 * scale,
-                            color: AppColors.textSecondary,
-                          ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.receipt_long_outlined, size: 64 * scale, color: AppColors.textSecondary.withOpacity(0.2)),
+                            SizedBox(height: 16 * scale),
+                            Text(
+                              'Không tìm thấy giao dịch nào',
+                              textAlign: TextAlign.center,
+                              style: AppTextStyles.arimo(
+                                fontSize: 16 * scale,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            if (_getActiveFilterCount() > 0) ...[
+                              SizedBox(height: 8 * scale),
+                              TextButton(
+                                onPressed: _clearFilters,
+                                child: const Text('Xóa bộ lọc'),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
                     );
@@ -294,10 +332,11 @@ class _StaffTransactionListScreenState
 
                   return RefreshIndicator(
                     onRefresh: _refresh,
+                    color: AppColors.primary,
                     child: ListView.separated(
-                      padding: EdgeInsets.all(16 * scale),
+                      padding: EdgeInsets.fromLTRB(16 * scale, 8 * scale, 16 * scale, 100 * scale),
                       itemCount: items.length,
-                      separatorBuilder: (_, __) => SizedBox(height: 10 * scale),
+                      separatorBuilder: (_, __) => SizedBox(height: 12 * scale),
                       itemBuilder: (context, index) {
                         final t = items[index];
                         return _TransactionItem(
@@ -317,433 +356,282 @@ class _StaffTransactionListScreenState
     );
   }
 
-  Widget _buildSearchBar(double scale) {
+  Widget _buildHeader(double scale) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(
-        16 * scale,
-        8 * scale,
-        16 * scale,
-        8 * scale,
-      ),
-      child: TextField(
-        controller: _searchController,
-        decoration: InputDecoration(
-          hintText: 'Tìm kiếm theo tên, email, mã giao dịch, booking...',
-          prefixIcon: const Icon(Icons.search),
-          suffixIcon: _searchQuery.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    setState(() {
-                      _searchQuery = '';
-                      _searchController.clear();
-                    });
-                  },
-                )
-              : null,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12 * scale),
-            borderSide: BorderSide(
-              color: AppColors.textSecondary.withValues(alpha: 0.3),
-            ),
-          ),
-          filled: true,
-          fillColor: AppColors.white,
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: 16 * scale,
-            vertical: 12 * scale,
-          ),
-        ),
-        onChanged: (value) {
-          setState(() {
-            _searchQuery = value;
-          });
-        },
-      ),
-    );
-  }
-
-  Widget _buildAdvancedFilters(double scale) {
-    return Container(
-      margin: EdgeInsets.fromLTRB(16 * scale, 0, 16 * scale, 8 * scale),
-      padding: EdgeInsets.all(16 * scale),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(12 * scale),
-        border: Border.all(
-          color: AppColors.textSecondary.withValues(alpha: 0.2),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Bộ lọc nâng cao',
-                style: AppTextStyles.arimo(
-                  fontSize: 14 * scale,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              TextButton(
-                onPressed: _clearFilters,
-                child: Text(
-                  'Xóa bộ lọc',
-                  style: AppTextStyles.arimo(
-                    fontSize: 12 * scale,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12 * scale),
-          // Date range
-          Row(
-            children: [
-              Expanded(
-                child: InkWell(
-                  onTap: () async {
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: _dateFrom ?? DateTime.now(),
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime(2030),
-                    );
-                    if (date != null) {
-                      setState(() {
-                        _dateFrom = date;
-                      });
-                    }
-                  },
-                  child: Container(
-                    padding: EdgeInsets.all(12 * scale),
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: AppColors.textSecondary.withValues(alpha: 0.3),
-                      ),
-                      borderRadius: BorderRadius.circular(8 * scale),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.calendar_today,
-                          size: 16 * scale,
-                          color: AppColors.textSecondary,
-                        ),
-                        SizedBox(width: 8 * scale),
-                        Expanded(
-                          child: Text(
-                            _dateFrom == null
-                                ? 'Từ ngày'
-                                : '${_dateFrom!.day}/${_dateFrom!.month}/${_dateFrom!.year}',
-                            style: AppTextStyles.arimo(
-                              fontSize: 12 * scale,
-                              color: _dateFrom == null
-                                  ? AppColors.textSecondary
-                                  : AppColors.textPrimary,
-                            ),
-                          ),
-                        ),
-                        if (_dateFrom != null)
-                          InkWell(
-                            onTap: () {
-                              setState(() {
-                                _dateFrom = null;
-                              });
-                            },
-                            child: Icon(
-                              Icons.close,
-                              size: 16 * scale,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(width: 8 * scale),
-              Expanded(
-                child: InkWell(
-                  onTap: () async {
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: _dateTo ?? DateTime.now(),
-                      firstDate: _dateFrom ?? DateTime(2020),
-                      lastDate: DateTime(2030),
-                    );
-                    if (date != null) {
-                      setState(() {
-                        _dateTo = date;
-                      });
-                    }
-                  },
-                  child: Container(
-                    padding: EdgeInsets.all(12 * scale),
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: AppColors.textSecondary.withValues(alpha: 0.3),
-                      ),
-                      borderRadius: BorderRadius.circular(8 * scale),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.calendar_today,
-                          size: 16 * scale,
-                          color: AppColors.textSecondary,
-                        ),
-                        SizedBox(width: 8 * scale),
-                        Expanded(
-                          child: Text(
-                            _dateTo == null
-                                ? 'Đến ngày'
-                                : '${_dateTo!.day}/${_dateTo!.month}/${_dateTo!.year}',
-                            style: AppTextStyles.arimo(
-                              fontSize: 12 * scale,
-                              color: _dateTo == null
-                                  ? AppColors.textSecondary
-                                  : AppColors.textPrimary,
-                            ),
-                          ),
-                        ),
-                        if (_dateTo != null)
-                          InkWell(
-                            onTap: () {
-                              setState(() {
-                                _dateTo = null;
-                              });
-                            },
-                            child: Icon(
-                              Icons.close,
-                              size: 16 * scale,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12 * scale),
-          // Payment method filter
-          Text(
-            'Phương thức thanh toán:',
-            style: AppTextStyles.arimo(
-              fontSize: 12 * scale,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          SizedBox(height: 8 * scale),
-          DropdownButton<String>(
-            value: _paymentMethodFilter,
-            isExpanded: true,
-            hint: const Text('Tất cả'),
-            items: const [
-              DropdownMenuItem(value: null, child: Text('Tất cả')),
-              DropdownMenuItem(value: 'PayOS', child: Text('PayOS (Online)')),
-              DropdownMenuItem(
-                value: 'Offline',
-                child: Text('Offline (Tiền mặt)'),
-              ),
-            ],
-            onChanged: (value) {
-              setState(() {
-                _paymentMethodFilter = value;
-              });
-            },
-          ),
-          SizedBox(height: 12 * scale),
-          // Amount range
-          Text(
-            'Khoảng giá (VNĐ):',
-            style: AppTextStyles.arimo(
-              fontSize: 12 * scale,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          SizedBox(height: 8 * scale),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    hintText: 'Từ',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8 * scale),
-                      borderSide: BorderSide(
-                        color: AppColors.textSecondary.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 12 * scale,
-                      vertical: 10 * scale,
-                    ),
-                  ),
-                  controller: TextEditingController(
-                    text: _amountFrom?.toStringAsFixed(0) ?? '',
-                  ),
-                  onChanged: (value) {
-                    setState(() {
-                      _amountFrom = value.isEmpty
-                          ? null
-                          : double.tryParse(value);
-                    });
-                  },
-                ),
-              ),
-              SizedBox(width: 8 * scale),
-              Expanded(
-                child: TextField(
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    hintText: 'Đến',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8 * scale),
-                      borderSide: BorderSide(
-                        color: AppColors.textSecondary.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 12 * scale,
-                      vertical: 10 * scale,
-                    ),
-                  ),
-                  controller: TextEditingController(
-                    text: _amountTo?.toStringAsFixed(0) ?? '',
-                  ),
-                  onChanged: (value) {
-                    setState(() {
-                      _amountTo = value.isEmpty ? null : double.tryParse(value);
-                    });
-                  },
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterBar(double scale) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        16 * scale,
-        8 * scale,
-        16 * scale,
-        4 * scale,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 8 * scale),
       child: Row(
         children: [
           Expanded(
-            child: Row(
-              children: [
-                Text(
-                  'Loại:',
-                  style: AppTextStyles.arimo(
-                    fontSize: 13 * scale,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: DropdownButton<String>(
-                    value: _typeFilter,
-                    isExpanded: true,
-                    items: const [
-                      DropdownMenuItem(value: 'all', child: Text('Tất cả')),
-                      DropdownMenuItem(
-                        value: 'deposit',
-                        child: Text('Đặt cọc'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'remaining',
-                        child: Text('Thanh toán còn lại'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'full',
-                        child: Text('Thanh toán toàn bộ'),
-                      ),
-                    ],
-                    onChanged: (value) {
-                      if (value == null) return;
-                      setState(() => _typeFilter = value);
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(width: 8 * scale),
-          Expanded(
-            child: Row(
-              children: [
-                Text(
-                  'Trạng thái:',
-                  style: AppTextStyles.arimo(
-                    fontSize: 13 * scale,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: DropdownButton<String>(
-                    value: _statusFilter,
-                    isExpanded: true,
-                    items: const [
-                      DropdownMenuItem(value: 'all', child: Text('Tất cả')),
-                      DropdownMenuItem(
-                        value: 'pending',
-                        child: Text('Chờ xử lý'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'paid',
-                        child: Text('Đã thanh toán'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'failed',
-                        child: Text('Thất bại'),
-                      ),
-                    ],
-                    onChanged: (value) {
-                      if (value == null) return;
-                      setState(() => _statusFilter = value);
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (_getActiveFilterCount() > 0) ...[
-            SizedBox(width: 8 * scale),
-            Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: 8 * scale,
-                vertical: 4 * scale,
-              ),
+            child: Container(
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
+                color: AppColors.white,
                 borderRadius: BorderRadius.circular(12 * scale),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-              child: Text(
-                '${_getActiveFilterCount()} bộ lọc',
-                style: AppTextStyles.arimo(
-                  fontSize: 11 * scale,
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w600,
+              child: TextField(
+                controller: _searchController,
+                style: AppTextStyles.arimo(fontSize: 14 * scale),
+                decoration: InputDecoration(
+                  hintText: 'Tìm theo tên, mã giao dịch...',
+                  hintStyle: AppTextStyles.arimo(
+                    fontSize: 14 * scale,
+                    color: AppColors.textSecondary.withOpacity(0.5),
+                  ),
+                  prefixIcon: Icon(Icons.search_rounded, color: AppColors.primary, size: 20 * scale),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: Icon(Icons.close_rounded, size: 18 * scale),
+                          onPressed: () {
+                            setState(() {
+                              _searchQuery = '';
+                              _searchController.clear();
+                            });
+                          },
+                        )
+                      : null,
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(vertical: 12 * scale),
                 ),
+                onChanged: (value) => setState(() => _searchQuery = value),
               ),
             ),
-          ],
+          ),
+          SizedBox(width: 12 * scale),
+          Stack(
+            children: [
+              IconButton(
+                onPressed: () => _showFilterBottomSheet(scale),
+                icon: Container(
+                  padding: EdgeInsets.all(8 * scale),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10 * scale),
+                  ),
+                  child: Icon(Icons.tune_rounded, color: AppColors.primary, size: 20 * scale),
+                ),
+              ),
+              if (_getActiveFilterCount() > 0)
+                Positioned(
+                  right: 4,
+                  top: 4,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+                    child: Text(
+                      '${_getActiveFilterCount()}',
+                      style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChips(double scale) {
+    final statuses = [
+      {'key': 'all', 'label': 'Tất cả'},
+      {'key': 'paid', 'label': 'Đã thanh toán'},
+      {'key': 'pending', 'label': 'Chờ xử lý'},
+      {'key': 'failed', 'label': 'Thất bại'},
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 8 * scale),
+          child: Row(
+            children: statuses.map((status) {
+              final isSelected = _statusFilter == status['key'];
+              return Padding(
+                padding: EdgeInsets.only(right: 8 * scale),
+                child: FilterChip(
+                  label: Text(status['label']!),
+                  selected: isSelected,
+                  onSelected: (val) {
+                    setState(() => _statusFilter = status['key']!);
+                  },
+                  selectedColor: AppColors.primary.withOpacity(0.2),
+                  checkmarkColor: AppColors.primary,
+                  labelStyle: AppTextStyles.arimo(
+                    fontSize: 12 * scale,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                    color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                  ),
+                  backgroundColor: AppColors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20 * scale),
+                    side: BorderSide(
+                      color: isSelected ? AppColors.primary : Colors.grey.withOpacity(0.2),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showFilterBottomSheet(double scale) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return Container(
+            padding: EdgeInsets.fromLTRB(20 * scale, 20 * scale, 20 * scale, 40 * scale),
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24 * scale)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Bộ lọc nâng cao',
+                      style: AppTextStyles.arimo(
+                        fontSize: 18 * scale,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        _clearFilters();
+                        Navigator.pop(context);
+                      },
+                      child: const Text('Xóa tất cả'),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20 * scale),
+                Text('Loại giao dịch', style: AppTextStyles.arimo(fontWeight: FontWeight.w600)),
+                SizedBox(height: 12 * scale),
+                Wrap(
+                  spacing: 8 * scale,
+                  children: [
+                    'all',
+                    'deposit',
+                    'remaining',
+                    'full'
+                  ].map((type) {
+                    final isSelected = _typeFilter == type;
+                    return ChoiceChip(
+                      label: Text(_typeLabel(type == 'all' ? null : type)),
+                      selected: isSelected,
+                      onSelected: (val) {
+                        setModalState(() => _typeFilter = type);
+                        setState(() {});
+                      },
+                    );
+                  }).toList(),
+                ),
+                SizedBox(height: 20 * scale),
+                Text('Khoảng thời gian', style: AppTextStyles.arimo(fontWeight: FontWeight.w600)),
+                SizedBox(height: 12 * scale),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _DateTile(
+                        label: 'Từ ngày',
+                        date: _dateFrom,
+                        onTap: () async {
+                          final d = await showDatePicker(
+                            context: context,
+                            initialDate: _dateFrom ?? DateTime.now(),
+                            firstDate: DateTime(2020),
+                            lastDate: DateTime.now(),
+                          );
+                          if (d != null) {
+                            setModalState(() => _dateFrom = d);
+                            setState(() {});
+                          }
+                        },
+                      ),
+                    ),
+                    SizedBox(width: 12 * scale),
+                    Expanded(
+                      child: _DateTile(
+                        label: 'Đến ngày',
+                        date: _dateTo,
+                        onTap: () async {
+                          final d = await showDatePicker(
+                            context: context,
+                            initialDate: _dateTo ?? DateTime.now(),
+                            firstDate: _dateFrom ?? DateTime(2020),
+                            lastDate: DateTime.now(),
+                          );
+                          if (d != null) {
+                            setModalState(() => _dateTo = d);
+                            setState(() {});
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20 * scale),
+                Text('Phương thức thanh toán', style: AppTextStyles.arimo(fontWeight: FontWeight.w600)),
+                SizedBox(height: 12 * scale),
+                Wrap(
+                  spacing: 8 * scale,
+                  children: [
+                    {'val': null, 'label': 'Tất cả'},
+                    {'val': 'PayOS', 'label': 'PayOS'},
+                    {'val': 'Offline', 'label': 'Tiền mặt'},
+                  ].map((method) {
+                    final isSelected = _paymentMethodFilter == method['val'];
+                    return ChoiceChip(
+                      label: Text(method['label'] as String),
+                      selected: isSelected,
+                      onSelected: (val) {
+                        setModalState(() => _paymentMethodFilter = method['val']);
+                        setState(() {});
+                      },
+                    );
+                  }).toList(),
+                ),
+                SizedBox(height: 32 * scale),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      padding: EdgeInsets.symmetric(vertical: 14 * scale),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12 * scale)),
+                    ),
+                    child: Text(
+                      'Áp dụng',
+                      style: AppTextStyles.arimo(color: Colors.white, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -752,6 +640,42 @@ class _StaffTransactionListScreenState
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+}
+
+class _DateTile extends StatelessWidget {
+  final String label;
+  final DateTime? date;
+  final VoidCallback onTap;
+
+  const _DateTile({required this.label, this.date, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.all(12 * scale),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.withOpacity(0.3)),
+          borderRadius: BorderRadius.circular(8 * scale),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.calendar_month_rounded, size: 16 * scale, color: AppColors.primary),
+            SizedBox(width: 8 * scale),
+            Text(
+              date == null ? label : '${date!.day}/${date!.month}/${date!.year}',
+              style: AppTextStyles.arimo(
+                fontSize: 12 * scale,
+                color: date == null ? AppColors.textSecondary : AppColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -794,18 +718,18 @@ class _TransactionItem extends StatelessWidget {
         '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
 
     return Container(
+      padding: EdgeInsets.all(16 * scale),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(16 * scale),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10 * scale,
-            offset: Offset(0, 4 * scale),
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      padding: EdgeInsets.all(14 * scale),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -813,13 +737,10 @@ class _TransactionItem extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 10 * scale,
-                  vertical: 6 * scale,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 10 * scale, vertical: 4 * scale),
                 decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(999),
+                  color: statusColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20 * scale),
                 ),
                 child: Text(
                   statusLabel,
@@ -833,13 +754,13 @@ class _TransactionItem extends StatelessWidget {
               Text(
                 '#${transaction.id.substring(0, 8)}',
                 style: AppTextStyles.arimo(
-                  fontSize: 12 * scale,
-                  color: AppColors.textSecondary,
+                  fontSize: 11 * scale,
+                  color: AppColors.textSecondary.withOpacity(0.6),
                 ),
               ),
             ],
           ),
-          SizedBox(height: 10 * scale),
+          SizedBox(height: 12 * scale),
           Text(
             customerName,
             style: AppTextStyles.arimo(
@@ -848,8 +769,8 @@ class _TransactionItem extends StatelessWidget {
               color: AppColors.textPrimary,
             ),
           ),
-          SizedBox(height: 4 * scale),
-          if (transaction.bookingId != null)
+          if (transaction.bookingId != null) ...[
+            SizedBox(height: 4 * scale),
             Text(
               'Booking #${transaction.bookingId}',
               style: AppTextStyles.arimo(
@@ -857,69 +778,85 @@ class _TransactionItem extends StatelessWidget {
                 color: AppColors.textSecondary,
               ),
             ),
-          SizedBox(height: 8 * scale),
-          Row(
+          ],
+          SizedBox(height: 12 * scale),
+            Row(
             children: [
-              Icon(
-                Icons.schedule,
-                size: 14 * scale,
-                color: AppColors.textSecondary,
-              ),
+              Icon(Icons.access_time_rounded, size: 14 * scale, color: AppColors.textSecondary.withOpacity(0.6)),
               SizedBox(width: 6 * scale),
               Text(
                 dateLabel,
                 style: AppTextStyles.arimo(
                   fontSize: 12 * scale,
-                  color: AppColors.textSecondary,
+                  color: AppColors.textSecondary.withOpacity(0.8),
                 ),
               ),
             ],
           ),
-          SizedBox(height: 6 * scale),
+          SizedBox(height: 12 * scale),
+          const Divider(height: 1, color: Color(0xFFEEEEEE)),
+          SizedBox(height: 12 * scale),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(
-                Icons.payments_outlined,
-                size: 14 * scale,
-                color: AppColors.textSecondary,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Số tiền',
+                    style: AppTextStyles.arimo(
+                      fontSize: 11 * scale,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  SizedBox(height: 2 * scale),
+                  Text(
+                    '${transaction.amount.toInt()} đ',
+                    style: AppTextStyles.arimo(
+                      fontSize: 16 * scale,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ],
               ),
-              SizedBox(width: 6 * scale),
-              Text(
-                '${transaction.amount.toStringAsFixed(0)} đ',
-                style: AppTextStyles.arimo(
-                  fontSize: 13 * scale,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primary,
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    'Loại & Phương thức',
+                    style: AppTextStyles.arimo(
+                      fontSize: 11 * scale,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  SizedBox(height: 2 * scale),
+                  Text(
+                    '$typeLabel / ${transaction.paymentMethod ?? 'PayOS'}',
+                    style: AppTextStyles.arimo(
+                      fontSize: 12 * scale,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-          SizedBox(height: 4 * scale),
-          Row(
-            children: [
-              Icon(
-                Icons.account_balance_wallet_outlined,
-                size: 14 * scale,
-                color: AppColors.textSecondary,
+          if (transaction.note != null && transaction.note!.trim().isNotEmpty) ...[
+            SizedBox(height: 12 * scale),
+            Container(
+              padding: EdgeInsets.all(10 * scale),
+              decoration: BoxDecoration(
+                color: Colors.grey.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(8 * scale),
               ),
-              SizedBox(width: 6 * scale),
-              Text(
-                '$typeLabel / ${transaction.paymentMethod ?? '-'}',
+              child: Text(
+                transaction.note!,
                 style: AppTextStyles.arimo(
                   fontSize: 12 * scale,
                   color: AppColors.textSecondary,
                 ),
-              ),
-            ],
-          ),
-          if (transaction.note != null &&
-              transaction.note!.trim().isNotEmpty) ...[
-            SizedBox(height: 6 * scale),
-            Text(
-              transaction.note!,
-              style: AppTextStyles.arimo(
-                fontSize: 12 * scale,
-                color: AppColors.textSecondary,
               ),
             ),
           ],

@@ -140,175 +140,152 @@ class CustomerProfileBookingsTab extends StatelessWidget {
                 status.toLowerCase().contains('done');
 
             return Container(
+              margin: EdgeInsets.only(bottom: 4 * scale),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(20 * scale),
-                border: Border.all(color: AppColors.borderLight.withValues(alpha: 0.5)),
+                borderRadius: BorderRadius.circular(24 * scale),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
                   ),
                 ],
+                border: Border.all(color: AppColors.borderLight.withValues(alpha: 0.5)),
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(20 * scale),
-                child: IntrinsicHeight(
-                  child: Row(
-                    children: [
-                      // Status Accent Bar
-                      Container(width: 4 * scale, color: statusColor),
-                      Expanded(
-                        child: Padding(
-                          padding: EdgeInsets.all(16 * scale),
-                          child: Column(
+                borderRadius: BorderRadius.circular(24 * scale),
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.all(20 * scale),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // --- Header: icon + package name + status ---
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    padding: EdgeInsets.all(10 * scale),
-                                    decoration: BoxDecoration(
-                                      color: statusColor.withValues(alpha: 0.1),
-                                      shape: BoxShape.circle,
+                              Container(
+                                padding: EdgeInsets.all(12 * scale),
+                                decoration: BoxDecoration(
+                                  color: statusColor.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(14 * scale),
+                                ),
+                                child: Icon(
+                                  statusIcon,
+                                  color: statusColor,
+                                  size: 24 * scale,
+                                ),
+                              ),
+                              SizedBox(width: 16 * scale),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      packageName,
+                                      style: AppTextStyles.arimo(
+                                        fontSize: 16 * scale,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.textPrimary,
+                                        height: 1.2,
+                                      ),
                                     ),
-                                    child: Icon(
-                                      statusIcon,
-                                      color: statusColor,
-                                      size: 20 * scale,
-                                    ),
-                                  ),
-                                  SizedBox(width: 12 * scale),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                    SizedBox(height: 6 * scale),
+                                    Row(
                                       children: [
-                                        Text(
-                                          packageName,
-                                          style: AppTextStyles.arimo(
-                                            fontSize: 14 * scale,
-                                            fontWeight: FontWeight.w800,
-                                            color: AppColors.textPrimary,
-                                            height: 1.3,
+                                        Container(
+                                          padding: EdgeInsets.symmetric(horizontal: 8 * scale, vertical: 2 * scale),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.background,
+                                            borderRadius: BorderRadius.circular(6 * scale),
+                                          ),
+                                          child: Text(
+                                            '#$bookingId',
+                                            style: AppTextStyles.arimo(
+                                              fontSize: 11 * scale,
+                                              fontWeight: FontWeight.w800,
+                                              color: AppColors.primary,
+                                            ),
                                           ),
                                         ),
-                                        SizedBox(height: 4 * scale),
-                                        Text(
-                                          'Mã Booking: #$bookingId',
-                                          style: AppTextStyles.arimo(
-                                            fontSize: 12 * scale,
-                                            fontWeight: FontWeight.w600,
-                                            color: AppColors.primary,
-                                          ),
-                                        ),
+                                        SizedBox(width: 8 * scale),
+                                        _buildStatusBadge(status),
                                       ],
                                     ),
-                                  ),
-                                  SizedBox(width: 8 * scale),
-                                  _buildStatusBadge(status),
-                                ],
-                              ),
-                              SizedBox(height: 12 * scale),
-
-                              // --- Customer info ---
-                              if (customerName.isNotEmpty || customerPhone.isNotEmpty)
-                                Padding(
-                                  padding: EdgeInsets.only(bottom: 12 * scale),
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.person_outline_rounded,
-                                          size: 16 * scale, color: AppColors.textSecondary),
-                                      SizedBox(width: 6 * scale),
-                                      Expanded(
-                                        child: Text(
-                                          [customerName, customerPhone]
-                                              .where((e) => e.isNotEmpty)
-                                              .join(' • '),
-                                          style: AppTextStyles.arimo(
-                                            fontSize: 12 * scale,
-                                            color: AppColors.textSecondary,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-
-                              // --- Date range ---
-                              Container(
-                                padding: EdgeInsets.all(12 * scale),
-                                decoration: BoxDecoration(
-                                  color: AppColors.background,
-                                  borderRadius: BorderRadius.circular(12 * scale),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.calendar_month_rounded,
-                                        size: 16 * scale, color: AppColors.textSecondary),
-                                    SizedBox(width: 8 * scale),
-                                    Expanded(
-                                      child: Text(
-                                        'Thời gian',
-                                        style: AppTextStyles.arimo(
-                                          fontSize: 12 * scale,
-                                          color: AppColors.textSecondary,
-                                        ),
-                                      ),
-                                    ),
-                                    Text(
-                                      '$startDate → $endDate',
-                                      style: AppTextStyles.arimo(
-                                        fontSize: 13 * scale,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.textPrimary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              SizedBox(height: 10 * scale),
-
-                              // --- Price breakdown ---
-                              Container(
-                                padding: EdgeInsets.all(12 * scale),
-                                decoration: BoxDecoration(
-                                  color: AppColors.background,
-                                  borderRadius: BorderRadius.circular(12 * scale),
-                                ),
-                                child: Column(
-                                  children: [
-                                    _buildPriceRow(
-                                      'Tổng tiền',
-                                      _formatCurrency(totalPrice),
-                                      AppColors.textPrimary,
-                                    ),
-                                    Divider(height: 12 * scale, color: AppColors.borderLight),
-                                    _buildPriceRow(
-                                      'Đã thanh toán',
-                                      _formatCurrency(paidAmount),
-                                      const Color(0xFF22C55E),
-                                    ),
-                                    if (remainingAmount != null && remainingAmount > 0) ...[
-                                      Divider(height: 12 * scale, color: AppColors.borderLight),
-                                      _buildPriceRow(
-                                        'Còn lại',
-                                        _formatCurrency(remainingAmount),
-                                        const Color(0xFFEF4444),
-                                      ),
-                                    ],
                                   ],
                                 ),
                               ),
                             ],
                           ),
-                        ),
+                          if (customerName.isNotEmpty || customerPhone.isNotEmpty) ...[
+                            SizedBox(height: 16 * scale),
+                            Row(
+                              children: [
+                                Icon(Icons.account_circle_outlined, size: 16 * scale, color: AppColors.textSecondary),
+                                SizedBox(width: 8 * scale),
+                                Expanded(
+                                  child: Text(
+                                    [customerName, customerPhone].where((e) => e.isNotEmpty).join(' • '),
+                                    style: AppTextStyles.arimo(
+                                      fontSize: 13 * scale,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                          SizedBox(height: 16 * scale),
+                          Container(
+                            padding: EdgeInsets.all(16 * scale),
+                            decoration: BoxDecoration(
+                              color: AppColors.background,
+                              borderRadius: BorderRadius.circular(16 * scale),
+                            ),
+                            child: Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(Icons.calendar_today_rounded, size: 14 * scale, color: AppColors.textSecondary),
+                                    SizedBox(width: 8 * scale),
+                                    Text(
+                                      'Thời gian:',
+                                      style: AppTextStyles.arimo(
+                                        fontSize: 12 * scale,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    Text(
+                                      '$startDate → $endDate',
+                                      style: AppTextStyles.arimo(
+                                        fontSize: 13 * scale,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 12 * scale),
+                                  child: Divider(height: 1, color: AppColors.borderLight.withValues(alpha: 0.5)),
+                                ),
+                                _buildPriceRow('Tổng cộng', _formatCurrency(totalPrice), AppColors.textPrimary, isTotal: true),
+                                SizedBox(height: 8 * scale),
+                                _buildPriceRow('Đã thanh toán', _formatCurrency(paidAmount), const Color(0xFF10B981)),
+                                if (remainingAmount != null && remainingAmount > 0) ...[
+                                  SizedBox(height: 8 * scale),
+                                  _buildPriceRow('Còn lại', _formatCurrency(remainingAmount), const Color(0xFFEF4444)),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             );
@@ -318,7 +295,7 @@ class CustomerProfileBookingsTab extends StatelessWidget {
     );
   }
 
-  Widget _buildPriceRow(String label, String value, Color valueColor) {
+  Widget _buildPriceRow(String label, String value, Color valueColor, {bool isTotal = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -326,14 +303,15 @@ class CustomerProfileBookingsTab extends StatelessWidget {
           label,
           style: AppTextStyles.arimo(
             fontSize: 12 * scale,
-            color: AppColors.textSecondary,
+            fontWeight: isTotal ? FontWeight.w700 : FontWeight.w600,
+            color: isTotal ? AppColors.textPrimary : AppColors.textSecondary,
           ),
         ),
         Text(
           value,
           style: AppTextStyles.arimo(
-            fontSize: 13 * scale,
-            fontWeight: FontWeight.w700,
+            fontSize: isTotal ? 16 * scale : 13 * scale,
+            fontWeight: isTotal ? FontWeight.w900 : FontWeight.w700,
             color: valueColor,
           ),
         ),
