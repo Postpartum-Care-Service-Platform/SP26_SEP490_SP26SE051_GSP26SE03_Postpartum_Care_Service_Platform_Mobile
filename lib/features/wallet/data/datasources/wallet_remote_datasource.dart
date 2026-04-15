@@ -31,10 +31,14 @@ class WalletRemoteDataSourceImpl implements WalletRemoteDataSource {
   Future<List<WalletTransactionModel>> getMyWalletTransactions() async {
     try {
       final response = await dio.get(ApiEndpoints.myWalletTransactions);
-      if (response.data is List) {
-         return (response.data as List).map((e) => WalletTransactionModel.fromJson(e)).toList();
-      } else if (response.data != null && response.data['items'] != null) {
-         return (response.data['items'] as List).map((e) => WalletTransactionModel.fromJson(e)).toList();
+      final data = response.data;
+      if (data is List) {
+        return data.map((e) => WalletTransactionModel.fromJson(e)).toList();
+      } else if (data is Map<String, dynamic>) {
+        final List<dynamic>? list = data['transactions'] ?? data['items'] ?? data['data'];
+        if (list != null) {
+          return list.map((e) => WalletTransactionModel.fromJson(e as Map<String, dynamic>)).toList();
+        }
       }
       return [];
     } on DioException catch (e) {

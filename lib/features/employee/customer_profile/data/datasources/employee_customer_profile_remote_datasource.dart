@@ -5,6 +5,7 @@ import '../../../../../core/apis/api_endpoints.dart';
 import '../../../../../features/auth/data/models/current_account_model.dart';
 import '../../../../../features/services/data/models/menu_record_model.dart';
 import '../../../../../features/services/data/models/menu_model.dart';
+import '../../../../../features/services/data/models/menu_type_model.dart';
 import '../../../../../features/family_profile/domain/entities/family_profile_entity.dart';
 import '../../../../../features/family_profile/data/models/family_profile_model.dart';
 
@@ -256,6 +257,30 @@ class EmployeeCustomerProfileRemoteDataSource {
     try {
       final response = await _dio.get(ApiEndpoints.menuById(id));
       return MenuModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<List<MenuModel>> getAllMenus() async {
+    try {
+      final response = await _dio.get(ApiEndpoints.menus);
+      final data = response.data;
+      if (data is! List) {
+        throw Exception('Dữ liệu menu không hợp lệ');
+      }
+      return data.map((item) => MenuModel.fromJson(item as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<List<MenuTypeModel>> getAllMenuTypes() async {
+    try {
+      final response = await _dio.get(ApiEndpoints.menuTypes);
+      final data = response.data;
+      if (data is! List) return [];
+      return data.map((item) => MenuTypeModel.fromJson(item as Map<String, dynamic>)).toList();
     } on DioException catch (e) {
       throw _handleError(e);
     }

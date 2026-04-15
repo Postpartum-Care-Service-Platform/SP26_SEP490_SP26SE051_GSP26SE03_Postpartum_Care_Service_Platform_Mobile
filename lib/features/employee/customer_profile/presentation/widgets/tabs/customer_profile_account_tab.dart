@@ -87,18 +87,18 @@ class CustomerProfileAccountTab extends StatelessWidget {
 
   Widget _buildProfileHeaderSection(CurrentAccountModel acc, String name) {
     return Container(
-      padding: EdgeInsets.all(20 * scale),
+      padding: EdgeInsets.all(24 * scale),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.8)],
+        gradient: const LinearGradient(
+          colors: [AppColors.primary, Color(0xFF8B5CF6)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(20 * scale),
+        borderRadius: BorderRadius.circular(24 * scale),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.3),
-            blurRadius: 15,
+            color: AppColors.primary.withValues(alpha: 0.25),
+            blurRadius: 16,
             offset: const Offset(0, 8),
           ),
         ],
@@ -106,16 +106,22 @@ class CustomerProfileAccountTab extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 72 * scale,
-            height: 72 * scale,
+            width: 80 * scale,
+            height: 80 * scale,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
+              color: Colors.white.withValues(alpha: 0.25),
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 2),
+              border: Border.all(color: Colors.white, width: 2.5),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 8,
+                ),
+              ],
             ),
-            child: Icon(Icons.person_rounded, color: Colors.white, size: 40 * scale),
+            child: Icon(Icons.person_rounded, color: Colors.white, size: 44 * scale),
           ),
-          SizedBox(width: 16 * scale),
+          SizedBox(width: 20 * scale),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -123,30 +129,31 @@ class CustomerProfileAccountTab extends StatelessWidget {
                 Text(
                   name,
                   style: AppTextStyles.tinos(
-                    fontSize: 22 * scale,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 24 * scale,
+                    fontWeight: FontWeight.w900,
                     color: Colors.white,
+                    height: 1.1,
                   ),
                 ),
-                SizedBox(height: 6 * scale),
+                SizedBox(height: 8 * scale),
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 10 * scale, vertical: 4 * scale),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(6 * scale),
+                    borderRadius: BorderRadius.circular(8 * scale),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.shield_rounded, size: 12 * scale, color: Colors.white),
-                      SizedBox(width: 4 * scale),
+                      Icon(Icons.verified_user_rounded, size: 12 * scale, color: Colors.white),
+                      SizedBox(width: 6 * scale),
                       Text(
                         acc.roleName.toUpperCase(),
                         style: AppTextStyles.arimo(
                           fontSize: 10 * scale,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w900,
                           color: Colors.white,
-                          letterSpacing: 0.5,
+                          letterSpacing: 0.8,
                         ),
                       ),
                     ],

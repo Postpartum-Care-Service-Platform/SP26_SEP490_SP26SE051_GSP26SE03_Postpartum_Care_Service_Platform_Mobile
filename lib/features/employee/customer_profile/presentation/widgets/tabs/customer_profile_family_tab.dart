@@ -56,7 +56,7 @@ class CustomerProfileFamilyTab extends StatelessWidget {
                       borderRadius: BorderRadius.circular(2 * scale),
                     ),
                   ),
-                  SizedBox(width: 8 * scale),
+                  SizedBox(width: 10 * scale),
                   Text(
                     'Thành viên gia đình (${members.length})',
                     style: AppTextStyles.arimo(
@@ -79,35 +79,35 @@ class CustomerProfileFamilyTab extends StatelessWidget {
   Widget _buildHeaderSection() {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(20 * scale),
+      padding: EdgeInsets.fromLTRB(24 * scale, 12 * scale, 24 * scale, 30 * scale),
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(24 * scale)),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(32 * scale)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: Column(
         children: [
           Container(
-            width: 80 * scale,
-            height: 80 * scale,
+            width: 84 * scale,
+            height: 84 * scale,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: const LinearGradient(
-                colors: [AppColors.primary, Color(0xFF8B5CF6)],
+                colors: [AppColors.primary, Color(0xFFFF9A8B)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.2),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
+                  color: AppColors.primary.withValues(alpha: 0.3),
+                  blurRadius: 15,
+                  offset: const Offset(0, 8),
                 ),
               ],
             ),
@@ -115,24 +115,23 @@ class CustomerProfileFamilyTab extends StatelessWidget {
               child: Text(
                 customerName.isNotEmpty ? customerName[0].toUpperCase() : 'C',
                 style: AppTextStyles.tinos(
-                  fontSize: 32 * scale,
+                  fontSize: 36 * scale,
                   fontWeight: FontWeight.bold,
                   color: AppColors.white,
                 ),
               ),
             ),
           ),
-          SizedBox(height: 16 * scale),
+          SizedBox(height: 20 * scale),
           Text(
             customerName,
             style: AppTextStyles.tinos(
-              fontSize: 22 * scale,
-              fontWeight: FontWeight.w800,
+              fontSize: 24 * scale,
+              fontWeight: FontWeight.w900,
               color: AppColors.textPrimary,
+              height: 1.1,
             ),
           ),
-          SizedBox(height: 6 * scale),
-          // Removed Customer ID container to fix overflow as requested
         ],
       ),
     );

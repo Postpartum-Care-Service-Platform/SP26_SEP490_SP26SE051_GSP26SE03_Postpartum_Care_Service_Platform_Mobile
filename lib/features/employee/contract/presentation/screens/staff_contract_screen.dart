@@ -1602,6 +1602,8 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
     final contract = _contract;
     final hasSignedFile = contract?.fileUrl?.trim().isNotEmpty == true || contract?.images?.isNotEmpty == true;
     final isSigned = contract?.status.toLowerCase() == 'signed';
+    final isPrinted = contract?.status.toLowerCase() == 'printed';
+    final isCancelled = contract?.status.toLowerCase() == 'cancelled';
     if (contract == null) {
       return Center(
         child: Text(
@@ -1725,15 +1727,39 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                 Row(
                   children: [
                     Icon(
+                      Icons.person_outline_rounded,
+                      size: 20 * scale,
+                      color: AppColors.primary,
+                    ),
+                    SizedBox(width: 8 * scale),
+                    Text(
+                      'Thông tin khách hàng',
+                      style: AppTextStyles.arimo(
+                        fontSize: 14 * scale,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 16 * scale),
+                // Customer row with clear null fallback
+                _buildCustomerRow(contract, scale),
+                SizedBox(height: 16 * scale),
+                Divider(height: 1, color: AppColors.borderLight),
+                SizedBox(height: 20 * scale),
+                Row(
+                  children: [
+                    Icon(
                       Icons.info_outline_rounded,
                       size: 20 * scale,
                       color: AppColors.primary,
                     ),
                     SizedBox(width: 8 * scale),
                     Text(
-                      'Thông tin hợp đồng',
+                      'Chi tiết hợp đồng',
                       style: AppTextStyles.arimo(
-                        fontSize: 16 * scale,
+                        fontSize: 14 * scale,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary,
                       ),
@@ -1747,14 +1773,14 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                   value: _formatDate(contract.contractDate),
                   scale: scale,
                 ),
-                SizedBox(height: 16 * scale),
+                SizedBox(height: 12 * scale),
                 _InfoRow(
                   icon: Icons.event_available_rounded,
                   label: 'Hiệu lực từ',
                   value: _formatDate(contract.effectiveFrom),
                   scale: scale,
                 ),
-                SizedBox(height: 16 * scale),
+                SizedBox(height: 12 * scale),
                 _InfoRow(
                   icon: Icons.event_busy_rounded,
                   label: 'Hiệu lực đến',
@@ -1762,7 +1788,7 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                   scale: scale,
                 ),
                 if (contract.signedDate != null) ...[
-                  SizedBox(height: 16 * scale),
+                  SizedBox(height: 12 * scale),
                   _InfoRow(
                     icon: Icons.edit_document,
                     label: 'Ngày ký',
@@ -1771,11 +1797,6 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                     highlight: true,
                   ),
                 ],
-                SizedBox(height: 16 * scale),
-                Divider(height: 1, color: AppColors.borderLight),
-                SizedBox(height: 16 * scale),
-                // Customer row with clear null fallback
-                _buildCustomerRow(contract, scale),
               ],
             ),
           ),
@@ -1808,7 +1829,7 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                     Text(
                       'Thao tác',
                       style: AppTextStyles.arimo(
-                        fontSize: 16 * scale,
+                        fontSize: 14 * scale,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary,
                       ),
@@ -1816,136 +1837,84 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                   ],
                 ),
                 SizedBox(height: 20 * scale),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final isNarrow = constraints.maxWidth < 360;
-                    final spacing = 12 * scale;
-                    final itemWidth = isNarrow
-                        ? constraints.maxWidth
-                        : (constraints.maxWidth - spacing) / 2;
-
-                    return Wrap(
-                      spacing: spacing,
-                      runSpacing: spacing,
-                      children: [
-                        SizedBox(
-                          width: itemWidth,
-                          child: _ActionButton(
-                            icon: Icons.edit_note_rounded,
-                            label: 'Chỉnh sửa',
-                            color: const Color(0xFF7C3AED),
-                            onPressed: _showEditContentSheet,
-                            scale: scale,
-                          ),
-                        ),
-                        SizedBox(
-                          width: itemWidth,
-                          child: _ActionButton(
-                            icon: Icons.visibility_rounded,
-                            label: 'Xem trước hợp đồng',
-                            color: const Color(0xFF0284C7),
-                            onPressed: _openPreview,
-                            scale: scale,
-                            isOutlined: true,
-                          ),
-                        ),
-                        SizedBox(
-                          width: itemWidth,
-                          child: _ActionButton(
-                            icon: Icons.picture_as_pdf_rounded,
-                            label: _isLoading ? 'Đang tải...' : 'Xuất PDF',
-                            color: AppColors.primary,
-                            onPressed: _isLoading ? null : _downloadPdf,
-                            scale: scale,
-                            isOutlined: true,
-                          ),
-                        ),
-                        SizedBox(
-                          width: itemWidth,
-                          child: _ActionButton(
-                            icon: Icons.cloud_upload_rounded,
-                            label: 'Upload file đã ký',
-                            color: const Color(0xFF0EA5E9),
-                            onPressed: contract.status.toLowerCase() == 'draft'
-                                ? null
-                                : _handleUploadSignedPressed,
-                            scale: scale,
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-                if (contract.status.toLowerCase() == 'draft') ...[
-                  SizedBox(height: 8 * scale),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.info_outline,
-                        size: 13 * scale,
-                        color: AppColors.textSecondary,
-                      ),
-                      SizedBox(width: 4 * scale),
-                      Expanded(
-                        child: Text(
-                          'Vui lòng bấm "Gửi khách" trước khi tính năng Upload được mở',
-                          style: AppTextStyles.arimo(
-                            fontSize: 11 * scale,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ),
-                    ],
+                // 1. Gửi khách — Chỉ hiển thị khi Draft
+                if (contract.status.toLowerCase() == 'draft' && !hasSignedFile) ...[
+                  _ActionButton(
+                    icon: Icons.send_rounded,
+                    label: _isSending ? 'Đang gửi...' : 'Gửi khách',
+                    color: const Color(0xFF2563EB),
+                    onPressed: _isSending ? null : _sendContract,
+                    scale: scale,
+                    isOutlined: true,
+                    isFullWidth: true,
                   ),
+                  SizedBox(height: 12 * scale),
                 ],
-                SizedBox(height: 12 * scale),
-                // Gửi khách — cho phép gửi ngay cả khi chưa upload file đã ký (để khách xem bản draft)
-                // Khoá gửi nếu đã có file upload hoàn tất hoặc hợp đồng đã ký
+
+                // 2. Xem hợp đồng
                 _ActionButton(
-                  icon: Icons.send_rounded,
-                  label: _isSending
-                      ? 'Đang gửi...'
-                      : isSigned
-                          ? 'Đã ký - Không thể gửi'
-                          : 'Gửi khách',
-                  color: const Color(0xFF2563EB),
-                  onPressed: (_isSending || hasSignedFile || isSigned) ? null : _sendContract,
+                  icon: Icons.visibility_rounded,
+                  label: 'Xem hợp đồng',
+                  color: const Color(0xFF0284C7),
+                  onPressed: _openPreview,
                   scale: scale,
                   isOutlined: true,
                   isFullWidth: true,
                 ),
-                if (hasSignedFile || isSigned) ...[
-                  SizedBox(height: 8 * scale),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.check_circle_outline,
-                        size: 13 * scale,
-                        color: const Color(0xFF16A34A),
-                      ),
-                      SizedBox(width: 4 * scale),
-                      Expanded(
-                        child: Text(
-                          isSigned
-                              ? 'Hợp đồng đã được ký, không thể gửi lại'
-                              : 'Hợp đồng đã hoàn tất upload file chữ ký, không cần gửi thêm',
-                          style: AppTextStyles.arimo(
-                            fontSize: 11 * scale,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ),
-                    ],
+                SizedBox(height: 12 * scale),
+
+                // 3. Xuất PDF — Ẩn khi Draft, đã in, đã ký hoặc đã hủy
+                if (!isPrinted && !isSigned && !isCancelled && contract.status.toLowerCase() != 'draft') ...[
+                  _ActionButton(
+                    icon: Icons.picture_as_pdf_rounded,
+                    label: _isLoading ? 'Đang tải...' : 'Xuất PDF',
+                    color: AppColors.primary,
+                    onPressed: _isLoading ? null : _downloadPdf,
+                    scale: scale,
+                    isOutlined: true,
+                    isFullWidth: true,
                   ),
                   SizedBox(height: 12 * scale),
+                ],
+
+                // 4. Upload file đã ký - Chỉ hiển thị khi Printed
+                if (isPrinted) ...[
+                  _ActionButton(
+                    icon: Icons.cloud_upload_rounded,
+                    label: 'Upload file đã ký',
+                    color: const Color(0xFF0EA5E9),
+                    onPressed: _handleUploadSignedPressed,
+                    scale: scale,
+                    isOutlined: (hasSignedFile || isSigned),
+                    isFullWidth: true,
+                  ),
+                  SizedBox(height: 12 * scale),
+                ],
+
+                // 5. Xem file đã ký — chỉ hiển thị nếu đã có file
+                if (hasSignedFile || isSigned) ...[
                   _ActionButton(
                     icon: _isPdf(contract)
                         ? Icons.picture_as_pdf_rounded
                         : Icons.image_rounded,
-                    label:
-                        'Xem file đã ký (${_fileTypeLabelText(contract)})',
+                    label: 'Xem file đã ký (${_fileTypeLabelText(contract)})',
                     color: const Color(0xFF059669),
                     onPressed: _openSignedContractImage,
+                    scale: scale,
+                    isOutlined: false,
+                    isFullWidth: true,
+                  ),
+                  SizedBox(height: 12 * scale),
+                ],
+
+                // Additional Action: Chỉnh sửa
+                // Ẩn nếu hợp đồng đã ký, đã in, hoặc đã có file ký hoặc đã hủy
+                if (!isSigned && !isPrinted && !isCancelled && !hasSignedFile) ...[
+                  _ActionButton(
+                    icon: Icons.edit_note_rounded,
+                    label: 'Chỉnh sửa',
+                    color: const Color(0xFF7C3AED),
+                    onPressed: _showEditContentSheet,
                     scale: scale,
                     isOutlined: true,
                     isFullWidth: true,
