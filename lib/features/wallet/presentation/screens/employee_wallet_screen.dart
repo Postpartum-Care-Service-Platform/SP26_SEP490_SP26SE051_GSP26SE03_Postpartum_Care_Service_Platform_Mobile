@@ -276,15 +276,16 @@ class _EmployeeWalletScreenState extends State<EmployeeWalletScreen> {
     final currencyFormatter = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
 
     return Container(
-      margin: EdgeInsets.only(bottom: 16 * scale),
-      padding: EdgeInsets.all(16 * scale),
+      margin: EdgeInsets.only(bottom: 12 * scale),
+      padding: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 14 * scale),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24 * scale),
+        borderRadius: BorderRadius.circular(20 * scale),
+        border: Border.all(color: const Color(0xFFF1F5F9)),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFE2E8F0).withValues(alpha: 0.3),
-            blurRadius: 12 * scale,
+            color: const Color(0xFF64748B).withValues(alpha: 0.05),
+            blurRadius: 10 * scale,
             offset: const Offset(0, 4),
           ),
         ],
@@ -292,53 +293,86 @@ class _EmployeeWalletScreenState extends State<EmployeeWalletScreen> {
       child: Row(
         children: [
           Container(
-            padding: EdgeInsets.all(12 * scale),
+            padding: EdgeInsets.all(10 * scale),
             decoration: BoxDecoration(
               color: isReceived 
-                ? const Color(0xFFF0FDF4)
-                : const Color(0xFFFEF2F2),
-              borderRadius: BorderRadius.circular(16 * scale),
+                ? AppColors.primary.withValues(alpha: 0.1)
+                : const Color(0xFFFEE2E2),
+              shape: BoxShape.circle,
             ),
             child: Icon(
-              isReceived ? Icons.add_circle_outline_rounded : Icons.remove_circle_outline_rounded,
-              color: isReceived ? const Color(0xFF16A34A) : const Color(0xFFEF4444),
-              size: 24 * scale,
+              isReceived ? Icons.call_received_rounded : Icons.call_made_rounded,
+              color: isReceived ? AppColors.primary : const Color(0xFFB91C1C),
+              size: 20 * scale,
             ),
           ),
-          SizedBox(width: 16 * scale),
+          SizedBox(width: 14 * scale),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  tx.type ?? 'Giao dịch',
+                  tx.packageName ?? tx.description ?? tx.type ?? 'Giao dịch',
                   style: AppTextStyles.arimo(
                     fontSize: 15 * scale,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1E293B),
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primary,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
+                if (tx.packageName != null && tx.description != null) ...[
+                  SizedBox(height: 2 * scale),
+                  Text(
+                    tx.description!,
+                    style: AppTextStyles.arimo(
+                      fontSize: 12 * scale,
+                      color: const Color(0xFF64748B),
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
                 SizedBox(height: 4 * scale),
                 Text(
                   tx.createdAt != null 
-                    ? DateFormat('dd/MM, HH:mm').format(tx.createdAt!)
+                    ? DateFormat('dd/MM/yyyy • HH:mm').format(tx.createdAt!)
                     : 'Gần đây',
                   style: AppTextStyles.arimo(
-                    fontSize: 12 * scale,
-                    color: const Color(0xFF64748B),
+                    fontSize: 11 * scale,
+                    color: const Color(0xFF94A3B8),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
             ),
           ),
-          Text(
-            '${isReceived ? '+' : ''}${currencyFormatter.format(tx.amount)}',
-            style: AppTextStyles.arimo(
-              fontSize: 16 * scale,
-              fontWeight: FontWeight.w800,
-              color: isReceived ? const Color(0xFF16A34A) : const Color(0xFF1E293B),
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '${isReceived ? '+' : ''}${currencyFormatter.format(tx.amount)}',
+                style: AppTextStyles.arimo(
+                  fontSize: 16 * scale,
+                  fontWeight: FontWeight.w800,
+                  color: isReceived ? const Color(0xFF15803D) : const Color(0xFF0F172A),
+                ),
+              ),
+              if (tx.status != null) ...[
+                SizedBox(height: 2 * scale),
+                Text(
+                  tx.status!,
+                  style: AppTextStyles.arimo(
+                    fontSize: 10 * scale,
+                    fontWeight: FontWeight.w700,
+                    color: tx.status == 'Success' || tx.status == 'Completed' 
+                        ? AppColors.primary
+                        : const Color(0xFF64748B),
+                  ),
+                ),
+              ],
+            ],
           ),
         ],
       ),
