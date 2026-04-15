@@ -28,12 +28,11 @@ class _StaffContractListScreenState extends State<StaffContractListScreen> {
   // Search and filter
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  String _statusFilter = 'all'; // all, draft, sent, signed, cancelled
+  String _statusFilter = 'all'; // all, draft, sent, signed, printed, cancelled
   DateTime? _contractDateFrom;
   DateTime? _contractDateTo;
   DateTime? _signedDateFrom;
   DateTime? _signedDateTo;
-  bool _showFilters = false;
   final Map<int, ContractPreviewModel> _previewByBookingId = {};
 
   Future<List<ContractModel>> _load() async {
@@ -199,60 +198,24 @@ class _StaffContractListScreenState extends State<StaffContractListScreen> {
     final scale = AppResponsive.scaleFactor(context);
 
     return EmployeeScaffold(
+      backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppAppBar(
-        title: 'Danh sách hợp đồng',
+        title: 'Quản lý hợp đồng',
         centerTitle: true,
-        titleFontSize: 20 * scale,
+        titleFontSize: 18 * scale,
         titleFontWeight: FontWeight.w700,
         actions: [
-          Stack(
-            children: [
-              IconButton(
-                onPressed: () {
-                  setState(() {
-                    _showFilters = !_showFilters;
-                  });
-                },
-                icon: const Icon(Icons.filter_list),
-              ),
-              if (_getActiveFilterCount() > 0)
-                Positioned(
-                  right: 8,
-                  top: 8,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                    ),
-                    constraints: const BoxConstraints(
-                      minWidth: 16,
-                      minHeight: 16,
-                    ),
-                    child: Text(
-                      '${_getActiveFilterCount()}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-            ],
-          ),
           IconButton(
             onPressed: _refresh,
-            icon: const Icon(Icons.refresh_rounded),
+            icon: Icon(Icons.refresh_rounded, color: AppColors.primary, size: 24 * scale),
           ),
+          SizedBox(width: 8 * scale),
         ],
       ),
       body: Column(
         children: [
-          _buildSearchBar(scale),
-          if (_showFilters) _buildAdvancedFilters(scale),
-          _buildFilterBar(scale),
+          _buildHeader(scale),
+          _buildStatusChips(scale),
           Expanded(
             child: FutureBuilder<List<ContractModel>>(
               future: _future,
@@ -329,456 +292,182 @@ class _StaffContractListScreenState extends State<StaffContractListScreen> {
     );
   }
 
-  Widget _buildSearchBar(double scale) {
+  Widget _buildHeader(double scale) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(
-        16 * scale,
-        8 * scale,
-        16 * scale,
-        8 * scale,
+      padding: EdgeInsets.fromLTRB(16 * scale, 12 * scale, 16 * scale, 8 * scale),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              height: 48 * scale,
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(12 * scale),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: _searchController,
+                onChanged: (v) => setState(() => _searchQuery = v),
+                decoration: InputDecoration(
+                  hintText: 'Tìm khách hàng, mã HĐ...',
+                  hintStyle: AppTextStyles.arimo(
+                    fontSize: 14 * scale,
+                    color: AppColors.textSecondary.withValues(alpha: 0.6),
+                  ),
+                  prefixIcon: Icon(Icons.search_rounded, color: AppColors.primary, size: 20 * scale),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(vertical: 12 * scale),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(width: 12 * scale),
+          GestureDetector(
+            onTap: _showFilterSheet,
+            child: Container(
+              height: 48 * scale,
+              width: 48 * scale,
+              decoration: BoxDecoration(
+                color: _getActiveFilterCount() > 0 ? AppColors.primary : AppColors.white,
+                borderRadius: BorderRadius.circular(12 * scale),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Icon(
+                    Icons.tune_rounded,
+                    color: _getActiveFilterCount() > 0 ? AppColors.white : AppColors.textPrimary,
+                    size: 20 * scale,
+                  ),
+                  if (_getActiveFilterCount() > 0)
+                    Positioned(
+                      top: 10 * scale,
+                      right: 10 * scale,
+                      child: Container(
+                        width: 8 * scale,
+                        height: 8 * scale,
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
-      child: TextField(
-        controller: _searchController,
-        decoration: InputDecoration(
-          hintText: 'Tìm kiếm theo tên, email, mã hợp đồng, booking...',
-          prefixIcon: const Icon(Icons.search),
-          suffixIcon: _searchQuery.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    setState(() {
-                      _searchQuery = '';
-                      _searchController.clear();
-                    });
-                  },
-                )
-              : null,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12 * scale),
-            borderSide: BorderSide(color: AppColors.textSecondary.withValues(alpha: 0.3)),
-          ),
-          filled: true,
-          fillColor: AppColors.white,
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: 16 * scale,
-            vertical: 12 * scale,
-          ),
-        ),
-        onChanged: (value) {
-          setState(() {
-            _searchQuery = value;
-          });
+    );
+  }
+
+  Widget _buildStatusChips(double scale) {
+    final statuses = [
+      {'id': 'all', 'label': 'Tất cả'},
+      {'id': 'draft', 'label': 'Bản nháp'},
+      {'id': 'sent', 'label': 'Đã gửi'},
+      {'id': 'signed', 'label': 'Đã ký'},
+      {'id': 'printed', 'label': 'Đã in'},
+      {'id': 'cancelled', 'label': 'Đã hủy'},
+    ];
+
+    return Container(
+      height: 40 * scale,
+      margin: EdgeInsets.symmetric(vertical: 8 * scale),
+      child: ListView.separated(
+        padding: EdgeInsets.symmetric(horizontal: 16 * scale),
+        scrollDirection: Axis.horizontal,
+        itemCount: statuses.length,
+        separatorBuilder: (_, __) => SizedBox(width: 8 * scale),
+        itemBuilder: (context, index) {
+          final s = statuses[index];
+          final isSelected = _statusFilter == s['id'];
+
+          return GestureDetector(
+            onTap: () {
+              setState(() {
+                _statusFilter = s['id']!;
+              });
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 8 * scale),
+              decoration: BoxDecoration(
+                color: isSelected ? AppColors.primary : AppColors.white,
+                borderRadius: BorderRadius.circular(20 * scale),
+                border: Border.all(
+                  color: isSelected ? AppColors.primary : AppColors.borderLight,
+                  width: 1,
+                ),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.2),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        )
+                      ]
+                    : [],
+              ),
+              child: Center(
+                child: Text(
+                  s['label']!,
+                  style: AppTextStyles.arimo(
+                    fontSize: 13 * scale,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                    color: isSelected ? AppColors.white : AppColors.textSecondary,
+                  ),
+                ),
+              ),
+            ),
+          );
         },
       ),
     );
   }
 
-  Widget _buildAdvancedFilters(double scale) {
-    return Container(
-      margin: EdgeInsets.fromLTRB(16 * scale, 0, 16 * scale, 8 * scale),
-      padding: EdgeInsets.all(16 * scale),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(12 * scale),
-        border: Border.all(
-          color: AppColors.textSecondary.withValues(alpha: 0.2),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Bộ lọc nâng cao',
-                style: AppTextStyles.arimo(
-                  fontSize: 14 * scale,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              TextButton(
-                onPressed: _clearFilters,
-                child: Text(
-                  'Xóa bộ lọc',
-                  style: AppTextStyles.arimo(
-                    fontSize: 12 * scale,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12 * scale),
-          // Status filter
-          Text(
-            'Trạng thái:',
-            style: AppTextStyles.arimo(
-              fontSize: 12 * scale,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          SizedBox(height: 8 * scale),
-          DropdownButton<String>(
-            value: _statusFilter,
-            isExpanded: true,
-            items: const [
-              DropdownMenuItem(value: 'all', child: Text('Tất cả')),
-              DropdownMenuItem(value: 'draft', child: Text('Nháp')),
-              DropdownMenuItem(value: 'sent', child: Text('Đã gửi')),
-              DropdownMenuItem(value: 'signed', child: Text('Đã ký')),
-              DropdownMenuItem(value: 'printed', child: Text('Đã in')),
-              DropdownMenuItem(value: 'cancelled', child: Text('Đã hủy')),
-            ],
-            onChanged: (value) {
-              if (value == null) return;
-              setState(() {
-                _statusFilter = value;
-              });
-            },
-          ),
-          SizedBox(height: 12 * scale),
-          // Contract date range
-          Text(
-            'Ngày ký hợp đồng:',
-            style: AppTextStyles.arimo(
-              fontSize: 12 * scale,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          SizedBox(height: 8 * scale),
-          Row(
-            children: [
-              Expanded(
-                child: InkWell(
-                  onTap: () async {
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: _contractDateFrom ?? DateTime.now(),
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime(2030),
-                    );
-                    if (date != null) {
-                      setState(() {
-                        _contractDateFrom = date;
-                      });
-                    }
-                  },
-                  child: Container(
-                    padding: EdgeInsets.all(12 * scale),
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: AppColors.textSecondary.withValues(alpha: 0.3),
-                      ),
-                      borderRadius: BorderRadius.circular(8 * scale),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.calendar_today,
-                          size: 16 * scale,
-                          color: AppColors.textSecondary,
-                        ),
-                        SizedBox(width: 8 * scale),
-                        Expanded(
-                          child: Text(
-                            _contractDateFrom == null
-                                ? 'Từ ngày'
-                                : '${_contractDateFrom!.day}/${_contractDateFrom!.month}/${_contractDateFrom!.year}',
-                            style: AppTextStyles.arimo(
-                              fontSize: 12 * scale,
-                              color: _contractDateFrom == null
-                                  ? AppColors.textSecondary
-                                  : AppColors.textPrimary,
-                            ),
-                          ),
-                        ),
-                        if (_contractDateFrom != null)
-                          InkWell(
-                            onTap: () {
-                              setState(() {
-                                _contractDateFrom = null;
-                              });
-                            },
-                            child: Icon(
-                              Icons.close,
-                              size: 16 * scale,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(width: 8 * scale),
-              Expanded(
-                child: InkWell(
-                  onTap: () async {
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: _contractDateTo ?? DateTime.now(),
-                      firstDate: _contractDateFrom ?? DateTime(2020),
-                      lastDate: DateTime(2030),
-                    );
-                    if (date != null) {
-                      setState(() {
-                        _contractDateTo = date;
-                      });
-                    }
-                  },
-                  child: Container(
-                    padding: EdgeInsets.all(12 * scale),
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: AppColors.textSecondary.withValues(alpha: 0.3),
-                      ),
-                      borderRadius: BorderRadius.circular(8 * scale),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.calendar_today,
-                          size: 16 * scale,
-                          color: AppColors.textSecondary,
-                        ),
-                        SizedBox(width: 8 * scale),
-                        Expanded(
-                          child: Text(
-                            _contractDateTo == null
-                                ? 'Đến ngày'
-                                : '${_contractDateTo!.day}/${_contractDateTo!.month}/${_contractDateTo!.year}',
-                            style: AppTextStyles.arimo(
-                              fontSize: 12 * scale,
-                              color: _contractDateTo == null
-                                  ? AppColors.textSecondary
-                                  : AppColors.textPrimary,
-                            ),
-                          ),
-                        ),
-                        if (_contractDateTo != null)
-                          InkWell(
-                            onTap: () {
-                              setState(() {
-                                _contractDateTo = null;
-                              });
-                            },
-                            child: Icon(
-                              Icons.close,
-                              size: 16 * scale,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12 * scale),
-          // Signed date range
-          Text(
-            'Ngày đã ký:',
-            style: AppTextStyles.arimo(
-              fontSize: 12 * scale,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          SizedBox(height: 8 * scale),
-          Row(
-            children: [
-              Expanded(
-                child: InkWell(
-                  onTap: () async {
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: _signedDateFrom ?? DateTime.now(),
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime(2030),
-                    );
-                    if (date != null) {
-                      setState(() {
-                        _signedDateFrom = date;
-                      });
-                    }
-                  },
-                  child: Container(
-                    padding: EdgeInsets.all(12 * scale),
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: AppColors.textSecondary.withValues(alpha: 0.3),
-                      ),
-                      borderRadius: BorderRadius.circular(8 * scale),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.edit_document,
-                          size: 16 * scale,
-                          color: AppColors.textSecondary,
-                        ),
-                        SizedBox(width: 8 * scale),
-                        Expanded(
-                          child: Text(
-                            _signedDateFrom == null
-                                ? 'Từ ngày'
-                                : '${_signedDateFrom!.day}/${_signedDateFrom!.month}/${_signedDateFrom!.year}',
-                            style: AppTextStyles.arimo(
-                              fontSize: 12 * scale,
-                              color: _signedDateFrom == null
-                                  ? AppColors.textSecondary
-                                  : AppColors.textPrimary,
-                            ),
-                          ),
-                        ),
-                        if (_signedDateFrom != null)
-                          InkWell(
-                            onTap: () {
-                              setState(() {
-                                _signedDateFrom = null;
-                              });
-                            },
-                            child: Icon(
-                              Icons.close,
-                              size: 16 * scale,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(width: 8 * scale),
-              Expanded(
-                child: InkWell(
-                  onTap: () async {
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: _signedDateTo ?? DateTime.now(),
-                      firstDate: _signedDateFrom ?? DateTime(2020),
-                      lastDate: DateTime(2030),
-                    );
-                    if (date != null) {
-                      setState(() {
-                        _signedDateTo = date;
-                      });
-                    }
-                  },
-                  child: Container(
-                    padding: EdgeInsets.all(12 * scale),
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: AppColors.textSecondary.withValues(alpha: 0.3),
-                      ),
-                      borderRadius: BorderRadius.circular(8 * scale),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.edit_document,
-                          size: 16 * scale,
-                          color: AppColors.textSecondary,
-                        ),
-                        SizedBox(width: 8 * scale),
-                        Expanded(
-                          child: Text(
-                            _signedDateTo == null
-                                ? 'Đến ngày'
-                                : '${_signedDateTo!.day}/${_signedDateTo!.month}/${_signedDateTo!.year}',
-                            style: AppTextStyles.arimo(
-                              fontSize: 12 * scale,
-                              color: _signedDateTo == null
-                                  ? AppColors.textSecondary
-                                  : AppColors.textPrimary,
-                            ),
-                          ),
-                        ),
-                        if (_signedDateTo != null)
-                          InkWell(
-                            onTap: () {
-                              setState(() {
-                                _signedDateTo = null;
-                              });
-                            },
-                            child: Icon(
-                              Icons.close,
-                              size: 16 * scale,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+  void _showFilterSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _FilterBottomSheet(
+        initialFilter: _filter,
+        contractDateFrom: _contractDateFrom,
+        contractDateTo: _contractDateTo,
+        signedDateFrom: _signedDateFrom,
+        signedDateTo: _signedDateTo,
+        onApply: (type, cFrom, cTo, sFrom, sTo) {
+          setState(() {
+            _filter = type;
+            _contractDateFrom = cFrom;
+            _contractDateTo = cTo;
+            _signedDateFrom = sFrom;
+            _signedDateTo = sTo;
+            _future = _load();
+          });
+        },
+        onClear: () {
+          _clearFilters();
+          _future = _load();
+        },
       ),
     );
   }
 
-  Widget _buildFilterBar(double scale) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(16 * scale, 8 * scale, 16 * scale, 4 * scale),
-      child: Row(
-        children: [
-          Text(
-            'Loại:',
-            style: AppTextStyles.arimo(
-              fontSize: 13 * scale,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: DropdownButton<String>(
-              value: _filter,
-              isExpanded: true,
-              items: const [
-                DropdownMenuItem(value: 'all', child: Text('Tất cả')),
-                DropdownMenuItem(
-                  value: 'no_schedule',
-                  child: Text('Chưa lên lịch'),
-                ),
-              ],
-              onChanged: (value) {
-                if (value == null) return;
-                setState(() {
-                  _filter = value;
-                  _future = _load();
-                });
-              },
-            ),
-          ),
-          if (_getActiveFilterCount() > 0) ...[
-            SizedBox(width: 8 * scale),
-            Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: 8 * scale,
-                vertical: 4 * scale,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12 * scale),
-              ),
-              child: Text(
-                '${_getActiveFilterCount()} bộ lọc',
-                style: AppTextStyles.arimo(
-                  fontSize: 11 * scale,
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
 
   @override
   void dispose() {
@@ -859,16 +548,17 @@ class _ContractItem extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16 * scale),
+      borderRadius: BorderRadius.circular(20 * scale),
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.white,
-          borderRadius: BorderRadius.circular(16 * scale),
+          borderRadius: BorderRadius.circular(20 * scale),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 10 * scale,
-              offset: Offset(0, 4 * scale),
+              blurRadius: 15 * scale,
+              spreadRadius: 0,
+              offset: Offset(0, 8 * scale),
             ),
           ],
         ),
@@ -885,24 +575,39 @@ class _ContractItem extends StatelessWidget {
                     vertical: 6 * scale,
                   ),
                   decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(999),
+                    color: statusColor.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(8 * scale),
+                    border: Border.all(color: statusColor.withValues(alpha: 0.2)),
                   ),
-                  child: Text(
-                    _statusText(contract.status),
-                    style: AppTextStyles.arimo(
-                      fontSize: 11 * scale,
-                      fontWeight: FontWeight.w700,
-                      color: statusColor,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6 * scale,
+                        height: 6 * scale,
+                        decoration: BoxDecoration(
+                          color: statusColor,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      SizedBox(width: 6 * scale),
+                      Text(
+                        _statusText(contract.status),
+                        style: AppTextStyles.arimo(
+                          fontSize: 11 * scale,
+                          fontWeight: FontWeight.w700,
+                          color: statusColor,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 Text(
                   contract.contractCode,
                   style: AppTextStyles.arimo(
                     fontSize: 12 * scale,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF2563EB),
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primary,
                   ),
                 ),
               ],
@@ -911,23 +616,23 @@ class _ContractItem extends StatelessWidget {
             Row(
               children: [
                 CircleAvatar(
-                  radius: 20 * scale,
+                  radius: 24 * scale,
                   backgroundColor: hasCustomer
-                      ? AppColors.primary
-                      : AppColors.textSecondary.withValues(alpha: 0.18),
+                      ? AppColors.primary.withValues(alpha: 0.1)
+                      : AppColors.textSecondary.withValues(alpha: 0.1),
                   child: hasCustomer
                       ? Text(
                           displayName[0].toUpperCase(),
                           style: TextStyle(
-                            color: AppColors.white,
-                            fontSize: 16 * scale,
-                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                            fontSize: 18 * scale,
+                            fontWeight: FontWeight.w800,
                           ),
                         )
                       : Icon(
-                          Icons.help_outline_rounded,
+                          Icons.person_outline_rounded,
                           color: AppColors.textSecondary,
-                          size: 20 * scale,
+                          size: 24 * scale,
                         ),
                 ),
                 SizedBox(width: 12 * scale),
