@@ -37,7 +37,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     // Load feedbacks and types on init
     context.read<FeedbackBloc>()
       ..add(const FeedbackTypesLoadRequested())
-      ..add(const MyFeedbacksLoadRequested());
+      ..add(const MyFeedbacksLoadRequested(scope: FeedbackLoadScope.profile));
   }
 
   void _handleCreateFeedback() {
@@ -102,7 +102,9 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
               return RefreshIndicator(
                 onRefresh: () async {
                   context.read<FeedbackBloc>().add(
-                        const MyFeedbacksRefreshRequested(),
+                        const MyFeedbacksRefreshRequested(
+                          scope: FeedbackLoadScope.profile,
+                        ),
                       );
                 },
                 color: AppColors.primary,
@@ -148,7 +150,9 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                       text: AppStrings.retry,
                       onPressed: () {
                         context.read<FeedbackBloc>().add(
-                              const MyFeedbacksLoadRequested(),
+                              const MyFeedbacksLoadRequested(
+                              scope: FeedbackLoadScope.profile,
+                            ),
                             );
                       },
                       width: 200,

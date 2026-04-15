@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/di/injection_container.dart';
-import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/auth/presentation/bloc/auth_event.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
@@ -70,16 +69,7 @@ class _AppScaffoldState extends State<AppScaffold> {
     final index = _customerTabs.indexOf(tab);
     if (index < 0 || index >= _screens.length) return;
 
-    // Special handling for Services tab: always refresh even if current tab
-    if (tab == AppBottomTab.services) {
-      context
-          .read<AuthBloc>()
-          .add(const AuthLoadCurrentAccount(forceRefresh: true));
-
-      if (tab == _currentTab) return; // Still skip PageView jump if same tab
-    } else {
-      if (tab == _currentTab) return;
-    }
+    if (tab == _currentTab) return;
 
     setState(() {
       _currentTab = tab;
@@ -104,13 +94,6 @@ class _AppScaffoldState extends State<AppScaffold> {
               setState(() {
                 _currentTab = newTab;
               });
-              
-              // Silently reload current account when switching to services tab (forced reload)
-              if (newTab == AppBottomTab.services) {
-                blocContext
-                    .read<AuthBloc>()
-                    .add(const AuthLoadCurrentAccount(forceRefresh: true));
-              }
             },
             children: _screens,
           ),

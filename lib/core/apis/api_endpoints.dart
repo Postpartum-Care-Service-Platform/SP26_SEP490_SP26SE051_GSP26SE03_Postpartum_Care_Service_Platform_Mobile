@@ -309,8 +309,11 @@ class ApiEndpoints {
   /// Get feedback types
   static const String feedbackTypes = '/FeedbackType';
 
-  /// Get my feedbacks
-  static const String myFeedbacks = '/Feedback/my-full-feedback';
+  /// Get my feedbacks from service flow
+  static const String myFeedbacks = '/Feedback/my-feedback';
+
+  /// Get full feedback history from profile flow
+  static const String myFullFeedbacks = '/Feedback/my-full-feedback';
 
   /// Create feedback
   static const String createFeedback = '/Feedback';

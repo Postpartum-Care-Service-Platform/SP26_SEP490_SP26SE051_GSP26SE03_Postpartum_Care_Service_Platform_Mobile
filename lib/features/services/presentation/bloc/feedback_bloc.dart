@@ -41,7 +41,9 @@ class FeedbackBloc extends Bloc<FeedbackEvent, FeedbackState> {
     emit(const FeedbackLoading());
     try {
       final types = await getFeedbackTypesUsecase();
-      final feedbacks = await getMyFeedbacksUsecase();
+      final feedbacks = await getMyFeedbacksUsecase(
+        scope: event.scope,
+      );
       emit(MyFeedbacksLoaded(feedbacks: feedbacks, types: types));
     } catch (e) {
       emit(FeedbackError(e.toString()));
@@ -55,13 +57,15 @@ class FeedbackBloc extends Bloc<FeedbackEvent, FeedbackState> {
     if (state is MyFeedbacksLoaded) {
       final currentState = state as MyFeedbacksLoaded;
       try {
-        final feedbacks = await getMyFeedbacksUsecase();
+        final feedbacks = await getMyFeedbacksUsecase(
+        scope: event.scope,
+      );
         emit(currentState.copyWith(feedbacks: feedbacks));
       } catch (e) {
         emit(FeedbackError(e.toString()));
       }
     } else {
-      add(const MyFeedbacksLoadRequested());
+      add(MyFeedbacksLoadRequested(scope: event.scope));
     }
   }
 
@@ -77,6 +81,9 @@ class FeedbackBloc extends Bloc<FeedbackEvent, FeedbackState> {
         content: event.content,
         rating: event.rating,
         imagePaths: event.imagePaths,
+        familyScheduleId: event.familyScheduleId,
+        staffId: event.staffId,
+        amenityTicketId: event.amenityTicketId,
       );
       emit(FeedbackCreated(feedback: feedback));
       // Reload feedbacks after creation

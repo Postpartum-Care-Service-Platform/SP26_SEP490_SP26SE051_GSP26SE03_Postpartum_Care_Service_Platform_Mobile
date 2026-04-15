@@ -9,6 +9,7 @@ import '../models/create_feedback_request_model.dart';
 abstract class FeedbackRemoteDataSource {
   Future<List<FeedbackTypeModel>> getFeedbackTypes();
   Future<List<FeedbackModel>> getMyFeedbacks();
+  Future<List<FeedbackModel>> getFullFeedbacks();
   Future<FeedbackModel> createFeedback(CreateFeedbackRequestModel request);
 }
 
@@ -35,6 +36,19 @@ class FeedbackRemoteDataSourceImpl implements FeedbackRemoteDataSource {
   Future<List<FeedbackModel>> getMyFeedbacks() async {
     try {
       final response = await dio.get(ApiEndpoints.myFeedbacks);
+      final List<dynamic> data = response.data as List<dynamic>;
+      return data
+          .map((json) => FeedbackModel.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  @override
+  Future<List<FeedbackModel>> getFullFeedbacks() async {
+    try {
+      final response = await dio.get(ApiEndpoints.myFullFeedbacks);
       final List<dynamic> data = response.data as List<dynamic>;
       return data
           .map((json) => FeedbackModel.fromJson(json as Map<String, dynamic>))

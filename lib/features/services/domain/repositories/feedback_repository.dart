@@ -6,8 +6,11 @@ abstract class FeedbackRepository {
   /// Get all feedback types
   Future<List<FeedbackTypeEntity>> getFeedbackTypes();
 
-  /// Get my feedbacks
+  /// Get my feedbacks for the service flow
   Future<List<FeedbackEntity>> getMyFeedbacks();
+
+  /// Get full feedback history for profile flow
+  Future<List<FeedbackEntity>> getFullFeedbacks();
 
   /// Create feedback
   Future<FeedbackEntity> createFeedback({
@@ -16,5 +19,8 @@ abstract class FeedbackRepository {
     required String content,
     required int rating,
     required List<String> imagePaths,
+    int? familyScheduleId,
+    String? staffId,
+    int? amenityTicketId,
   });
 }

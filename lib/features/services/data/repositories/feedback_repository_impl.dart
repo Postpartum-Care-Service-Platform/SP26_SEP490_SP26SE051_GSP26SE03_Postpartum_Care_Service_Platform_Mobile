@@ -24,12 +24,21 @@ class FeedbackRepositoryImpl implements FeedbackRepository {
   }
 
   @override
+  Future<List<FeedbackEntity>> getFullFeedbacks() async {
+    final models = await remoteDataSource.getFullFeedbacks();
+    return models.map((model) => model.toEntity()).toList();
+  }
+
+  @override
   Future<FeedbackEntity> createFeedback({
     required int feedbackTypeId,
     required String title,
     required String content,
     required int rating,
     required List<String> imagePaths,
+    int? familyScheduleId,
+    String? staffId,
+    int? amenityTicketId,
   }) async {
     final request = CreateFeedbackRequestModel(
       feedbackTypeId: feedbackTypeId,
@@ -37,6 +46,9 @@ class FeedbackRepositoryImpl implements FeedbackRepository {
       content: content,
       rating: rating,
       images: imagePaths.map((path) => File(path)).toList(),
+      familyScheduleId: familyScheduleId,
+      staffId: staffId,
+      amenityTicketId: amenityTicketId,
     );
 
     final model = await remoteDataSource.createFeedback(request);
