@@ -198,7 +198,6 @@ class _StaffContractListScreenState extends State<StaffContractListScreen> {
     final scale = AppResponsive.scaleFactor(context);
 
     return EmployeeScaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppAppBar(
         title: 'Quản lý hợp đồng',
         centerTitle: true,
@@ -759,4 +758,289 @@ class _ContractItem extends StatelessWidget {
     );
   }
 }
+
+class _FilterBottomSheet extends StatefulWidget {
+  final String initialFilter;
+  final DateTime? contractDateFrom;
+  final DateTime? contractDateTo;
+  final DateTime? signedDateFrom;
+  final DateTime? signedDateTo;
+  final Function(String type, DateTime? cFrom, DateTime? cTo, DateTime? sFrom, DateTime? sTo) onApply;
+  final VoidCallback onClear;
+
+  const _FilterBottomSheet({
+    required this.initialFilter,
+    required this.contractDateFrom,
+    required this.contractDateTo,
+    required this.signedDateFrom,
+    required this.signedDateTo,
+    required this.onApply,
+    required this.onClear,
+  });
+
+  @override
+  State<_FilterBottomSheet> createState() => _FilterBottomSheetState();
+}
+
+class _FilterBottomSheetState extends State<_FilterBottomSheet> {
+  late String _type;
+  DateTime? _cFrom;
+  DateTime? _cTo;
+  DateTime? _sFrom;
+  DateTime? _sTo;
+
+  @override
+  void initState() {
+    super.initState();
+    _type = widget.initialFilter;
+    _cFrom = widget.contractDateFrom;
+    _cTo = widget.contractDateTo;
+    _sFrom = widget.signedDateFrom;
+    _sTo = widget.signedDateTo;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+
+    return Container(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom + 24 * scale,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24 * scale)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 40 * scale,
+            height: 4 * scale,
+            margin: EdgeInsets.symmetric(vertical: 12 * scale),
+            decoration: BoxDecoration(
+              color: AppColors.borderLight,
+              borderRadius: BorderRadius.circular(2 * scale),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20 * scale),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Bộ lọc nâng cao',
+                  style: AppTextStyles.arimo(
+                    fontSize: 18 * scale,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    widget.onClear();
+                    Navigator.pop(context);
+                  },
+                  child: Text(
+                    'Xóa tất cả',
+                    style: AppTextStyles.arimo(
+                      color: Colors.red,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(),
+          Flexible(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(20 * scale),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSectionTitle('Loại hợp đồng', scale),
+                  SizedBox(height: 12 * scale),
+                  Row(
+                    children: [
+                      _buildTypeItem('all', 'Tất cả', scale),
+                      SizedBox(width: 12 * scale),
+                      _buildTypeItem('no_schedule', 'Chưa lên lịch', scale),
+                    ],
+                  ),
+                  SizedBox(height: 24 * scale),
+                  _buildSectionTitle('Ngày tạo hợp đồng', scale),
+                  SizedBox(height: 12 * scale),
+                  _buildDateRangePicker(
+                    from: _cFrom,
+                    to: _cTo,
+                    onFromChanged: (d) => setState(() => _cFrom = d),
+                    onToChanged: (d) => setState(() => _cTo = d),
+                    scale: scale,
+                  ),
+                  SizedBox(height: 24 * scale),
+                  _buildSectionTitle('Ngày đã ký', scale),
+                  SizedBox(height: 12 * scale),
+                  _buildDateRangePicker(
+                    from: _sFrom,
+                    to: _sTo,
+                    onFromChanged: (d) => setState(() => _sFrom = d),
+                    onToChanged: (d) => setState(() => _sTo = d),
+                    scale: scale,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.all(20 * scale),
+            child: SizedBox(
+              width: double.infinity,
+              height: 50 * scale,
+              child: ElevatedButton(
+                onPressed: () {
+                  widget.onApply(_type, _cFrom, _cTo, _sFrom, _sTo);
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12 * scale),
+                  ),
+                  elevation: 0,
+                ),
+                child: Text(
+                  'Áp dụng',
+                  style: AppTextStyles.arimo(
+                    fontSize: 16 * scale,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title, double scale) {
+    return Text(
+      title,
+      style: AppTextStyles.arimo(
+        fontSize: 15 * scale,
+        fontWeight: FontWeight.w700,
+        color: AppColors.textPrimary,
+      ),
+    );
+  }
+
+  Widget _buildTypeItem(String id, String label, double scale) {
+    final isSelected = _type == id;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _type = id),
+        child: Container(
+          padding: EdgeInsets.symmetric(vertical: 12 * scale),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : AppColors.white,
+            borderRadius: BorderRadius.circular(12 * scale),
+            border: Border.all(
+              color: isSelected ? AppColors.primary : AppColors.borderLight,
+              width: 1.5,
+            ),
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: AppTextStyles.arimo(
+                fontSize: 13 * scale,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? AppColors.primary : AppColors.textSecondary,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDateRangePicker({
+    required DateTime? from,
+    required DateTime? to,
+    required Function(DateTime?) onFromChanged,
+    required Function(DateTime?) onToChanged,
+    required double scale,
+  }) {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildDatePicker(
+            value: from,
+            hint: 'Từ ngày',
+            onChanged: onFromChanged,
+            scale: scale,
+          ),
+        ),
+        SizedBox(width: 12 * scale),
+        Expanded(
+          child: _buildDatePicker(
+            value: to,
+            hint: 'Đến ngày',
+            onChanged: onToChanged,
+            scale: scale,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDatePicker({
+    required DateTime? value,
+    required String hint,
+    required Function(DateTime?) onChanged,
+    required double scale,
+  }) {
+    return GestureDetector(
+      onTap: () async {
+        final date = await showDatePicker(
+          context: context,
+          initialDate: value ?? DateTime.now(),
+          firstDate: DateTime(2020),
+          lastDate: DateTime(2030),
+        );
+        onChanged(date);
+      },
+      child: Container(
+        padding: EdgeInsets.all(12 * scale),
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(12 * scale),
+          border: Border.all(color: AppColors.borderLight),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.calendar_today_rounded, size: 16 * scale, color: AppColors.textSecondary),
+            SizedBox(width: 8 * scale),
+            Expanded(
+              child: Text(
+                value == null ? hint : '${value.day}/${value.month}/${value.year}',
+                style: AppTextStyles.arimo(
+                  fontSize: 12 * scale,
+                  color: value == null ? AppColors.textSecondary : AppColors.textPrimary,
+                ),
+              ),
+            ),
+            if (value != null)
+              GestureDetector(
+                onTap: () => onChanged(null),
+                child: Icon(Icons.close_rounded, size: 16 * scale, color: AppColors.textSecondary),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 
