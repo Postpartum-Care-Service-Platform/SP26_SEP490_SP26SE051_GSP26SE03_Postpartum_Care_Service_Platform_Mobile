@@ -99,6 +99,7 @@ class ApiEndpoints {
 
   // Package endpoints
   static const String packages = '/Packages/center';
+  static const String nowPackage = '/Packages/nowPackage';
   static String packageById(int id) => '/Packages/$id';
   static const String packageTypes = '/PackageType';
 

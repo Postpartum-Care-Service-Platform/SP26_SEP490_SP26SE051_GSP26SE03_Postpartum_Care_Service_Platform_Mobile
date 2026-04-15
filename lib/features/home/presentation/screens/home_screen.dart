@@ -68,15 +68,15 @@ class _HomeScreenState extends State<HomeScreen> {
                         SizedBox(height: 28 * scale),
 
                         Builder(
-                    builder: (homeContext) => SectionHeader(
-                      title: AppStrings.promotions,
-                      actionText: AppStrings.viewAll,
-                      onActionPressed: () {
-                        AppRouter.push(context, AppRoutes.package);
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 16),
+                          builder: (homeContext) => SectionHeader(
+                            title: AppStrings.promotions,
+                            actionText: AppStrings.viewAll,
+                            onActionPressed: () {
+                              AppRouter.push(context, AppRoutes.package);
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 16),
                   BlocBuilder<PackageBloc, PackageState>(
                     builder: (context, state) {
                       if (state is PackageLoading) {

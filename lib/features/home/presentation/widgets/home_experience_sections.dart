@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../../core/apis/api_client.dart';
 import '../../../../core/apis/api_endpoints.dart';
@@ -10,12 +11,18 @@ import '../../../../core/apis/api_endpoints.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/routing/app_router.dart';
+import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 
 /// 1) Welcome information section with intro text and small icons row.
 class HomeWelcomeSection extends StatelessWidget {
   const HomeWelcomeSection({super.key});
+
+  void _openQuickAction(BuildContext context, String route) {
+    AppRouter.push(context, route);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,26 +31,147 @@ class HomeWelcomeSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          AppStrings.homeWelcomeSubtitle,
-          style: AppTextStyles.arimo(
-            fontSize: 13 * scale,
-            fontWeight: FontWeight.w400,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        SizedBox(height: 20 * scale),
-        Text(
-          AppStrings.homeWelcomeDescription,
-          style: AppTextStyles.arimo(
-            fontSize: 13 * scale,
-            fontWeight: FontWeight.w400,
-            color: AppColors.textPrimary,
-          ).copyWith(
-            height: 1.5,
-          ),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final tileWidth = (constraints.maxWidth - (12 * scale)) / 2;
+
+            return Wrap(
+              spacing: 12 * scale,
+              runSpacing: 12 * scale,
+              children: [
+                SizedBox(
+                  width: tileWidth,
+                  child: _QuickActionTile(
+                    iconAsset: AppAssets.calendar,
+                    label: 'Lịch hẹn',
+                    onTap: () => _openQuickAction(context, AppRoutes.appointment),
+                  ),
+                ),
+                SizedBox(
+                  width: tileWidth,
+                  child: _QuickActionTile(
+                    iconAsset: AppAssets.appIconThird,
+                    label: 'Dịch vụ',
+                    onTap: () => _openQuickAction(context, AppRoutes.services),
+                  ),
+                ),
+                SizedBox(
+                  width: tileWidth,
+                  child: _QuickActionTile(
+                    iconAsset: AppAssets.chatMessage,
+                    label: 'Tư vấn',
+                    onTap: () => _openQuickAction(context, AppRoutes.chat),
+                  ),
+                ),
+                SizedBox(
+                  width: tileWidth,
+                  child: _QuickActionTile(
+                    iconAsset: AppAssets.family,
+                    label: 'Hồ sơ gia đình',
+                    onTap: () => _openQuickAction(context, AppRoutes.familyProfile),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ],
+    );
+  }
+}
+
+class _QuickActionTile extends StatefulWidget {
+  final String iconAsset;
+  final String label;
+  final VoidCallback onTap;
+
+  const _QuickActionTile({
+    required this.iconAsset,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  State<_QuickActionTile> createState() => _QuickActionTileState();
+}
+
+class _QuickActionTileState extends State<_QuickActionTile> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+
+    return AnimatedScale(
+      duration: const Duration(milliseconds: 120),
+      curve: Curves.easeOut,
+      scale: _pressed ? 0.97 : 1,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOut,
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(18 * scale),
+          border: Border.all(
+            color: _pressed
+                ? AppColors.primary.withValues(alpha: 0.28)
+                : AppColors.primary.withValues(alpha: 0.14),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: _pressed ? 0.08 : 0.04),
+              blurRadius: _pressed ? 16 * scale : 12 * scale,
+              offset: Offset(0, _pressed ? 2 * scale : 4 * scale),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(18 * scale),
+            onTap: widget.onTap,
+            onTapDown: (_) => setState(() => _pressed = true),
+            onTapCancel: () => setState(() => _pressed = false),
+            onTapUp: (_) => setState(() => _pressed = false),
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 12 * scale, horizontal: 8 * scale),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 40 * scale,
+                    height: 40 * scale,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: _pressed ? 0.18 : 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    padding: EdgeInsets.all(10 * scale),
+                    child: SvgPicture.asset(
+                      widget.iconAsset,
+                      colorFilter: const ColorFilter.mode(
+                        AppColors.primary,
+                        BlendMode.srcIn,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 8 * scale),
+                  Text(
+                    widget.label,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.arimo(
+                      fontSize: 11 * scale,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

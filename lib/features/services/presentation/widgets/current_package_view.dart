@@ -127,6 +127,8 @@ class CurrentPackageView extends StatelessWidget {
             SizedBox(height: 16 * scale),
             if (nowPackage.isServiceUnlocked) ...[
               _AccountQuickInfo(account: account),
+            SizedBox(height: 16 * scale),
+            _NowPackageDetailsCard(nowPackage: nowPackage),
               SizedBox(height: 16 * scale),
               _InProgressSection(nowPackage: nowPackage),
               SizedBox(height: 16 * scale),
@@ -453,6 +455,74 @@ class _HomeServiceScheduleSection extends StatelessWidget {
       child: _HomeServiceScheduleContent(
         nowPackage: nowPackage,
         serviceDates: serviceDates,
+      ),
+    );
+  }
+}
+
+class _NowPackageDetailsCard extends StatelessWidget {
+  final NowPackageModel nowPackage;
+
+  const _NowPackageDetailsCard({required this.nowPackage});
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+
+    return AppWidgets.sectionContainer(
+      context,
+      padding: EdgeInsets.all(16 * scale),
+      children: [
+        Text(
+          'Thông tin gói hiện tại',
+          style: AppTextStyles.arimo(
+            fontSize: 14 * scale,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        SizedBox(height: 12 * scale),
+        _detailRow('Mã booking', nowPackage.bookingId.toString(), scale),
+        _detailRow('Gói', nowPackage.packageName, scale),
+        _detailRow('Loại', nowPackage.type, scale),
+        _detailRow('Phòng', nowPackage.roomName ?? '--', scale),
+        _detailRow('Tầng', nowPackage.floor?.toString() ?? '--', scale),
+        _detailRow('Mã hợp đồng', nowPackage.contractCode ?? '--', scale),
+        _detailRow('Trạng thái', nowPackage.contractStatus, scale),
+      ],
+    );
+  }
+
+  Widget _detailRow(String label, String value, double scale) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 8 * scale),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 4,
+            child: Text(
+              label,
+              style: AppTextStyles.arimo(
+                fontSize: 12 * scale,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
+          SizedBox(width: 8 * scale),
+          Expanded(
+            flex: 6,
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: AppTextStyles.arimo(
+                fontSize: 12 * scale,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
