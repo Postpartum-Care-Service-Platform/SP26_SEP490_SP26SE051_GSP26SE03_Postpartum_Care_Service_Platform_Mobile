@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/usecases/get_feedback_types_usecase.dart';
 import '../../domain/usecases/get_my_feedbacks_usecase.dart';
 import '../../domain/usecases/create_feedback_usecase.dart';
+import '../../domain/usecases/get_current_booking_staff_usecase.dart';
 import 'feedback_event.dart';
 import 'feedback_state.dart';
 
@@ -10,13 +11,17 @@ class FeedbackBloc extends Bloc<FeedbackEvent, FeedbackState> {
   final GetFeedbackTypesUsecase getFeedbackTypesUsecase;
   final GetMyFeedbacksUsecase getMyFeedbacksUsecase;
   final CreateFeedbackUsecase createFeedbackUsecase;
+  final GetCurrentBookingStaffUsecase getCurrentBookingStaffUsecase;
 
   FeedbackBloc({
     required this.getFeedbackTypesUsecase,
     required this.getMyFeedbacksUsecase,
     required this.createFeedbackUsecase,
+    required this.getCurrentBookingStaffUsecase,
   }) : super(const FeedbackInitial()) {
     on<FeedbackTypesLoadRequested>(_onFeedbackTypesLoadRequested);
+    on<FeedbackCurrentBookingStaffLoadRequested>(
+        _onFeedbackCurrentBookingStaffLoadRequested);
     on<MyFeedbacksLoadRequested>(_onMyFeedbacksLoadRequested);
     on<MyFeedbacksRefreshRequested>(_onMyFeedbacksRefreshRequested);
     on<FeedbackCreateRequested>(_onFeedbackCreateRequested);
@@ -29,6 +34,18 @@ class FeedbackBloc extends Bloc<FeedbackEvent, FeedbackState> {
     try {
       final types = await getFeedbackTypesUsecase();
       emit(FeedbackTypesLoaded(types: types));
+    } catch (e) {
+      emit(FeedbackError(e.toString()));
+    }
+  }
+
+  Future<void> _onFeedbackCurrentBookingStaffLoadRequested(
+    FeedbackCurrentBookingStaffLoadRequested event,
+    Emitter<FeedbackState> emit,
+  ) async {
+    try {
+      final staffs = await getCurrentBookingStaffUsecase();
+      emit(FeedbackCurrentBookingStaffLoaded(staffs: staffs));
     } catch (e) {
       emit(FeedbackError(e.toString()));
     }

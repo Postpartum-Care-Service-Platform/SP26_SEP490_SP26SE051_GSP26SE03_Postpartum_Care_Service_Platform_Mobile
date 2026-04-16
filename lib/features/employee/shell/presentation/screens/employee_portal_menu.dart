@@ -59,9 +59,8 @@ class _EmployeePortalScreenState extends State<EmployeePortalScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<AuthBloc>(
-      create: (_) =>
-          InjectionContainer.authBloc..add(const AuthLoadCurrentAccount()),
+    return BlocProvider<AuthBloc>.value(
+      value: InjectionContainer.authBloc..add(const AuthLoadCurrentAccount()),
       child: PopScope(
         canPop: _currentTab == AppBottomTab.appointment,
         onPopInvokedWithResult: (didPop, result) {

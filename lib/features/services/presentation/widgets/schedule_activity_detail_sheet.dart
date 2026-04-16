@@ -10,6 +10,7 @@ import '../bloc/family_schedule_bloc.dart';
 import '../bloc/family_schedule_event.dart';
 import '../../domain/entities/family_schedule_entity.dart';
 import '../../domain/entities/staff_schedule_entity.dart';
+import 'create_feedback_sheet.dart';
 
 /// Schedule Activity Detail Bottom Sheet
 /// Displays activity, staff and note information with user-friendly layout.
@@ -109,6 +110,17 @@ class ScheduleActivityDetailSheet extends StatelessWidget {
                 AppWidgets.primaryButton(
                   text: 'Xác nhận hoàn thành',
                   onPressed: () => _showConfirmDialog(context, scale),
+                  width: double.infinity,
+                ),
+              ],
+              if (schedule.isCompleted || _isStaffDone) ...[
+                SizedBox(height: 12 * scale),
+                AppWidgets.secondaryButton(
+                  text: 'Viết feedback',
+                  onPressed: () => CreateFeedbackSheet.show(
+                    context,
+                    initialSchedule: schedule,
+                  ),
                   width: double.infinity,
                 ),
               ],

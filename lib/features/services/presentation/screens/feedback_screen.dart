@@ -20,10 +20,12 @@ import '../widgets/create_feedback_sheet.dart';
 /// Displays user's feedbacks and allows creating new feedback
 class FeedbackScreen extends StatefulWidget {
   final bool isReadOnly;
+  final FeedbackLoadScope scope;
 
   const FeedbackScreen({
     super.key,
     this.isReadOnly = false,
+    this.scope = FeedbackLoadScope.service,
   });
 
   @override
@@ -35,28 +37,21 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   void initState() {
     super.initState();
     // Load feedbacks and types on init
-    context.read<FeedbackBloc>()
-      ..add(const FeedbackTypesLoadRequested())
-      ..add(const MyFeedbacksLoadRequested(scope: FeedbackLoadScope.profile));
+    context.read<FeedbackBloc>().add(MyFeedbacksLoadRequested(scope: widget.scope));
   }
 
   void _handleCreateFeedback() {
     final state = context.read<FeedbackBloc>().state;
     if (state is MyFeedbacksLoaded) {
-      CreateFeedbackSheet.show(context, state.types);
+      CreateFeedbackSheet.show(context, feedbackTypes: state.types);
     } else if (state is FeedbackTypesLoaded) {
-      CreateFeedbackSheet.show(context, state.types);
+      CreateFeedbackSheet.show(context, feedbackTypes: state.types);
     } else {
-      // Load types first
-      context.read<FeedbackBloc>().add(const FeedbackTypesLoadRequested());
-      // Wait a bit then show sheet
-      Future.delayed(const Duration(milliseconds: 500), () {
-        if (!mounted) return;
-        final newState = context.read<FeedbackBloc>().state;
-        if (newState is FeedbackTypesLoaded) {
-          CreateFeedbackSheet.show(context, newState.types);
-        }
-      });
+      // Dispatch load both to maintain a proper state for FeedbackScreen
+      context.read<FeedbackBloc>().add(MyFeedbacksLoadRequested(scope: widget.scope));
+      // Show sheet immediately. The sheet's BlocBuilder will show a
+      // loading indicator until MyFeedbacksLoaded provides the types.
+      CreateFeedbackSheet.show(context, feedbackTypes: const []);
     }
   }
 
@@ -73,8 +68,8 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           // Hide loading when feedbacks are loaded (after creation or initial load)
           AppLoading.hide(context);
         } else if (state is FeedbackCreated) {
-          // Feedback created, feedbacks will be reloaded automatically by bloc
-          // Loading will be hidden when MyFeedbacksLoaded is emitted
+          // Feedback created, trigger reload manually
+          context.read<FeedbackBloc>().add(MyFeedbacksRefreshRequested(scope: widget.scope));
         }
       },
       child: Scaffold(
@@ -85,6 +80,11 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           centerTitle: true,
         ),
         body: BlocBuilder<FeedbackBloc, FeedbackState>(
+          buildWhen: (previous, current) => 
+              current is FeedbackLoading ||
+              current is MyFeedbacksLoaded ||
+              current is FeedbackError ||
+              current is FeedbackInitial,
           builder: (context, state) {
             if (state is FeedbackLoading) {
               return Center(
@@ -102,8 +102,8 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
               return RefreshIndicator(
                 onRefresh: () async {
                   context.read<FeedbackBloc>().add(
-                        const MyFeedbacksRefreshRequested(
-                          scope: FeedbackLoadScope.profile,
+                        MyFeedbacksRefreshRequested(
+                          scope: widget.scope,
                         ),
                       );
                 },
@@ -150,9 +150,9 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                       text: AppStrings.retry,
                       onPressed: () {
                         context.read<FeedbackBloc>().add(
-                              const MyFeedbacksLoadRequested(
-                              scope: FeedbackLoadScope.profile,
-                            ),
+                              MyFeedbacksLoadRequested(
+                                scope: widget.scope,
+                              ),
                             );
                       },
                       width: 200,
@@ -162,7 +162,12 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
               );
             }
 
-            return const SizedBox.shrink();
+            // Fallback for FeedbackInitial, FeedbackCreated, etc.
+            return Center(
+              child: AppLoadingIndicator(
+                color: AppColors.primary,
+              ),
+            );
           },
         ),
         floatingActionButton: widget.isReadOnly

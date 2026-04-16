@@ -1,5 +1,6 @@
 import '../entities/feedback_entity.dart';
 import '../entities/feedback_type_entity.dart';
+import '../../../auth/domain/entities/staff_entity.dart';
 
 /// Feedback Repository Interface - Domain layer
 abstract class FeedbackRepository {
@@ -23,4 +24,7 @@ abstract class FeedbackRepository {
     String? staffId,
     int? amenityTicketId,
   });
+
+  /// Get current booking staff
+  Future<List<StaffEntity>> getCurrentBookingStaff();
 }

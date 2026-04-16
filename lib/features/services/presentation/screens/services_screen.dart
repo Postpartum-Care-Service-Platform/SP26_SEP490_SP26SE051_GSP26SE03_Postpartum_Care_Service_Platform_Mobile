@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:dio/dio.dart';
 import '../../../../core/apis/api_client.dart';
 import '../../../../core/apis/api_endpoints.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -27,7 +28,7 @@ class ServicesScreen extends StatefulWidget {
 
 class _ServicesScreenState extends State<ServicesScreen> {
   ServiceLocationType? _selectedLocationType;
-  Future<NowPackageModel>? _nowPackageFuture;
+  Future<NowPackageModel?>? _nowPackageFuture;
 
   @override
   void initState() {
@@ -35,9 +36,29 @@ class _ServicesScreenState extends State<ServicesScreen> {
     _nowPackageFuture = _loadNowPackage();
   }
 
-  Future<NowPackageModel> _loadNowPackage() async {
-    final response = await ApiClient.dio.get(ApiEndpoints.nowPackage);
-    return NowPackageModel.fromJson(response.data as Map<String, dynamic>);
+  Future<NowPackageModel?> _loadNowPackage() async {
+    try {
+      final response = await ApiClient.dio.get(ApiEndpoints.nowPackage);
+      
+      final data = response.data;
+      if (data is List) {
+        if (data.isNotEmpty && data.first != null) {
+          return NowPackageModel.fromJson(data.first as Map<String, dynamic>);
+        }
+        return null;
+      } else if (data is Map<String, dynamic>) {
+        return NowPackageModel.fromJson(data);
+      }
+      return null;
+    } catch (e) {
+      if (e is DioException) {
+        // If it's a 400 or 404, it might mean the user has no package
+        if (e.response?.statusCode == 404 || e.response?.statusCode == 400) {
+          return null;
+        }
+      }
+      rethrow;
+    }
   }
 
   void _refreshNowPackage() {
@@ -77,7 +98,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
       body: BlocConsumer<BookingBloc, BookingState>(
         listener: _handleBookingSideEffects,
         builder: (context, _) {
-          return FutureBuilder<NowPackageModel>(
+          return FutureBuilder<NowPackageModel?>(
             future: _nowPackageFuture,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {

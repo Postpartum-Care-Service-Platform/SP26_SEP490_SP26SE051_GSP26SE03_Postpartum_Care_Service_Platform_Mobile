@@ -47,6 +47,7 @@ class ApiEndpoints {
   static const String getAllAccounts = '/Account/GetAll';
   static String getAccountById(String id) => '/Account/GetById/$id';
   static String getAccountByPhone(String phone) => '/Account/phone/$phone';
+  static const String currentBookingStaff = '/Account/staffs/current-booking';
 
   // User endpoints (legacy / placeholder)
   static const String profile = '/user/profile';

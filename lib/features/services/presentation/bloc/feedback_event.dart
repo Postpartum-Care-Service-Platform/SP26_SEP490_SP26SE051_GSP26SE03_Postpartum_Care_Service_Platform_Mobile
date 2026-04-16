@@ -1,4 +1,7 @@
 import 'package:equatable/equatable.dart';
+import '../../domain/entities/feedback_entity.dart';
+import '../../domain/entities/feedback_type_entity.dart';
+import '../../../auth/domain/entities/staff_entity.dart';
 
 /// Feedback Event - BLoC events
 abstract class FeedbackEvent extends Equatable {
@@ -11,6 +14,11 @@ abstract class FeedbackEvent extends Equatable {
 /// Load feedback types
 class FeedbackTypesLoadRequested extends FeedbackEvent {
   const FeedbackTypesLoadRequested();
+}
+
+/// Load current booking staff
+class FeedbackCurrentBookingStaffLoadRequested extends FeedbackEvent {
+  const FeedbackCurrentBookingStaffLoadRequested();
 }
 
 enum FeedbackLoadScope {

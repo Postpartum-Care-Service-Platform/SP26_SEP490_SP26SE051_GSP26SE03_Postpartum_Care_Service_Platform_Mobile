@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/feedback_entity.dart';
 import '../../domain/entities/feedback_type_entity.dart';
+import '../../../auth/domain/entities/staff_entity.dart';
 
 /// Feedback State - BLoC states
 abstract class FeedbackState extends Equatable {
@@ -28,6 +29,16 @@ class FeedbackTypesLoaded extends FeedbackState {
 
   @override
   List<Object> get props => [types];
+}
+
+/// Feedback current booking staff loaded
+class FeedbackCurrentBookingStaffLoaded extends FeedbackState {
+  final List<StaffEntity> staffs;
+
+  const FeedbackCurrentBookingStaffLoaded({required this.staffs});
+
+  @override
+  List<Object> get props => [staffs];
 }
 
 /// My feedbacks loaded

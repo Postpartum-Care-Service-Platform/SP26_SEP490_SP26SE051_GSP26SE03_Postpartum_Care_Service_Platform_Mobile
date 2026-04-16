@@ -34,12 +34,12 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider<NotificationBloc>(
-          create: (_) => InjectionContainer.notificationBloc
+        BlocProvider<NotificationBloc>.value(
+          value: InjectionContainer.notificationBloc
             ..add(const NotificationLoadRequested()),
         ),
-        BlocProvider<AuthBloc>(
-          create: (_) => InjectionContainer.authBloc,
+        BlocProvider<AuthBloc>.value(
+          value: InjectionContainer.authBloc,
         ),
       ],
       child: MaterialApp(

@@ -45,7 +45,6 @@ class _ResetOtpVerificationScreenState
 
   @override
   void dispose() {
-    _authBloc.close();
     for (var controller in _controllers) {
       controller.dispose();
     }
@@ -85,9 +84,16 @@ class _ResetOtpVerificationScreenState
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
 
-    return BlocProvider(
-      create: (context) => _authBloc,
+    return BlocProvider<AuthBloc>.value(
+      value: _authBloc,
       child: BlocListener<AuthBloc, AuthState>(
+        listenWhen: (previous, current) {
+          return current is AuthLoading ||
+              current is AuthVerifyResetOtpSuccess ||
+              current is AuthForgotPasswordSuccess ||
+              current is AuthError ||
+              current is AuthInitial;
+        },
         listener: (context, state) {
           if (state is AuthLoading) {
             AppLoading.show(context, message: AppStrings.processing);
