@@ -85,11 +85,6 @@ class _EmployeePortalScreenState extends State<EmployeePortalScreen> {
             currentTab: _currentTab,
             onTabSelected: _onTabSelected,
           ),
-          floatingActionButton: Builder(
-            builder: (fabContext) => EmployeeFab(
-              onTap: () => EmployeeMoreSheet.show(fabContext),
-            ),
-          ),
         ),
       ),
     );

@@ -414,6 +414,9 @@ class _LoadedContentState extends State<_LoadedContent> {
                     case EmployeeQuickMenuExtraAction.contracts:
                       AppRouter.push(context, AppRoutes.staffContractList);
                       break;
+                    case EmployeeQuickMenuExtraAction.bookings:
+                      AppRouter.push(context, AppRoutes.staffBookingList);
+                      break;
                     case EmployeeQuickMenuExtraAction.appointments:
                       AppRouter.push(
                         context,
