@@ -12,7 +12,6 @@ import '../../../../../features/chat/presentation/bloc/chat_event.dart';
 import '../../../../../features/chat/presentation/bloc/chat_state.dart';
 import '../../../../../features/employee/shell/presentation/widgets/employee_scaffold.dart';
 import '../../domain/entities/support_request.dart';
-import '../../../auth/data/models/current_account_model.dart';
 
 class EmployeeSupportRequestScreen extends StatefulWidget {
   final VoidCallback? onBackToDefaultStaffPage;

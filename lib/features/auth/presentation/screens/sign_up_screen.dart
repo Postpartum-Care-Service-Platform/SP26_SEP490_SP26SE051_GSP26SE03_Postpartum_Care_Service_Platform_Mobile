@@ -24,14 +24,23 @@ class SignUpScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final isWide = AppResponsive.isTablet(context);
 
-    return BlocProvider(
-      create: (context) => InjectionContainer.authBloc,
+    return BlocProvider<AuthBloc>.value(
+      value: InjectionContainer.authBloc,
       child: BlocListener<AuthBloc, AuthState>(
+        listenWhen: (previous, current) {
+          return current is AuthLoading ||
+              current is AuthRegisterSuccess ||
+              current is AuthError ||
+              current is AuthInitial;
+        },
         listener: (context, state) {
           if (state is AuthLoading) {
             AppLoading.show(context, message: AppStrings.processing);
-          } else if (state is AuthRegisterSuccess) {
+          } else {
             AppLoading.hide(context);
+          }
+
+          if (state is AuthRegisterSuccess) {
             AppToast.showSuccess(
               context,
               message: state.message,
@@ -42,7 +51,6 @@ class SignUpScreen extends StatelessWidget {
               arguments: {'email': state.email},
             );
           } else if (state is AuthError) {
-            AppLoading.hide(context);
             AppToast.showError(
               context,
               message: state.message,

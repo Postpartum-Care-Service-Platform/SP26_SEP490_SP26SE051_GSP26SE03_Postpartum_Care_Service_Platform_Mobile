@@ -1,11 +1,14 @@
 import 'package:equatable/equatable.dart';
+import '../../domain/entities/feedback_entity.dart';
+import '../../domain/entities/feedback_type_entity.dart';
+import '../../../auth/domain/entities/staff_entity.dart';
 
 /// Feedback Event - BLoC events
 abstract class FeedbackEvent extends Equatable {
   const FeedbackEvent();
 
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 /// Load feedback types
@@ -13,14 +16,34 @@ class FeedbackTypesLoadRequested extends FeedbackEvent {
   const FeedbackTypesLoadRequested();
 }
 
+/// Load current booking staff
+class FeedbackCurrentBookingStaffLoadRequested extends FeedbackEvent {
+  const FeedbackCurrentBookingStaffLoadRequested();
+}
+
+enum FeedbackLoadScope {
+  service,
+  profile,
+}
+
 /// Load my feedbacks
 class MyFeedbacksLoadRequested extends FeedbackEvent {
-  const MyFeedbacksLoadRequested();
+  final FeedbackLoadScope scope;
+
+  const MyFeedbacksLoadRequested({this.scope = FeedbackLoadScope.service});
+
+  @override
+  List<Object?> get props => [scope];
 }
 
 /// Refresh my feedbacks
 class MyFeedbacksRefreshRequested extends FeedbackEvent {
-  const MyFeedbacksRefreshRequested();
+  final FeedbackLoadScope scope;
+
+  const MyFeedbacksRefreshRequested({this.scope = FeedbackLoadScope.service});
+
+  @override
+  List<Object?> get props => [scope];
 }
 
 /// Create feedback
@@ -30,6 +53,9 @@ class FeedbackCreateRequested extends FeedbackEvent {
   final String content;
   final int rating;
   final List<String> imagePaths;
+  final int? familyScheduleId;
+  final String? staffId;
+  final int? amenityTicketId;
 
   const FeedbackCreateRequested({
     required this.feedbackTypeId,
@@ -37,8 +63,20 @@ class FeedbackCreateRequested extends FeedbackEvent {
     required this.content,
     required this.rating,
     required this.imagePaths,
+    this.familyScheduleId,
+    this.staffId,
+    this.amenityTicketId,
   });
 
   @override
-  List<Object> get props => [feedbackTypeId, title, content, rating, imagePaths];
+  List<Object?> get props => [
+        feedbackTypeId,
+        title,
+        content,
+        rating,
+        imagePaths,
+        familyScheduleId,
+        staffId,
+        amenityTicketId,
+      ];
 }

@@ -4,12 +4,15 @@ import '../../../../core/apis/api_endpoints.dart';
 import '../models/feedback_model.dart';
 import '../models/feedback_type_model.dart';
 import '../models/create_feedback_request_model.dart';
+import '../../../auth/data/models/staff_model.dart';
 
 /// Feedback Remote Data Source Interface
 abstract class FeedbackRemoteDataSource {
   Future<List<FeedbackTypeModel>> getFeedbackTypes();
   Future<List<FeedbackModel>> getMyFeedbacks();
+  Future<List<FeedbackModel>> getFullFeedbacks();
   Future<FeedbackModel> createFeedback(CreateFeedbackRequestModel request);
+  Future<List<StaffModel>> getCurrentBookingStaff();
 }
 
 /// Feedback Remote Data Source Implementation
@@ -35,6 +38,19 @@ class FeedbackRemoteDataSourceImpl implements FeedbackRemoteDataSource {
   Future<List<FeedbackModel>> getMyFeedbacks() async {
     try {
       final response = await dio.get(ApiEndpoints.myFeedbacks);
+      final List<dynamic> data = response.data as List<dynamic>;
+      return data
+          .map((json) => FeedbackModel.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  @override
+  Future<List<FeedbackModel>> getFullFeedbacks() async {
+    try {
+      final response = await dio.get(ApiEndpoints.myFullFeedbacks);
       final List<dynamic> data = response.data as List<dynamic>;
       return data
           .map((json) => FeedbackModel.fromJson(json as Map<String, dynamic>))
@@ -84,6 +100,17 @@ class FeedbackRemoteDataSourceImpl implements FeedbackRemoteDataSource {
       );
 
       return FeedbackModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  @override
+  Future<List<StaffModel>> getCurrentBookingStaff() async {
+    try {
+      final response = await dio.get(ApiEndpoints.currentBookingStaff);
+      final List<dynamic> data = response.data as List<dynamic>;
+      return StaffModel.fromJsonList(data);
     } on DioException catch (e) {
       throw _handleError(e);
     }

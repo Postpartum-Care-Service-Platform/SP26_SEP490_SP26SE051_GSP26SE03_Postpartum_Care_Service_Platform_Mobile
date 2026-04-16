@@ -232,12 +232,18 @@ class NowPackageModel extends Equatable {
       remainingAmount: remainingAmount,
       packageId: json['packageId'] as int? ?? 0,
       packageName: json['packageName'] as String? ?? '',
-      checkinDate: json['checkinDate'] != null
-          ? DateTime.tryParse(json['checkinDate'] as String)
-          : null,
-      checkoutDate: json['checkoutDate'] != null
-          ? DateTime.tryParse(json['checkoutDate'] as String)
-          : null,
+      checkinDate: (json['checkinDate'] != null
+              ? DateTime.tryParse(json['checkinDate'] as String)
+              : null) ??
+          (json['startDate'] != null
+              ? DateTime.tryParse(json['startDate'] as String)
+              : null),
+      checkoutDate: (json['checkoutDate'] != null
+              ? DateTime.tryParse(json['checkoutDate'] as String)
+              : null) ??
+          (json['endDate'] != null
+              ? DateTime.tryParse(json['endDate'] as String)
+              : null),
       serviceDates: serviceDates,
       roomTypeId: json['roomTypeId'] as int?,
       roomTypeName: json['roomTypeName'] as String?,

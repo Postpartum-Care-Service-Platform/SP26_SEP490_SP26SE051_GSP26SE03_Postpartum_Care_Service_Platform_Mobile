@@ -224,8 +224,8 @@ class _PillBottomNavState extends State<_PillBottomNav>
     return LayoutBuilder(
       builder: (context, constraints) {
         final outerHPadding = 16.0 * scale;
-        final barHeight = 84.0 * scale;
-        final selectedPillWidth = 64.0 * scale;
+        final barHeight = 96.0 * scale;
+        final selectedPillWidth = 68.0 * scale;
         final selectedPillTop = 6.0 * scale;
         final selectedPillBottom = -6.0 * scale;
         final selectedBorderRadius = 26.0 * scale;

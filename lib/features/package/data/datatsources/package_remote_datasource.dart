@@ -1,12 +1,14 @@
 import 'package:dio/dio.dart';
 import '../../../../core/apis/api_client.dart';
 import '../../../../core/apis/api_endpoints.dart';
+import '../../../../features/auth/data/models/current_account_model.dart';
 import '../models/package_model.dart';
 
 /// Package remote data source interface
 abstract class PackageRemoteDataSource {
   Future<List<PackageModel>> getPackages();
   Future<PackageModel> getPackageById(int id);
+  Future<NowPackageModel> getNowPackage();
 }
 
 /// Package remote data source implementation
@@ -91,6 +93,22 @@ class PackageRemoteDataSourceImpl implements PackageRemoteDataSource {
       if (e.response != null) {
         throw Exception(
             'Tải chi tiết gói dịch vụ thất bại: ${e.response?.statusCode}');
+      }
+      throw Exception('Lỗi kết nối mạng: ${e.message}');
+    } catch (e) {
+      throw Exception('Lỗi không mong muốn: $e');
+    }
+  }
+
+  @override
+  Future<NowPackageModel> getNowPackage() async {
+    try {
+      final response = await dio.get(ApiEndpoints.nowPackage);
+      return NowPackageModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(
+            'Tải gói dịch vụ hiện tại thất bại: ${e.response?.statusCode}');
       }
       throw Exception('Lỗi kết nối mạng: ${e.message}');
     } catch (e) {

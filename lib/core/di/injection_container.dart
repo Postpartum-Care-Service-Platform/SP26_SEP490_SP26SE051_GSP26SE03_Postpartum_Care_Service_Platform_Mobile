@@ -145,6 +145,7 @@ import '../../features/services/domain/repositories/feedback_repository.dart';
 import '../../features/services/domain/usecases/get_feedback_types_usecase.dart';
 import '../../features/services/domain/usecases/get_my_feedbacks_usecase.dart';
 import '../../features/services/domain/usecases/create_feedback_usecase.dart';
+import '../../features/services/domain/usecases/get_current_booking_staff_usecase.dart';
 import '../../features/services/presentation/bloc/feedback_bloc.dart';
 import '../../features/services/data/datasources/amenity_remote_datasource.dart';
 import '../../features/services/data/repositories/amenity_repository_impl.dart';
@@ -520,6 +521,9 @@ class InjectionContainer {
   static CreateFeedbackUsecase get _createFeedbackUsecase =>
       CreateFeedbackUsecase(feedbackRepository);
 
+  static GetCurrentBookingStaffUsecase get _getCurrentBookingStaffUsecase =>
+      GetCurrentBookingStaffUsecase(feedbackRepository);
+
   static GetAmenityServicesUsecase get _getAmenityServicesUsecase =>
       GetAmenityServicesUsecase(amenityRepository);
   static GetMyAmenityTicketsUsecase get _getMyAmenityTicketsUsecase =>
@@ -557,7 +561,8 @@ class InjectionContainer {
 
   // ==================== Blocs ====================
 
-  static AuthBloc get authBloc => AuthBloc(
+  static AuthBloc? _authBloc;
+  static AuthBloc get authBloc => _authBloc ??= AuthBloc(
     loginUsecase: _loginUsecase,
     registerUsecase: _registerUsecase,
     verifyEmailUsecase: _verifyEmailUsecase,
@@ -686,6 +691,7 @@ class InjectionContainer {
     getFeedbackTypesUsecase: _getFeedbackTypesUsecase,
     getMyFeedbacksUsecase: _getMyFeedbacksUsecase,
     createFeedbackUsecase: _createFeedbackUsecase,
+    getCurrentBookingStaffUsecase: _getCurrentBookingStaffUsecase,
   );
 
   static AmenityBloc get amenityBloc => AmenityBloc(
@@ -717,6 +723,7 @@ class InjectionContainer {
 
   /// Reset all dependencies (useful for testing or logout)
   static void reset() {
+    _authBloc = null;
     _chatBloc = null;
     _chatHubService = null;
     ApiClient.reset();
