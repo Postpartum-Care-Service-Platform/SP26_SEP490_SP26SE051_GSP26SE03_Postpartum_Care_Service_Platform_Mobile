@@ -46,7 +46,6 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
 
   @override
   void dispose() {
-    _authBloc.close();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -66,9 +65,15 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => _authBloc,
+    return BlocProvider<AuthBloc>.value(
+      value: _authBloc,
       child: BlocListener<AuthBloc, AuthState>(
+        listenWhen: (previous, current) {
+          return current is AuthLoading ||
+              current is AuthResetPasswordSuccess ||
+              current is AuthError ||
+              current is AuthInitial;
+        },
         listener: (context, state) {
           if (state is AuthLoading) {
             AppLoading.show(context, message: AppStrings.processing);

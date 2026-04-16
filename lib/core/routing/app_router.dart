@@ -56,6 +56,8 @@ import '../../features/services/presentation/screens/refund_request_history_scre
 import '../../features/services/presentation/bloc/refund_request/refund_request_event.dart';
 import '../../features/services/presentation/bloc/menu_event.dart';
 import '../../features/services/presentation/bloc/family_schedule_event.dart';
+import '../../features/services/presentation/bloc/amenity_bloc.dart';
+import '../../features/services/presentation/bloc/feedback_event.dart';
 import '../../core/widgets/app_scaffold.dart';
 import '../../core/widgets/app_bottom_navigation_bar.dart';
 import '../../core/di/injection_container.dart';
@@ -498,10 +500,24 @@ class AppRouter {
       // Feedback Routes
       case AppRoutes.feedback:
         final bool isReadOnly = (args is Map<String, dynamic> && args['isReadOnly'] == true);
+        final scope = isReadOnly ? FeedbackLoadScope.profile : FeedbackLoadScope.service;
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => InjectionContainer.feedbackBloc,
-            child: FeedbackScreen(isReadOnly: isReadOnly),
+          builder: (_) => MultiBlocProvider(
+            providers: [
+              BlocProvider(
+                create: (_) => InjectionContainer.feedbackBloc,
+              ),
+              BlocProvider(
+                create: (_) => InjectionContainer.familyScheduleBloc,
+              ),
+              BlocProvider(
+                create: (_) => InjectionContainer.amenityBloc,
+              ),
+            ],
+            child: FeedbackScreen(
+              isReadOnly: isReadOnly,
+              scope: scope,
+            ),
           ),
         );
 

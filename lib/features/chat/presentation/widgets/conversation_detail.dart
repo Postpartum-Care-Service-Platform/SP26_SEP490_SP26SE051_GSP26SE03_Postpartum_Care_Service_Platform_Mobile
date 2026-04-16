@@ -11,7 +11,6 @@ import '../../../../core/constants/app_assets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../domain/entities/chat_message.dart';
 import '../../domain/entities/chat_conversation.dart';
-import '../../domain/entities/support_request.dart';
 import '../bloc/chat_bloc.dart';
 import '../bloc/chat_event.dart';
 import '../bloc/chat_state.dart';

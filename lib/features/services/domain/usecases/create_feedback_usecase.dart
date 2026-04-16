@@ -13,6 +13,9 @@ class CreateFeedbackUsecase {
     required String content,
     required int rating,
     required List<String> imagePaths,
+    int? familyScheduleId,
+    String? staffId,
+    int? amenityTicketId,
   }) async {
     return await repository.createFeedback(
       feedbackTypeId: feedbackTypeId,
@@ -20,6 +23,9 @@ class CreateFeedbackUsecase {
       content: content,
       rating: rating,
       imagePaths: imagePaths,
+      familyScheduleId: familyScheduleId,
+      staffId: staffId,
+      amenityTicketId: amenityTicketId,
     );
   }
 }

@@ -1,4 +1,3 @@
-import 'dart:convert';
 
 /// A utility class for parsing VietQR (EMVCo) strings.
 class VietQrParser {

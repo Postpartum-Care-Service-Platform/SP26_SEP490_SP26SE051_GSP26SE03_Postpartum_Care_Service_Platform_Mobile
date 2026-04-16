@@ -7,6 +7,9 @@ class CreateFeedbackRequestModel {
   final String content;
   final int rating;
   final List<File> images;
+  final int? familyScheduleId;
+  final String? staffId;
+  final int? amenityTicketId;
 
   CreateFeedbackRequestModel({
     required this.feedbackTypeId,
@@ -14,6 +17,9 @@ class CreateFeedbackRequestModel {
     required this.content,
     required this.rating,
     required this.images,
+    this.familyScheduleId,
+    this.staffId,
+    this.amenityTicketId,
   });
 
   Map<String, dynamic> toFormData() {
@@ -23,6 +29,16 @@ class CreateFeedbackRequestModel {
       'Content': content,
       'Rating': rating.toString(),
     };
+
+    if (familyScheduleId != null) {
+      data['FamilyScheduleId'] = familyScheduleId.toString();
+    }
+    if (staffId != null && staffId!.isNotEmpty) {
+      data['StaffId'] = staffId;
+    }
+    if (amenityTicketId != null) {
+      data['AmenityTicketId'] = amenityTicketId.toString();
+    }
 
     // Images will be handled separately in datasource
     return data;

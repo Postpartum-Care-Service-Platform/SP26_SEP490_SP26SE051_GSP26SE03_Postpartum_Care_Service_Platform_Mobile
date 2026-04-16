@@ -47,6 +47,7 @@ class ApiEndpoints {
   static const String getAllAccounts = '/Account/GetAll';
   static String getAccountById(String id) => '/Account/GetById/$id';
   static String getAccountByPhone(String phone) => '/Account/phone/$phone';
+  static const String currentBookingStaff = '/Account/staffs/current-booking';
 
   // User endpoints (legacy / placeholder)
   static const String profile = '/user/profile';
@@ -99,6 +100,7 @@ class ApiEndpoints {
 
   // Package endpoints
   static const String packages = '/Packages/center';
+  static const String nowPackage = '/Packages/nowPackage';
   static String packageById(int id) => '/Packages/$id';
   static const String packageTypes = '/PackageType';
 
@@ -308,8 +310,11 @@ class ApiEndpoints {
   /// Get feedback types
   static const String feedbackTypes = '/FeedbackType';
 
-  /// Get my feedbacks
-  static const String myFeedbacks = '/Feedback/my-full-feedback';
+  /// Get my feedbacks from service flow
+  static const String myFeedbacks = '/Feedback/my-feedback';
+
+  /// Get full feedback history from profile flow
+  static const String myFullFeedbacks = '/Feedback/my-full-feedback';
 
   /// Create feedback
   static const String createFeedback = '/Feedback';
