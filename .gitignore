@@ -50,9 +50,7 @@ android/key.properties
 **/*.keystore
 
 # Env/local configs
-.env
-.env.*
-*.local
+
 
 # Flutter version manager (nếu dùng FVM)
 .fvm/
