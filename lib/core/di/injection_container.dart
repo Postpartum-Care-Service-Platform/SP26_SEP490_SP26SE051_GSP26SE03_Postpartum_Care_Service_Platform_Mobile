@@ -540,7 +540,8 @@ class InjectionContainer {
 
   // ==================== Blocs ====================
 
-  static AuthBloc get authBloc => AuthBloc(
+  static AuthBloc? _authBlocInstance;
+  static AuthBloc get authBloc => _authBlocInstance ??= AuthBloc(
     loginUsecase: _loginUsecase,
     registerUsecase: _registerUsecase,
     verifyEmailUsecase: _verifyEmailUsecase,
@@ -695,6 +696,7 @@ class InjectionContainer {
 
   /// Reset all dependencies (useful for testing or logout)
   static void reset() {
+    _authBlocInstance = null;
     _chatBloc = null;
     _chatHubService = null;
     ApiClient.reset();

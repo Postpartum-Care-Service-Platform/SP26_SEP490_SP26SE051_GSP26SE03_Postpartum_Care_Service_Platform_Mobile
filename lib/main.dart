@@ -20,7 +20,7 @@ void main() async {
   await AppConfig.init();
 
   // DEV ONLY: Accept self-signed certs (SignalR / HTTPS)
-  if (kDebugMode) {
+  if (kDebugMode && !kIsWeb) {
     HttpOverrides.global = DevHttpOverrides();
   }
   

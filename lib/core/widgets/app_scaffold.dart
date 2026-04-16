@@ -53,6 +53,10 @@ class _AppScaffoldState extends State<AppScaffold> {
   @override
   void initState() {
     super.initState();
+    
+    // Trigger initial account load
+    context.read<AuthBloc>().add(const AuthLoadCurrentAccount());
+
     final initialTab = widget.initialTab ?? AppBottomTab.home;
     _currentTab = _customerTabs.contains(initialTab)
         ? initialTab
@@ -90,39 +94,31 @@ class _AppScaffoldState extends State<AppScaffold> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => InjectionContainer.authBloc
-        ..add(const AuthLoadCurrentAccount()),
-      child: Builder(
-        builder: (blocContext) => Scaffold(
-          backgroundColor: AppColors.background,
-          body: PageView(
-            controller: _pageController,
-            onPageChanged: (index) {
-              if (index < 0 || index >= _customerTabs.length) return;
-              final newTab = _customerTabs[index];
-              setState(() {
-                _currentTab = newTab;
-              });
-              
-              // Silently reload current account when switching to services tab (forced reload)
-              if (newTab == AppBottomTab.services) {
-                blocContext
-                    .read<AuthBloc>()
-                    .add(const AuthLoadCurrentAccount(forceRefresh: true));
-              }
-            },
-            children: _screens,
-          ),
-          bottomNavigationBar: Builder(
-            builder: (navContext) => AppBottomNavigationBar(
-              currentTab: _currentTab,
-              onTabSelected: (tab) => _onTabSelected(tab, blocContext),
-            ),
-          ),
-          endDrawer: const NotificationDrawer(),
-        ),
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: (index) {
+          if (index < 0 || index >= _customerTabs.length) return;
+          final newTab = _customerTabs[index];
+          setState(() {
+            _currentTab = newTab;
+          });
+
+          // Silently reload current account when switching to services tab (forced reload)
+          if (newTab == AppBottomTab.services) {
+            context
+                .read<AuthBloc>()
+                .add(const AuthLoadCurrentAccount(forceRefresh: true));
+          }
+        },
+        children: _screens,
       ),
+      bottomNavigationBar: AppBottomNavigationBar(
+        currentTab: _currentTab,
+        onTabSelected: (tab) => _onTabSelected(tab, context),
+      ),
+      endDrawer: const NotificationDrawer(),
     );
   }
 }

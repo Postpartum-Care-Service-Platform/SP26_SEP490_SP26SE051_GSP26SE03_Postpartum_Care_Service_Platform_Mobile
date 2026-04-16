@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Application configuration
@@ -10,8 +11,9 @@ class AppConfig {
   static String get baseUrl {
     final url = dotenv.env['BASE_URL'] ?? '';
     
-    // On Android emulator, replace localhost with 10.0.2.2
-    if (Platform.isAndroid && url.contains('localhost')) {
+    // On Web, Platform.isAndroid throws an exception. 
+    // We must check kIsWeb first.
+    if (!kIsWeb && Platform.isAndroid && url.contains('localhost')) {
       return url.replaceAll('localhost', '10.0.2.2');
     }
     
