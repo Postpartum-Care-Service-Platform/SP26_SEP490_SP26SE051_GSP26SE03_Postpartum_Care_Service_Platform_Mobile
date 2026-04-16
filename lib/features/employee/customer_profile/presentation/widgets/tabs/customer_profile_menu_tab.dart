@@ -222,13 +222,33 @@ class CustomerProfileMenuTab extends StatelessWidget {
                                   ),
                                   if (foods.isNotEmpty) ...[
                                     SizedBox(height: 16 * scale),
-                                    Text(
-                                      'Combo món ăn:',
-                                      style: AppTextStyles.arimo(
-                                        fontSize: 12 * scale,
-                                        fontWeight: FontWeight.w800,
-                                        color: AppColors.textPrimary,
-                                      ),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          'Combo món ăn (${foods.length} món):',
+                                          style: AppTextStyles.arimo(
+                                            fontSize: 12 * scale,
+                                            fontWeight: FontWeight.w800,
+                                            color: AppColors.textPrimary,
+                                          ),
+                                        ),
+                                        if (foods.length > 2)
+                                          Row(
+                                            children: [
+                                              Text(
+                                                'Kéo xem +${foods.length - 2} món',
+                                                style: AppTextStyles.arimo(
+                                                  fontSize: 11 * scale,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: AppColors.primary,
+                                                ).copyWith(fontStyle: FontStyle.italic),
+                                              ),
+                                              SizedBox(width: 4 * scale),
+                                              Icon(Icons.arrow_forward_rounded, size: 14 * scale, color: AppColors.primary),
+                                            ],
+                                          ),
+                                      ],
                                     ),
                                     SizedBox(height: 10 * scale),
                                     SizedBox(
