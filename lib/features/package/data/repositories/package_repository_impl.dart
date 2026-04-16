@@ -1,3 +1,4 @@
+import '../../../auth/data/models/current_account_model.dart';
 import '../../domain/entities/package_entity.dart';
 import '../../domain/repositories/package_repository.dart';
 import '../datatsources/package_remote_datasource.dart';
@@ -18,5 +19,10 @@ class PackageRepositoryImpl implements PackageRepository {
   Future<PackageEntity> getPackageById(int id) async {
     final model = await dataSource.getPackageById(id);
     return model.toEntity();
+  }
+
+  @override
+  Future<NowPackageModel> getNowPackage() async {
+    return dataSource.getNowPackage();
   }
 }

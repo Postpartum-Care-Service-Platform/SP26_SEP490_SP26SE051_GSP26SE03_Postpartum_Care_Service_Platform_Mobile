@@ -6,6 +6,7 @@ import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/auth_scaffold.dart';
 import '../../../../core/widgets/app_toast.dart';
+import '../../../../core/widgets/app_loading.dart';
 import '../../../../core/widgets/app_widgets.dart';
 import '../../../../core/di/injection_container.dart';
 import '../bloc/auth_bloc.dart';
@@ -42,7 +43,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
   @override
   void dispose() {
-    _authBloc.close();
     for (var controller in _controllers) {
       controller.dispose();
     }
@@ -77,10 +77,23 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
 
-    return BlocProvider(
-      create: (context) => _authBloc,
+    return BlocProvider<AuthBloc>.value(
+      value: _authBloc,
       child: BlocListener<AuthBloc, AuthState>(
+        listenWhen: (previous, current) {
+          return current is AuthLoading ||
+              current is AuthVerifyEmailSuccess ||
+              current is AuthForgotPasswordSuccess ||
+              current is AuthError ||
+              current is AuthInitial;
+        },
         listener: (context, state) {
+          if (state is AuthLoading) {
+            AppLoading.show(context, message: AppStrings.processing);
+          } else {
+            AppLoading.hide(context);
+          }
+
           if (state is AuthVerifyEmailSuccess) {
             AppToast.showSuccess(context, message: state.message);
             Navigator.of(context).pushAndRemoveUntil(

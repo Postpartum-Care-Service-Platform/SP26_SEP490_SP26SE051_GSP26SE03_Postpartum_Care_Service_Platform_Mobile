@@ -27,19 +27,38 @@ final GoogleSignIn _googleSignIn = GoogleSignIn(
 );
 
 /// Login Screen - Main login page following clean architecture + BloC pattern
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  bool _hasNavigated = false;
+
+  @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => InjectionContainer.authBloc,
+    return BlocProvider<AuthBloc>.value(
+      value: InjectionContainer.authBloc,
       child: BlocListener<AuthBloc, AuthState>(
+        listenWhen: (previous, current) {
+          // Stop listening entirely after navigation
+          if (_hasNavigated) return false;
+          return current is AuthLoading ||
+              current is AuthSuccess ||
+              current is AuthError ||
+              current is AuthInitial;
+        },
         listener: (context, state) {
           if (state is AuthLoading) {
             AppLoading.show(context, message: AppStrings.processing);
-          } else if (state is AuthSuccess) {
+          } else {
             AppLoading.hide(context);
+          }
+
+          if (state is AuthSuccess) {
+            _hasNavigated = true;
             AppToast.showSuccess(context, message: AppStrings.successLogin);
             final role = state.user?.role.toLowerCase();
             final isEmployee =
@@ -58,7 +77,6 @@ class LoginScreen extends StatelessWidget {
               });
             }
           } else if (state is AuthError) {
-            AppLoading.hide(context);
             AppToast.showError(context, message: state.message);
           }
         },
@@ -137,5 +155,3 @@ class LoginScreen extends StatelessWidget {
     );
   }
 }
-
-

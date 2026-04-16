@@ -4,7 +4,9 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/utils/app_date_time_utils.dart';
+import '../../../../core/widgets/app_widgets.dart';
 import '../../domain/entities/amenity_ticket_entity.dart';
+import 'create_feedback_sheet.dart';
 
 /// Amenity Ticket Card Widget
 class AmenityTicketCard extends StatelessWidget {
@@ -116,25 +118,41 @@ class AmenityTicketCard extends StatelessWidget {
             ],
           ),
           SizedBox(height: 8 * scale),
-          // Row 2: Date + Time range
+          // Row 2: Date + Time range + Direct Feedback Button
           Row(
             children: [
-              Text(
-                _formatDate(ticket.startTime),
-                style: AppTextStyles.arimo(
-                  fontSize: 14 * scale,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+              Expanded(
+                child: Row(
+                  children: [
+                    Text(
+                      _formatDate(ticket.startTime),
+                      style: AppTextStyles.arimo(
+                        fontSize: 14 * scale,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    SizedBox(width: 12 * scale),
+                    Text(
+                      ticket.timeRange,
+                      style: AppTextStyles.arimo(
+                        fontSize: 12 * scale,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              SizedBox(width: 12 * scale),
-              Text(
-                ticket.timeRange,
-                style: AppTextStyles.arimo(
-                  fontSize: 12 * scale,
-                  color: AppColors.textSecondary,
+              if (ticket.isCompleted)
+                AppWidgets.secondaryButton(
+                  text: 'Đánh giá',
+                  onPressed: () => CreateFeedbackSheet.show(
+                    context,
+                    initialAmenityTicket: ticket,
+                  ),
+                  width: 100 * scale,
+                  height: 32 * scale,
                 ),
-              ),
             ],
           ),
         ],

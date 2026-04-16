@@ -22,8 +22,13 @@ import '../../../../../features/services/data/datasources/staff_schedule_remote_
 /// Cho phép staff xem, cập nhật, hủy ticket
 class StaffAmenityTicketListScreen extends StatefulWidget {
   final AccountModel? selectedCustomer;
+  final VoidCallback? onBackToDefaultStaffPage;
 
-  const StaffAmenityTicketListScreen({super.key, this.selectedCustomer});
+  const StaffAmenityTicketListScreen({
+    super.key,
+    this.selectedCustomer,
+    this.onBackToDefaultStaffPage,
+  });
 
   @override
   State<StaffAmenityTicketListScreen> createState() =>
@@ -63,6 +68,8 @@ class _StaffAmenityTicketListScreenState
       
       final dataSource = StaffScheduleRemoteDataSourceImpl();
       final schedules = await dataSource.getMySchedulesByDateRange(from: from, to: to);
+      
+      if (!mounted) return;
       
       final Map<String, AccountModel> customerMap = {};
       final nowTime = DateTime.now();
@@ -140,6 +147,8 @@ class _StaffAmenityTicketListScreenState
               try {
                 final dataSource = AccountRemoteDataSource();
                 final account = await dataSource.getAccountByPhone(formattedPhone);
+                
+                if (!mounted) return;
                 
                 if (account != null) {
                   // Check if this customer is already in the global _customers list
@@ -356,6 +365,8 @@ class _StaffAmenityTicketListScreenState
               EmployeeHeaderBar(
                 title: 'Phiếu dịch vụ',
                 subtitle: 'Quản lý phiếu dịch vụ tiện ích',
+                showBackButton: true,
+                onBack: widget.onBackToDefaultStaffPage,
               ),
               // Customer selector
               Container(

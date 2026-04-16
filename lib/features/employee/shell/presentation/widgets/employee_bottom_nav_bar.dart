@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../../../core/constants/app_colors.dart';  
+import '../../../../../core/constants/app_assets.dart';
 import '../../../../../core/widgets/app_bottom_navigation_bar.dart';
 import '../../../../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../../../../features/auth/presentation/bloc/auth_state.dart';
@@ -32,23 +33,36 @@ class EmployeeBottomNavBar extends StatelessWidget {
       }
     } catch (_) {}
 
-    // Lấy các bottom tab items từ quick menu presets
-    final primaryItems = EmployeeQuickMenuPresets.primaryItems(memberType);
-    final bottomTabItems = primaryItems
-        .where((item) => item.type == EmployeeQuickMenuItemType.bottomTab)
-        .toList();
-
-    // Map sang AppBottomTab
-    final tabs = bottomTabItems
-        .map((item) => item.bottomTab!)
-        .whereType<AppBottomTab>()
-        .toList();
-
-    // Tìm index hiện tại
-    final currentIndex = tabs.indexOf(currentTab);
-    final safeIndex = currentIndex >= 0 ? currentIndex : 0;
+    // Khai báo cố định danh sách Bottom Navigation Bar thay vì phụ thuộc vào Quick Menu
+    final bottomTabItems = [
+      EmployeeQuickMenuItem.bottom(
+        id: 'family',
+        label: 'Gia đình',
+        iconAsset: AppAssets.family,
+        tab: AppBottomTab.family,
+      ),
+      EmployeeQuickMenuItem.bottom(
+        id: 'contracts',
+        label: 'Hợp đồng',
+        iconAsset: AppAssets.menuThird,
+        tab: AppBottomTab.contracts,
+      ),
+      EmployeeQuickMenuItem.bottom(
+        id: 'amenities',
+        label: 'Tiện ích',
+        iconAsset: AppAssets.serviceAmenity,
+        tab: AppBottomTab.amenities,
+      ),
+      EmployeeQuickMenuItem.bottom(
+        id: 'services',
+        label: 'Dịch vụ',
+        iconAsset: AppAssets.appIconThird,
+        tab: AppBottomTab.services,
+      ),
+    ];
 
     return Container(
+      padding: const EdgeInsets.only(top: 8),
       decoration: BoxDecoration(
         color: AppColors.white,
         boxShadow: [
@@ -61,42 +75,42 @@ class EmployeeBottomNavBar extends StatelessWidget {
       ),
       child: SafeArea(
         top: false,
-        child: BottomNavigationBar(
-          currentIndex: safeIndex,
-          onTap: (index) {
-            if (index < tabs.length) {
-              onTabSelected(tabs[index]);
-            }
-          },
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: AppColors.primary,
-          unselectedItemColor: AppColors.third,
-          selectedFontSize: 12,
-          unselectedFontSize: 11,
-          selectedLabelStyle: const TextStyle(
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.2,
+        child: SizedBox(
+          height: 60,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: bottomTabItems.map((item) {
+              final isSelected = item.bottomTab == currentTab;
+              return Expanded(
+                child: InkWell(
+                  onTap: () {
+                    if (item.bottomTab != null) {
+                      onTabSelected(item.bottomTab!);
+                    }
+                  },
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _EmployeeNavIcon(
+                        asset: item.iconAsset,
+                        isActive: isSelected,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        item.label,
+                        style: TextStyle(
+                          fontSize: isSelected ? 12 : 11,
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                          letterSpacing: isSelected ? 0.2 : 0.1,
+                          color: isSelected ? AppColors.primary : AppColors.third,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
           ),
-          unselectedLabelStyle: const TextStyle(
-            fontWeight: FontWeight.w500,
-            letterSpacing: 0.1,
-          ),
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-          items: bottomTabItems.map((item) {
-            final isSelected = item.bottomTab == currentTab;
-            return BottomNavigationBarItem(
-              icon: _EmployeeNavIcon(
-                asset: item.iconAsset,
-                isActive: isSelected,
-              ),
-              activeIcon: _EmployeeNavIcon(
-                asset: item.iconAsset,
-                isActive: true,
-              ),
-              label: item.label,
-            );
-          }).toList(),
         ),
       ),
     );

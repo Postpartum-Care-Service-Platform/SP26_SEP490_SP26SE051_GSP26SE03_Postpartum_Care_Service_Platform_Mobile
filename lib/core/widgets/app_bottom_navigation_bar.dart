@@ -11,7 +11,7 @@ import '../constants/app_strings.dart';
 import '../constants/app_assets.dart';
 import '../utils/app_responsive.dart';
 
-enum AppBottomTab { home, appointment, services, chat, supportRequests, profile }
+enum AppBottomTab { home, appointment, services, chat, supportRequests, profile, family, contracts, amenities }
 
 extension AppBottomTabX on AppBottomTab {
   IconData? get icon {
@@ -22,6 +22,9 @@ extension AppBottomTabX on AppBottomTab {
       case AppBottomTab.chat:
       case AppBottomTab.supportRequests:
       case AppBottomTab.profile:
+      case AppBottomTab.family:
+      case AppBottomTab.contracts:
+      case AppBottomTab.amenities:
         return null; // Use SVG instead
     }
   }
@@ -40,6 +43,12 @@ extension AppBottomTabX on AppBottomTab {
         return AppAssets.chatMessage;
       case AppBottomTab.profile:
         return AppAssets.profile;
+      case AppBottomTab.family:
+        return AppAssets.family;
+      case AppBottomTab.contracts:
+        return AppAssets.menuThird;
+      case AppBottomTab.amenities:
+        return AppAssets.serviceAmenity;
     }
   }
 
@@ -57,6 +66,12 @@ extension AppBottomTabX on AppBottomTab {
         return AppStrings.bottomNavSupportRequests;
       case AppBottomTab.profile:
         return AppStrings.bottomNavProfile;
+      case AppBottomTab.family:
+        return 'Gia đình';
+      case AppBottomTab.contracts:
+        return 'Hợp đồng';
+      case AppBottomTab.amenities:
+        return 'Tiện ích';
     }
   }
 }
@@ -209,8 +224,8 @@ class _PillBottomNavState extends State<_PillBottomNav>
     return LayoutBuilder(
       builder: (context, constraints) {
         final outerHPadding = 16.0 * scale;
-        final barHeight = 84.0 * scale;
-        final selectedPillWidth = 64.0 * scale;
+        final barHeight = 96.0 * scale;
+        final selectedPillWidth = 68.0 * scale;
         final selectedPillTop = 6.0 * scale;
         final selectedPillBottom = -6.0 * scale;
         final selectedBorderRadius = 26.0 * scale;

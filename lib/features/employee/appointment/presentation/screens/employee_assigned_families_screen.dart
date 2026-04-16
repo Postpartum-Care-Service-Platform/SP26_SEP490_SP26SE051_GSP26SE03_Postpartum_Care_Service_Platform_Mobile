@@ -16,7 +16,12 @@ import '../../../../../features/employee/shell/presentation/widgets/employee_sca
 import '../../../../../core/widgets/app_toast.dart';
 
 class EmployeeAssignedFamiliesScreen extends StatefulWidget {
-  const EmployeeAssignedFamiliesScreen({super.key});
+  final VoidCallback? onBackToDefaultStaffPage;
+
+  const EmployeeAssignedFamiliesScreen({
+    super.key,
+    this.onBackToDefaultStaffPage,
+  });
 
   @override
   State<EmployeeAssignedFamiliesScreen> createState() =>
@@ -108,6 +113,8 @@ class _EmployeeAssignedFamiliesScreenState
               activity: (familyMap?['activity'] ?? 'Hoạt động').toString(),
               status: (familyMap?['status'] ?? 'Scheduled').toString(),
               note: (familyMap?['note'] ?? '').toString(),
+              checkedAt: row['checkedAt'] != null ? DateTime.tryParse(row['checkedAt'].toString()) : null,
+              images: (row['images'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
             );
           })
           .toList()
@@ -537,57 +544,30 @@ class _EmployeeAssignedFamiliesScreenState
                       ),
                       SizedBox(height: 12 * scale),
                     ],
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: () async {
-                              final image = await picker.pickImage(
-                                source: ImageSource.camera,
-                                imageQuality: 70,
-                                maxWidth: 1200,
-                              );
-                              if (image != null) {
-                                setState(() {
-                                  imagePaths.add(image.path);
-                                });
-                              }
-                            },
-                            icon: const Icon(Icons.camera_alt_outlined),
-                            label: const Text('Máy ảnh'),
-                            style: OutlinedButton.styleFrom(
-                              padding: EdgeInsets.symmetric(vertical: 10 * scale),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10 * scale),
-                              ),
-                            ),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final image = await picker.pickImage(
+                            source: ImageSource.camera,
+                            imageQuality: 70,
+                            maxWidth: 1200,
+                          );
+                          if (image != null) {
+                            setState(() {
+                              imagePaths.add(image.path);
+                            });
+                          }
+                        },
+                        icon: const Icon(Icons.camera_alt_outlined),
+                        label: const Text('Chụp ảnh minh chứng'),
+                        style: OutlinedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(vertical: 12 * scale),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10 * scale),
                           ),
                         ),
-                        SizedBox(width: 8 * scale),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: () async {
-                              final images = await picker.pickMultiImage(
-                                imageQuality: 70,
-                                maxWidth: 1200,
-                              );
-                              if (images.isNotEmpty) {
-                                setState(() {
-                                  imagePaths.addAll(images.map((e) => e.path));
-                                });
-                              }
-                            },
-                            icon: const Icon(Icons.photo_library_outlined),
-                            label: const Text('Thư viện'),
-                            style: OutlinedButton.styleFrom(
-                              padding: EdgeInsets.symmetric(vertical: 10 * scale),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10 * scale),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
@@ -774,9 +754,11 @@ class _EmployeeAssignedFamiliesScreenState
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
     return EmployeeScaffold(
-      appBar: const AppAppBar(
+      appBar: AppAppBar(
         title: 'Gia đình được phân công',
         centerTitle: true,
+        showBackButton: true,
+        onBackPressed: widget.onBackToDefaultStaffPage,
       ),
       body: FutureBuilder<List<_AssignedCustomer>>(
         future: _futureCustomers,
@@ -1015,6 +997,8 @@ class _AssignedActivity {
   final String activity;
   final String status;
   final String note;
+  final DateTime? checkedAt;
+  final List<String> images;
 
   _AssignedActivity({
     required this.staffScheduleId,
@@ -1023,11 +1007,15 @@ class _AssignedActivity {
     required this.activity,
     required this.status,
     required this.note,
+    this.checkedAt,
+    this.images = const [],
   });
 
   _AssignedActivity copyWith({
     String? status,
     String? note,
+    DateTime? checkedAt,
+    List<String>? images,
   }) {
     return _AssignedActivity(
       staffScheduleId: staffScheduleId,
@@ -1036,6 +1024,8 @@ class _AssignedActivity {
       activity: activity,
       status: status ?? this.status,
       note: note ?? this.note,
+      checkedAt: checkedAt ?? this.checkedAt,
+      images: images ?? this.images,
     );
   }
 }
@@ -1582,22 +1572,24 @@ class _ActivityItem extends StatelessWidget {
           ),
           // Right: Content Card
           Expanded(
-            child: Container(
-              margin: EdgeInsets.only(bottom: 24 * scale),
-              padding: EdgeInsets.all(16 * scale),
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(16 * scale),
-                border: Border.all(color: AppColors.borderLight.withValues(alpha: 0.4)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
+            child: GestureDetector(
+              onTap: isDone ? () => _showActivityDetailsDialog(context, activity) : null,
+              child: Container(
+                margin: EdgeInsets.only(bottom: 24 * scale),
+                padding: EdgeInsets.all(16 * scale),
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(16 * scale),
+                  border: Border.all(color: AppColors.borderLight.withValues(alpha: 0.4)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
@@ -1690,12 +1682,241 @@ class _ActivityItem extends StatelessWidget {
                       ),
                     ),
                   ],
+                  if (isDone) ...[
+                    SizedBox(height: 10 * scale),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          'Nhấn để xem chi tiết',
+                          style: AppTextStyles.arimo(
+                            fontSize: 12 * scale,
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        SizedBox(width: 4 * scale),
+                        Icon(Icons.arrow_forward_ios_rounded, size: 10 * scale, color: AppColors.primary),
+                      ],
+                    ),
+                  ],
                 ],
               ),
+            ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  void _showActivityDetailsDialog(BuildContext context, _AssignedActivity activity) {
+    final scale = AppResponsive.scaleFactor(context);
+    final statusColor = _getStatusColor(activity.status);
+    
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: AppColors.white,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16 * scale)),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.all(20 * scale),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.info_outline_rounded, color: AppColors.primary, size: 24 * scale),
+                      SizedBox(width: 8 * scale),
+                      Expanded(
+                        child: Text(
+                          'Chi tiết hoạt động',
+                          style: AppTextStyles.arimo(
+                            fontSize: 18 * scale,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close_rounded),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 16 * scale),
+                  Text(
+                    activity.activity,
+                    style: AppTextStyles.arimo(
+                      fontSize: 16 * scale,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  SizedBox(height: 8 * scale),
+                  Row(
+                    children: [
+                       Container(
+                        padding: EdgeInsets.symmetric(horizontal: 8 * scale, vertical: 4 * scale),
+                        decoration: BoxDecoration(
+                          color: statusColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6 * scale),
+                        ),
+                        child: Text(
+                          _getStatusText(activity.status),
+                          style: AppTextStyles.arimo(
+                            fontSize: 12 * scale,
+                            fontWeight: FontWeight.w800,
+                            color: statusColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 16 * scale),
+                  if (activity.startAt != null && activity.endAt != null) ...[
+                    Row(
+                      children: [
+                        Icon(Icons.access_time_rounded, size: 16 * scale, color: AppColors.textSecondary),
+                        SizedBox(width: 8 * scale),
+                        Text(
+                          'Thời gian: ${_formatTimeRange(activity.startAt, activity.endAt)}',
+                          style: AppTextStyles.arimo(
+                            fontSize: 14 * scale,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8 * scale),
+                  ],
+                  if (activity.checkedAt != null) ...[
+                    Row(
+                      children: [
+                        Icon(Icons.check_circle_outline_rounded, size: 16 * scale, color: Colors.green),
+                        SizedBox(width: 8 * scale),
+                        Text(
+                          'Xác nhận lúc: ${DateFormat('HH:mm - dd/MM/yyyy').format(activity.checkedAt!.toLocal())}',
+                          style: AppTextStyles.arimo(
+                            fontSize: 14 * scale,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8 * scale),
+                  ],
+                  if (activity.note.isNotEmpty) ...[
+                    SizedBox(height: 8 * scale),
+                    Text(
+                      'Ghi chú:',
+                      style: AppTextStyles.arimo(
+                        fontSize: 14 * scale,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 4 * scale),
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(12 * scale),
+                      decoration: BoxDecoration(
+                        color: AppColors.borderLight.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8 * scale),
+                        border: Border.all(color: AppColors.borderLight.withValues(alpha: 0.2)),
+                      ),
+                      child: Text(
+                        activity.note,
+                        style: AppTextStyles.arimo(
+                          fontSize: 14 * scale,
+                          color: AppColors.textSecondary,
+                        ).copyWith(fontStyle: FontStyle.italic),
+                      ),
+                    ),
+                  ],
+                  if (activity.images.isNotEmpty) ...[
+                    SizedBox(height: 16 * scale),
+                    Text(
+                      'Hình ảnh minh chứng:',
+                      style: AppTextStyles.arimo(
+                        fontSize: 14 * scale,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 8 * scale),
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 8 * scale,
+                        mainAxisSpacing: 8 * scale,
+                      ),
+                      itemCount: activity.images.length,
+                      itemBuilder: (context, index) {
+                        return GestureDetector(
+                          onTap: () {
+                            _showFullScreenImage(context, activity.images[index]);
+                          },
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8 * scale),
+                            child: Image.network(
+                              activity.images[index],
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showFullScreenImage(BuildContext context, String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(0),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    color: Colors.black87,
+                    child: InteractiveViewer(
+                      child: Image.network(imageUrl, fit: BoxFit.contain),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 20,
+                right: 20,
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 

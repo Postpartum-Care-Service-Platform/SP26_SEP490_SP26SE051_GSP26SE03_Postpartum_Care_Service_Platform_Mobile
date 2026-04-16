@@ -337,6 +337,8 @@ class AppWidgets {
     VoidCallback? onTogglePassword,
     String? Function(String?)? validator,
     bool enabled = true,
+    int? maxLines = 1,
+    int? minLines,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -352,17 +354,19 @@ class AppWidgets {
         ),
         const SizedBox(height: 12),
 
-        // Field box: fixed height, full width of its parent.
-        SizedBox(
+        // Field box: flexible height if multi-line, otherwise fixed.
+        Container(
           width: double.infinity,
-          height: 52,
+          constraints: BoxConstraints(
+            minHeight: (maxLines != null && maxLines > 1) ? 100 : 52,
+          ),
           child: TextFormField(
             controller: controller,
             enabled: enabled,
             obscureText: isPassword && obscureText,
             validator: validator,
-            maxLines: 1,
-            minLines: 1,
+            maxLines: maxLines,
+            minLines: minLines,
             style: AppTextStyles.arimo(
               fontSize: 14,
               fontWeight: FontWeight.normal,
@@ -377,16 +381,11 @@ class AppWidgets {
               ),
               filled: true,
               fillColor: AppColors.white,
-              // Add subtle shadow
-              // Note: InputDecoration doesn't support boxShadow directly,
-              // but we can wrap the TextFormField in a Container if needed
-
               isDense: true,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
                 vertical: 16,
               ),
-
               border: OutlineInputBorder(
                 borderSide: const BorderSide(
                   color: AppColors.borderLight,
@@ -422,11 +421,8 @@ class AppWidgets {
                 ),
                 borderRadius: BorderRadius.circular(16),
               ),
-
-              // Hide Flutter's built-in error text to prevent it affecting layout.
               errorStyle: const TextStyle(height: 0, fontSize: 0),
               errorMaxLines: 1,
-
               suffixIcon: isPassword
                   ? IconButton(
                       icon: SvgPicture.asset(

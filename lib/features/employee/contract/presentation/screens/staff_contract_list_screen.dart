@@ -13,7 +13,8 @@ import '../../../../../features/employee/shell/presentation/widgets/employee_sca
 
 /// Danh sách hợp đồng cho staff (tất cả + chưa lên lịch)
 class StaffContractListScreen extends StatefulWidget {
-  const StaffContractListScreen({super.key});
+  final VoidCallback? onBackToDefaultStaffPage;
+  const StaffContractListScreen({super.key, this.onBackToDefaultStaffPage});
 
   @override
   State<StaffContractListScreen> createState() =>
@@ -201,6 +202,8 @@ class _StaffContractListScreenState extends State<StaffContractListScreen> {
       appBar: AppAppBar(
         title: 'Quản lý hợp đồng',
         centerTitle: true,
+        showBackButton: true,
+        onBackPressed: widget.onBackToDefaultStaffPage,
         titleFontSize: 18 * scale,
         titleFontWeight: FontWeight.w700,
         actions: [

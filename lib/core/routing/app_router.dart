@@ -56,6 +56,8 @@ import '../../features/services/presentation/screens/refund_request_history_scre
 import '../../features/services/presentation/bloc/refund_request/refund_request_event.dart';
 import '../../features/services/presentation/bloc/menu_event.dart';
 import '../../features/services/presentation/bloc/family_schedule_event.dart';
+import '../../features/services/presentation/bloc/amenity_bloc.dart';
+import '../../features/services/presentation/bloc/feedback_event.dart';
 import '../../core/widgets/app_scaffold.dart';
 import '../../core/widgets/app_bottom_navigation_bar.dart';
 import '../../core/di/injection_container.dart';
@@ -69,7 +71,9 @@ import '../../features/employee/amenity_service/presentation/bloc/amenity_servic
 import '../../features/wallet/presentation/screens/employee_wallet_screen.dart';
 import '../../features/wallet/presentation/bloc/wallet_cubit.dart';
 import '../../features/wallet/data/datasources/wallet_remote_datasource.dart';
+import '../../features/wallet/data/datasources/wallet_remote_datasource.dart';
 import '../../core/apis/api_client.dart';
+import '../../features/employee/feedback/presentation/screens/staff_feedback_screen.dart';
 import 'app_routes.dart';
 
 /// App Router - Centralized navigation management
@@ -416,6 +420,14 @@ class AppRouter {
           ),
         );
 
+      case AppRoutes.staffFeedbackList:
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (_) => InjectionContainer.staffFeedbackBloc,
+            child: const StaffFeedbackScreen(),
+          ),
+        );
+
       // Employee Routes - Legacy/Mock screens
       case AppRoutes.employeeTasks:
         return MaterialPageRoute(builder: (_) => const TasksScreenNew());
@@ -498,10 +510,24 @@ class AppRouter {
       // Feedback Routes
       case AppRoutes.feedback:
         final bool isReadOnly = (args is Map<String, dynamic> && args['isReadOnly'] == true);
+        final scope = isReadOnly ? FeedbackLoadScope.profile : FeedbackLoadScope.service;
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => InjectionContainer.feedbackBloc,
-            child: FeedbackScreen(isReadOnly: isReadOnly),
+          builder: (_) => MultiBlocProvider(
+            providers: [
+              BlocProvider(
+                create: (_) => InjectionContainer.feedbackBloc,
+              ),
+              BlocProvider(
+                create: (_) => InjectionContainer.familyScheduleBloc,
+              ),
+              BlocProvider(
+                create: (_) => InjectionContainer.amenityBloc,
+              ),
+            ],
+            child: FeedbackScreen(
+              isReadOnly: isReadOnly,
+              scope: scope,
+            ),
           ),
         );
 

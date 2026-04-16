@@ -237,6 +237,9 @@ class EmployeeMoreSheet {
       case EmployeeQuickMenuExtraAction.contracts:
         AppRouter.push(context, AppRoutes.staffContractList);
         break;
+      case EmployeeQuickMenuExtraAction.bookings:
+        AppRouter.push(context, AppRoutes.staffBookingList);
+        break;
       case EmployeeQuickMenuExtraAction.staffProfile:
         Navigator.of(context).push(
           MaterialPageRoute(
@@ -256,6 +259,9 @@ class EmployeeMoreSheet {
       case EmployeeQuickMenuExtraAction.supportRequests:
         AppRouter.push(context, AppRoutes.employeeSupportRequests);
         break;
+      case EmployeeQuickMenuExtraAction.feedbacks:
+        AppRouter.push(context, AppRoutes.staffFeedbackList);
+        break;
     }
   }
 
@@ -274,10 +280,8 @@ class _MenuGroup {
 }
 
 List<_MenuGroup> _buildGroupedItems(List<EmployeeQuickMenuItem> items) {
-  final operations = <EmployeeQuickMenuItem>[];
-  final customerCare = <EmployeeQuickMenuItem>[];
-  final finance = <EmployeeQuickMenuItem>[];
-  final personal = <EmployeeQuickMenuItem>[];
+  final group1 = <EmployeeQuickMenuItem>[];
+  final group2 = <EmployeeQuickMenuItem>[];
 
   for (final item in items) {
     switch (item.extraAction) {
@@ -285,28 +289,22 @@ List<_MenuGroup> _buildGroupedItems(List<EmployeeQuickMenuItem> items) {
       case EmployeeQuickMenuExtraAction.appointments:
       case EmployeeQuickMenuExtraAction.room:
       case EmployeeQuickMenuExtraAction.requests:
-        operations.add(item);
-        break;
+      case EmployeeQuickMenuExtraAction.bookings:
       case EmployeeQuickMenuExtraAction.amenityService:
       case EmployeeQuickMenuExtraAction.amenityTicket:
       case EmployeeQuickMenuExtraAction.mealPlan:
       case EmployeeQuickMenuExtraAction.familyProfile:
       case EmployeeQuickMenuExtraAction.createCustomer:
-        customerCare.add(item);
+      case EmployeeQuickMenuExtraAction.myBookings:
+      case EmployeeQuickMenuExtraAction.supportRequests:
+      case EmployeeQuickMenuExtraAction.feedbacks:
+        group1.add(item);
         break;
       case EmployeeQuickMenuExtraAction.transactions:
       case EmployeeQuickMenuExtraAction.contracts:
       case EmployeeQuickMenuExtraAction.wallet:
-        finance.add(item);
-        break;
-      case EmployeeQuickMenuExtraAction.myBookings:
-        operations.add(item);
-        break;
-      case EmployeeQuickMenuExtraAction.supportRequests:
-        customerCare.add(item);
-        break;
       case EmployeeQuickMenuExtraAction.staffProfile:
-        personal.add(item);
+        group2.add(item);
         break;
       case null:
         break;
@@ -315,24 +313,14 @@ List<_MenuGroup> _buildGroupedItems(List<EmployeeQuickMenuItem> items) {
 
   return [
     _MenuGroup(
-      title: 'Nghiệp vụ vận hành',
-      color: const Color(0xFF16A34A),
-      items: operations,
+      title: 'Công việc & Dịch vụ',
+      color: AppColors.textPrimary,
+      items: group1,
     ),
     _MenuGroup(
-      title: 'Chăm sóc khách hàng',
-      color: const Color(0xFF2563EB),
-      items: customerCare,
-    ),
-    _MenuGroup(
-      title: 'Tài chính & hợp đồng',
-      color: const Color(0xFFEAB308),
-      items: finance,
-    ),
-    _MenuGroup(
-      title: 'Cá nhân',
-      color: const Color(0xFF7C3AED),
-      items: personal,
+      title: 'Hồ sơ & Tài chính',
+      color: AppColors.textPrimary,
+      items: group2,
     ),
   ].where((group) => group.items.isNotEmpty).toList();
 }
@@ -380,9 +368,9 @@ class _GroupSectionState extends State<_GroupSection> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
             decoration: BoxDecoration(
-              color: group.color.withValues(alpha: 0.08),
+              color: Colors.grey[100],
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: group.color.withValues(alpha: 0.22)),
+              border: Border.all(color: Colors.grey[300]!),
             ),
             child: Row(
               children: [
@@ -390,7 +378,7 @@ class _GroupSectionState extends State<_GroupSection> {
                   width: 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: group.color,
+                    color: Colors.black87,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -419,7 +407,7 @@ class _GroupSectionState extends State<_GroupSection> {
                   duration: const Duration(milliseconds: 200),
                   child: Icon(
                     Icons.expand_more,
-                    color: group.color,
+                    color: Colors.black87,
                     size: 20,
                   ),
                 ),
@@ -447,7 +435,7 @@ class _GroupSectionState extends State<_GroupSection> {
                     item.extraAction == EmployeeQuickMenuExtraAction.tasks;
                 return _ModernSheetItem(
                   item: item,
-                  groupColor: group.color,
+                  groupColor: AppColors.primary,
                   isPriority: isPriority,
                   onTap: () => widget.onItemTap(item),
                 );
