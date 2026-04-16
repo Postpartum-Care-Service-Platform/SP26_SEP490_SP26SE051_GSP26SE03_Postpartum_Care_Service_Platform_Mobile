@@ -18,12 +18,14 @@ class EmployeeHeaderBar extends StatefulWidget {
   final String subtitle;
 
   final bool showBackButton;
+  final VoidCallback? onBack;
 
   const EmployeeHeaderBar({
     super.key,
     required this.title,
     required this.subtitle,
     this.showBackButton = false,
+    this.onBack,
   });
 
   @override
@@ -114,7 +116,11 @@ class _EmployeeHeaderBarState extends State<EmployeeHeaderBar> {
           if (widget.showBackButton) ...[
             InkWell(
               borderRadius: BorderRadius.circular(24),
-              onTap: () => Navigator.of(context).pop(),
+              onTap: widget.onBack ?? () {
+                if (Navigator.canPop(context)) {
+                  Navigator.of(context).pop();
+                }
+              },
               child: SizedBox(
                 width: 44,
                 height: 44,

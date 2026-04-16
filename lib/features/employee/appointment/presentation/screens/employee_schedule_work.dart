@@ -376,6 +376,9 @@ class _LoadedContentState extends State<_LoadedContent> {
                     case AppBottomTab.appointment:
                     case AppBottomTab.home:
                     case AppBottomTab.profile:
+                    case AppBottomTab.family:
+                    case AppBottomTab.contracts:
+                    case AppBottomTab.amenities:
                       break;
                   }
                 },
@@ -413,6 +416,9 @@ class _LoadedContentState extends State<_LoadedContent> {
                       break;
                     case EmployeeQuickMenuExtraAction.contracts:
                       AppRouter.push(context, AppRoutes.staffContractList);
+                      break;
+                    case EmployeeQuickMenuExtraAction.bookings:
+                      AppRouter.push(context, AppRoutes.staffBookingList);
                       break;
                     case EmployeeQuickMenuExtraAction.appointments:
                       AppRouter.push(

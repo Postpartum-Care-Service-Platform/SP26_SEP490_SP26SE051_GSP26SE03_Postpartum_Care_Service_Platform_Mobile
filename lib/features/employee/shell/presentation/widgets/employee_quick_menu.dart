@@ -26,6 +26,7 @@ enum EmployeeQuickMenuExtraAction {
   transactions,
   contracts,
   myBookings,
+  bookings,
   supportRequests,
   wallet,
 }
@@ -340,15 +341,12 @@ class _QuickMenuGroup {
 }
 
 List<_QuickMenuGroup> _buildQuickMenuGroups(List<EmployeeQuickMenuItem> items) {
-  final tabs = <EmployeeQuickMenuItem>[];
-  final operations = <EmployeeQuickMenuItem>[];
-  final customerCare = <EmployeeQuickMenuItem>[];
-  final finance = <EmployeeQuickMenuItem>[];
-  final personal = <EmployeeQuickMenuItem>[];
+  final group1 = <EmployeeQuickMenuItem>[];
+  final group2 = <EmployeeQuickMenuItem>[];
 
   for (final item in items) {
     if (item.type == EmployeeQuickMenuItemType.bottomTab) {
-      tabs.add(item);
+      group1.add(item);
       continue;
     }
 
@@ -357,28 +355,21 @@ List<_QuickMenuGroup> _buildQuickMenuGroups(List<EmployeeQuickMenuItem> items) {
       case EmployeeQuickMenuExtraAction.appointments:
       case EmployeeQuickMenuExtraAction.room:
       case EmployeeQuickMenuExtraAction.requests:
-        operations.add(item);
-        break;
+      case EmployeeQuickMenuExtraAction.bookings:
       case EmployeeQuickMenuExtraAction.amenityService:
       case EmployeeQuickMenuExtraAction.amenityTicket:
       case EmployeeQuickMenuExtraAction.mealPlan:
       case EmployeeQuickMenuExtraAction.familyProfile:
       case EmployeeQuickMenuExtraAction.createCustomer:
-        customerCare.add(item);
+      case EmployeeQuickMenuExtraAction.myBookings:
+      case EmployeeQuickMenuExtraAction.supportRequests:
+        group1.add(item);
         break;
       case EmployeeQuickMenuExtraAction.transactions:
       case EmployeeQuickMenuExtraAction.contracts:
       case EmployeeQuickMenuExtraAction.wallet:
-        finance.add(item);
-        break;
-      case EmployeeQuickMenuExtraAction.myBookings:
-        operations.add(item);
-        break;
-      case EmployeeQuickMenuExtraAction.supportRequests:
-        customerCare.add(item);
-        break;
       case EmployeeQuickMenuExtraAction.staffProfile:
-        personal.add(item);
+        group2.add(item);
         break;
       case null:
         break;
@@ -387,29 +378,14 @@ List<_QuickMenuGroup> _buildQuickMenuGroups(List<EmployeeQuickMenuItem> items) {
 
   return [
     _QuickMenuGroup(
-      title: 'Tabs chính',
-      color: const Color(0xFFF59E0B),
-      items: tabs,
+      title: 'Công việc & Dịch vụ',
+      color: AppColors.textPrimary,
+      items: group1,
     ),
     _QuickMenuGroup(
-      title: 'Nghiệp vụ vận hành',
-      color: const Color(0xFF16A34A),
-      items: operations,
-    ),
-    _QuickMenuGroup(
-      title: 'Chăm sóc khách hàng',
-      color: const Color(0xFF2563EB),
-      items: customerCare,
-    ),
-    _QuickMenuGroup(
-      title: 'Tài chính & hợp đồng',
-      color: const Color(0xFFEAB308),
-      items: finance,
-    ),
-    _QuickMenuGroup(
-      title: 'Cá nhân',
-      color: const Color(0xFF7C3AED),
-      items: personal,
+      title: 'Hồ sơ & Tài chính',
+      color: AppColors.textPrimary,
+      items: group2,
     ),
   ].where((group) => group.items.isNotEmpty).toList();
 }
@@ -476,9 +452,9 @@ class _QuickMenuGroupSectionState extends State<_QuickMenuGroupSection> {
               vertical: 10 * scale,
             ),
             decoration: BoxDecoration(
-              color: group.color.withValues(alpha: 0.08),
+              color: Colors.grey[100],
               borderRadius: BorderRadius.circular(12 * scale),
-              border: Border.all(color: group.color.withValues(alpha: 0.22)),
+              border: Border.all(color: Colors.grey[300]!),
             ),
             child: Row(
               children: [
@@ -486,7 +462,7 @@ class _QuickMenuGroupSectionState extends State<_QuickMenuGroupSection> {
                   width: 8 * scale,
                   height: 8 * scale,
                   decoration: BoxDecoration(
-                    color: group.color,
+                    color: Colors.black87,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -515,7 +491,7 @@ class _QuickMenuGroupSectionState extends State<_QuickMenuGroupSection> {
                   duration: const Duration(milliseconds: 200),
                   child: Icon(
                     Icons.expand_more,
-                    color: group.color,
+                    color: Colors.black87,
                     size: 20 * scale,
                   ),
                 ),
@@ -547,7 +523,6 @@ class _QuickMenuGroupSectionState extends State<_QuickMenuGroupSection> {
                   item: item,
                   onTap: () => widget.onItemTap(item),
                   isActive: isActive,
-                  groupColor: group.color,
                 );
               },
             ),
@@ -671,38 +646,59 @@ class EmployeeQuickMenuPresets {
         raw.contains('tại nhà') ||
         raw.contains('tai nha') ||
         raw.contains('homecare');
-    return [
-      EmployeeQuickMenuItem.bottom(
-        id: 'schedule',
-        label: 'Trang chủ',
-        iconAsset: AppAssets.calendar,
-        tab: AppBottomTab.appointment,
-      ),
-      if (isHomeNurse)
+    if (isHomeNurse) {
+      return [
+        EmployeeQuickMenuItem.bottom(
+          id: 'schedule',
+          label: 'Trang chủ',
+          iconAsset: AppAssets.calendar,
+          tab: AppBottomTab.appointment,
+        ),
         EmployeeQuickMenuItem.extra(
           id: 'my_bookings',
           label: 'Booking của tôi',
           iconAsset: AppAssets.menuThird,
           action: EmployeeQuickMenuExtraAction.myBookings,
-        )
-      else
-        EmployeeQuickMenuItem.extra(
-          id: 'family_profile',
-          label: 'Gia đình',
-          iconAsset: AppAssets.family,
-          action: EmployeeQuickMenuExtraAction.familyProfile,
         ),
+        EmployeeQuickMenuItem.bottom(
+          id: 'services',
+          label: 'Dịch vụ',
+          iconAsset: AppAssets.appIconThird,
+          tab: AppBottomTab.services,
+        ),
+        EmployeeQuickMenuItem.bottom(
+          id: 'support_requests',
+          label: 'Yêu cầu Chat',
+          iconAsset: AppAssets.chatMessage,
+          tab: AppBottomTab.supportRequests,
+        ),
+      ];
+    }
+
+    return [
+      EmployeeQuickMenuItem.extra(
+        id: 'family_profile',
+        label: 'Gia đình',
+        iconAsset: AppAssets.family,
+        action: EmployeeQuickMenuExtraAction.familyProfile,
+      ),
+      EmployeeQuickMenuItem.extra(
+        id: 'contracts',
+        label: 'Hợp đồng',
+        iconAsset: AppAssets.menuThird,
+        action: EmployeeQuickMenuExtraAction.contracts,
+      ),
+      EmployeeQuickMenuItem.extra(
+        id: 'amenity_service',
+        label: 'Tiện ích',
+        iconAsset: AppAssets.serviceAmenity,
+        action: EmployeeQuickMenuExtraAction.amenityService,
+      ),
       EmployeeQuickMenuItem.bottom(
         id: 'services',
         label: 'Dịch vụ',
         iconAsset: AppAssets.appIconThird,
         tab: AppBottomTab.services,
-      ),
-      EmployeeQuickMenuItem.bottom(
-        id: 'support_requests',
-        label: 'Yêu cầu Chat',
-        iconAsset: AppAssets.chatMessage,
-        tab: AppBottomTab.supportRequests,
       ),
     ];
   }
@@ -752,6 +748,12 @@ class EmployeeQuickMenuPresets {
           label: 'Phòng ở',
           iconAsset: AppAssets.family,
           action: EmployeeQuickMenuExtraAction.room,
+        ),
+        EmployeeQuickMenuItem.extra(
+          id: 'bookings',
+          label: 'Quản lý Booking',
+          iconAsset: AppAssets.menuThird,
+          action: EmployeeQuickMenuExtraAction.bookings,
         ),
       ],
 
