@@ -28,7 +28,8 @@ import '../../domain/entities/amenity_ticket_status.dart';
 /// Service Booking Screen
 /// Allows staff to book amenity services for customers
 class ServiceBookingScreen extends StatefulWidget {
-  const ServiceBookingScreen({super.key});
+  final VoidCallback? onBackToDefaultStaffPage;
+  const ServiceBookingScreen({super.key, this.onBackToDefaultStaffPage});
 
   @override
   State<ServiceBookingScreen> createState() => _ServiceBookingScreenState();
@@ -54,12 +55,12 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
   @override
   void initState() {
     super.initState();
-    _loadCustomers();
     _searchController.addListener(_filterCustomers);
 
     final now = DateTime.now();
     final startDate = DateTime(now.year, now.month, now.day);
     _selectedDate = startDate;
+    // Tải lịch phân công — khách hàng sẽ được extract từ dữ liệu này
     _loadStaffSchedulesForRange(startDate, startDate);
   }
 
@@ -88,28 +89,49 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
     return '$hour:$minute:00';
   }
 
-  Future<void> _loadCustomers() async {
-    setState(() => _isLoadingCustomers = true);
-    try {
-      final accountDataSource = AccountRemoteDataSource();
-      final customers = await accountDataSource.getCustomers();
+  /// Tải danh sách khách hàng từ SĐT (bổ sung thêm khi user tìm kiếm bằng SĐT)
+  Future<void> _searchCustomerByPhone(String phone) async {
+    if (phone.trim().isEmpty) return;
 
-      setState(() {
-        _customers = customers;
-        _filteredCustomers = customers;
-        _isLoadingCustomers = false;
-      });
-    } catch (e) {
-      setState(() {
-        _isLoadingCustomers = false;
-        _customers = [];
-        _filteredCustomers = [];
-      });
-      debugPrint('Optional load all customers failed: $e');
+    String formattedPhone = phone.trim();
+    if (formattedPhone.startsWith('0')) {
+      formattedPhone = '+84${formattedPhone.substring(1)}';
     }
 
-    if (_selectedDate != null) {
-      _loadStaffSchedulesForRange(_selectedDate!, _selectedDate!);
+    setState(() => _isLoadingCustomers = true);
+    try {
+      final dataSource = AccountRemoteDataSource();
+      final account = await dataSource.getAccountByPhone(formattedPhone);
+
+      if (!mounted) return;
+      if (account != null) {
+        // Thêm vào danh sách nếu chưa có
+        final exists = _customers.any((c) => c.id == account.id);
+        if (!exists) {
+          setState(() {
+            _customers.insert(0, account);
+            _filteredCustomers = _customers;
+          });
+        }
+        _selectCustomer(account);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Không tìm thấy khách hàng với SĐT này'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Không tìm thấy khách hàng hoặc có lỗi xảy ra'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoadingCustomers = false);
     }
   }
 
@@ -271,12 +293,16 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
     setState(() {
       _staffSchedules = schedules;
 
-      // Cập nhật danh sách khách hàng từ schedule (để có data ban đầu nếu getCustomers lỗi)
-      final List<AccountModel> scheduleCustomers = [];
+      // Luôn cập nhật danh sách khách hàng từ lịch phân công
+      final Map<String, AccountModel> customerMap = {};
+      // Giữ lại những khách đã có (do tìm kiếm SĐT bổ sung)
+      for (final c in _customers) {
+        customerMap[c.id] = c;
+      }
       for (final s in _staffSchedules.where((item) => item.familySchedule != null)) {
         final family = s.familySchedule!;
-        if (!scheduleCustomers.any((c) => c.id == family.customerId)) {
-          scheduleCustomers.add(AccountModel(
+        if (!customerMap.containsKey(family.customerId)) {
+          customerMap[family.customerId] = AccountModel(
             id: family.customerId,
             email: '',
             username: family.customerName ?? 'Khách hàng',
@@ -285,13 +311,13 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
             updatedAt: DateTime.now(),
             roleName: 'Customer',
             isEmailVerified: true,
-          ));
+          );
         }
       }
-      
-      if (_customers.isEmpty && scheduleCustomers.isNotEmpty) {
-        _filteredCustomers = scheduleCustomers;
-      }
+
+      _customers = customerMap.values.toList();
+      _filteredCustomers = _customers;
+      _isLoadingCustomers = false;
 
       _updateLocalSchedules();
     });
@@ -351,9 +377,11 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            const EmployeeHeaderBar(
+            EmployeeHeaderBar(
               title: 'Đặt dịch vụ',
               subtitle: 'Thiết lập thời gian tiện ích cho khách hàng',
+              showBackButton: true,
+              onBack: widget.onBackToDefaultStaffPage,
             ),
             Expanded(
               child: MultiBlocListener(
@@ -971,12 +999,15 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
 
   void _showCustomerSelectionBottomSheet() {
     final scale = AppResponsive.scaleFactor(context);
+    final phoneSearchController = TextEditingController();
+    bool isSearchingPhone = false;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) {
+      builder: (bottomSheetCtx) => StatefulBuilder(
+        builder: (bsContext, setModalState) {
           return Container(
             height: MediaQuery.of(context).size.height * 0.75,
             decoration: const BoxDecoration(
@@ -985,23 +1016,35 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
             ),
             child: Column(
               children: [
+                // Handle bar
+                Container(
+                  margin: const EdgeInsets.only(top: 12),
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.borderLight,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
                 Padding(
                   padding: EdgeInsets.all(20 * scale), 
                   child: Row(
                     children: [
                       Text('Chọn khách hàng', style: AppTextStyles.arimo(fontSize: 18 * scale, fontWeight: FontWeight.bold)),
                       const Spacer(),
-                      IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
+                      IconButton(onPressed: () => Navigator.pop(bsContext), icon: const Icon(Icons.close)),
                     ],
                   )
                 ),
+                // Tìm kiếm theo tên
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20 * scale),
                   child: TextField(
                     controller: _searchController,
-                    onChanged: (v) => setModalState(() {}),
+                    onChanged: (v) => setModalState(() {
+                      _filterCustomers();
+                    }),
                     decoration: InputDecoration(
-                      hintText: 'Tìm kiếm khách hàng...', 
+                      hintText: 'Tìm theo tên khách hàng...', 
                       prefixIcon: const Icon(Icons.search), 
                       filled: true,
                       fillColor: AppColors.background,
@@ -1009,26 +1052,259 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
                     ),
                   ),
                 ),
-                Expanded(
-                  child: ListView.builder(
-                    padding: EdgeInsets.all(20 * scale),
-                    itemCount: _filteredCustomers.length,
-                    itemBuilder: (context, index) {
-                      final c = _filteredCustomers[index];
-                      final isSelected = _selectedCustomer?.id == c.id;
-                      return ListTile(
-                        onTap: () => _selectCustomer(c),
-                        contentPadding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                        leading: CircleAvatar(
-                          backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                          child: Text(c.displayName[0], style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary))
-                        ),
-                        title: Text(c.displayName, style: const TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text(c.phone ?? c.email, style: const TextStyle(fontSize: 12)),
-                        trailing: isSelected ? const Icon(Icons.check_circle, color: AppColors.primary) : const Icon(Icons.chevron_right),
-                      );
+                const SizedBox(height: 8),
+                // Tìm kiếm theo SĐT
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20 * scale),
+                  child: TextField(
+                    controller: phoneSearchController,
+                    keyboardType: TextInputType.phone,
+                    textInputAction: TextInputAction.search,
+                    onSubmitted: (value) async {
+                      setModalState(() => isSearchingPhone = true);
+                      await _searchCustomerByPhone(value);
+                      if (mounted) {
+                        setModalState(() => isSearchingPhone = false);
+                      }
                     },
+                    decoration: InputDecoration(
+                      hintText: 'Tìm bằng SĐT (VD: 0912345678)',
+                      hintStyle: AppTextStyles.arimo(color: AppColors.textSecondary),
+                      prefixIcon: const Icon(Icons.phone, color: AppColors.textSecondary),
+                      suffixIcon: IconButton(
+                        icon: isSearchingPhone
+                            ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                            : const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.primary),
+                        onPressed: isSearchingPhone
+                            ? null
+                            : () async {
+                                setModalState(() => isSearchingPhone = true);
+                                await _searchCustomerByPhone(phoneSearchController.text);
+                                if (mounted) {
+                                  setModalState(() => isSearchingPhone = false);
+                                }
+                              },
+                      ),
+                      filled: true,
+                      fillColor: AppColors.background,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+                    ),
                   ),
+                ),
+                const SizedBox(height: 8),
+                // Danh sách khách hàng
+                Expanded(
+                  child: _isLoadingCustomers
+                      ? const Center(child: CircularProgressIndicator())
+                      : _filteredCustomers.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.people_outline, size: 48, color: AppColors.textSecondary),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'Chưa có khách hàng.\nHãy nhập SĐT để tìm kiếm.',
+                                    textAlign: TextAlign.center,
+                                    style: AppTextStyles.arimo(color: AppColors.textSecondary),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : ListView.builder(
+                              padding: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 8 * scale),
+                              itemCount: _filteredCustomers.length,
+                              itemBuilder: (context, index) {
+                                final c = _filteredCustomers[index];
+                                final isSelected = _selectedCustomer?.id == c.id;
+
+                                // Lấy thông tin bổ sung từ lịch phân công
+                                final customerSchedules = _staffSchedules
+                                    .map((s) => s.familySchedule)
+                                    .whereType<FamilyScheduleEntity>()
+                                    .where((s) => s.customerId == c.id || s.customerName == c.displayName)
+                                    .toList();
+                                
+                                final packageName = customerSchedules.isNotEmpty 
+                                    ? customerSchedules.first.packageName 
+                                    : null;
+                                final roomName = customerSchedules.isNotEmpty 
+                                    ? customerSchedules.first.roomName 
+                                    : null;
+                                final activityCount = customerSchedules.length;
+                                // Tìm hoạt động tiếp theo (chưa hoàn thành)
+                                final nextActivity = customerSchedules
+                                    .where((s) => s.status.toLowerCase() == 'scheduled')
+                                    .toList()
+                                  ..sort((a, b) => a.startTime.compareTo(b.startTime));
+
+                                return GestureDetector(
+                                  onTap: () => _selectCustomer(c),
+                                  child: Container(
+                                    margin: EdgeInsets.only(bottom: 12 * scale),
+                                    padding: EdgeInsets.all(14 * scale),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? AppColors.primary.withValues(alpha: 0.06)
+                                          : AppColors.white,
+                                      borderRadius: BorderRadius.circular(18 * scale),
+                                      border: Border.all(
+                                        color: isSelected ? AppColors.primary : AppColors.borderLight,
+                                        width: isSelected ? 1.5 : 0.8,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(alpha: 0.03),
+                                          blurRadius: 8 * scale,
+                                          offset: Offset(0, 2 * scale),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        // Avatar
+                                        Container(
+                                          width: 48 * scale,
+                                          height: 48 * scale,
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              colors: isSelected
+                                                  ? [AppColors.primary, AppColors.primary.withValues(alpha: 0.7)]
+                                                  : [AppColors.primary.withValues(alpha: 0.15), AppColors.primary.withValues(alpha: 0.08)],
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                            ),
+                                            borderRadius: BorderRadius.circular(14 * scale),
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              c.displayName.isNotEmpty ? c.displayName[0].toUpperCase() : 'K',
+                                              style: AppTextStyles.arimo(
+                                                fontSize: 20 * scale,
+                                                fontWeight: FontWeight.w800,
+                                                color: isSelected ? AppColors.white : AppColors.primary,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(width: 12 * scale),
+                                        // Thông tin
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                c.displayName,
+                                                style: AppTextStyles.arimo(
+                                                  fontSize: 15 * scale,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: AppColors.textPrimary,
+                                                ),
+                                              ),
+                                              SizedBox(height: 4 * scale),
+                                              // Gói dịch vụ + Phòng
+                                              if (packageName != null || roomName != null)
+                                                Row(
+                                                  children: [
+                                                    if (packageName != null) ...[
+                                                      Icon(Icons.medical_services_outlined, size: 12 * scale, color: AppColors.primary),
+                                                      SizedBox(width: 4 * scale),
+                                                      Flexible(
+                                                        child: Text(
+                                                          packageName,
+                                                          style: AppTextStyles.arimo(
+                                                            fontSize: 11 * scale,
+                                                            color: AppColors.primary,
+                                                            fontWeight: FontWeight.w600,
+                                                          ),
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow.ellipsis,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                    if (packageName != null && roomName != null)
+                                                      Text('  •  ', style: TextStyle(fontSize: 10 * scale, color: AppColors.textSecondary)),
+                                                    if (roomName != null) ...[
+                                                      Icon(Icons.room_outlined, size: 12 * scale, color: AppColors.textSecondary),
+                                                      SizedBox(width: 2 * scale),
+                                                      Text(
+                                                        roomName,
+                                                        style: AppTextStyles.arimo(
+                                                          fontSize: 11 * scale,
+                                                          color: AppColors.textSecondary,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ],
+                                                ),
+                                              SizedBox(height: 6 * scale),
+                                              // Số hoạt động + Hoạt động tiếp theo
+                                              Row(
+                                                children: [
+                                                  Container(
+                                                    padding: EdgeInsets.symmetric(horizontal: 8 * scale, vertical: 3 * scale),
+                                                    decoration: BoxDecoration(
+                                                      color: activityCount > 0
+                                                          ? Colors.blue.withValues(alpha: 0.1)
+                                                          : Colors.grey.withValues(alpha: 0.1),
+                                                      borderRadius: BorderRadius.circular(8 * scale),
+                                                    ),
+                                                    child: Text(
+                                                      '$activityCount hoạt động',
+                                                      style: AppTextStyles.arimo(
+                                                        fontSize: 10 * scale,
+                                                        fontWeight: FontWeight.w600,
+                                                        color: activityCount > 0 ? Colors.blue : Colors.grey,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  if (nextActivity.isNotEmpty) ...[
+                                                    SizedBox(width: 6 * scale),
+                                                    Container(
+                                                      padding: EdgeInsets.symmetric(horizontal: 8 * scale, vertical: 3 * scale),
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.green.withValues(alpha: 0.1),
+                                                        borderRadius: BorderRadius.circular(8 * scale),
+                                                      ),
+                                                      child: Row(
+                                                        mainAxisSize: MainAxisSize.min,
+                                                        children: [
+                                                          Icon(Icons.schedule, size: 10 * scale, color: Colors.green),
+                                                          SizedBox(width: 3 * scale),
+                                                          Text(
+                                                            nextActivity.first.startTime.substring(0, 5),
+                                                            style: AppTextStyles.arimo(
+                                                              fontSize: 10 * scale,
+                                                              fontWeight: FontWeight.w600,
+                                                              color: Colors.green,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        // Trailing icon
+                                        isSelected
+                                            ? Container(
+                                                padding: EdgeInsets.all(4 * scale),
+                                                decoration: BoxDecoration(
+                                                  color: AppColors.primary,
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                child: Icon(Icons.check, size: 16 * scale, color: Colors.white),
+                                              )
+                                            : Icon(Icons.chevron_right, color: AppColors.textSecondary, size: 20 * scale),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                 ),
               ],
             ),

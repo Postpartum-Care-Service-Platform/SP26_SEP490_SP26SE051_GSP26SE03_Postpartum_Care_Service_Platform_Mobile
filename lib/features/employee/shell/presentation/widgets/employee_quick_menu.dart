@@ -646,38 +646,59 @@ class EmployeeQuickMenuPresets {
         raw.contains('tại nhà') ||
         raw.contains('tai nha') ||
         raw.contains('homecare');
-    return [
-      EmployeeQuickMenuItem.bottom(
-        id: 'schedule',
-        label: 'Trang chủ',
-        iconAsset: AppAssets.calendar,
-        tab: AppBottomTab.appointment,
-      ),
-      if (isHomeNurse)
+    if (isHomeNurse) {
+      return [
+        EmployeeQuickMenuItem.bottom(
+          id: 'schedule',
+          label: 'Trang chủ',
+          iconAsset: AppAssets.calendar,
+          tab: AppBottomTab.appointment,
+        ),
         EmployeeQuickMenuItem.extra(
           id: 'my_bookings',
           label: 'Booking của tôi',
           iconAsset: AppAssets.menuThird,
           action: EmployeeQuickMenuExtraAction.myBookings,
-        )
-      else
-        EmployeeQuickMenuItem.extra(
-          id: 'family_profile',
-          label: 'Gia đình',
-          iconAsset: AppAssets.family,
-          action: EmployeeQuickMenuExtraAction.familyProfile,
         ),
+        EmployeeQuickMenuItem.bottom(
+          id: 'services',
+          label: 'Dịch vụ',
+          iconAsset: AppAssets.appIconThird,
+          tab: AppBottomTab.services,
+        ),
+        EmployeeQuickMenuItem.bottom(
+          id: 'support_requests',
+          label: 'Yêu cầu Chat',
+          iconAsset: AppAssets.chatMessage,
+          tab: AppBottomTab.supportRequests,
+        ),
+      ];
+    }
+
+    return [
+      EmployeeQuickMenuItem.extra(
+        id: 'family_profile',
+        label: 'Gia đình',
+        iconAsset: AppAssets.family,
+        action: EmployeeQuickMenuExtraAction.familyProfile,
+      ),
+      EmployeeQuickMenuItem.extra(
+        id: 'contracts',
+        label: 'Hợp đồng',
+        iconAsset: AppAssets.menuThird,
+        action: EmployeeQuickMenuExtraAction.contracts,
+      ),
+      EmployeeQuickMenuItem.extra(
+        id: 'amenity_service',
+        label: 'Tiện ích',
+        iconAsset: AppAssets.serviceAmenity,
+        action: EmployeeQuickMenuExtraAction.amenityService,
+      ),
       EmployeeQuickMenuItem.bottom(
         id: 'services',
         label: 'Dịch vụ',
         iconAsset: AppAssets.appIconThird,
         tab: AppBottomTab.services,
-      ),
-      EmployeeQuickMenuItem.bottom(
-        id: 'support_requests',
-        label: 'Yêu cầu Chat',
-        iconAsset: AppAssets.chatMessage,
-        tab: AppBottomTab.supportRequests,
       ),
     ];
   }

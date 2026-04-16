@@ -16,7 +16,12 @@ import '../../../../../features/employee/shell/presentation/widgets/employee_sca
 import '../../../../../core/widgets/app_toast.dart';
 
 class EmployeeAssignedFamiliesScreen extends StatefulWidget {
-  const EmployeeAssignedFamiliesScreen({super.key});
+  final VoidCallback? onBackToDefaultStaffPage;
+
+  const EmployeeAssignedFamiliesScreen({
+    super.key,
+    this.onBackToDefaultStaffPage,
+  });
 
   @override
   State<EmployeeAssignedFamiliesScreen> createState() =>
@@ -749,9 +754,11 @@ class _EmployeeAssignedFamiliesScreenState
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
     return EmployeeScaffold(
-      appBar: const AppAppBar(
+      appBar: AppAppBar(
         title: 'Gia đình được phân công',
         centerTitle: true,
+        showBackButton: true,
+        onBackPressed: widget.onBackToDefaultStaffPage,
       ),
       body: FutureBuilder<List<_AssignedCustomer>>(
         future: _futureCustomers,
