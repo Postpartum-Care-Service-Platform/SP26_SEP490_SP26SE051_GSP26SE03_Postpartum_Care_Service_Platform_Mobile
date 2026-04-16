@@ -259,6 +259,9 @@ class EmployeeMoreSheet {
       case EmployeeQuickMenuExtraAction.supportRequests:
         AppRouter.push(context, AppRoutes.employeeSupportRequests);
         break;
+      case EmployeeQuickMenuExtraAction.feedbacks:
+        AppRouter.push(context, AppRoutes.staffFeedbackList);
+        break;
     }
   }
 
@@ -294,6 +297,7 @@ List<_MenuGroup> _buildGroupedItems(List<EmployeeQuickMenuItem> items) {
       case EmployeeQuickMenuExtraAction.createCustomer:
       case EmployeeQuickMenuExtraAction.myBookings:
       case EmployeeQuickMenuExtraAction.supportRequests:
+      case EmployeeQuickMenuExtraAction.feedbacks:
         group1.add(item);
         break;
       case EmployeeQuickMenuExtraAction.transactions:

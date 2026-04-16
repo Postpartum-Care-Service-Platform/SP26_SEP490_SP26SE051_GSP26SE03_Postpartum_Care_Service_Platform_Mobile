@@ -69,7 +69,9 @@ import '../../features/employee/amenity_service/presentation/bloc/amenity_servic
 import '../../features/wallet/presentation/screens/employee_wallet_screen.dart';
 import '../../features/wallet/presentation/bloc/wallet_cubit.dart';
 import '../../features/wallet/data/datasources/wallet_remote_datasource.dart';
+import '../../features/wallet/data/datasources/wallet_remote_datasource.dart';
 import '../../core/apis/api_client.dart';
+import '../../features/employee/feedback/presentation/screens/staff_feedback_screen.dart';
 import 'app_routes.dart';
 
 /// App Router - Centralized navigation management
@@ -413,6 +415,14 @@ class AppRouter {
         return MaterialPageRoute(
           builder: (_) => const StaffBookingListScreen(
             useHomeStaffBookings: true,
+          ),
+        );
+
+      case AppRoutes.staffFeedbackList:
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (_) => InjectionContainer.staffFeedbackBloc,
+            child: const StaffFeedbackScreen(),
           ),
         );
 

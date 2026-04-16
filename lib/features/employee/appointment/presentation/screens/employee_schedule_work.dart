@@ -449,6 +449,12 @@ class _LoadedContentState extends State<_LoadedContent> {
                         AppRoutes.employeeSupportRequests,
                       );
                       break;
+                    case EmployeeQuickMenuExtraAction.feedbacks:
+                      AppRouter.push(
+                        context,
+                        AppRoutes.staffFeedbackList,
+                      );
+                      break;
                   }
                 },
               ),

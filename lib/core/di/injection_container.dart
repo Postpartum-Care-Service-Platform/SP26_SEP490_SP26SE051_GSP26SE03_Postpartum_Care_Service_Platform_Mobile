@@ -174,6 +174,11 @@ import '../../features/services/data/repositories/vietqr_repository_impl.dart';
 import '../../features/services/domain/repositories/vietqr_repository.dart';
 import '../../features/services/domain/usecases/get_vietqr_banks.dart';
 import '../../features/services/domain/usecases/get_vietqr_deeplink_apps.dart';
+import '../../features/employee/feedback/data/datasources/staff_feedback_remote_datasource.dart';
+import '../../features/employee/feedback/data/repositories/staff_feedback_repository_impl.dart';
+import '../../features/employee/feedback/domain/repositories/staff_feedback_repository.dart';
+import '../../features/employee/feedback/domain/usecases/get_my_feedbacks_for_staff.dart';
+import '../../features/employee/feedback/presentation/bloc/staff_feedback_bloc.dart';
 import '../apis/api_client.dart';
 
 /// Centralized dependency injection container
@@ -243,6 +248,10 @@ class InjectionContainer {
 
   static VietQrRemoteDataSource get _vietQrRemoteDataSource =>
       VietQrRemoteDataSourceImpl(dio: ApiClient.dio);
+
+  static StaffFeedbackRemoteDataSource get _staffFeedbackRemoteDataSource =>
+      StaffFeedbackRemoteDataSourceImpl(dio: ApiClient.dio);
+
 
   // ==================== Repositories ====================
 
@@ -335,6 +344,10 @@ class InjectionContainer {
 
   static VietQrRepository get vietQrRepository =>
       VietQrRepositoryImpl(remoteDataSource: _vietQrRemoteDataSource);
+
+  static StaffFeedbackRepository get staffFeedbackRepository =>
+      StaffFeedbackRepositoryImpl(remoteDataSource: _staffFeedbackRemoteDataSource);
+
 
   // ==================== Use Cases ====================
 
@@ -538,6 +551,10 @@ class InjectionContainer {
   static GetVietQrDeeplinkApps get getVietQrDeeplinkApps =>
       GetVietQrDeeplinkApps(vietQrRepository);
 
+  static GetMyFeedbacksForStaffUseCase get _getMyFeedbacksForStaffUseCase =>
+      GetMyFeedbacksForStaffUseCase(staffFeedbackRepository);
+
+
   // ==================== Blocs ====================
 
   static AuthBloc get authBloc => AuthBloc(
@@ -690,6 +707,11 @@ class InjectionContainer {
     createRefundRequestUsecase: _createRefundRequestUsecase,
     getMyRefundRequestsUsecase: _getMyRefundRequestsUsecase,
   );
+
+  static StaffFeedbackBloc get staffFeedbackBloc => StaffFeedbackBloc(
+    getMyFeedbacksForStaffUseCase: _getMyFeedbacksForStaffUseCase,
+  );
+
 
   // ==================== Reset ====================
 

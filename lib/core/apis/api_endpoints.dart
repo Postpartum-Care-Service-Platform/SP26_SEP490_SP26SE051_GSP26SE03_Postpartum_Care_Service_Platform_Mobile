@@ -317,6 +317,9 @@ class ApiEndpoints {
   /// Get public feedback content for home screen
   static const String feedbackContent = '/Feedback/content';
 
+  /// Get my feedbacks for staff
+  static const String myFeedbacksForStaff = '/Feedback/my-feedbacks-for-staff';
+
   /// Get public feedback images for home screen
   static const String feedbackImages = '/Feedback/images';
 

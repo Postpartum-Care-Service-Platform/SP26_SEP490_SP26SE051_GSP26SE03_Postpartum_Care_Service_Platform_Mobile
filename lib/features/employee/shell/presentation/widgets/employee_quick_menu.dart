@@ -29,6 +29,7 @@ enum EmployeeQuickMenuExtraAction {
   bookings,
   supportRequests,
   wallet,
+  feedbacks,
 }
 
 /// Model định nghĩa 1 item trong menu nhanh
@@ -363,6 +364,7 @@ List<_QuickMenuGroup> _buildQuickMenuGroups(List<EmployeeQuickMenuItem> items) {
       case EmployeeQuickMenuExtraAction.createCustomer:
       case EmployeeQuickMenuExtraAction.myBookings:
       case EmployeeQuickMenuExtraAction.supportRequests:
+      case EmployeeQuickMenuExtraAction.feedbacks:
         group1.add(item);
         break;
       case EmployeeQuickMenuExtraAction.transactions:
@@ -758,6 +760,12 @@ class EmployeeQuickMenuPresets {
       ],
 
       // Nhóm chăm sóc khách hàng
+      EmployeeQuickMenuItem.extra(
+        id: 'feedbacks',
+        label: 'Phản hồi',
+        iconAsset: AppAssets.chatMessage, // Or a review star icon if available
+        action: EmployeeQuickMenuExtraAction.feedbacks,
+      ),
       EmployeeQuickMenuItem.extra(
         id: 'create_customer',
         label: 'Tạo KH',
