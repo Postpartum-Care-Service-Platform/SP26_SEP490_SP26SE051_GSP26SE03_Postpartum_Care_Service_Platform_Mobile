@@ -4,6 +4,8 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/widgets/app_drawer_form.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
 import '../bloc/chat_bloc.dart';
 import '../bloc/chat_event.dart';
 import '../bloc/chat_state.dart';
@@ -88,18 +90,30 @@ class _ConversationDetailScreenState extends State<ConversationDetailScreen> {
     );
   }
 
+  bool _isStaff(BuildContext context) {
+    final authState = context.read<AuthBloc>().state;
+    if (authState is AuthCurrentAccountLoaded) {
+      final role = authState.account.roleName.toLowerCase();
+      return role == 'staff' || role == 'manager' || role == 'admin';
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isStaff = _isStaff(context);
+
     return Scaffold(
       backgroundColor: AppColors.white,
       body: BlocListener<ChatBloc, ChatState>(
         listenWhen: (p, c) => p.selectedConversation != c.selectedConversation,
         listener: (context, state) => _scrollToBottom(),
         child: ConversationDetail(
-          onSupport: () => _showSupportDialog(context),
+          onSupport: isStaff ? null : () => _showSupportDialog(context),
           onBack: () => Navigator.of(context).maybePop(),
           controller: _messageController,
           scrollController: _messageScrollController,
+          isStaff: isStaff,
         ),
       ),
     );

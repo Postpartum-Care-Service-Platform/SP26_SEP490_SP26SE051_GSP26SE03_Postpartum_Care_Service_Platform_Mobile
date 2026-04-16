@@ -26,6 +26,15 @@ class _ConversationScreenState extends State<ConversationListScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    // Initialize chat when the screen is first loaded
+    InjectionContainer.chatBloc.add(
+      const ChatStarted(autoSelectFirstConversation: false),
+    );
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
@@ -108,8 +117,7 @@ class _ConversationScreenState extends State<ConversationListScreen> {
     final isStaff = _isStaff(context);
 
     return BlocProvider.value(
-      value: InjectionContainer.chatBloc
-        ..add(const ChatStarted(autoSelectFirstConversation: false)),
+      value: InjectionContainer.chatBloc,
       child: Builder(
         builder: (contextWithBloc) {
           return Scaffold(
