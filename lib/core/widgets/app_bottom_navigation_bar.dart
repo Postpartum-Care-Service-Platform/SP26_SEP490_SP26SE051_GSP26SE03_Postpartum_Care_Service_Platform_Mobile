@@ -89,17 +89,17 @@ extension AppBottomTabX on AppBottomTab {
       case AppBottomTab.profile:
         return AppStrings.bottomNavProfile;
       case AppBottomTab.family:
-        return 'Gia đình';
+        return AppStrings.familyTitle;
       case AppBottomTab.contracts:
-        return 'Hợp đồng';
+        return AppStrings.contractTitle;
       case AppBottomTab.amenities:
-        return 'Tiện ích';
+        return AppStrings.amenityTitle;
       case AppBottomTab.myBookings:
-        return 'Booking của tôi';
+        return AppStrings.myBookingTitle;
       case AppBottomTab.wallet:
-        return 'Ví tiền';
+        return AppStrings.walletTitle;
       case AppBottomTab.feedback:
-        return 'Phản hồi';
+        return AppStrings.feedbackTitle;
     }
   }
 }

@@ -64,5 +64,17 @@ class AppColors {
   static const Color homeServiceScheduleHighlightBg = Color(0xFFFFF4E8);
   static const Color homeServiceShadow = Color(0x0A000000);
   static const Color homeServiceShadowLight = Color(0x08000000);
+
+  // Semantic Colors (Slate/Modern Palette)
+  static const Color lightSurface = Color(0xFFF8FAFC);
+  static const Color navyDeep = Color(0xFF1E293B);
+  static const Color slate600 = Color(0xFF64748B);
+  static const Color slate400 = Color(0xFF94A3B8);
+  static const Color slateBorder = Color(0xFFF1F5F9);
+  static const Color slate900 = Color(0xFF0F172A);
+  static const Color successGreen = Color(0xFF15803D);
+  static const Color errorLight = Color(0xFFFEE2E2);
+  static const Color errorDark = Color(0xFFB91C1C);
+  static const Color dividerLight = Color(0xFFEEEEEE);
 }
 

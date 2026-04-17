@@ -27,14 +27,14 @@ class _EmployeeWalletScreenState extends State<EmployeeWalletScreen> {
     final scale = AppResponsive.scaleFactor(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppColors.lightSurface,
       body: BlocConsumer<WalletCubit, WalletState>(
         listener: (context, state) {
           if (state is WalletError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.message),
-                backgroundColor: Colors.redAccent,
+                backgroundColor: AppColors.errorDark,
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
@@ -61,17 +61,17 @@ class _EmployeeWalletScreenState extends State<EmployeeWalletScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Lịch sử giao dịch',
+                          AppStrings.transactionHistory,
                           style: AppTextStyles.arimo(
                             fontSize: 18 * scale,
                             fontWeight: FontWeight.w800,
-                            color: const Color(0xFF1E293B),
+                            color: AppColors.navyDeep,
                           ),
                         ),
                         TextButton(
                           onPressed: () {},
                           child: Text(
-                            'Tháng này',
+                            AppStrings.thisMonth,
                             style: AppTextStyles.arimo(
                               fontSize: 14 * scale,
                               fontWeight: FontWeight.w600,
@@ -89,13 +89,13 @@ class _EmployeeWalletScreenState extends State<EmployeeWalletScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.receipt_long_outlined, size: 64 * scale, color: Colors.grey[300]),
+                        Icon(Icons.receipt_long_outlined, size: 64 * scale, color: AppColors.slate400),
                         SizedBox(height: 16 * scale),
                         Text(
-                          'Chưa có giao dịch nào',
+                          AppStrings.noTransactionsYet,
                           style: AppTextStyles.arimo(
                             fontSize: 15 * scale,
-                            color: Colors.grey[500],
+                            color: AppColors.slate600,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -124,7 +124,7 @@ class _EmployeeWalletScreenState extends State<EmployeeWalletScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.error_outline, size: 48, color: Colors.redAccent),
+                          const Icon(Icons.error_outline, size: 48, color: AppColors.errorDark),
                           const SizedBox(height: 16),
                           Text(state.message, textAlign: TextAlign.center),
                           const SizedBox(height: 24),
@@ -134,7 +134,7 @@ class _EmployeeWalletScreenState extends State<EmployeeWalletScreen> {
                               backgroundColor: AppColors.primary,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             ),
-                            child: const Text('Thử lại'),
+                            child: const Text(AppStrings.tryAgain),
                           ),
                         ],
                       ),
@@ -160,24 +160,24 @@ class _EmployeeWalletScreenState extends State<EmployeeWalletScreen> {
         icon: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.grey[100],
+            color: AppColors.slateBorder,
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.arrow_back_ios_new, size: 16, color: Colors.black),
+          child: const Icon(Icons.arrow_back_ios_new, size: 16, color: AppColors.textPrimary),
         ),
         onPressed: () => Navigator.of(context).pop(),
       ),
       title: Text(
-        'Ví Của Tôi',
+        AppStrings.walletTitle,
         style: AppTextStyles.arimo(
           fontSize: 18 * scale,
           fontWeight: FontWeight.w800,
-          color: const Color(0xFF1E293B),
+          color: AppColors.navyDeep,
         ),
       ),
       actions: [
         IconButton(
-          icon: Icon(Icons.refresh_rounded, color: Colors.grey[600]),
+          icon: Icon(Icons.refresh_rounded, color: AppColors.slate600),
           onPressed: () => context.read<WalletCubit>().loadWallet(),
         ),
       ],
@@ -236,15 +236,15 @@ class _EmployeeWalletScreenState extends State<EmployeeWalletScreen> {
                           color: Colors.white.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(12 * scale),
                         ),
-                        child: Icon(Icons.account_balance_wallet, color: Colors.white, size: 20 * scale),
+                        child: Icon(Icons.account_balance_wallet, color: AppColors.white, size: 20 * scale),
                       ),
                       SizedBox(width: 12 * scale),
                       Text(
-                        'Tổng số dư',
+                        AppStrings.totalBalance,
                         style: AppTextStyles.arimo(
                           fontSize: 14 * scale,
                           fontWeight: FontWeight.w600,
-                          color: Colors.white.withValues(alpha: 0.8),
+                          color: AppColors.white.withValues(alpha: 0.8),
                         ),
                       ),
                     ],
@@ -257,7 +257,7 @@ class _EmployeeWalletScreenState extends State<EmployeeWalletScreen> {
                       style: AppTextStyles.arimo(
                         fontSize: 40 * scale,
                         fontWeight: FontWeight.w800,
-                        color: Colors.white,
+                        color: AppColors.white,
                         letterSpacing: -1,
                       ),
                     ),
@@ -279,12 +279,13 @@ class _EmployeeWalletScreenState extends State<EmployeeWalletScreen> {
       margin: EdgeInsets.only(bottom: 12 * scale),
       padding: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 14 * scale),
       decoration: BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(20 * scale),
-        border: Border.all(color: const Color(0xFFF1F5F9)),
+        border: Border.all(color: AppColors.slateBorder),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF64748B).withValues(alpha: 0.05),
+            color: AppColors.slate600.withValues(alpha: 0.05),
             blurRadius: 10 * scale,
             offset: const Offset(0, 4),
           ),
@@ -297,12 +298,12 @@ class _EmployeeWalletScreenState extends State<EmployeeWalletScreen> {
             decoration: BoxDecoration(
               color: isReceived 
                 ? AppColors.primary.withValues(alpha: 0.1)
-                : const Color(0xFFFEE2E2),
+                : AppColors.errorLight,
               shape: BoxShape.circle,
             ),
             child: Icon(
               isReceived ? Icons.call_received_rounded : Icons.call_made_rounded,
-              color: isReceived ? AppColors.primary : const Color(0xFFB91C1C),
+              color: isReceived ? AppColors.primary : AppColors.errorDark,
               size: 20 * scale,
             ),
           ),
@@ -327,7 +328,7 @@ class _EmployeeWalletScreenState extends State<EmployeeWalletScreen> {
                     tx.description!,
                     style: AppTextStyles.arimo(
                       fontSize: 12 * scale,
-                      color: const Color(0xFF64748B),
+                      color: AppColors.slate600,
                       fontWeight: FontWeight.w500,
                     ),
                     maxLines: 1,
@@ -338,10 +339,10 @@ class _EmployeeWalletScreenState extends State<EmployeeWalletScreen> {
                 Text(
                   tx.createdAt != null 
                     ? DateFormat('dd/MM/yyyy • HH:mm').format(tx.createdAt!)
-                    : 'Gần đây',
+                    : AppStrings.recent,
                   style: AppTextStyles.arimo(
                     fontSize: 11 * scale,
-                    color: const Color(0xFF94A3B8),
+                    color: AppColors.slate400,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -356,7 +357,7 @@ class _EmployeeWalletScreenState extends State<EmployeeWalletScreen> {
                 style: AppTextStyles.arimo(
                   fontSize: 16 * scale,
                   fontWeight: FontWeight.w800,
-                  color: isReceived ? const Color(0xFF15803D) : const Color(0xFF0F172A),
+                  color: isReceived ? AppColors.successGreen : AppColors.slate900,
                 ),
               ),
               if (tx.status != null) ...[
@@ -368,7 +369,7 @@ class _EmployeeWalletScreenState extends State<EmployeeWalletScreen> {
                     fontWeight: FontWeight.w700,
                     color: tx.status == 'Success' || tx.status == 'Completed' 
                         ? AppColors.primary
-                        : const Color(0xFF64748B),
+                        : AppColors.slate600,
                   ),
                 ),
               ],

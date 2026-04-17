@@ -69,11 +69,11 @@ class _StaffTransactionListScreenState
   String _statusLabel(String status) {
     switch (status.toLowerCase()) {
       case 'paid':
-        return 'Đã thanh toán';
+        return AppStrings.transactionStatusPaid;
       case 'pending':
-        return 'Chờ xử lý';
+        return AppStrings.statusPendingAction;
       case 'failed':
-        return 'Thất bại';
+        return AppStrings.transactionStatusFailed;
       default:
         return status;
     }
@@ -82,13 +82,13 @@ class _StaffTransactionListScreenState
   String _typeLabel(String? type) {
     switch ((type ?? '').toLowerCase()) {
       case 'deposit':
-        return 'Đặt cọc';
+        return AppStrings.transactionTypeDeposit;
       case 'remaining':
-        return 'Thanh toán còn lại';
+        return AppStrings.transactionTypeRemaining;
       case 'full':
-        return 'Thanh toán toàn bộ';
+        return AppStrings.transactionTypeFull;
       case 'platformcommission':
-        return 'Hoa hồng hệ thống';
+        return AppStrings.platformCommission;
       default:
         return type ?? '-';
     }
@@ -239,7 +239,7 @@ class _StaffTransactionListScreenState
     return EmployeeScaffold(
       appBar: AppBar(
         title: Text(
-          'Giao dịch',
+          AppStrings.transactionHistory,
           style: AppTextStyles.arimo(
             fontSize: 18 * scale,
             fontWeight: FontWeight.w700,
@@ -280,10 +280,10 @@ class _StaffTransactionListScreenState
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.error_outline, size: 48 * scale, color: Colors.red.withOpacity(0.5)),
+                            Icon(Icons.error_outline, size: 48 * scale, color: AppColors.errorDark.withOpacity(0.5)),
                             SizedBox(height: 16 * scale),
                             Text(
-                              'Lỗi tải danh sách: ${snapshot.error}',
+                              '${AppStrings.loadCarePlanError}: ${snapshot.error}',
                               textAlign: TextAlign.center,
                               style: AppTextStyles.arimo(
                                 fontSize: 14 * scale,
@@ -309,7 +309,7 @@ class _StaffTransactionListScreenState
                             Icon(Icons.receipt_long_outlined, size: 64 * scale, color: AppColors.textSecondary.withOpacity(0.2)),
                             SizedBox(height: 16 * scale),
                             Text(
-                              'Không tìm thấy giao dịch nào',
+                              AppStrings.noTransactionsFound,
                               textAlign: TextAlign.center,
                               style: AppTextStyles.arimo(
                                 fontSize: 16 * scale,
@@ -321,7 +321,7 @@ class _StaffTransactionListScreenState
                               SizedBox(height: 8 * scale),
                               TextButton(
                                 onPressed: _clearFilters,
-                                child: const Text('Xóa bộ lọc'),
+                                child: Text(AppStrings.clearFilter),
                               ),
                             ],
                           ],
@@ -378,7 +378,7 @@ class _StaffTransactionListScreenState
                 controller: _searchController,
                 style: AppTextStyles.arimo(fontSize: 14 * scale),
                 decoration: InputDecoration(
-                  hintText: 'Tìm theo tên, mã giao dịch...',
+                  hintText: AppStrings.searchHintTransaction,
                   hintStyle: AppTextStyles.arimo(
                     fontSize: 14 * scale,
                     color: AppColors.textSecondary.withOpacity(0.5),
@@ -429,7 +429,7 @@ class _StaffTransactionListScreenState
                     constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
                     child: Text(
                       '${_getActiveFilterCount()}',
-                      style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                      style: const TextStyle(color: AppColors.white, fontSize: 8, fontWeight: FontWeight.bold),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -443,10 +443,10 @@ class _StaffTransactionListScreenState
 
   Widget _buildFilterChips(double scale) {
     final statuses = [
-      {'key': 'all', 'label': 'Tất cả'},
-      {'key': 'paid', 'label': 'Đã thanh toán'},
-      {'key': 'pending', 'label': 'Chờ xử lý'},
-      {'key': 'failed', 'label': 'Thất bại'},
+      {'key': 'all', 'label': AppStrings.filterAll},
+      {'key': 'paid', 'label': AppStrings.transactionStatusPaid},
+      {'key': 'pending', 'label': AppStrings.statusPendingAction},
+      {'key': 'failed', 'label': AppStrings.transactionStatusFailed},
     ];
 
     return Column(
@@ -510,7 +510,7 @@ class _StaffTransactionListScreenState
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Bộ lọc nâng cao',
+                      AppStrings.advancedFilter,
                       style: AppTextStyles.arimo(
                         fontSize: 18 * scale,
                         fontWeight: FontWeight.w700,
@@ -521,12 +521,12 @@ class _StaffTransactionListScreenState
                         _clearFilters();
                         Navigator.pop(context);
                       },
-                      child: const Text('Xóa tất cả'),
+                      child: Text(AppStrings.clearAll),
                     ),
                   ],
                 ),
                 SizedBox(height: 20 * scale),
-                Text('Loại giao dịch', style: AppTextStyles.arimo(fontWeight: FontWeight.w600)),
+                Text(AppStrings.transactionType, style: AppTextStyles.arimo(fontWeight: FontWeight.w600)),
                 SizedBox(height: 12 * scale),
                 Wrap(
                   spacing: 8 * scale,
@@ -548,13 +548,13 @@ class _StaffTransactionListScreenState
                   }).toList(),
                 ),
                 SizedBox(height: 20 * scale),
-                Text('Khoảng thời gian', style: AppTextStyles.arimo(fontWeight: FontWeight.w600)),
+                Text(AppStrings.timeRange, style: AppTextStyles.arimo(fontWeight: FontWeight.w600)),
                 SizedBox(height: 12 * scale),
                 Row(
                   children: [
                     Expanded(
                       child: _DateTile(
-                        label: 'Từ ngày',
+                        label: AppStrings.fromDate,
                         date: _dateFrom,
                         onTap: () async {
                           final d = await showDatePicker(
@@ -573,7 +573,7 @@ class _StaffTransactionListScreenState
                     SizedBox(width: 12 * scale),
                     Expanded(
                       child: _DateTile(
-                        label: 'Đến ngày',
+                        label: AppStrings.toDate,
                         date: _dateTo,
                         onTap: () async {
                           final d = await showDatePicker(
@@ -592,13 +592,13 @@ class _StaffTransactionListScreenState
                   ],
                 ),
                 SizedBox(height: 20 * scale),
-                Text('Phương thức thanh toán', style: AppTextStyles.arimo(fontWeight: FontWeight.w600)),
+                Text(AppStrings.paymentMethod, style: AppTextStyles.arimo(fontWeight: FontWeight.w600)),
                 SizedBox(height: 12 * scale),
                 Wrap(
                   spacing: 8 * scale,
                   children: [
-                    {'val': null, 'label': 'Tất cả'},
-                    {'val': 'PayOS', 'label': 'PayOS'},
+                    {'val': null, 'label': AppStrings.filterAll},
+                    {'val': 'PayOS', 'label': AppStrings.paymentPayOS},
                     {'val': 'Offline', 'label': 'Tiền mặt'},
                   ].map((method) {
                     final isSelected = _paymentMethodFilter == method['val'];
@@ -623,8 +623,8 @@ class _StaffTransactionListScreenState
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12 * scale)),
                     ),
                     child: Text(
-                      'Áp dụng',
-                      style: AppTextStyles.arimo(color: Colors.white, fontWeight: FontWeight.w700),
+                      AppStrings.apply,
+                      style: AppTextStyles.arimo(color: AppColors.white, fontWeight: FontWeight.w700),
                     ),
                   ),
                 ),
@@ -693,11 +693,11 @@ class _TransactionItem extends StatelessWidget {
   Color _statusColor(String status) {
     switch (status.toLowerCase()) {
       case 'paid':
-        return Colors.green;
+        return AppColors.verified;
       case 'pending':
-        return Colors.orange;
+        return AppColors.appointmentPending;
       case 'failed':
-        return Colors.red;
+        return AppColors.errorDark;
       default:
         return AppColors.textSecondary;
     }
@@ -794,7 +794,7 @@ class _TransactionItem extends StatelessWidget {
             ],
           ),
           SizedBox(height: 12 * scale),
-          const Divider(height: 1, color: Color(0xFFEEEEEE)),
+          const Divider(height: 1, color: AppColors.dividerLight),
           SizedBox(height: 12 * scale),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -207,7 +207,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
     final fromSchedule = await _pickSchedule();
     if (fromSchedule == null) return;
 
-    final toSchedule = await _pickSchedule(title: 'Chọn lịch muốn đổi');
+    final toSchedule = await _pickSchedule(title: AppStrings.selectTargetSchedule);
     if (toSchedule == null) return;
 
     final receiver = await _pickReceiver();
@@ -222,23 +222,23 @@ class _RequestsScreenState extends State<RequestsScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Tạo yêu cầu đổi lịch'),
+        title: const Text(AppStrings.createSwapRequest),
         content: TextField(
           controller: reasonController,
           maxLines: 3,
           decoration: const InputDecoration(
-            hintText: 'Lý do đổi lịch',
+            hintText: AppStrings.swapReason,
             border: OutlineInputBorder(),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Hủy'),
+            child: const Text(AppStrings.cancelAction),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Gửi'),
+            child: const Text(AppStrings.sendAction),
           ),
         ],
       ),
@@ -260,13 +260,13 @@ class _RequestsScreenState extends State<RequestsScreen> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Đã gửi yêu cầu đổi lịch.')),
+        const SnackBar(content: Text(AppStrings.swapRequestSent)),
       );
       await _loadData();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Tạo yêu cầu thất bại: $e')),
+        SnackBar(content: Text('${AppStrings.swapRequestFailed}: $e')),
       );
     } finally {
       if (mounted) {
@@ -276,11 +276,11 @@ class _RequestsScreenState extends State<RequestsScreen> {
     }
   }
 
-  Future<_ScheduleOption?> _pickSchedule({String title = 'Chọn lịch hiện tại'}) async {
+  Future<_ScheduleOption?> _pickSchedule({String title = AppStrings.selectCurrentSchedule}) async {
     if (_mySchedules.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Không có lịch để chọn.')),
+          const SnackBar(content: Text(AppStrings.noSchedulesToSelect)),
         );
       }
       return null;
@@ -300,7 +300,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
     if (_staffReceivers.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Không có nhân viên để chọn.')),
+          const SnackBar(content: Text(AppStrings.noStaffToSelect)),
         );
       }
       return null;
@@ -309,7 +309,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
     return showModalBottomSheet<_StaffReceiver>(
       context: context,
       builder: (ctx) => _SelectBottomSheet<_StaffReceiver>(
-        title: 'Chọn người nhận yêu cầu',
+        title: AppStrings.selectReceiver,
         items: _staffReceivers,
         labelBuilder: (x) => x.displayName,
       ),
@@ -326,14 +326,14 @@ class _RequestsScreenState extends State<RequestsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(approve ? 'Đã chấp nhận yêu cầu.' : 'Đã từ chối yêu cầu.'),
+          content: Text(approve ? AppStrings.requestAccepted : AppStrings.requestRejected),
         ),
       );
       await _loadData();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Xử lý yêu cầu thất bại: $e')),
+        SnackBar(content: Text('${AppStrings.processRequestFailed}: $e')),
       );
     } finally {
       if (mounted) {
@@ -448,7 +448,7 @@ class _HeaderCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Yêu cầu đổi lịch 🔁',
+            AppStrings.swapRequestTitle,
             style: AppTextStyles.arimo(
               fontSize: 20,
               fontWeight: FontWeight.w700,
@@ -457,7 +457,7 @@ class _HeaderCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Gửi / nhận yêu cầu đổi ca giữa nhân viên',
+            AppStrings.swapRequestSubtitle,
             style: AppTextStyles.arimo(
               fontSize: 14,
               fontWeight: FontWeight.w400,
@@ -489,14 +489,14 @@ class _TabBar extends StatelessWidget {
           Expanded(
             child: _TabButton(
               active: tab == _RequestTab.sent,
-              text: 'Đã gửi',
+              text: AppStrings.tabSent,
               onTap: () => onChanged(_RequestTab.sent),
             ),
           ),
           Expanded(
             child: _TabButton(
               active: tab == _RequestTab.incoming,
-              text: 'Đã nhận',
+              text: AppStrings.tabReceived,
               onTap: () => onChanged(_RequestTab.incoming),
             ),
           ),
@@ -549,8 +549,8 @@ class _DateFilterBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final label = selected == null
-        ? 'Lọc theo ngày (tùy chọn)'
-        : 'Ngày: ${selected!.day.toString().padLeft(2, '0')}/${selected!.month.toString().padLeft(2, '0')}/${selected!.year}';
+        ? AppStrings.filterByDateOptional
+        : '${AppStrings.datePrefix}: ${selected!.day.toString().padLeft(2, '0')}/${selected!.month.toString().padLeft(2, '0')}/${selected!.year}';
 
     return Row(
       children: [
@@ -572,7 +572,7 @@ class _DateFilterBar extends StatelessWidget {
           IconButton(
             onPressed: onClear,
             icon: const Icon(Icons.close),
-            tooltip: 'Xóa lọc ngày',
+            tooltip: AppStrings.clearDateFilter,
           ),
         ],
       ],
@@ -597,7 +597,7 @@ class _ActionRow extends StatelessWidget {
               child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.white),
             )
           : const Icon(Icons.swap_horiz),
-      label: Text(creating ? 'Đang xử lý...' : 'Tạo yêu cầu đổi lịch'),
+      label: Text(creating ? AppStrings.processing : AppStrings.createSwapRequest),
       style: FilledButton.styleFrom(
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.white,
@@ -645,11 +645,11 @@ class _ErrorCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Không tải được dữ liệu',
+            AppStrings.loadDataError,
             style: AppTextStyles.arimo(
               fontSize: 14,
               fontWeight: FontWeight.w700,
-              color: Colors.red,
+              color: AppColors.errorDark,
             ),
           ),
           const SizedBox(height: 6),
@@ -663,7 +663,7 @@ class _ErrorCard extends StatelessWidget {
           const SizedBox(height: 10),
           OutlinedButton(
             onPressed: onRetry,
-            child: const Text('Thử lại'),
+            child: const Text(AppStrings.tryAgain),
           ),
         ],
       ),
@@ -683,7 +683,7 @@ class _EmptyCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
       ),
       child: Text(
-        'Chưa có yêu cầu nào trong phạm vi thời gian này.',
+        AppStrings.noRequestsInTimeRange,
         textAlign: TextAlign.center,
         style: AppTextStyles.arimo(
           fontSize: 13,
@@ -715,15 +715,15 @@ class _RequestCard extends StatelessWidget {
     final isPending = statusLower == 'pending';
     final isApproved = statusLower == 'approved';
     final statusColor = isApproved
-        ? const Color(0xFF1B7F3A)
+        ? AppColors.successGreen
         : isPending
-            ? const Color(0xFF9A6B00)
-            : const Color(0xFFB91C1C);
+            ? AppColors.appointmentPending
+            : AppColors.errorDark;
     final statusBg = isApproved
-        ? const Color(0xFFE8F7EE)
+        ? AppColors.verified.withValues(alpha: 0.1)
         : isPending
-            ? const Color(0xFFFFF6E5)
-            : const Color(0xFFFEE2E2);
+            ? AppColors.appointmentPending.withValues(alpha: 0.1)
+            : AppColors.errorLight;
 
     return Container(
       decoration: BoxDecoration(
@@ -772,7 +772,7 @@ class _RequestCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Lịch hiện tại: #${request.fromScheduleId}  •  Lịch muốn đổi: #${request.toScheduleId}',
+            '${AppStrings.currentSchedulePrefix}: #${request.fromScheduleId}  •  ${AppStrings.targetSchedulePrefix}: #${request.toScheduleId}',
             style: AppTextStyles.arimo(
               fontSize: 12,
               color: AppColors.textSecondary,
@@ -780,7 +780,7 @@ class _RequestCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Lý do: ${request.reason.isEmpty ? '(Không có)' : request.reason}',
+            '${AppStrings.reasonPrefix}: ${request.reason.isEmpty ? AppStrings.noneValue : request.reason}',
             style: AppTextStyles.arimo(
               fontSize: 12,
               color: AppColors.textSecondary,
@@ -789,7 +789,7 @@ class _RequestCard extends StatelessWidget {
           if (request.createdAt != null) ...[
             const SizedBox(height: 6),
             Text(
-              'Tạo lúc: ${request.createdAt!.day.toString().padLeft(2, '0')}/${request.createdAt!.month.toString().padLeft(2, '0')}/${request.createdAt!.year} ${request.createdAt!.hour.toString().padLeft(2, '0')}:${request.createdAt!.minute.toString().padLeft(2, '0')}',
+              '${AppStrings.createdAtPrefix}: ${request.createdAt!.day.toString().padLeft(2, '0')}/${request.createdAt!.month.toString().padLeft(2, '0')}/${request.createdAt!.year} ${request.createdAt!.hour.toString().padLeft(2, '0')}:${request.createdAt!.minute.toString().padLeft(2, '0')}',
               style: AppTextStyles.arimo(
                 fontSize: 11,
                 color: AppColors.textSecondary,
