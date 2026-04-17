@@ -602,8 +602,63 @@ class _ContractHtmlViewerScreenState extends State<_ContractHtmlViewerScreen> {
 
             if (state is ContractLoaded) {
               final contract = state.contract;
-              final contentHtml = contract.htmlContent;
-              if (contentHtml == null || contentHtml.isEmpty) {
+              String contentHtml = contract.htmlContent ?? '';
+              
+              // Tự động phân tích và đưa phần chữ ký 2 bên ngang hàng nếu nó đang bị dọc
+              if (contentHtml.isNotEmpty && 
+                  contentHtml.contains('ĐẠI DIỆN BÊN A') && 
+                  contentHtml.contains('ĐẠI DIỆN BÊN B')) {
+                
+                int indexA = contentHtml.indexOf('ĐẠI DIỆN BÊN A');
+                int indexB = contentHtml.indexOf('ĐẠI DIỆN BÊN B');
+                
+                if (indexA != -1 && indexB != -1 && indexA < indexB) {
+                  int startIndex = contentHtml.lastIndexOf('<p', indexA);
+                  if (startIndex == -1) startIndex = contentHtml.lastIndexOf('<div', indexA);
+                  if (startIndex == -1) startIndex = indexA;
+                  
+                  int signatureTextB = contentHtml.indexOf('(Ký, ghi rõ họ tên)', indexB);
+                  if (signatureTextB != -1) {
+                    int endIndex = contentHtml.indexOf('</p>', signatureTextB);
+                    if (endIndex == -1) endIndex = contentHtml.indexOf('</div>', signatureTextB);
+                    if (endIndex != -1) {
+                      endIndex += 4; // bỏ qua < / p >
+                    } else {
+                      endIndex = signatureTextB + '(Ký, ghi rõ họ tên)'.length;
+                    }
+                    
+                    String originalSignaturesBlock = contentHtml.substring(startIndex, endIndex);
+                    int startBInBlock = originalSignaturesBlock.indexOf('ĐẠI DIỆN BÊN B');
+                    
+                    if (startBInBlock > 0) {
+                      int splitIndex = originalSignaturesBlock.lastIndexOf('<p', startBInBlock);
+                      if (splitIndex == -1) splitIndex = originalSignaturesBlock.lastIndexOf('<div', startBInBlock);
+                      if (splitIndex <= 0) splitIndex = startBInBlock;
+                      
+                      String blockA = originalSignaturesBlock.substring(0, splitIndex).trim();
+                      String blockB = originalSignaturesBlock.substring(splitIndex).trim();
+                      
+                      // Inject class "no-border" to override td borders
+                      String tableHtml = '''
+                      <table class="signature-table no-border" style="width:100%; margin-top:32px;">
+                        <tr class="no-border">
+                          <td class="no-border" style="width:50%;">
+                            $blockA
+                          </td>
+                          <td class="no-border" style="width:50%;">
+                            $blockB
+                          </td>
+                        </tr>
+                      </table>
+                      ''';
+                      
+                      contentHtml = contentHtml.replaceFirst(originalSignaturesBlock, tableHtml);
+                    }
+                  }
+                }
+              }
+
+              if (contentHtml.isEmpty) {
                 return Center(
                   child: Text(
                     'Hợp đồng chưa có nội dung chi tiết.',
@@ -641,6 +696,82 @@ class _ContractHtmlViewerScreenState extends State<_ContractHtmlViewerScreen> {
                       fontSize: 14 * scale,
                       color: AppColors.textPrimary,
                     ),
+                    customStylesBuilder: (element) {
+                      final tag = element.localName?.toLowerCase();
+                      final className = element.className;
+                      
+                      switch (tag) {
+                        case 'h1':
+                          return {
+                            'font-weight': 'bold',
+                            'font-size': '18px',
+                            'margin-top': '16px',
+                            'margin-bottom': '12px',
+                            'color': '#1a1a1a',
+                            'text-align': 'center',
+                          };
+                        case 'h2':
+                        case 'h3':
+                          return {
+                            'font-weight': 'bold',
+                            'font-size': '16px',
+                            'margin-top': '12px',
+                            'margin-bottom': '8px',
+                            'color': '#1a1a1a',
+                          };
+                        case 'p':
+                          return {
+                            'margin-top': '8px',
+                            'margin-bottom': '8px',
+                            'line-height': '1.6',
+                            'text-align': 'justify',
+                          };
+                        case 'table':
+                          if (className.contains('no-border')) {
+                            return {
+                              'width': '100%',
+                              'margin-top': '24px',
+                            };
+                          }
+                          return {
+                            'width': '100%',
+                            'border-collapse': 'collapse',
+                            'margin-top': '12px',
+                            'margin-bottom': '12px',
+                          };
+                        case 'th':
+                          return {
+                            'padding': '10px 8px',
+                            'border': '1px solid #d1d5db',
+                            'background-color': '#f3f4f6',
+                            'font-weight': '600',
+                            'text-align': 'left',
+                          };
+                        case 'td':
+                          if (className.contains('no-border')) {
+                            return {
+                              'padding': '0',
+                              'border': 'none',
+                              'vertical-align': 'top',
+                              'text-align': 'center',
+                            };
+                          }
+                          return {
+                            'padding': '10px 8px',
+                            'border': '1px solid #e5e7eb',
+                            'vertical-align': 'top',
+                          };
+                        default:
+                          if (className.contains('title')) {
+                            return {
+                              'font-weight': 'bold',
+                              'font-size': '16px',
+                              'margin-bottom': '8px',
+                            };
+                          }
+                          return null;
+                      }
+                    },
                   ),
                 ),
               );

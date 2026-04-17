@@ -78,7 +78,7 @@ class _StaffContractPreviewScreenState
           }
 
           final preview = snapshot.data;
-          if (preview == null) {
+          if (preview == null || preview.htmlContent.isEmpty) {
             return Center(
               child: Text(
                 'Không có nội dung preview.',
@@ -88,6 +88,55 @@ class _StaffContractPreviewScreenState
                 ),
               ),
             );
+          }
+
+          String contentHtml = preview.htmlContent;
+
+          // Tự động phân tích và đưa phần chữ ký 2 bên ngang hàng
+          if (contentHtml.contains('ĐẠI DIỆN BÊN A') && contentHtml.contains('ĐẠI DIỆN BÊN B')) {
+            int indexA = contentHtml.indexOf('ĐẠI DIỆN BÊN A');
+            int indexB = contentHtml.indexOf('ĐẠI DIỆN BÊN B');
+            
+            if (indexA != -1 && indexB != -1 && indexA < indexB) {
+              int startIndex = contentHtml.lastIndexOf('<p', indexA);
+              if (startIndex == -1) startIndex = contentHtml.lastIndexOf('<div', indexA);
+              if (startIndex == -1) startIndex = indexA;
+              
+              int signatureTextB = contentHtml.indexOf('(Ký, ghi rõ họ tên)', indexB);
+              if (signatureTextB != -1) {
+                int endIndex = contentHtml.indexOf('</p>', signatureTextB);
+                if (endIndex == -1) endIndex = contentHtml.indexOf('</div>', signatureTextB);
+                if (endIndex != -1) endIndex += 4;
+                else endIndex = signatureTextB + '(Ký, ghi rõ họ tên)'.length;
+                
+                String originalSignaturesBlock = contentHtml.substring(startIndex, endIndex);
+                int startBInBlock = originalSignaturesBlock.indexOf('ĐẠI DIỆN BÊN B');
+                
+                if (startBInBlock > 0) {
+                  int splitIndex = originalSignaturesBlock.lastIndexOf('<p', startBInBlock);
+                  if (splitIndex == -1) splitIndex = originalSignaturesBlock.lastIndexOf('<div', startBInBlock);
+                  if (splitIndex <= 0) splitIndex = startBInBlock;
+                  
+                  String blockA = originalSignaturesBlock.substring(0, splitIndex).trim();
+                  String blockB = originalSignaturesBlock.substring(splitIndex).trim();
+                  
+                  String tableHtml = '''
+                  <table class="signature-table no-border" style="width:100%; margin-top:32px;">
+                    <tr class="no-border">
+                      <td class="no-border" style="width:50%;">
+                        $blockA
+                      </td>
+                      <td class="no-border" style="width:50%;">
+                        $blockB
+                      </td>
+                    </tr>
+                  </table>
+                  ''';
+                  
+                  contentHtml = contentHtml.replaceFirst(originalSignaturesBlock, tableHtml);
+                }
+              }
+            }
           }
 
           return SingleChildScrollView(
@@ -185,20 +234,21 @@ class _StaffContractPreviewScreenState
                           ),
                         ),
                         child: HtmlWidget(
-                          preview.htmlContent,
+                          contentHtml,
                           textStyle: AppTextStyles.arimo(
                             fontSize: 15 * scale,
                             color: AppColors.textPrimary,
                           ),
                           customStylesBuilder: (element) {
-                            // Cải thiện styling cho các thẻ HTML
                             final tag = element.localName?.toLowerCase();
+                            final className = element.className;
+                            
                             switch (tag) {
                               case 'h1':
                                 return {
                                   'font-weight': 'bold',
-                                  'font-size': '20px',
-                                  'margin-top': '20px',
+                                  'font-size': '18px',
+                                  'margin-top': '16px',
                                   'margin-bottom': '12px',
                                   'color': '#1a1a1a',
                                   'text-align': 'center',
@@ -207,19 +257,25 @@ class _StaffContractPreviewScreenState
                               case 'h3':
                                 return {
                                   'font-weight': 'bold',
-                                  'font-size': '18px',
-                                  'margin-top': '16px',
-                                  'margin-bottom': '10px',
+                                  'font-size': '16px',
+                                  'margin-top': '12px',
+                                  'margin-bottom': '8px',
                                   'color': '#1a1a1a',
                                 };
                               case 'p':
                                 return {
-                                  'margin-top': '10px',
-                                  'margin-bottom': '10px',
-                                  'line-height': '1.8',
+                                  'margin-top': '8px',
+                                  'margin-bottom': '8px',
+                                  'line-height': '1.6',
                                   'text-align': 'justify',
                                 };
                               case 'table':
+                                if (className.contains('no-border')) {
+                                  return {
+                                    'width': '100%',
+                                    'margin-top': '24px',
+                                  };
+                                }
                                 return {
                                   'width': '100%',
                                   'border-collapse': 'collapse',
@@ -229,47 +285,36 @@ class _StaffContractPreviewScreenState
                                 };
                               case 'th':
                                 return {
-                                  'padding': '10px',
-                                  'border': '1px solid #d0d0d0',
-                                  'background-color': '#f5f5f5',
-                                  'font-weight': 'bold',
+                                  'padding': '10px 8px',
+                                  'border': '1px solid #d1d5db',
+                                  'background-color': '#f3f4f6',
+                                  'font-weight': '600',
                                   'text-align': 'left',
                                 };
                               case 'td':
-                                return {
-                                  'padding': '10px',
-                                  'border': '1px solid #e0e0e0',
-                                };
-                              case 'div':
-                                // Kiểm tra class để style đặc biệt
-                                final className = element.className;
-                                if (className.contains('header')) {
+                                if (className.contains('no-border')) {
                                   return {
+                                    'padding': '0',
+                                    'border': 'none',
                                     'text-align': 'center',
-                                    'margin-bottom': '20px',
+                                    'vertical-align': 'top',
                                   };
                                 }
-                                if (className.contains('section')) {
-                                  return {
-                                    'margin-top': '16px',
-                                    'margin-bottom': '16px',
-                                  };
-                                }
+                                return {
+                                  'padding': '10px 8px',
+                                  'border': '1px solid #e5e7eb',
+                                  'vertical-align': 'top',
+                                };
+                              default:
                                 if (className.contains('title')) {
                                   return {
                                     'font-weight': 'bold',
-                                    'font-size': '18px',
-                                    'margin-bottom': '12px',
+                                    'font-size': '16px',
+                                    'margin-bottom': '8px',
                                   };
                                 }
                                 return null;
-                              default:
-                                return null;
                             }
-                          },
-                          customWidgetBuilder: (element) {
-                            // Custom widget cho các thẻ đặc biệt nếu cần
-                            return null;
                           },
                         ),
                       ),

@@ -405,6 +405,101 @@ class _CreateFeedbackSheetState extends State<CreateFeedbackSheet> {
     );
   }
 
+  void _showAmenityTicketPickerDrawer(List<AmenityTicketEntity> tickets, double scale) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => AppDrawerForm(
+        title: 'Chọn AmenityTicket',
+        children: [
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: tickets.length,
+            separatorBuilder: (context, index) => SizedBox(height: 8 * scale),
+            itemBuilder: (context, index) {
+              final ticket = tickets[index];
+              final isSelected = _amenityTicketId == ticket.id;
+
+              return InkWell(
+                onTap: () {
+                  setState(() {
+                    _amenityTicketId = ticket.id;
+                  });
+                  Navigator.of(context).pop();
+                },
+                borderRadius: BorderRadius.circular(12 * scale),
+                child: Container(
+                  padding: EdgeInsets.all(12 * scale),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColors.primary.withValues(alpha: 0.05)
+                        : AppColors.white,
+                    borderRadius: BorderRadius.circular(12 * scale),
+                    border: Border.all(
+                      color: isSelected ? AppColors.primary : AppColors.borderLight,
+                      width: isSelected ? 1.5 : 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8 * scale,
+                          vertical: 4 * scale,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.background,
+                          borderRadius: BorderRadius.circular(6 * scale),
+                        ),
+                        child: Text(
+                          '#${ticket.id}',
+                          style: AppTextStyles.arimo(
+                            fontSize: 12 * scale,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 12 * scale),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              ticket.amenityServiceName ?? 'Amenity',
+                              style: AppTextStyles.arimo(
+                                fontSize: 14 * scale,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            SizedBox(height: 2 * scale),
+                            Text(
+                              '${ticket.startTime.day.toString().padLeft(2, '0')}/${ticket.startTime.month.toString().padLeft(2, '0')}/${ticket.startTime.year} • ${ticket.timeRange}',
+                              style: AppTextStyles.arimo(
+                                fontSize: 12 * scale,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (isSelected)
+                        const Icon(Icons.check_circle, color: AppColors.primary),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+          SizedBox(height: 24 * scale),
+        ],
+      ),
+    );
+  }
+
   void _handleSubmit() {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedTypeId == null) {
@@ -838,27 +933,41 @@ class _CreateFeedbackSheetState extends State<CreateFeedbackSheet> {
                   );
                 }
 
-                return DropdownButtonFormField<int>(
-                  initialValue: _amenityTicketId,
-                  isExpanded: true,
-                  decoration: InputDecoration(
-                    border: const OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 12 * scale,
-                      vertical: 14 * scale,
+                return GestureDetector(
+                  onTap: () => _showAmenityTicketPickerDrawer(tickets, scale),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 16 * scale),
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(16 * scale),
+                      border: Border.all(color: AppColors.borderLight),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.receipt_long, color: AppColors.textSecondary),
+                        SizedBox(width: 12 * scale),
+                        Expanded(
+                          child: Text(
+                            _amenityTicketId == null
+                                ? 'Chọn ticket hoàn thành'
+                                : (() {
+                                    final selectedTicket = tickets.firstWhere(
+                                        (t) => t.id == _amenityTicketId,
+                                        orElse: () => tickets.first);
+                                    return '#${selectedTicket.id} - ${selectedTicket.amenityServiceName ?? 'Amenity'}';
+                                  })(),
+                            style: AppTextStyles.arimo(
+                              fontSize: 14 * scale,
+                              color: _amenityTicketId == null
+                                  ? AppColors.textSecondary
+                                  : AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                      ],
                     ),
                   ),
-                  hint: const Text('Chọn ticket hoàn thành'),
-                  items: tickets.map((ticket) {
-                    return DropdownMenuItem<int>(
-                      value: ticket.id,
-                      child: Text(
-                        '#${ticket.id} - ${ticket.amenityServiceName ?? 'Amenity'}',
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (value) => setState(() => _amenityTicketId = value),
                 );
               },
             ),

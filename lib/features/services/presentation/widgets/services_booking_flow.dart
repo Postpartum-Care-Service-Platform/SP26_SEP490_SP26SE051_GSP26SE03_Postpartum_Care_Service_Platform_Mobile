@@ -158,33 +158,35 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
     final scale = AppResponsive.scaleFactor(context);
     final estimatedPrice = _getEstimatedPrice(state);
 
-    return SafeArea(
-      top: false,
-      child: Container(
-        padding:
-            EdgeInsets.fromLTRB(4 * scale, 2 * scale, 4 * scale, 2 * scale),
-        decoration: BoxDecoration(
-          color: AppColors.background,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 8 * scale,
-              offset: Offset(0, -2 * scale),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              flex: 4,
-              child: _buildEstimatedPrice(estimatedPrice, scale),
-            ),
-            SizedBox(width: 12 * scale),
-            Expanded(
-              flex: 6,
-              child: _buildNextButton(context, state, scale),
-            ),
-          ],
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8 * scale,
+            offset: Offset(0, -2 * scale),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding:
+              EdgeInsets.fromLTRB(4 * scale, 2 * scale, 4 * scale, 2 * scale),
+          child: Row(
+            children: [
+              Expanded(
+                flex: 4,
+                child: _buildEstimatedPrice(estimatedPrice, scale),
+              ),
+              SizedBox(width: 12 * scale),
+              Expanded(
+                flex: 6,
+                child: _buildNextButton(context, state, scale),
+              ),
+            ],
+          ),
         ),
       ),
     );
