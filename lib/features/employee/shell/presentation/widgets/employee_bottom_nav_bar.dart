@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-import '../../../../../core/constants/app_colors.dart';  
+import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/constants/app_assets.dart';
 import '../../../../../core/widgets/app_bottom_navigation_bar.dart';
 import '../../../../../features/auth/presentation/bloc/auth_bloc.dart';
@@ -26,40 +26,70 @@ class EmployeeBottomNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     String? memberType;
     try {
-      final authBloc = context.read<AuthBloc>();
-      final state = authBloc.state;
-      if (state is AuthCurrentAccountLoaded) {
-        memberType = (state.account as dynamic).memberType;
+      final authState = context.watch<AuthBloc>().state;
+      if (authState is AuthCurrentAccountLoaded) {
+        memberType = (authState.account as dynamic).memberType;
+        if (memberType == null) {
+          memberType = (authState.account as dynamic).ownerProfile?.memberTypeName;
+        }
       }
     } catch (_) {}
 
-    // Khai báo cố định danh sách Bottom Navigation Bar thay vì phụ thuộc vào Quick Menu
-    final bottomTabItems = [
-      EmployeeQuickMenuItem.bottom(
-        id: 'family',
-        label: 'Gia đình',
-        iconAsset: AppAssets.family,
-        tab: AppBottomTab.family,
-      ),
-      EmployeeQuickMenuItem.bottom(
-        id: 'contracts',
-        label: 'Hợp đồng',
-        iconAsset: AppAssets.menuThird,
-        tab: AppBottomTab.contracts,
-      ),
-      EmployeeQuickMenuItem.bottom(
-        id: 'amenities',
-        label: 'Tiện ích',
-        iconAsset: AppAssets.serviceAmenity,
-        tab: AppBottomTab.amenities,
-      ),
-      EmployeeQuickMenuItem.bottom(
-        id: 'services',
-        label: 'Dịch vụ',
-        iconAsset: AppAssets.appIconThird,
-        tab: AppBottomTab.services,
-      ),
-    ];
+    final isHomeStaff =
+        (memberType?.toLowerCase().contains('homestaff') ?? false) ||
+        (memberType?.toLowerCase().contains('home-staff') ?? false) ||
+        (memberType?.toLowerCase().contains('home nurse') ?? false) ||
+        (memberType?.toLowerCase().contains('tại nhà') ?? false);
+
+    // Khai báo danh sách Bottom Navigation Bar phụ thuộc vào role
+    final List<EmployeeQuickMenuItem> bottomTabItems = isHomeStaff
+        ? [
+            EmployeeQuickMenuItem.bottom(
+              id: 'family',
+              label: 'Gia đình',
+              iconAsset: AppAssets.family,
+              tab: AppBottomTab.family,
+            ),
+            EmployeeQuickMenuItem.bottom(
+              id: 'myBookings',
+              label: 'Booking của tôi',
+              iconAsset: AppAssets.calendarBold,
+              tab: AppBottomTab.myBookings,
+            ),
+            EmployeeQuickMenuItem.bottom(
+              id: 'wallet',
+              label: 'Ví tiền',
+              iconAsset: AppAssets
+                  .menuSecond, // Using a generic icon for wallet since wallet isn't in AppAssets yet
+              tab: AppBottomTab.wallet,
+            ),
+          ]
+        : [
+            EmployeeQuickMenuItem.bottom(
+              id: 'family',
+              label: 'Gia đình',
+              iconAsset: AppAssets.family,
+              tab: AppBottomTab.family,
+            ),
+            EmployeeQuickMenuItem.bottom(
+              id: 'contracts',
+              label: 'Hợp đồng',
+              iconAsset: AppAssets.menuThird,
+              tab: AppBottomTab.contracts,
+            ),
+            EmployeeQuickMenuItem.bottom(
+              id: 'amenities',
+              label: 'Tiện ích',
+              iconAsset: AppAssets.serviceAmenity,
+              tab: AppBottomTab.amenities,
+            ),
+            EmployeeQuickMenuItem.bottom(
+              id: 'services',
+              label: 'Dịch vụ',
+              iconAsset: AppAssets.appIconThird,
+              tab: AppBottomTab.services,
+            ),
+          ];
 
     return Container(
       padding: const EdgeInsets.only(top: 8),
@@ -100,9 +130,13 @@ class EmployeeBottomNavBar extends StatelessWidget {
                         item.label,
                         style: TextStyle(
                           fontSize: isSelected ? 12 : 11,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                          fontWeight: isSelected
+                              ? FontWeight.w600
+                              : FontWeight.w500,
                           letterSpacing: isSelected ? 0.2 : 0.1,
-                          color: isSelected ? AppColors.primary : AppColors.third,
+                          color: isSelected
+                              ? AppColors.primary
+                              : AppColors.third,
                         ),
                       ),
                     ],
@@ -121,10 +155,7 @@ class _EmployeeNavIcon extends StatelessWidget {
   final String asset;
   final bool isActive;
 
-  const _EmployeeNavIcon({
-    required this.asset,
-    required this.isActive,
-  });
+  const _EmployeeNavIcon({required this.asset, required this.isActive});
 
   @override
   Widget build(BuildContext context) {

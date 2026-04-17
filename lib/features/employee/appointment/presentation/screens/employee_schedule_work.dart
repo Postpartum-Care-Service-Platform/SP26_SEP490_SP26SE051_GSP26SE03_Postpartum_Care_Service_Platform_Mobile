@@ -379,6 +379,8 @@ class _LoadedContentState extends State<_LoadedContent> {
                     case AppBottomTab.family:
                     case AppBottomTab.contracts:
                     case AppBottomTab.amenities:
+                    case AppBottomTab.myBookings:
+                    case AppBottomTab.wallet:
                       break;
                   }
                 },

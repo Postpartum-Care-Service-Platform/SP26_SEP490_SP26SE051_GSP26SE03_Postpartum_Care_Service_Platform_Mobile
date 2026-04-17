@@ -11,7 +11,19 @@ import '../constants/app_strings.dart';
 import '../constants/app_assets.dart';
 import '../utils/app_responsive.dart';
 
-enum AppBottomTab { home, appointment, services, chat, supportRequests, profile, family, contracts, amenities }
+enum AppBottomTab {
+  home,
+  appointment,
+  services,
+  chat,
+  supportRequests,
+  profile,
+  family,
+  contracts,
+  amenities,
+  myBookings,
+  wallet,
+}
 
 extension AppBottomTabX on AppBottomTab {
   IconData? get icon {
@@ -25,6 +37,8 @@ extension AppBottomTabX on AppBottomTab {
       case AppBottomTab.family:
       case AppBottomTab.contracts:
       case AppBottomTab.amenities:
+      case AppBottomTab.myBookings:
+      case AppBottomTab.wallet:
         return null; // Use SVG instead
     }
   }
@@ -49,6 +63,10 @@ extension AppBottomTabX on AppBottomTab {
         return AppAssets.menuThird;
       case AppBottomTab.amenities:
         return AppAssets.serviceAmenity;
+      case AppBottomTab.myBookings:
+        return AppAssets.calendar;
+      case AppBottomTab.wallet:
+        return AppAssets.menuFirst; // placeholder svg for wallet
     }
   }
 
@@ -72,6 +90,10 @@ extension AppBottomTabX on AppBottomTab {
         return 'Hợp đồng';
       case AppBottomTab.amenities:
         return 'Tiện ích';
+      case AppBottomTab.myBookings:
+        return 'Booking của tôi';
+      case AppBottomTab.wallet:
+        return 'Ví tiền';
     }
   }
 }
@@ -108,7 +130,8 @@ class AppBottomNavigationBar extends StatelessWidget {
               .toList();
           profileLabel = parts.isNotEmpty ? parts.last : fullName;
           profileAvatarUrl =
-              authState.account.ownerProfile?.avatarUrl ?? authState.account.avatarUrl;
+              authState.account.ownerProfile?.avatarUrl ??
+              authState.account.avatarUrl;
         }
 
         return SafeArea(
@@ -486,7 +509,8 @@ class _NavIconButtonState extends State<_NavIconButton>
               curve: Curves.easeOut,
               child: ScaleTransition(
                 scale: _scaleAnimation,
-                child: widget.avatarUrl != null ||
+                child:
+                    widget.avatarUrl != null ||
                         (widget.svgIcon == null && widget.icon == null)
                     ? _ProfileAvatarIcon(
                         avatarUrl: widget.avatarUrl,
@@ -494,20 +518,20 @@ class _NavIconButtonState extends State<_NavIconButton>
                         borderColor: iconColor,
                       )
                     : widget.svgIcon != null
-                        ? SvgPicture.asset(
-                            widget.svgIcon!,
-                            width: widget.isSelected ? selectedIconSize : iconSize,
-                            height: widget.isSelected ? selectedIconSize : iconSize,
-                            colorFilter: ColorFilter.mode(
-                              iconColor,
-                              BlendMode.srcIn,
-                            ),
-                          )
-                        : Icon(
-                            widget.icon,
-                            size: widget.isSelected ? selectedIconSize : iconSize,
-                            color: iconColor,
-                          ),
+                    ? SvgPicture.asset(
+                        widget.svgIcon!,
+                        width: widget.isSelected ? selectedIconSize : iconSize,
+                        height: widget.isSelected ? selectedIconSize : iconSize,
+                        colorFilter: ColorFilter.mode(
+                          iconColor,
+                          BlendMode.srcIn,
+                        ),
+                      )
+                    : Icon(
+                        widget.icon,
+                        size: widget.isSelected ? selectedIconSize : iconSize,
+                        color: iconColor,
+                      ),
               ),
             ),
             SizedBox(height: spacing),
@@ -552,7 +576,10 @@ class _ProfileAvatarIcon extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: borderColor.withValues(alpha: 0.35), width: 1),
+        border: Border.all(
+          color: borderColor.withValues(alpha: 0.35),
+          width: 1,
+        ),
       ),
       child: ClipOval(
         child: avatarUrl != null && avatarUrl!.isNotEmpty

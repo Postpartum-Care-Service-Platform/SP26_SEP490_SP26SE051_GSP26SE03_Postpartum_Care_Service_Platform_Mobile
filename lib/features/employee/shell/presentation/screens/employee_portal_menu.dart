@@ -20,6 +20,11 @@ import '../../../../../features/employee/amenity_ticket/presentation/bloc/amenit
 
 import '../../../../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../../../../features/auth/presentation/bloc/auth_event.dart';
+import '../../../booking/presentation/screens/staff_booking_list_screen.dart';
+import '../../../../../features/wallet/presentation/screens/employee_wallet_screen.dart';
+import '../../../../../features/wallet/presentation/bloc/wallet_cubit.dart';
+import '../../../../../features/wallet/data/datasources/wallet_remote_datasource.dart';
+import '../../../../../core/apis/api_client.dart';
 
 class EmployeePortalScreen extends StatefulWidget {
   const EmployeePortalScreen({super.key});
@@ -38,41 +43,57 @@ class _EmployeePortalScreenState extends State<EmployeePortalScreen> {
     });
   }
 
-  List<Widget> get _screens => [
-    EmployeeScheduleScreenNew(
-      onBottomTabSelected: _onTabSelected,
-    ), // AppBottomTab.appointment (index 0)
-    EmployeeAssignedFamiliesScreen(
-      onBackToDefaultStaffPage: _backToDefaultStaffPage,
-    ), // AppBottomTab.family (index 1)
-    StaffContractListScreen(
-      onBackToDefaultStaffPage: _backToDefaultStaffPage,
-    ), // AppBottomTab.contracts (index 2)
-    MultiBlocProvider(
-      providers: [
-        BlocProvider<StaffScheduleBloc>(
-          create: (_) => InjectionContainer.staffScheduleBloc,
-        ),
-        BlocProvider<AmenityServiceBloc>(
-          create: (_) => InjectionContainer.amenityServiceBloc
-            ..add(const LoadActiveAmenityServices()),
-        ),
-        BlocProvider<AmenityTicketBloc>(
-          create: (_) => InjectionContainer.amenityTicketBloc,
-        ),
-      ],
-      child: ServiceBookingScreen(
-        onBackToDefaultStaffPage: _backToDefaultStaffPage,
-      ),
-    ), // AppBottomTab.amenities (index 3)
-    // Dùng BlocProvider.value để không dispose global PackageBloc
-    BlocProvider<PackageBloc>.value(
-      value: InjectionContainer.packageBloc,
-      child: EmployeePackageBookingScreen(
-        onBackToDefaultStaffPage: _backToDefaultStaffPage,
-      ), 
-    ), // AppBottomTab.services (index 4)
-  ];
+  Widget _buildScreen(AppBottomTab tab) {
+    switch (tab) {
+      case AppBottomTab.appointment:
+        return EmployeeScheduleScreenNew(onBottomTabSelected: _onTabSelected);
+      case AppBottomTab.family:
+        return EmployeeAssignedFamiliesScreen(
+          onBackToDefaultStaffPage: _backToDefaultStaffPage,
+        );
+      case AppBottomTab.contracts:
+        return StaffContractListScreen(
+          onBackToDefaultStaffPage: _backToDefaultStaffPage,
+        );
+      case AppBottomTab.amenities:
+        return MultiBlocProvider(
+          providers: [
+            BlocProvider<StaffScheduleBloc>(
+              create: (_) => InjectionContainer.staffScheduleBloc,
+            ),
+            BlocProvider<AmenityServiceBloc>(
+              create: (_) =>
+                  InjectionContainer.amenityServiceBloc
+                    ..add(const LoadActiveAmenityServices()),
+            ),
+            BlocProvider<AmenityTicketBloc>(
+              create: (_) => InjectionContainer.amenityTicketBloc,
+            ),
+          ],
+          child: ServiceBookingScreen(
+            onBackToDefaultStaffPage: _backToDefaultStaffPage,
+          ),
+        );
+      case AppBottomTab.services:
+        return BlocProvider<PackageBloc>.value(
+          value: InjectionContainer.packageBloc,
+          child: EmployeePackageBookingScreen(
+            onBackToDefaultStaffPage: _backToDefaultStaffPage,
+          ),
+        );
+      case AppBottomTab.myBookings:
+        return const StaffBookingListScreen(useHomeStaffBookings: true);
+      case AppBottomTab.wallet:
+        return BlocProvider(
+          create: (_) => WalletCubit(
+            remoteDataSource: WalletRemoteDataSourceImpl(dio: ApiClient.dio),
+          ),
+          child: const EmployeeWalletScreen(),
+        );
+      default:
+        return EmployeeScheduleScreenNew(onBottomTabSelected: _onTabSelected);
+    }
+  }
 
   void _onTabSelected(AppBottomTab tab) {
     setState(() {
@@ -96,14 +117,7 @@ class _EmployeePortalScreenState extends State<EmployeePortalScreen> {
         },
         child: Scaffold(
           backgroundColor: AppColors.background,
-          body: switch (_currentTab) {
-            AppBottomTab.appointment => _screens[0],
-            AppBottomTab.family => _screens[1],
-            AppBottomTab.contracts => _screens[2],
-            AppBottomTab.amenities => _screens[3],
-            AppBottomTab.services => _screens[4],
-            _ => _screens[0],
-          },
+          body: _buildScreen(_currentTab),
           bottomNavigationBar: EmployeeBottomNavBar(
             currentTab: _currentTab,
             onTabSelected: _onTabSelected,
