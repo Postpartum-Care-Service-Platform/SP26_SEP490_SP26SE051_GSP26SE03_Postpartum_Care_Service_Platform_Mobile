@@ -23,6 +23,7 @@ enum AppBottomTab {
   amenities,
   myBookings,
   wallet,
+  feedback,
 }
 
 extension AppBottomTabX on AppBottomTab {
@@ -39,6 +40,7 @@ extension AppBottomTabX on AppBottomTab {
       case AppBottomTab.amenities:
       case AppBottomTab.myBookings:
       case AppBottomTab.wallet:
+      case AppBottomTab.feedback:
         return null; // Use SVG instead
     }
   }
@@ -67,6 +69,8 @@ extension AppBottomTabX on AppBottomTab {
         return AppAssets.calendar;
       case AppBottomTab.wallet:
         return AppAssets.menuFirst; // placeholder svg for wallet
+      case AppBottomTab.feedback:
+        return AppAssets.pencilFeedback;
     }
   }
 
@@ -94,6 +98,8 @@ extension AppBottomTabX on AppBottomTab {
         return 'Booking của tôi';
       case AppBottomTab.wallet:
         return 'Ví tiền';
+      case AppBottomTab.feedback:
+        return 'Phản hồi';
     }
   }
 }

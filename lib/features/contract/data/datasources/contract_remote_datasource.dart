@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../../../../core/apis/api_client.dart';
 import '../../../../core/apis/api_endpoints.dart';
 import '../models/contract_model.dart';
@@ -187,9 +188,18 @@ class ContractRemoteDataSourceImpl implements ContractRemoteDataSource {
     try {
       final response = await dio.get(ApiEndpoints.getAllContracts);
       final data = response.data as List<dynamic>;
-      return data
-          .map((e) => ContractModel.fromJson(e as Map<String, dynamic>))
-          .toList();
+      final contracts = <ContractModel>[];
+      
+      for (var item in data) {
+        try {
+          contracts.add(ContractModel.fromJson(item as Map<String, dynamic>));
+        } catch (e) {
+          // Log parsing error but continue with other items
+          debugPrint('ContractRemoteDataSource: Error parsing contract item: $e');
+        }
+      }
+      
+      return contracts;
     } on DioException catch (e) {
       if (e.response != null) {
         throw Exception(

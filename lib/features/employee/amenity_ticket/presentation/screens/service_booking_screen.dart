@@ -969,17 +969,22 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
 
   Widget _buildSubmitButton() {
     final scale = AppResponsive.scaleFactor(context);
+    final isFormValid = _selectedCustomer != null && 
+                       _selectedService != null && 
+                       _selectedDate != null && 
+                       _selectedTime != null;
+
     return BlocBuilder<AmenityTicketBloc, AmenityTicketState>(
       builder: (context, state) {
         final isLoading = state is AmenityTicketLoading;
         return ElevatedButton(
-          onPressed: isLoading ? null : _submit,
+          onPressed: (isLoading || !isFormValid) ? null : _submit,
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary, 
+            backgroundColor: isFormValid ? AppColors.primary : AppColors.primary.withValues(alpha: 0.3), 
             foregroundColor: Colors.white, 
             padding: EdgeInsets.symmetric(vertical: 16 * scale), 
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16 * scale)),
-            elevation: 4,
+            elevation: isFormValid ? 4 : 0,
             shadowColor: AppColors.primary.withValues(alpha: 0.4),
           ),
           child: isLoading 
@@ -987,9 +992,19 @@ class _ServiceBookingScreenState extends State<ServiceBookingScreen> {
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                   Text('Xác nhận đặt lịch', style: AppTextStyles.arimo(fontSize: 16 * scale, fontWeight: FontWeight.bold)),
+                   Text(
+                     isFormValid ? 'Xác nhận đặt lịch' : 'Vui lòng điền đủ thông tin',
+                     style: AppTextStyles.arimo(
+                       fontSize: 16 * scale, 
+                       fontWeight: FontWeight.bold,
+                       color: isFormValid ? Colors.white : Colors.white.withValues(alpha: 0.7),
+                     ),
+                   ),
                    const SizedBox(width: 8),
-                   const Icon(Icons.check_circle_outline),
+                   Icon(
+                     isFormValid ? Icons.check_circle_outline : Icons.info_outline,
+                     color: isFormValid ? Colors.white : Colors.white.withValues(alpha: 0.7),
+                   ),
                 ],
               ),
         );

@@ -25,6 +25,7 @@ import '../../../../../features/wallet/presentation/screens/employee_wallet_scre
 import '../../../../../features/wallet/presentation/bloc/wallet_cubit.dart';
 import '../../../../../features/wallet/data/datasources/wallet_remote_datasource.dart';
 import '../../../../../core/apis/api_client.dart';
+import '../../../feedback/presentation/screens/staff_feedback_screen.dart';
 
 class EmployeePortalScreen extends StatefulWidget {
   const EmployeePortalScreen({super.key});
@@ -90,6 +91,8 @@ class _EmployeePortalScreenState extends State<EmployeePortalScreen> {
           ),
           child: const EmployeeWalletScreen(),
         );
+      case AppBottomTab.feedback:
+        return const StaffFeedbackScreen();
       default:
         return EmployeeScheduleScreenNew(onBottomTabSelected: _onTabSelected);
     }

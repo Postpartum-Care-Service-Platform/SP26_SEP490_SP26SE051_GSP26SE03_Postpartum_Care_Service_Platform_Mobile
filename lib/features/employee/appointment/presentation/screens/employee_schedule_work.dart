@@ -19,6 +19,8 @@ import '../../../../../features/booking/data/models/booking_model.dart';
 import '../../../../../features/chat/data/datasources/chat_remote_datasource.dart';
 import '../../../../../features/contract/data/datasources/contract_remote_datasource.dart';
 import '../../../../../features/notification/data/datasources/notification_remote_datasource.dart';
+import '../../data/datasources/appointment_employee_remote_datasource.dart';
+import '../../data/models/appointment_model.dart';
 import '../../../../../features/employee/account/presentation/screens/employee_profile_screen.dart';
 import '../../../../../features/employee/shell/presentation/widgets/employee_quick_menu.dart';
 import '../../../../../features/employee/appointment/domain/entities/appointment_entity.dart';
@@ -187,9 +189,11 @@ class _LoadedContentState extends State<_LoadedContent> {
   late final ChatRemoteDataSource _chatRemote;
   late final ContractRemoteDataSource _contractRemote;
   late final BookingRemoteDataSource _bookingRemote;
+  late final AppointmentEmployeeRemoteDataSource _appointmentRemote;
   late final NotificationRemoteDataSource _notificationRemote;
   Future<_DashboardSummary>? _summaryFuture;
   Future<List<BookingModel>>? _recentBookingsFuture;
+  Future<List<BookingModel>>? _bookingsFutureMemo;
 
   @override
   void initState() {
@@ -198,54 +202,86 @@ class _LoadedContentState extends State<_LoadedContent> {
     _chatRemote = ChatRemoteDataSourceImpl(dio: dio);
     _contractRemote = ContractRemoteDataSourceImpl(dio: dio);
     _bookingRemote = BookingRemoteDataSourceImpl(dio: dio);
+    _appointmentRemote = AppointmentEmployeeRemoteDataSource(dio: dio);
     _notificationRemote = NotificationRemoteDataSourceImpl(dio: dio);
     _summaryFuture = _loadSummary();
     _recentBookingsFuture = _loadRecentBookings();
   }
 
+  Future<List<BookingModel>> _loadBookings() {
+    _bookingsFutureMemo ??= _bookingRemote.getAllBookings();
+    return _bookingsFutureMemo!;
+  }
+
   Future<List<BookingModel>> _loadRecentBookings() async {
     try {
-      final bookings = await _bookingRemote.getAllBookings();
+      final bookings = await _loadBookings();
       // Lấy danh sách booking gần nhất, sắp xếp theo ngày tạo để phân trang ở UI
-      bookings.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      return bookings;
+      final sortedBookings = List<BookingModel>.from(bookings);
+      sortedBookings.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return sortedBookings;
     } catch (_) {
       return [];
     }
   }
 
   Future<_DashboardSummary> _loadSummary() async {
-    try {
-      final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
-      
-      // Load both my requests and all pending requests
-      final mySupportList = await _chatRemote.getMySupportRequests();
-      final allSupportList = await _chatRemote.getSupportRequests();
-      
-      final noScheduleContracts = await _contractRemote.getNoScheduleContracts();
-      final bookings = await _bookingRemote.getAllBookings();
-      final notifications = await _notificationRemote.getNotifications();
-      final unreadNotificationCount = notifications.where((n) => !n.isRead).length;
+    int mySupportCount = 0;
+    int pendingSupportCount = 0;
+    int draftContractsCount = 0;
+    int pendingBookingsCount = 0;
 
-      final mySupportCount = mySupportList.length;
-      final pendingSupportCount = allSupportList.length;
-      final unscheduledContracts = noScheduleContracts.length;
-      
-      // Đếm booking cần xử lý (status Pending)
-      final pendingBookingsCount = bookings.where((b) {
-        return b.status.toLowerCase() == 'pending';
-      }).length;
-      final unreadNotifications = unreadNotificationCount;
+    try {
+      // Yêu cầu hỗ trợ
+      try {
+        final mySupportList = await _chatRemote.getMySupportRequests();
+        mySupportCount = mySupportList.length;
+        final allSupportList = await _chatRemote.getSupportRequests();
+        pendingSupportCount = allSupportList.length;
+      } catch (e) {
+        debugPrint('Dashboard: Error loading support requests: $e');
+      }
+
+      // Hợp đồng
+      try {
+        final allContracts = await _contractRemote.getAllContracts();
+        draftContractsCount = allContracts.where((c) {
+          return c.status.toLowerCase() == 'draft';
+        }).length;
+      } catch (e) {
+        debugPrint('Dashboard: Error loading contracts: $e');
+      }
+
+      // Bookings
+      try {
+        final bookings = await _loadBookings();
+        pendingBookingsCount = bookings.where((b) {
+          return b.status.toLowerCase() == 'pending';
+        }).length;
+      } catch (e) {
+        debugPrint('Dashboard: Error loading bookings: $e');
+      }
+
+      // Appointments (Lịch hẹn) - Lấy tất cả Pending trong hệ thống
+      int systemPendingAppts = 0;
+      try {
+        final allAppts = await _appointmentRemote.getAllAppointments();
+        systemPendingAppts = allAppts
+            .where((a) => a.status.toLowerCase() == 'pending')
+            .length;
+      } catch (e) {
+        debugPrint('Dashboard: Error loading appointments: $e');
+      }
 
       return _DashboardSummary(
         mySupportRequests: mySupportCount,
         pendingSupportRequests: pendingSupportCount,
-        unscheduledContracts: unscheduledContracts,
+        unscheduledContracts: draftContractsCount,
         todaysBookings: pendingBookingsCount,
-        unreadNotifications: unreadNotifications,
+        pendingAppointments: systemPendingAppts,
       );
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Dashboard: Global summary error: $e');
       return const _DashboardSummary.empty();
     }
   }
@@ -275,11 +311,14 @@ class _LoadedContentState extends State<_LoadedContent> {
     }
 
     // Tính toán stats
+    final pendingCount = widget.appointments
+        .where((a) => a.status == AppointmentStatus.pending)
+        .length;
     final totalAssigned = widget.appointments.length;
     final completed = widget.appointments
         .where((a) => a.status == AppointmentStatus.completed)
         .length;
-    final pending = widget.appointments
+    final active = widget.appointments
         .where(
           (a) =>
               a.status != AppointmentStatus.completed &&
@@ -311,30 +350,14 @@ class _LoadedContentState extends State<_LoadedContent> {
                 const SizedBox(height: 16),
                 const _HomeStaffWalletSection(),
               ] else ...[
-                const SizedBox(height: 16),
-                // Stats cho Appointment
-                _SectionTitle(
-                  title: 'Lịch hẹn',
-                  icon: Icons.event_note,
-                  onViewAll: () {
-                    AppRouter.push(context, AppRoutes.employeeAppointmentList);
-                  },
-                ),
-                const SizedBox(height: 12),
-                _StatsGrid(
-                  totalAssigned: totalAssigned,
-                  completed: completed,
-                  pending: pending,
-                  onTap: () {
-                    AppRouter.push(context, AppRoutes.employeeAppointmentList);
-                  },
-                ),
+                // User requested to remove Stats cho Appointment section here
               ],
               const SizedBox(height: 16),
 
               _DashboardSummaryRow(
                 summaryFuture: _summaryFuture,
                 isHomeStaff: isHomeStaff,
+                pendingAppointmentsCount: pendingCount,
                 onSupportRequestsTap: () {
                   // Điều hướng đến quản lý yêu cầu chat riêng biệt
                   AppRouter.push(context, AppRoutes.employeeSupportRequests);
@@ -345,8 +368,8 @@ class _LoadedContentState extends State<_LoadedContent> {
                 onBookingsTap: () {
                   AppRouter.push(context, AppRoutes.staffBookingList);
                 },
-                onNotificationsTap: () {
-                  AppRouter.push(context, AppRoutes.notifications);
+                onPendingAppointmentsTap: () {
+                  AppRouter.push(context, AppRoutes.employeeAppointmentList);
                 },
               ),
               const SizedBox(height: 20),
@@ -381,6 +404,7 @@ class _LoadedContentState extends State<_LoadedContent> {
                     case AppBottomTab.amenities:
                     case AppBottomTab.myBookings:
                     case AppBottomTab.wallet:
+                    case AppBottomTab.feedback:
                       break;
                   }
                 },
@@ -452,10 +476,7 @@ class _LoadedContentState extends State<_LoadedContent> {
                       );
                       break;
                     case EmployeeQuickMenuExtraAction.feedbacks:
-                      AppRouter.push(
-                        context,
-                        AppRoutes.staffFeedbackList,
-                      );
+                      AppRouter.push(context, AppRoutes.staffFeedbackList);
                       break;
                   }
                 },
@@ -717,46 +738,48 @@ class _DashboardSummary {
   final int pendingSupportRequests;
   final int unscheduledContracts;
   final int todaysBookings;
-  final int unreadNotifications;
+  final int pendingAppointments;
 
   const _DashboardSummary({
     required this.mySupportRequests,
     required this.pendingSupportRequests,
     required this.unscheduledContracts,
     required this.todaysBookings,
-    required this.unreadNotifications,
+    required this.pendingAppointments,
   });
 
   const _DashboardSummary.empty()
-    : mySupportRequests = 0,
-      pendingSupportRequests = 0,
-      unscheduledContracts = 0,
-      todaysBookings = 0,
-      unreadNotifications = 0;
+      : mySupportRequests = 0,
+        pendingSupportRequests = 0,
+        unscheduledContracts = 0,
+        todaysBookings = 0,
+        pendingAppointments = 0;
 
   bool get isAllZero =>
       mySupportRequests == 0 &&
       pendingSupportRequests == 0 &&
       unscheduledContracts == 0 &&
       todaysBookings == 0 &&
-      unreadNotifications == 0;
+      pendingAppointments == 0;
 }
 
 class _DashboardSummaryRow extends StatelessWidget {
   final Future<_DashboardSummary>? summaryFuture;
   final bool isHomeStaff;
+  final int pendingAppointmentsCount;
   final VoidCallback? onSupportRequestsTap;
   final VoidCallback? onContractsTap;
   final VoidCallback? onBookingsTap;
-  final VoidCallback? onNotificationsTap;
+  final VoidCallback? onPendingAppointmentsTap;
 
   const _DashboardSummaryRow({
     required this.summaryFuture,
     this.isHomeStaff = false,
+    required this.pendingAppointmentsCount,
     this.onSupportRequestsTap,
     this.onContractsTap,
     this.onBookingsTap,
-    this.onNotificationsTap,
+    this.onPendingAppointmentsTap,
   });
 
   @override
@@ -775,8 +798,12 @@ class _DashboardSummaryRow extends StatelessWidget {
         final summary = snapshot.data;
 
         // Sau khi load xong, nếu tất cả đều 0 thì ẩn
-        if (!isLoading && summary != null && summary.isAllZero) {
-          return const SizedBox.shrink();
+        if (!isLoading && summary != null) {
+          final summaryAllZero = summary.isAllZero;
+          final isReallyAllZero = summaryAllZero && (isHomeStaff ? pendingAppointmentsCount == 0 : true);
+          if (isReallyAllZero) {
+            return const SizedBox.shrink();
+          }
         }
 
         if (isHomeStaff) {
@@ -786,7 +813,9 @@ class _DashboardSummaryRow extends StatelessWidget {
                 child: _DashboardMiniCard(
                   icon: Icons.support_agent,
                   title: 'Hỗ trợ',
-                  value: isLoading ? null : '${summary?.pendingSupportRequests ?? 0}',
+                  value: isLoading
+                      ? null
+                      : '${summary?.pendingSupportRequests ?? 0}',
                   color: const Color(0xFF2563EB),
                   scale: scale,
                   onTap: onSupportRequestsTap,
@@ -795,12 +824,12 @@ class _DashboardSummaryRow extends StatelessWidget {
               SizedBox(width: 8 * scale),
               Expanded(
                 child: _DashboardMiniCard(
-                  icon: Icons.notifications_active_outlined,
-                  title: 'Thông báo',
-                  value: isLoading ? null : '${summary?.unreadNotifications ?? 0}',
+                  icon: Icons.event_note,
+                  title: 'Lịch hẹn cần xử lý',
+                  value: isLoading ? null : '${summary?.pendingAppointments ?? 0}',
                   color: const Color(0xFFF97316),
                   scale: scale,
-                  onTap: onNotificationsTap,
+                  onTap: onPendingAppointmentsTap,
                 ),
               ),
             ],
@@ -815,7 +844,9 @@ class _DashboardSummaryRow extends StatelessWidget {
                   child: _DashboardMiniCard(
                     icon: Icons.support_agent,
                     title: 'Yêu cầu hỗ trợ',
-                    value: isLoading ? null : '${summary?.pendingSupportRequests ?? 0}',
+                    value: isLoading
+                        ? null
+                        : '${summary?.pendingSupportRequests ?? 0}',
                     color: const Color(0xFF2563EB),
                     scale: scale,
                     onTap: onSupportRequestsTap,
@@ -825,8 +856,10 @@ class _DashboardSummaryRow extends StatelessWidget {
                 Expanded(
                   child: _DashboardMiniCard(
                     icon: Icons.article_outlined,
-                    title: 'HĐ chưa lên lịch',
-                    value: isLoading ? null : '${summary?.unscheduledContracts ?? 0}',
+                    title: 'Hợp đồng bản nháp',
+                    value: isLoading
+                        ? null
+                        : '${summary?.unscheduledContracts ?? 0}',
                     color: const Color(0xFF9333EA),
                     scale: scale,
                     onTap: onContractsTap,
@@ -850,12 +883,14 @@ class _DashboardSummaryRow extends StatelessWidget {
                 SizedBox(width: 8 * scale),
                 Expanded(
                   child: _DashboardMiniCard(
-                    icon: Icons.notifications_active_outlined,
-                    title: 'Thông báo chưa đọc',
-                    value: isLoading ? null : '${summary?.unreadNotifications ?? 0}',
+                    icon: Icons.event_note,
+                    title: 'Lịch hẹn cần xử lý',
+                    value: isLoading
+                        ? null
+                        : '${summary?.pendingAppointments ?? 0}',
                     color: const Color(0xFFF97316),
                     scale: scale,
-                    onTap: onNotificationsTap,
+                    onTap: onPendingAppointmentsTap,
                   ),
                 ),
               ],
@@ -887,7 +922,7 @@ class _DashboardMiniCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget card = Container(
-      height: 72 * scale,
+      height: 80 * scale,
       padding: EdgeInsets.all(12 * scale),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.06),
@@ -1426,26 +1461,28 @@ class _RecentBookingsSectionState extends State<_RecentBookingsSection> {
             ),
             if (bookings.length >= _pageSize) ...[
               SizedBox(height: 4 * scale),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: _BookingPaginationControls(
-                  currentPage: safeCurrentPage,
-                  totalPages: totalPages,
-                  onPrevious: safeCurrentPage > 0
-                      ? () {
-                          setState(() {
-                            _currentPage = safeCurrentPage - 1;
-                          });
-                        }
-                      : null,
-                  onNext: safeCurrentPage < totalPages - 1
-                      ? () {
-                          setState(() {
-                            _currentPage = safeCurrentPage + 1;
-                          });
-                        }
-                      : null,
-                ),
+              _BookingPaginationControls(
+                currentPage: safeCurrentPage,
+                totalPages: totalPages,
+                onPageSelected: (page) {
+                  setState(() {
+                    _currentPage = page;
+                  });
+                },
+                onPrevious: safeCurrentPage > 0
+                    ? () {
+                        setState(() {
+                          _currentPage = safeCurrentPage - 1;
+                        });
+                      }
+                    : null,
+                onNext: safeCurrentPage < totalPages - 1
+                    ? () {
+                        setState(() {
+                          _currentPage = safeCurrentPage + 1;
+                        });
+                      }
+                    : null,
               ),
             ],
           ],
@@ -1460,16 +1497,20 @@ class _BookingPaginationControls extends StatelessWidget {
   final int totalPages;
   final VoidCallback? onPrevious;
   final VoidCallback? onNext;
+  final ValueChanged<int>? onPageSelected;
 
   const _BookingPaginationControls({
     required this.currentPage,
     required this.totalPages,
     this.onPrevious,
     this.onNext,
+    this.onPageSelected,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (totalPages <= 1) return const SizedBox.shrink();
+    
     final scale = AppResponsive.scaleFactor(context);
     const accentOrange = Color(0xFFF59E0B);
 
@@ -1481,86 +1522,143 @@ class _BookingPaginationControls extends StatelessWidget {
         border: Border.all(color: accentOrange.withValues(alpha: 0.35)),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
         children: [
-          FilledButton(
-            onPressed: onPrevious,
-            style: FilledButton.styleFrom(
-              backgroundColor: accentOrange,
-              foregroundColor: Colors.white,
-              disabledBackgroundColor: accentOrange.withValues(alpha: 0.35),
-              disabledForegroundColor: Colors.white.withValues(alpha: 0.9),
-              padding: EdgeInsets.symmetric(
-                horizontal: 12 * scale,
-                vertical: 8 * scale,
-              ),
-              visualDensity: VisualDensity.compact,
+          Expanded(
+            child: _PaginationButton(
+              onPressed: onPrevious,
+              icon: Icons.chevron_left,
+              label: 'Trước',
+              scale: scale,
+              accentOrange: accentOrange,
             ),
+          ),
+          SizedBox(width: 8 * scale),
+          // Danh sách số trang - Đặt trong SizedBox cố định để tránh đẩy kích thước nút Trước/Sau
+          SizedBox(
+            width: 140 * scale,
             child: Row(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.chevron_left, size: 16),
-                SizedBox(width: 2 * scale),
-                Text(
-                  'Trước',
-                  style: AppTextStyles.arimo(
-                    fontSize: 11 * scale,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+                ...() {
+                  List<Widget> items = [];
+                  int start = (currentPage - 1).clamp(0, totalPages - 1);
+                  int end = (start + 2).clamp(0, totalPages - 1);
+                  
+                  if (end == totalPages - 1 && totalPages >= 3) {
+                    start = (end - 2).clamp(0, totalPages - 1);
+                  }
+
+                  if (start > 0) {
+                    items.add(Text('...', style: TextStyle(color: accentOrange, fontSize: 11 * scale)));
+                  }
+
+                  for (int i = start; i <= end; i++) {
+                    final index = i;
+                    final isSelected = index == currentPage;
+                    items.add(
+                      GestureDetector(
+                        onTap: () => onPageSelected?.call(index),
+                        child: Container(
+                          margin: EdgeInsets.symmetric(horizontal: 2 * scale),
+                          width: 28 * scale,
+                          height: 28 * scale,
+                          decoration: BoxDecoration(
+                            color: isSelected ? accentOrange : Colors.white,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isSelected ? accentOrange : accentOrange.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            '${index + 1}',
+                            style: AppTextStyles.arimo(
+                              fontSize: 11 * scale,
+                              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                              color: isSelected ? Colors.white : accentOrange,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+
+                  if (end < totalPages - 1) {
+                    items.add(Text('...', style: TextStyle(color: accentOrange, fontSize: 11 * scale)));
+                  }
+                  
+                  return items;
+                }(),
               ],
             ),
           ),
-          SizedBox(width: 6 * scale),
-          Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: 12 * scale,
-              vertical: 6 * scale,
-            ),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: accentOrange.withValues(alpha: 0.45)),
-            ),
-            child: Text(
-              'Trang ${currentPage + 1}/$totalPages',
-              style: AppTextStyles.arimo(
-                fontSize: 11 * scale,
-                fontWeight: FontWeight.w700,
-                color: accentOrange,
-              ),
+          SizedBox(width: 8 * scale),
+          Expanded(
+            child: _PaginationButton(
+              onPressed: onNext,
+              icon: Icons.chevron_right,
+              label: 'Sau',
+              isTrailingIcon: true,
+              scale: scale,
+              accentOrange: accentOrange,
             ),
           ),
-          SizedBox(width: 6 * scale),
-          FilledButton(
-            onPressed: onNext,
-            style: FilledButton.styleFrom(
-              backgroundColor: accentOrange,
-              foregroundColor: Colors.white,
-              disabledBackgroundColor: accentOrange.withValues(alpha: 0.35),
-              disabledForegroundColor: Colors.white.withValues(alpha: 0.9),
-              padding: EdgeInsets.symmetric(
-                horizontal: 12 * scale,
-                vertical: 8 * scale,
-              ),
-              visualDensity: VisualDensity.compact,
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Sau',
-                  style: AppTextStyles.arimo(
-                    fontSize: 11 * scale,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                SizedBox(width: 2 * scale),
-                const Icon(Icons.chevron_right, size: 16),
-              ],
+        ],
+      ),
+    );
+  }
+}
+
+class _PaginationButton extends StatelessWidget {
+  final VoidCallback? onPressed;
+  final IconData icon;
+  final String label;
+  final bool isTrailingIcon;
+  final double scale;
+  final Color accentOrange;
+
+  const _PaginationButton({
+    this.onPressed,
+    required this.icon,
+    required this.label,
+    this.isTrailingIcon = false,
+    required this.scale,
+    required this.accentOrange,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return FilledButton(
+      onPressed: onPressed,
+      style: FilledButton.styleFrom(
+        backgroundColor: accentOrange,
+        foregroundColor: Colors.white,
+        disabledBackgroundColor: accentOrange.withValues(alpha: 0.15),
+        disabledForegroundColor: accentOrange.withValues(alpha: 0.4),
+        padding: EdgeInsets.zero,
+        minimumSize: Size(0, 32 * scale),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8 * scale),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (!isTrailingIcon) ...[
+            Icon(icon, size: 14 * scale),
+            SizedBox(width: 2 * scale),
+          ],
+          Text(
+            label,
+            style: AppTextStyles.arimo(
+              fontSize: 10 * scale,
+              fontWeight: FontWeight.w700,
             ),
           ),
+          if (isTrailingIcon) ...[
+            SizedBox(width: 2 * scale),
+            Icon(icon, size: 14 * scale),
+          ],
         ],
       ),
     );
@@ -1576,13 +1674,15 @@ class _BookingCard extends StatelessWidget {
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
       case 'confirmed':
-        return const Color(0xFF1B7F3A);
+        return const Color(0xFF0284C7); // Sky blue
       case 'pending':
-        return const Color(0xFFF59E0B);
+        return const Color(0xFFF59E0B); // Amber
+      case 'inprogress':
+        return const Color(0xFF6366F1); // Indigo
       case 'cancelled':
-        return const Color(0xFFDC2626);
+        return const Color(0xFFEF4444); // Red
       case 'completed':
-        return const Color(0xFF2563EB);
+        return const Color(0xFF10B981); // Emerald Green
       default:
         return AppColors.textSecondary;
     }
@@ -1591,13 +1691,15 @@ class _BookingCard extends StatelessWidget {
   String _getStatusText(String status) {
     switch (status.toLowerCase()) {
       case 'confirmed':
-        return 'Đã xác nhận';
+        return 'Đang triển khai';
       case 'pending':
-        return 'Chờ xử lý';
+        return 'Chờ xác nhận';
+      case 'inprogress':
+        return 'Đang sử dụng';
       case 'cancelled':
-        return 'Đã hủy';
+        return 'Đã hủy bỏ';
       case 'completed':
-        return 'Hoàn thành';
+        return 'Đã hoàn thành';
       default:
         return status;
     }
@@ -1608,15 +1710,10 @@ class _BookingCard extends StatelessWidget {
     final roomTypeName = booking.package?.roomTypeName.trim() ?? '';
 
     if (packageName.isNotEmpty && roomTypeName.isNotEmpty) {
-      return '$roomTypeName - $packageName';
+      if (packageName.contains(roomTypeName)) return packageName;
+      return '$roomTypeName \u2022 $packageName';
     }
-    if (packageName.isNotEmpty) {
-      return packageName;
-    }
-    if (roomTypeName.isNotEmpty) {
-      return roomTypeName;
-    }
-    return 'Gói dịch vụ';
+    return packageName.isNotEmpty ? packageName : (roomTypeName.isNotEmpty ? roomTypeName : 'Gói dịch vụ');
   }
 
   String _formatCurrency(double value) {
@@ -1628,33 +1725,34 @@ class _BookingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
     final dateFormat = DateFormat('dd/MM/yyyy');
-    final statusColor = _getStatusColor(booking.status);
+    final status = booking.status.toLowerCase();
+    final statusColor = _getStatusColor(status);
+    final isCancelled = status == 'cancelled';
+    final isCompleted = status == 'completed';
+
     final customerName = booking.customer?.username.trim().isNotEmpty == true
         ? booking.customer!.username
         : (booking.customer?.email ?? 'Khách hàng');
     final customerPhone = booking.customer?.phone.trim();
-    final paymentStatus = booking.remainingAmount <= 0
-        ? 'Đã thanh toán'
-        : 'Còn lại: ${_formatCurrency(booking.remainingAmount)}';
 
     return InkWell(
-      onTap: () {
-        AppRouter.push(context, AppRoutes.staffBookingList);
-      },
-      borderRadius: BorderRadius.circular(16),
+      onTap: () => AppRouter.push(context, AppRoutes.staffBookingList),
+      borderRadius: BorderRadius.circular(20),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(16),
+          color: isCancelled ? const Color(0xFFF9FAFB) : AppColors.white,
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: statusColor.withValues(alpha: 0.24),
-            width: 1.5,
+            color: isCancelled 
+                ? AppColors.borderLight 
+                : statusColor.withValues(alpha: 0.2),
+            width: 1.2,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+              color: statusColor.withValues(alpha: isCancelled ? 0.02 : 0.05),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
             ),
           ],
         ),
@@ -1662,132 +1760,173 @@ class _BookingCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header: trạng thái + mã đơn
+            // Header Row
             Row(
               children: [
                 Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 10 * scale,
-                    vertical: 6 * scale,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 10 * scale, vertical: 4 * scale),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8 * scale),
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Text(
-                    _getStatusText(booking.status),
-                    style: AppTextStyles.arimo(
-                      fontSize: 11 * scale,
-                      fontWeight: FontWeight.w700,
-                      color: statusColor,
-                    ),
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  'Mã đơn #${booking.id}',
-                  style: AppTextStyles.arimo(
-                    fontSize: 12 * scale,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 12 * scale),
-
-            // Body: dịch vụ + khách hàng + liên hệ + thanh toán
-            Text(
-              _getServiceTitle(),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTextStyles.arimo(
-                fontSize: 15 * scale,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            SizedBox(height: 6 * scale),
-            Text(
-              customerName,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTextStyles.arimo(
-                fontSize: 13 * scale,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            if (customerPhone != null && customerPhone.isNotEmpty) ...[
-              SizedBox(height: 4 * scale),
-              Row(
-                children: [
-                  Icon(
-                    Icons.phone_outlined,
-                    size: 13 * scale,
-                    color: AppColors.textPrimary,
-                  ),
-                  SizedBox(width: 6 * scale),
-                  Text(
-                    customerPhone,
-                    style: AppTextStyles.arimo(
-                      fontSize: 12 * scale,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-            SizedBox(height: 8 * scale),
-            Text(
-              paymentStatus,
-              style: AppTextStyles.arimo(
-                fontSize: 12 * scale,
-                fontWeight: FontWeight.w600,
-                color: booking.remainingAmount <= 0
-                    ? const Color(0xFF1B7F3A)
-                    : const Color(0xFFF59E0B),
-              ),
-            ),
-
-            SizedBox(height: 12 * scale),
-            Divider(
-              height: 1,
-              color: AppColors.borderLight.withValues(alpha: 0.8),
-            ),
-            SizedBox(height: 10 * scale),
-
-            // Footer: ngày tháng + tổng tiền
-            Row(
-              children: [
-                Expanded(
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        Icons.calendar_today,
-                        size: 13 * scale,
-                        color: AppColors.textPrimary,
+                      Container(
+                        width: 6 * scale,
+                        height: 6 * scale,
+                        decoration: BoxDecoration(
+                          color: statusColor,
+                          shape: BoxShape.circle,
+                        ),
                       ),
                       SizedBox(width: 6 * scale),
-                      Expanded(
-                        child: Text(
-                          '${dateFormat.format(booking.startDate)} - ${dateFormat.format(booking.endDate)}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTextStyles.arimo(
-                            fontSize: 12 * scale,
-                            color: AppColors.textPrimary,
-                          ),
+                      Text(
+                        _getStatusText(booking.status),
+                        style: AppTextStyles.arimo(
+                          fontSize: 10 * scale,
+                          fontWeight: FontWeight.w800,
+                          color: statusColor,
                         ),
                       ),
                     ],
                   ),
                 ),
-                SizedBox(width: 10 * scale),
+                const Spacer(),
+                Text(
+                  '#${booking.id}',
+                  style: AppTextStyles.arimo(
+                    fontSize: 10 * scale,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textSecondary.withValues(alpha: 0.6),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 14 * scale),
+
+            // Service Title
+            Text(
+              _getServiceTitle(),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.arimo(
+                fontSize: 16 * scale,
+                fontWeight: FontWeight.w800,
+                color: isCancelled ? AppColors.textSecondary : AppColors.textPrimary,
+                height: 1.3,
+              ),
+            ),
+            SizedBox(height: 8 * scale),
+
+            // Customer Info Row
+            Row(
+              children: [
+                Icon(Icons.person_outline, size: 14 * scale, color: AppColors.textSecondary),
+                SizedBox(width: 8 * scale),
+                Expanded(
+                  child: Text(
+                    customerName,
+                    style: AppTextStyles.arimo(
+                      fontSize: 12 * scale,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+                if (customerPhone != null && customerPhone.isNotEmpty) ...[
+                  SizedBox(width: 12 * scale),
+                  Icon(Icons.phone_outlined, size: 14 * scale, color: AppColors.textSecondary),
+                  SizedBox(width: 4 * scale),
+                  Text(
+                    customerPhone,
+                    style: AppTextStyles.arimo(
+                      fontSize: 12 * scale,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            
+            SizedBox(height: 12 * scale),
+            
+            // Payment Status Section
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(10 * scale),
+              decoration: BoxDecoration(
+                color: isCancelled 
+                    ? Colors.transparent 
+                    : (isCompleted ? const Color(0xFFF0FDF4) : const Color(0xFFFFFBEB)),
+                borderRadius: BorderRadius.circular(12 * scale),
+                border: Border.all(
+                  color: isCancelled 
+                      ? AppColors.borderLight 
+                      : (isCompleted ? const Color(0xFFBBF7D0) : const Color(0xFFFEF3C7)),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    isCompleted ? Icons.check_circle_outline : Icons.payments_outlined,
+                    size: 16 * scale,
+                    color: isCancelled ? AppColors.textSecondary : (isCompleted ? const Color(0xFF10B981) : const Color(0xFFD97706)),
+                  ),
+                  SizedBox(width: 8 * scale),
+                  Expanded(
+                    child: Text(
+                      isCancelled 
+                          ? 'Đã xử lý hủy đơn' 
+                          : (booking.remainingAmount <= 0 ? 'Đã thanh toán đủ' : 'Còn thiếu: ${_formatCurrency(booking.remainingAmount)}'),
+                      style: AppTextStyles.arimo(
+                        fontSize: 11 * scale,
+                        fontWeight: FontWeight.w700,
+                        color: isCancelled ? AppColors.textSecondary : (isCompleted ? const Color(0xFF059669) : const Color(0xFFD97706)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            SizedBox(height: 16 * scale),
+            
+            // Footer Divider
+            Container(
+              height: 1,
+              width: double.infinity,
+              color: AppColors.borderLight.withValues(alpha: 0.5),
+            ),
+            
+            SizedBox(height: 12 * scale),
+
+            // Dates and Total
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.date_range_outlined, size: 14 * scale, color: AppColors.textSecondary),
+                    SizedBox(width: 6 * scale),
+                    Text(
+                      '${dateFormat.format(booking.startDate)} - ${dateFormat.format(booking.endDate)}',
+                      style: AppTextStyles.arimo(
+                        fontSize: 11 * scale,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
                 Text(
                   _formatCurrency(booking.finalAmount),
                   style: AppTextStyles.arimo(
                     fontSize: 15 * scale,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.primary,
+                    fontWeight: FontWeight.w900,
+                    color: isCancelled 
+                        ? AppColors.textSecondary.withValues(alpha: 0.5) 
+                        : (isCompleted ? const Color(0xFF10B981) : const Color(0xFFF97316)),
+                    decoration: isCancelled ? TextDecoration.lineThrough : null,
                   ),
                 ),
               ],

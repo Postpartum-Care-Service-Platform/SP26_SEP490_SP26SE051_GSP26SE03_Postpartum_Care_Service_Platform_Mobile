@@ -11,7 +11,8 @@ class AppTextStyles {
     Color? color,
     double? letterSpacing,
     double? height,                
-    List<Shadow>? shadows,          
+    List<Shadow>? shadows,
+    TextDecoration? decoration,
   }) {
     return TextStyle(
       fontFamily: 'Queens',
@@ -19,8 +20,9 @@ class AppTextStyles {
       fontWeight: fontWeight,
       color: color,
       letterSpacing: letterSpacing,
-      height: height,              
-      shadows: shadows,             
+      height: height,
+      shadows: shadows,
+      decoration: decoration,
     );
   }
 
@@ -30,7 +32,8 @@ class AppTextStyles {
     Color? color,
     double? letterSpacing,
     double? height,               
-    List<Shadow>? shadows,         
+    List<Shadow>? shadows,
+    TextDecoration? decoration,
   }) {
     return TextStyle(
       fontFamily: 'ESRebondGrotesque',
@@ -38,8 +41,9 @@ class AppTextStyles {
       fontWeight: fontWeight,
       color: color,
       letterSpacing: letterSpacing,
-      height: height,              
-      shadows: shadows,            
+      height: height,
+      shadows: shadows,
+      decoration: decoration,
     );
   }
 }
