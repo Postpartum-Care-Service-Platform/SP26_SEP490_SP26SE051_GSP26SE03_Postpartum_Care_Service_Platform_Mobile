@@ -240,37 +240,39 @@ class _HomeServiceBookingScreenState extends State<HomeServiceBookingScreen> {
   ) {
     final estimatedPrice = _getEstimatedPrice(state);
 
-    return SafeArea(
-      top: false,
-      child: Container(
-        padding: EdgeInsets.fromLTRB(
-          4 * scale,
-          2 * scale,
-          4 * scale,
-          2 * scale,
-        ),
-        decoration: BoxDecoration(
-          color: AppColors.background,
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.homeServiceShadow,
-              blurRadius: 8 * scale,
-              offset: Offset(0, -2 * scale),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              flex: 4,
-              child: _buildEstimatedPriceCard(estimatedPrice, scale),
-            ),
-            SizedBox(width: 12 * scale),
-            Expanded(
-              flex: 6,
-              child: _buildNextButton(state, scale, blocContext),
-            ),
-          ],
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.homeServiceShadow,
+            blurRadius: 8 * scale,
+            offset: Offset(0, -2 * scale),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            4 * scale,
+            2 * scale,
+            4 * scale,
+            2 * scale,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                flex: 4,
+                child: _buildEstimatedPriceCard(estimatedPrice, scale),
+              ),
+              SizedBox(width: 12 * scale),
+              Expanded(
+                flex: 6,
+                child: _buildNextButton(state, scale, blocContext),
+              ),
+            ],
+          ),
         ),
       ),
     );

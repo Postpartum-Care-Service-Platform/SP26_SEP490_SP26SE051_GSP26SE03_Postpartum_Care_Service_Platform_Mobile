@@ -27,7 +27,6 @@ class ServicesScreen extends StatefulWidget {
 }
 
 class _ServicesScreenState extends State<ServicesScreen> {
-  ServiceLocationType? _selectedLocationType;
   Future<NowPackageModel?>? _nowPackageFuture;
 
   @override
@@ -95,13 +94,10 @@ class _ServicesScreenState extends State<ServicesScreen> {
   Widget _buildContent() {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: BlocConsumer<BookingBloc, BookingState>(
-        listener: _handleBookingSideEffects,
-        builder: (context, _) {
-          return FutureBuilder<NowPackageModel?>(
-            future: _nowPackageFuture,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
+      body: FutureBuilder<NowPackageModel?>(
+        future: _nowPackageFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(
                   child: AppLoadingIndicator(color: AppColors.primary),
                 );
@@ -140,63 +136,70 @@ class _ServicesScreenState extends State<ServicesScreen> {
                 }
               }
 
-              // Chưa có gói hiện tại → cho chọn loại dịch vụ trước khi vào flow đặt gói
-              if (_selectedLocationType == null) {
-                return ServiceLocationSelection(
-                  onLocationSelected: (locationType) {
-                    if (locationType == ServiceLocationType.center) {
-                      context.read<BookingBloc>().add(const BookingReset());
+              return ServiceLocationSelection(
+                onLocationSelected: (locationType) {
+                  if (locationType == ServiceLocationType.center) {
+                    context.read<BookingBloc>().add(const BookingReset());
+                  }
+
+                  final bookingBloc = context.read<BookingBloc>();
+
+                  Navigator.of(context, rootNavigator: true).push(
+                    MaterialPageRoute(
+                      builder: (routeContext) {
+                        return BlocProvider.value(
+                          value: bookingBloc,
+                          child: locationType == ServiceLocationType.home
+                              ? HomeServiceBookingScreen(
+                                  onBackToLocationSelection: () {
+                                    Navigator.of(routeContext).pop();
+                                  },
+                                )
+                              : Scaffold(
+                                  backgroundColor: AppColors.background,
+                                  body: BlocConsumer<BookingBloc, BookingState>(
+                                    listener: (consumerContext, bookingState) {
+                                      if (bookingState is BookingCreated) {
+                                        AppRouter.pushReplacement(
+                                          consumerContext,
+                                          AppRoutes.payment,
+                                          arguments: {
+                                            'booking': bookingState.booking,
+                                            'bookingBloc': bookingBloc,
+                                            'paymentType': 'Deposit',
+                                          },
+                                        );
+                                      } else if (bookingState is BookingError) {
+                                        AppToast.showError(
+                                          consumerContext,
+                                          message: bookingState.message,
+                                        );
+                                      }
+                                    },
+                                    builder: (consumerContext, _) {
+                                      return ServicesBookingFlow(
+                                        locationType: locationType,
+                                        onBackToLocationSelection: () {
+                                          bookingBloc.add(const BookingReset());
+                                          Navigator.of(routeContext).pop();
+                                        },
+                                      );
+                                    },
+                                  ),
+                                ),
+                        );
+                      },
+                    ),
+                  ).then((_) {
+                    if (context.mounted && locationType == ServiceLocationType.center) {
+                      bookingBloc.add(const BookingReset());
                     }
-                    setState(() {
-                      _selectedLocationType = locationType;
-                    });
-                  },
-                );
-              }
-
-              if (_selectedLocationType == ServiceLocationType.home) {
-                return HomeServiceBookingScreen(
-                  onBackToLocationSelection: () {
-                    setState(() {
-                      _selectedLocationType = null;
-                    });
-                  },
-                );
-              }
-
-              return ServicesBookingFlow(
-                locationType: _selectedLocationType!,
-                onBackToLocationSelection: () {
-                  context.read<BookingBloc>().add(const BookingReset());
-                  setState(() {
-                    _selectedLocationType = null;
                   });
                 },
               );
-            },
-          );
         },
       ),
     );
   }
-
-  void _handleBookingSideEffects(BuildContext context, BookingState state) {
-    if (state is BookingCreated) {
-      final bookingBloc = context.read<BookingBloc>();
-      AppRouter.push(
-        context,
-        AppRoutes.payment,
-        arguments: {
-          'booking': state.booking,
-          'bookingBloc': bookingBloc,
-          'paymentType': 'Deposit',
-        },
-      );
-    } else if (state is BookingError) {
-      AppToast.showError(
-        context,
-        message: state.message,
-      );
-    }
-  }
 }
+
