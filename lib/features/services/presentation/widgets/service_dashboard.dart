@@ -21,6 +21,7 @@ import 'schedule_calendar_picker.dart';
 import 'schedule_day_view.dart';
 import 'service_action_card.dart';
 import 'create_refund_request_sheet.dart';
+import 'current_booking_staff_sheet.dart';
 
 class ServiceDashboard extends StatelessWidget {
   final NowPackageModel nowPackage;
@@ -200,72 +201,81 @@ class ServiceDashboard extends StatelessWidget {
   }
 
   Widget _buildServicesBanner(BuildContext context, double scale) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.white,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          CurrentBookingStaffSheet.show(context);
+        },
         borderRadius: BorderRadius.circular(20 * scale),
-        border: Border.all(color: AppColors.borderLight, width: 1.2 * scale),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 12 * scale,
-            offset: Offset(0, 4 * scale),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(20 * scale),
+            border: Border.all(color: AppColors.borderLight, width: 1.2 * scale),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 12 * scale,
+                offset: Offset(0, 4 * scale),
+              ),
+            ],
           ),
-        ],
-      ),
-      padding: EdgeInsets.symmetric(
-        horizontal: 16 * scale,
-        vertical: 16 * scale,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Icon with decorative background
-          Container(
-            padding: EdgeInsets.all(8 * scale),
-            child: SvgPicture.asset(
-              AppAssets.helper,
-              fit: BoxFit.contain,
-              width: 28 * scale,
-              height: 28 * scale,
-            ),
+          padding: EdgeInsets.symmetric(
+            horizontal: 16 * scale,
+            vertical: 16 * scale,
           ),
-          SizedBox(width: 12 * scale),
-          // Title Section - Centered
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                AppStrings.servicesResortAmenities,
-                style: AppTextStyles.tinos(
-                  fontSize: 20 * scale,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+              // Icon with decorative background
+              Container(
+                padding: EdgeInsets.all(8 * scale),
+                child: SvgPicture.asset(
+                  AppAssets.helper,
+                  fit: BoxFit.contain,
+                  width: 28 * scale,
+                  height: 28 * scale,
                 ),
               ),
-              SizedBox(height: 2 * scale),
-              Text(
-                AppStrings.servicesExploreAmenities,
-                style: AppTextStyles.arimo(
-                  fontSize: 12 * scale,
-                  color: AppColors.textSecondary,
+              SizedBox(width: 12 * scale),
+              // Title Section - Centered
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    AppStrings.servicesResortAmenities,
+                    style: AppTextStyles.tinos(
+                      fontSize: 20 * scale,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  SizedBox(height: 2 * scale),
+                  Text(
+                    AppStrings.servicesExploreAmenities,
+                    style: AppTextStyles.arimo(
+                      fontSize: 12 * scale,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(width: 12 * scale),
+              // Helper icon at the end
+              Container(
+                padding: EdgeInsets.all(8 * scale),
+                child: SvgPicture.asset(
+                  AppAssets.helper,
+                  fit: BoxFit.contain,
+                  width: 28 * scale,
+                  height: 28 * scale,
                 ),
               ),
             ],
           ),
-          SizedBox(width: 12 * scale),
-          // Helper icon at the end
-          Container(
-            padding: EdgeInsets.all(8 * scale),
-            child: SvgPicture.asset(
-              AppAssets.helper,
-              fit: BoxFit.contain,
-              width: 28 * scale,
-              height: 28 * scale,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

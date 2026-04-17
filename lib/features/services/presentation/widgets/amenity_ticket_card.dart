@@ -152,6 +152,7 @@ class AmenityTicketCard extends StatelessWidget {
                   ),
                   width: 100 * scale,
                   height: 32 * scale,
+                  padding: EdgeInsets.symmetric(horizontal: 4 * scale, vertical: 0),
                 ),
             ],
           ),

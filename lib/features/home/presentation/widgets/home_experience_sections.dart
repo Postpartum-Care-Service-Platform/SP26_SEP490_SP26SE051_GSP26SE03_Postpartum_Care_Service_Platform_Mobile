@@ -538,6 +538,10 @@ class _HomeTestimonialBannerState extends State<HomeTestimonialBanner> {
 
   void _showFullContent(_HomeTestimonial item) {
     final scale = AppResponsive.scaleFactor(context);
+    final fullName = item.fullName.trim();
+    final initials = fullName.isNotEmpty
+        ? fullName.characters.first.toUpperCase()
+        : '?';
 
     showModalBottomSheet<void>(
       context: context,
@@ -552,26 +556,56 @@ class _HomeTestimonialBannerState extends State<HomeTestimonialBanner> {
           child: Padding(
             padding: EdgeInsets.fromLTRB(
               20 * scale,
-              18 * scale,
               20 * scale,
-              (20 * scale) + bottomInset,
+              20 * scale,
+              (24 * scale) + bottomInset,
             ),
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    item.fullName,
-                    style: AppTextStyles.tinos(
-                      fontSize: 18 * scale,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      CircleAvatar(
+                        radius: 20 * scale,
+                        backgroundColor: AppColors.primary,
+                        backgroundImage: item.avatar.trim().isNotEmpty
+                            ? NetworkImage(item.avatar)
+                            : null,
+                        child: item.avatar.trim().isEmpty
+                            ? Text(
+                                initials,
+                                style: AppTextStyles.tinos(
+                                  fontSize: 18 * scale,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.white,
+                                ),
+                              )
+                            : null,
+                      ),
+                      SizedBox(width: 12 * scale),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              fullName,
+                              style: AppTextStyles.tinos(
+                                fontSize: 18 * scale,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            SizedBox(height: 4 * scale),
+                            _buildRatingStars(scale, item.rating),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  SizedBox(height: 8 * scale),
-                  _buildRatingStars(scale, item.rating),
-                  SizedBox(height: 12 * scale),
+                  SizedBox(height: 16 * scale),
                   Text.rich(
                     TextSpan(
                       children: _buildFormattedSpans(

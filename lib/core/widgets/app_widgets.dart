@@ -271,6 +271,7 @@ class AppWidgets {
     double? width,
     double? height,
     bool isEnabled = true,
+    EdgeInsetsGeometry? padding,
   }) {
     return SizedBox(
       width: width ?? double.infinity,
@@ -292,7 +293,7 @@ class AppWidgets {
             borderRadius: BorderRadius.circular(16),
           ),
           elevation: 0,
-          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          padding: padding ?? const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           animationDuration: const Duration(milliseconds: 200),
         ),
         child: Row(

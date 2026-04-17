@@ -18,6 +18,144 @@ class FeedbackCard extends StatelessWidget {
     this.feedbackType,
   });
 
+  Widget _buildSmartHeader(double scale) {
+    IconData? icon;
+    String? targetText;
+
+    if (feedback.feedbackTypeId == 3 && (feedback.familyScheduleInfo != null || feedback.familyScheduleId != null)) {
+      icon = Icons.design_services_rounded;
+      final info = feedback.familyScheduleInfo;
+      if (info != null) {
+        final timeParts = <String>[];
+        if (info.workDate != null && info.workDate!.isNotEmpty) timeParts.add(info.workDate!);
+        if (info.startTime != null && info.endTime != null) timeParts.add('${info.startTime} - ${info.endTime}');
+        final timeStr = timeParts.join(' ');
+        targetText = '${info.activity ?? ""}${timeStr.isNotEmpty ? ' ($timeStr)' : ''}';
+      } else {
+        targetText = feedback.familyScheduleId?.toString();
+      }
+    } else if (feedback.feedbackTypeId == 4 && (feedback.staffInfo != null || feedback.staffName != null)) {
+      icon = Icons.support_agent_rounded;
+      final info = feedback.staffInfo;
+      if (info != null) {
+        final extra = (info.phone?.isNotEmpty == true) ? info.phone : info.email;
+        targetText = '${info.fullName ?? ""}${extra != null && extra.isNotEmpty ? ' ($extra)' : ''}';
+      } else {
+        targetText = feedback.staffName;
+      }
+    } else if (feedback.feedbackTypeId == 5 && (feedback.amenityTicketInfo != null || feedback.amenityServiceName != null)) {
+      icon = Icons.spa_rounded;
+      final info = feedback.amenityTicketInfo;
+      if (info != null) {
+        final timeParts = <String>[];
+        if (info.date != null && info.date!.isNotEmpty) timeParts.add(info.date!);
+        if (info.startTime != null && info.endTime != null) timeParts.add('${info.startTime} - ${info.endTime}');
+        final timeStr = timeParts.join(' ');
+        targetText = '${info.amenityServiceName ?? ""}${timeStr.isNotEmpty ? ' ($timeStr)' : ''}';
+      } else {
+        targetText = feedback.amenityServiceName;
+      }
+    }
+
+    final typeName = feedbackType?.name ?? feedback.feedbackTypeName ?? '';
+    final hasTarget = targetText != null && targetText.isNotEmpty;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+               // Neat category badge
+              Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 10 * scale,
+                  vertical: 6 * scale,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8 * scale),
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.15),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (icon != null) ...[
+                      Icon(icon, size: 14 * scale, color: AppColors.primary),
+                      SizedBox(width: 6 * scale),
+                    ],
+                    Flexible(
+                      child: Text(
+                        typeName,
+                        style: AppTextStyles.arimo(
+                          fontSize: 12 * scale,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (hasTarget) ...[
+                SizedBox(height: 8 * scale),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.only(top: 2 * scale),
+                      child: Icon(Icons.subdirectory_arrow_right_rounded, size: 14 * scale, color: AppColors.primary.withValues(alpha: 0.6)),
+                    ),
+                    SizedBox(width: 6 * scale),
+                    Expanded(
+                      child: Text(
+                        targetText!,
+                        style: AppTextStyles.arimo(
+                          fontSize: 13 * scale,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary.withValues(alpha: 0.8),
+                        ).copyWith(height: 1.45),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+        SizedBox(width: 12 * scale),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            StarRatingWidget(
+              initialRating: feedback.rating,
+              onRatingChanged: (_) {},
+              starSize: 14 * scale,
+              interactive: false,
+            ),
+            SizedBox(height: 6 * scale),
+            Text(
+              feedback.formattedDate,
+              style: AppTextStyles.arimo(
+                fontSize: 11 * scale,
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   List<TextSpan> _buildContentSpans(String content, double scale) {
     final spans = <TextSpan>[];
     final boldPattern = RegExp(r'\*\*(.+?)\*\*', dotAll: true);
@@ -116,82 +254,41 @@ class FeedbackCard extends StatelessWidget {
       padding: EdgeInsets.all(20 * scale),
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(16 * scale),
+        borderRadius: BorderRadius.circular(20 * scale),
         border: Border.all(
-          color: AppColors.borderLight,
+          color: AppColors.borderLight.withValues(alpha: 0.6),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.shadowLight,
-            blurRadius: 12 * scale,
-            offset: Offset(0, 4 * scale),
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 24 * scale,
+            offset: Offset(0, 8 * scale),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header: Type badge, date, rating
-          Row(
-            children: [
-              // Type badge
-              if (feedbackType != null)
-                Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 10 * scale,
-                    vertical: 6 * scale,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8 * scale),
-                  ),
-                  child: Text(
-                    feedbackType!.name,
-                    style: AppTextStyles.arimo(
-                      fontSize: 12 * scale,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ),
-              if (feedbackType != null) SizedBox(width: 12 * scale),
-              // Date
-              Text(
-                feedback.formattedDate,
-                style: AppTextStyles.arimo(
-                  fontSize: 12 * scale,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              const Spacer(),
-              // Rating
-              StarRatingWidget(
-                initialRating: feedback.rating,
-                onRatingChanged: (_) {},
-                starSize: 16,
-                interactive: false,
-              ),
-            ],
-          ),
-          SizedBox(height: 12 * scale),
+          _buildSmartHeader(scale),
+          SizedBox(height: 16 * scale),
           // Title
           Text(
             feedback.title,
             style: AppTextStyles.tinos(
               fontSize: 18 * scale,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
             ),
           ),
-          SizedBox(height: 12 * scale),
+          SizedBox(height: 8 * scale),
           // Content - supports line breaks and markdown-style bold: **text**
           RichText(
             text: TextSpan(
               style: AppTextStyles.arimo(
                 fontSize: 14 * scale,
-                color: AppColors.textPrimary,
-              ).copyWith(height: 1.6),
+                color: AppColors.textPrimary.withValues(alpha: 0.85),
+              ).copyWith(height: 1.55),
               children: _buildContentSpans(feedback.content, scale),
             ),
           ),

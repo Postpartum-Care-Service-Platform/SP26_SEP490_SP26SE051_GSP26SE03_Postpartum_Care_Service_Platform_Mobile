@@ -95,13 +95,6 @@ class _AppScaffoldState extends State<AppScaffold> {
           setState(() {
             _currentTab = newTab;
           });
-
-          // Silently reload current account when switching to services tab (forced reload)
-          if (newTab == AppBottomTab.services) {
-            context
-                .read<AuthBloc>()
-                .add(const AuthLoadCurrentAccount(forceRefresh: true));
-          }
         },
         children: _screens,
       ),
