@@ -4,6 +4,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../domain/entities/notification_entity.dart';
 import '../bloc/notification_bloc.dart';
+import '../bloc/notification_event.dart';
 import '../bloc/notification_state.dart';
 import '../widgets/notification_loading_state.dart';
 import '../widgets/notification_error_state.dart';
@@ -30,6 +31,16 @@ enum NotificationFilter {
 
 class _NotificationScreenState extends State<NotificationScreen> {
   NotificationFilter _currentFilter = NotificationFilter.all;
+  
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<NotificationBloc>().add(const NotificationLoadRequested());
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

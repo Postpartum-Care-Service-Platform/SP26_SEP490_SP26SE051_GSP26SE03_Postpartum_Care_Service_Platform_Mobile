@@ -48,6 +48,12 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
 
       throw Exception('Phản hồi thông báo không hợp lệ');
     } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        // If it's a 401, it means ApiClient refresh failed or was skipped
+        if (_cachedNotifications.isNotEmpty) return _cachedNotifications;
+        throw Exception('Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại hoặc thử lại.');
+      }
+
       final isTimeout =
           e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout;
@@ -75,7 +81,9 @@ class NotificationRemoteDataSourceImpl implements NotificationRemoteDataSource {
         return _cachedNotifications;
       }
 
-      throw Exception('Không thể tải thông báo: ${e.message}');
+      // Provide a cleaner message instead of raw technical Dio error
+      final errorMessage = e.response?.data?['message'] ?? e.message ?? 'Lỗi không xác định';
+      throw Exception('Không thể tải thông báo: $errorMessage');
     }
   }
 

@@ -35,8 +35,7 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider<NotificationBloc>.value(
-          value: InjectionContainer.notificationBloc
-            ..add(const NotificationLoadRequested()),
+          value: InjectionContainer.notificationBloc,
         ),
         BlocProvider<AuthBloc>.value(
           value: InjectionContainer.authBloc,
