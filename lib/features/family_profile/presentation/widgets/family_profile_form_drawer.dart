@@ -95,21 +95,7 @@ class _FamilyProfileFormDrawerState extends State<FamilyProfileFormDrawer> {
   }
 
   String _normalizePhoneForEditing(String raw) {
-    final text = raw.trim();
-    if (text.isEmpty) return '';
-
-    // Strip +84 or 84 prefix to get local digits
-    String remainder;
-    if (text.startsWith('+84')) {
-      remainder = text.substring(3);
-    } else if (text.startsWith('84') && text.length > 2) {
-      remainder = text.substring(2);
-    } else {
-      remainder = text;
-    }
-
-    remainder = remainder.replaceAll(RegExp(r'[^0-9]'), '');
-    return remainder;
+    return raw.trim();
   }
 
   void _normalizePhoneInput() {
@@ -129,22 +115,7 @@ class _FamilyProfileFormDrawerState extends State<FamilyProfileFormDrawer> {
   String? _phoneNumberForSubmit() {
     final text = _phoneNumberController.text.trim();
     if (text.isEmpty) return null;
-
-    // Strip any existing prefix
-    String digits;
-    if (text.startsWith('+84')) {
-      digits = text.substring(3);
-    } else if (text.startsWith('84') && text.length > 2) {
-      digits = text.substring(2);
-    } else if (text.startsWith('0')) {
-      digits = text.substring(1);
-    } else {
-      digits = text;
-    }
-
-    digits = digits.replaceAll(RegExp(r'[^0-9]'), '');
-    if (digits.isEmpty) return null;
-    return '+84$digits';
+    return text;
   }
 
   Future<bool> _ensureGalleryPermission() async {

@@ -26,8 +26,9 @@ class FamilyProfileRepositoryImpl implements FamilyProfileRepository {
     String customerId,
   ) async {
     try {
-      final models =
-          await remoteDataSource.getFamilyProfilesByCustomerId(customerId);
+      final models = await remoteDataSource.getFamilyProfilesByCustomerId(
+        customerId,
+      );
       return models.map((model) => model.toEntity()).toList();
     } catch (e) {
       rethrow;
@@ -39,8 +40,9 @@ class FamilyProfileRepositoryImpl implements FamilyProfileRepository {
     String accountId,
   ) async {
     try {
-      final models =
-          await remoteDataSource.getFamilyProfilesByAccountId(accountId);
+      final models = await remoteDataSource.getFamilyProfilesByAccountId(
+        accountId,
+      );
       return models.map((model) => model.toEntity()).toList();
     } catch (e) {
       rethrow;

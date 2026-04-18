@@ -128,7 +128,10 @@ class _EmployeePackageBookingScreenState
                       16 * scale,
                       8 * scale,
                     ),
-                    child: _buildCustomerSelector(scale, context.read<BookingBloc>()),
+                    child: _buildCustomerSelector(
+                      scale,
+                      context.read<BookingBloc>(),
+                    ),
                   ),
                   const Divider(height: 1),
                   Expanded(
@@ -140,7 +143,8 @@ class _EmployeePackageBookingScreenState
                         onBackToLocationSelection: () {
                           Navigator.of(context).maybePop();
                         },
-                        onConfirmOverride: () => _onStaffConfirmBooking(context),
+                        onConfirmOverride: () =>
+                            _onStaffConfirmBooking(context),
                       ),
                     ),
                   ),

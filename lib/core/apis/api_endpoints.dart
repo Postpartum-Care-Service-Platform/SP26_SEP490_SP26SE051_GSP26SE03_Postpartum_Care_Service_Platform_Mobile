@@ -140,7 +140,8 @@ class ApiEndpoints {
   static String sendContract(int id) => '/Contract/$id/send';
   static String uploadSignedContract(int id) => '/Contract/$id/upload-signed';
   // Backend hiện dùng cùng endpoint upload-signed (body JSON chứa fileUrl + signedDate)
-  static String uploadSignedContractFile(int id) => '/Contract/$id/upload-signed';
+  static String uploadSignedContractFile(int id) =>
+      '/Contract/$id/upload-signed';
   static String updateContractContent(int id) => '/Contract/$id/update-content';
   static const String getNoScheduleContracts = '/Contract/no-staff-schedule';
 
@@ -188,7 +189,7 @@ class ApiEndpoints {
 
   /// Get available rooms for a date range
   static const String availableRooms = '/Room/available';
-  
+
   /// Get room by ID
   static String roomById(int id) => '/Room/$id';
 
@@ -331,18 +332,20 @@ class ApiEndpoints {
   // ==========================================
   // Home Service Booking endpoints
   // ==========================================
-  
+
   /// Get home activities
   static const String homeActivities = '/Activities/home';
-  
+
   /// Get free home staff for date list
-  static const String freeHomeStaffInDateList = '/HomeBooking/free-home-staff-in-date-list';
-  
+  static const String freeHomeStaffInDateList =
+      '/HomeBooking/free-home-staff-in-date-list';
+
   /// Book home service
   static const String bookHomeService = '/HomeBooking/book-home-service';
-  
+
   /// Create home service payment link
-  static const String createHomeServicePaymentLink = '/Transaction/create-home-service-payment-link';
+  static const String createHomeServicePaymentLink =
+      '/Transaction/create-home-service-payment-link';
 
   // ==========================================
   // Refund Request endpoints
@@ -357,7 +360,7 @@ class ApiEndpoints {
   // ==========================================
   // Wallet endpoints
   // ==========================================
-  
+
   static const String myWallet = '/Wallet/me';
   static const String myWalletTransactions = '/Wallet/me/transactions';
 }
