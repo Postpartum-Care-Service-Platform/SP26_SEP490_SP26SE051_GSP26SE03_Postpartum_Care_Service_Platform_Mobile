@@ -18,10 +18,12 @@ import '../bloc/booking_event.dart';
 import '../bloc/booking_state.dart';
 
 class BookingStep2FamilyProfileSelection extends StatefulWidget {
+  final String? accountId;
   final void Function(List<int> selectedIds) onSelectionChanged;
 
   const BookingStep2FamilyProfileSelection({
     super.key,
+    this.accountId,
     required this.onSelectionChanged,
   });
 
@@ -147,7 +149,7 @@ class _BookingStep2FamilyProfileSelectionState
                 AppLoading.hide(context);
                 AppToast.showSuccess(context, message: AppStrings.updateSuccess);
 
-                context.read<BookingBloc>().add(const BookingLoadFamilyProfiles());
+                context.read<BookingBloc>().add(BookingLoadFamilyProfiles(accountId: widget.accountId));
 
                 if (created.memberTypeId == 2 || created.memberTypeId == 3) {
                   final nextIds = [...selectedIds];
@@ -206,7 +208,7 @@ class _BookingStep2FamilyProfileSelectionState
           if (profiles.isEmpty) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (context.mounted) {
-                context.read<BookingBloc>().add(const BookingLoadFamilyProfiles());
+                context.read<BookingBloc>().add(BookingLoadFamilyProfiles(accountId: widget.accountId));
               }
             });
             return const Center(child: AppLoadingIndicator());

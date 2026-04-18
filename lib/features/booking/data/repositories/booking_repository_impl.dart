@@ -36,6 +36,7 @@ class BookingRepositoryImpl implements BookingRepository {
     required int packageId,
     required int roomId,
     required DateTime startDate,
+    required List<int> familyProfileIds,
     double? discountAmount,
   }) async {
     try {
@@ -44,6 +45,7 @@ class BookingRepositoryImpl implements BookingRepository {
         packageId: packageId,
         roomId: roomId,
         startDate: startDate,
+        familyProfileIds: familyProfileIds,
         discountAmount: discountAmount,
       );
       return model.toEntity();

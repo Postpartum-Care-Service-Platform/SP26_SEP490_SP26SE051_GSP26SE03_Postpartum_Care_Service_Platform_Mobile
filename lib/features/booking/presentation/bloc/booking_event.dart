@@ -82,12 +82,17 @@ class BookingCreateBooking extends BookingEvent {
 /// Staff: Create booking for a specific customer
 class BookingCreateBookingForCustomer extends BookingEvent {
   final String customerId;
+  final List<int> familyProfileIds;
   final double? discountAmount;
 
-  const BookingCreateBookingForCustomer(this.customerId, {this.discountAmount});
+  const BookingCreateBookingForCustomer({
+    required this.customerId,
+    required this.familyProfileIds,
+    this.discountAmount,
+  });
 
   @override
-  List<Object?> get props => [customerId, discountAmount];
+  List<Object?> get props => [customerId, familyProfileIds, discountAmount];
 }
 
 /// Create payment link
@@ -146,4 +151,14 @@ class BookingCancelRequested extends BookingEvent {
 /// Reset booking state
 class BookingReset extends BookingEvent {
   const BookingReset();
+}
+
+/// Select customer (for staff booking)
+class BookingSelectCustomer extends BookingEvent {
+  final dynamic customer;
+
+  const BookingSelectCustomer(this.customer);
+
+  @override
+  List<Object?> get props => [customer];
 }

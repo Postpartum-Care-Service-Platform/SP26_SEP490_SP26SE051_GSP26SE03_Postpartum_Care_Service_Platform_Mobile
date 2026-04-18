@@ -15,6 +15,7 @@ import '../../../booking/presentation/widgets/booking_step3_date_selection.dart'
 import '../../../booking/presentation/widgets/booking_step4_summary.dart';
 import 'services_formatters.dart';
 import 'service_location_selection.dart';
+import '../../../../core/widgets/app_scaffold.dart';
 
 class ServicesBookingFlow extends StatefulWidget {
   final ServiceLocationType? locationType;
@@ -40,6 +41,23 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
   bool _packagesLoadRequested = false;
   bool _profilesLoadRequested = false;
   bool _roomsLoadRequested = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        const ToggleBottomNavNotification(show: false).dispatch(context);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    // Luôn hiển thị lại bottom nav khi thoát khỏi luồng
+    const ToggleBottomNavNotification(show: true).dispatch(context);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -94,6 +112,7 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
           });
         }
         return BookingStep2FamilyProfileSelection(
+          accountId: widget.familyProfilesAccountId,
           onSelectionChanged: (selectedIds) {
             context
                 .read<BookingBloc>()
@@ -253,7 +272,11 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
                   context.read<BookingBloc>().add(_createLoadRoomsEvent(context));
                 }
               } else {
-                context.read<BookingBloc>().add(const BookingCreateBooking());
+                if (widget.onConfirmOverride != null) {
+                  widget.onConfirmOverride!();
+                } else {
+                  context.read<BookingBloc>().add(const BookingCreateBooking());
+                }
               }
             }
           : null,

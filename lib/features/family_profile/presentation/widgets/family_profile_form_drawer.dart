@@ -80,7 +80,7 @@ class _FamilyProfileFormDrawerState extends State<FamilyProfileFormDrawer> {
       }
       _avatarUrl = widget.member!.avatarUrl;
     } else {
-      _phoneNumberController.text = '+84';
+      _phoneNumberController.text = '';
     }
     _phoneNumberController.addListener(_normalizePhoneInput);
   }
@@ -96,46 +96,55 @@ class _FamilyProfileFormDrawerState extends State<FamilyProfileFormDrawer> {
 
   String _normalizePhoneForEditing(String raw) {
     final text = raw.trim();
-    if (text.isEmpty) return '+84';
+    if (text.isEmpty) return '';
 
+    // Strip +84 or 84 prefix to get local digits
     String remainder;
     if (text.startsWith('+84')) {
       remainder = text.substring(3);
-    } else if (text.startsWith('84')) {
+    } else if (text.startsWith('84') && text.length > 2) {
       remainder = text.substring(2);
-    } else if (text.startsWith('0')) {
-      remainder = text.substring(1);
     } else {
       remainder = text;
     }
 
     remainder = remainder.replaceAll(RegExp(r'[^0-9]'), '');
-    return '+84$remainder';
+    return remainder;
   }
 
   void _normalizePhoneInput() {
     if (_isNormalizingPhone) return;
-    final normalized = _normalizePhoneForEditing(_phoneNumberController.text);
-    if (normalized == _phoneNumberController.text) return;
+    final text = _phoneNumberController.text;
+    final digitsOnly = text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digitsOnly == text) return;
 
     _isNormalizingPhone = true;
     _phoneNumberController.value = TextEditingValue(
-      text: normalized,
-      selection: TextSelection.collapsed(offset: normalized.length),
+      text: digitsOnly,
+      selection: TextSelection.collapsed(offset: digitsOnly.length),
     );
     _isNormalizingPhone = false;
   }
 
   String? _phoneNumberForSubmit() {
-    final normalized = _normalizePhoneForEditing(_phoneNumberController.text);
-    final digits = normalized.substring(3);
-    if (digits.isEmpty) return null;
+    final text = _phoneNumberController.text.trim();
+    if (text.isEmpty) return null;
 
-    final withoutLeadingZero = digits.startsWith('0')
-        ? digits.substring(1)
-        : digits;
-    if (withoutLeadingZero.isEmpty) return null;
-    return '+84$withoutLeadingZero';
+    // Strip any existing prefix
+    String digits;
+    if (text.startsWith('+84')) {
+      digits = text.substring(3);
+    } else if (text.startsWith('84') && text.length > 2) {
+      digits = text.substring(2);
+    } else if (text.startsWith('0')) {
+      digits = text.substring(1);
+    } else {
+      digits = text;
+    }
+
+    digits = digits.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.isEmpty) return null;
+    return '+84$digits';
   }
 
   Future<bool> _ensureGalleryPermission() async {
@@ -551,15 +560,16 @@ class _FamilyProfileFormDrawerState extends State<FamilyProfileFormDrawer> {
               // Phone Number
               AppWidgets.textInput(
                 label: AppStrings.phoneNumber,
-                placeholder: '+84xxxxxxxxx',
+                placeholder: '0xxxxxxxxx',
                 controller: _phoneNumberController,
                 enabled: _isEditing,
                 validator: (value) {
-                  final normalized = _normalizePhoneForEditing(value ?? '');
-                  final digits = normalized.substring(3);
+                  if (value == null || value.trim().isEmpty) return null;
+
+                  final digits = value.replaceAll(RegExp(r'[^0-9]'), '');
                   if (digits.isEmpty) return null;
 
-                  final phoneRegex = RegExp(r'^[0-9]{9,10}$');
+                  final phoneRegex = RegExp(r'^[0-9]{9,11}$');
                   if (!phoneRegex.hasMatch(digits)) {
                     return AppStrings.invalidPhoneNumber;
                   }

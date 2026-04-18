@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/widgets/app_bottom_navigation_bar.dart';
+import '../../../../../core/widgets/app_scaffold.dart';
 import '../../../../../core/di/injection_container.dart';
 import '../../../../../features/package/presentation/bloc/package_bloc.dart';
 import '../../../../../features/employee/shell/presentation/screens/employee_chat_screen.dart';
@@ -36,6 +37,7 @@ class EmployeePortalScreen extends StatefulWidget {
 
 class _EmployeePortalScreenState extends State<EmployeePortalScreen> {
   AppBottomTab _currentTab = AppBottomTab.appointment;
+  bool _showBottomNav = true;
 
   void _backToDefaultStaffPage() {
     if (!mounted) return;
@@ -108,22 +110,34 @@ class _EmployeePortalScreenState extends State<EmployeePortalScreen> {
   Widget build(BuildContext context) {
     return BlocProvider<AuthBloc>.value(
       value: InjectionContainer.authBloc..add(const AuthLoadCurrentAccount()),
-      child: PopScope(
-        canPop: _currentTab == AppBottomTab.appointment,
-        onPopInvokedWithResult: (didPop, result) {
-          // Nếu đang ở tab khác tab chính, back sẽ đưa về tab trang chủ
-          if (!didPop && _currentTab != AppBottomTab.appointment) {
+      child: NotificationListener<ToggleBottomNavNotification>(
+        onNotification: (notification) {
+          if (mounted) {
             setState(() {
-              _currentTab = AppBottomTab.appointment;
+              _showBottomNav = notification.show;
             });
           }
+          return true;
         },
-        child: Scaffold(
-          backgroundColor: AppColors.background,
-          body: _buildScreen(_currentTab),
-          bottomNavigationBar: EmployeeBottomNavBar(
-            currentTab: _currentTab,
-            onTabSelected: _onTabSelected,
+        child: PopScope(
+          canPop: _currentTab == AppBottomTab.appointment,
+          onPopInvokedWithResult: (didPop, result) {
+            // Nếu đang ở tab khác tab chính, back sẽ đưa về tab trang chủ
+            if (!didPop && _currentTab != AppBottomTab.appointment) {
+              setState(() {
+                _currentTab = AppBottomTab.appointment;
+              });
+            }
+          },
+          child: Scaffold(
+            backgroundColor: AppColors.background,
+            body: _buildScreen(_currentTab),
+            bottomNavigationBar: _showBottomNav
+                ? EmployeeBottomNavBar(
+                    currentTab: _currentTab,
+                    onTabSelected: _onTabSelected,
+                  )
+                : null,
           ),
         ),
       ),
