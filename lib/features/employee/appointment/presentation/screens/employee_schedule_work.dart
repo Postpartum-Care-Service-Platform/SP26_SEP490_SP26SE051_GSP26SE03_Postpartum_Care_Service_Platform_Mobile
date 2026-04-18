@@ -10,7 +10,6 @@ import '../../../../../core/routing/app_router.dart';
 import '../../../../../core/routing/app_routes.dart';
 import '../../../../../core/utils/app_responsive.dart';
 import '../../../../../core/utils/app_text_styles.dart';
-import '../../../../../core/widgets/app_bottom_navigation_bar.dart';
 import '../../../../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../../../../features/auth/presentation/bloc/auth_event.dart';
 import '../../../../../features/auth/presentation/bloc/auth_state.dart';
@@ -20,7 +19,6 @@ import '../../../../../features/chat/data/datasources/chat_remote_datasource.dar
 import '../../../../../features/contract/data/datasources/contract_remote_datasource.dart';
 import '../../../../../features/notification/data/datasources/notification_remote_datasource.dart';
 import '../../data/datasources/appointment_employee_remote_datasource.dart';
-import '../../data/models/appointment_model.dart';
 import '../../../../../features/employee/account/presentation/screens/employee_profile_screen.dart';
 import '../../../../../features/employee/shell/presentation/widgets/employee_quick_menu.dart';
 import '../../../../../features/employee/appointment/domain/entities/appointment_entity.dart';
@@ -33,7 +31,7 @@ import '../../../../../features/employee/shell/presentation/widgets/employee_sca
 import '../../../../../features/wallet/data/datasources/wallet_remote_datasource.dart';
 import '../../../../../features/wallet/presentation/bloc/wallet_cubit.dart';
 import '../../../../../features/wallet/presentation/bloc/wallet_state.dart';
-
+import '../../../../../core/widgets/app_bottom_navigation_bar.dart';
 /// Employee Dashboard Screen - Trang chính sau khi staff đăng nhập
 /// Hiển thị tổng quan thống kê, quick menu và danh sách appointment gần nhất
 class EmployeeScheduleScreenNew extends StatelessWidget {
@@ -190,7 +188,6 @@ class _LoadedContentState extends State<_LoadedContent> {
   late final ContractRemoteDataSource _contractRemote;
   late final BookingRemoteDataSource _bookingRemote;
   late final AppointmentEmployeeRemoteDataSource _appointmentRemote;
-  late final NotificationRemoteDataSource _notificationRemote;
   Future<_DashboardSummary>? _summaryFuture;
   Future<List<BookingModel>>? _recentBookingsFuture;
   Future<List<BookingModel>>? _bookingsFutureMemo;
@@ -203,7 +200,6 @@ class _LoadedContentState extends State<_LoadedContent> {
     _contractRemote = ContractRemoteDataSourceImpl(dio: dio);
     _bookingRemote = BookingRemoteDataSourceImpl(dio: dio);
     _appointmentRemote = AppointmentEmployeeRemoteDataSource(dio: dio);
-    _notificationRemote = NotificationRemoteDataSourceImpl(dio: dio);
     _summaryFuture = _loadSummary();
     _recentBookingsFuture = _loadRecentBookings();
   }
@@ -315,16 +311,6 @@ class _LoadedContentState extends State<_LoadedContent> {
         .where((a) => a.status == AppointmentStatus.pending)
         .length;
     final totalAssigned = widget.appointments.length;
-    final completed = widget.appointments
-        .where((a) => a.status == AppointmentStatus.completed)
-        .length;
-    final active = widget.appointments
-        .where(
-          (a) =>
-              a.status != AppointmentStatus.completed &&
-              a.status != AppointmentStatus.cancelled,
-        )
-        .length;
 
     // Lấy 5 appointment gần nhất (chưa hoàn thành, sắp xếp theo thời gian)
     final upcomingAppointments =
@@ -372,7 +358,7 @@ class _LoadedContentState extends State<_LoadedContent> {
                   AppRouter.push(context, AppRoutes.employeeAppointmentList);
                 },
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 1 * AppResponsive.scaleFactor(context)),
               EmployeeQuickMenuSection(
                 primaryItems: EmployeeQuickMenuPresets.primaryItems(memberType),
                 allItems: EmployeeQuickMenuPresets.allItems(memberType),
@@ -483,17 +469,17 @@ class _LoadedContentState extends State<_LoadedContent> {
               ),
               if (!isHomeStaff) ...[
                 if (recentAppointments.isNotEmpty) ...[
-                  const SizedBox(height: 24),
+                  SizedBox(height: 10),
                   _RecentAppointmentsSection(
                     appointments: recentAppointments,
                     totalCount: totalAssigned,
                   ),
                 ],
                 // Section Booking
-                const SizedBox(height: 24),
+                SizedBox(height: 5),
                 _RecentBookingsSection(bookingsFuture: _recentBookingsFuture),
               ],
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
             ]),
           ),
         ),
@@ -678,60 +664,8 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-/// Stats grid showing key metrics
-class _StatsGrid extends StatelessWidget {
-  final int totalAssigned;
-  final int completed;
-  final int pending;
-  final VoidCallback? onTap;
+// _StatsGrid was removed because it was no longer used in the dashboard layout.
 
-  const _StatsGrid({
-    required this.totalAssigned,
-    required this.completed,
-    required this.pending,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final scale = AppResponsive.scaleFactor(context);
-    final gap = 12.0 * scale;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Row(
-        children: [
-          Expanded(
-            child: _StatCard(
-              title: 'Tổng số',
-              value: '$totalAssigned',
-              valueColor: AppColors.primary,
-              icon: Icons.event_note,
-            ),
-          ),
-          SizedBox(width: gap),
-          Expanded(
-            child: _StatCard(
-              title: 'Hoàn thành',
-              value: '$completed',
-              valueColor: const Color(0xFF1B7F3A),
-              icon: Icons.check_circle_outline,
-            ),
-          ),
-          SizedBox(width: gap),
-          Expanded(
-            child: _StatCard(
-              title: 'Đang xử lý',
-              value: '$pending',
-              valueColor: const Color(0xFF2563EB),
-              icon: Icons.pending_outlined,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _DashboardSummary {
   final int mySupportRequests;
@@ -1004,71 +938,8 @@ class _DashboardMiniCard extends StatelessWidget {
   }
 }
 
-/// Stat card widget
-class _StatCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final Color valueColor;
-  final IconData? icon;
+// _StatCard was removed because it was only used by the now-deleted _StatsGrid.
 
-  const _StatCard({
-    required this.title,
-    required this.value,
-    required this.valueColor,
-    this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: valueColor.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: AppTextStyles.arimo(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ),
-              if (icon != null)
-                Icon(icon, size: 16, color: valueColor.withValues(alpha: 0.6)),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Center(
-            child: Text(
-              value,
-              style: AppTextStyles.arimo(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: valueColor,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 // Removed: _SectionTitle, _AppointmentCard, _CompletedAppointmentCard, _StatusBadge, _InfoRow, _ActionButton moved to EmployeeAppointmentListScreen
 
