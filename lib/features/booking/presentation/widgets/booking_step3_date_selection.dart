@@ -80,23 +80,20 @@ class _BookingStep3DateSelectionState extends State<BookingStep3DateSelection> {
           );
         }
 
-        return Padding(
-          padding: EdgeInsets.fromLTRB(
-            16 * scale,
-            4 * scale,
-            16 * scale,
-            4 * scale,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Custom Calendar - fixed size (60% of available space)
-              Flexible(
-                flex: 4,
-                child: Container(
-                  constraints: BoxConstraints(
-                    maxHeight: MediaQuery.of(context).size.height * 0.4,
-                  ),
+        return SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              16 * scale,
+              4 * scale,
+              16 * scale,
+              4 * scale,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Custom Calendar
+                Container(
                   decoration: BoxDecoration(
                     color: AppColors.white,
                     borderRadius: BorderRadius.circular(16 * scale),
@@ -120,18 +117,18 @@ class _BookingStep3DateSelectionState extends State<BookingStep3DateSelection> {
                     },
                   ),
                 ),
-              ),
-              // Selected dates display - 2 squares in a row (below calendar)
-              if (_selectedDate != null) ...[
-                SizedBox(height: 8 * scale),
-                CheckInOutCards(
-                  checkInDate: _selectedDate,
-                  checkOutDate: checkOutDate,
-                ),
+                // Selected dates display - 2 squares in a row (below calendar)
+                if (_selectedDate != null) ...[
+                  SizedBox(height: 12 * scale),
+                  CheckInOutCards(
+                    checkInDate: _selectedDate,
+                    checkOutDate: checkOutDate,
+                  ),
+                ],
+                // Spacing at the bottom
+                SizedBox(height: 16 * scale),
               ],
-              // Spacer to fill remaining space (only if check-in/check-out is not shown)
-              if (_selectedDate == null) Spacer(flex: 2),
-            ],
+            ),
           ),
         );
       },
@@ -318,73 +315,71 @@ class _CustomCalendarState extends State<_CustomCalendar> {
             }).toList(),
           ),
           SizedBox(height: 8 * scale),
-          // Calendar grid - allow scrolling if needed
-          Flexible(
-            child: GridView.builder(
-              physics: const AlwaysScrollableScrollPhysics(),
-              shrinkWrap: false,
-              padding: EdgeInsets.zero,
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 7,
-                mainAxisSpacing: 4 * scale,
-                crossAxisSpacing: 4 * scale,
-                childAspectRatio: 1.0,
-              ),
-              itemCount: days.length,
-              itemBuilder: (context, index) {
-                final date = days[index];
-                
-                if (date == null) {
-                  return const SizedBox();
-                }
-                
-                final isDisabled = _isDateDisabled(date);
-                final isToday = _isToday(date);
-                final isSelected = _isSelected(date);
-                
-                return GestureDetector(
-                  onTap: isDisabled
-                      ? null
-                      : () {
-                          widget.onDateSelected(date);
-                        },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? AppColors.primary
-                          : isToday
-                              ? AppColors.primary.withValues(alpha: 0.1)
-                              : Colors.transparent,
-                      shape: BoxShape.circle,
-                      border: isToday && !isSelected
-                          ? Border.all(
-                              color: AppColors.primary,
-                              width: 1,
-                            )
-                          : null,
-                    ),
-                    child: Center(
-                      child: Text(
-                        '${date.day}',
-                        style: AppTextStyles.arimo(
-                          fontSize: 14 * scale,
-                          fontWeight: isSelected || isToday
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                          color: isDisabled
-                              ? AppColors.textSecondary.withValues(alpha: 0.3)
-                              : isSelected
-                                  ? AppColors.white
-                                  : isToday
-                                      ? AppColors.primary
-                                      : AppColors.textPrimary,
-                        ),
+          // Calendar grid
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: EdgeInsets.zero,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 7,
+              mainAxisSpacing: 4 * scale,
+              crossAxisSpacing: 4 * scale,
+              childAspectRatio: 1.0,
+            ),
+            itemCount: days.length,
+            itemBuilder: (context, index) {
+              final date = days[index];
+              
+              if (date == null) {
+                return const SizedBox();
+              }
+              
+              final isDisabled = _isDateDisabled(date);
+              final isToday = _isToday(date);
+              final isSelected = _isSelected(date);
+              
+              return GestureDetector(
+                onTap: isDisabled
+                    ? null
+                    : () {
+                        widget.onDateSelected(date);
+                      },
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColors.primary
+                        : isToday
+                            ? AppColors.primary.withValues(alpha: 0.1)
+                            : Colors.transparent,
+                    shape: BoxShape.circle,
+                    border: isToday && !isSelected
+                        ? Border.all(
+                            color: AppColors.primary,
+                            width: 1,
+                          )
+                        : null,
+                  ),
+                  child: Center(
+                    child: Text(
+                      '${date.day}',
+                      style: AppTextStyles.arimo(
+                        fontSize: 14 * scale,
+                        fontWeight: isSelected || isToday
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                        color: isDisabled
+                            ? AppColors.textSecondary.withValues(alpha: 0.3)
+                            : isSelected
+                                ? AppColors.white
+                                : isToday
+                                    ? AppColors.primary
+                                    : AppColors.textPrimary,
                       ),
                     ),
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
         ],
       ),

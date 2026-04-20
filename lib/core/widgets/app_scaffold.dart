@@ -13,6 +13,11 @@ import '../../features/chat/presentation/screens/conversation_list_screen.dart';
 import '../../features/notification/presentation/widgets/notification_drawer.dart';
 import 'app_bottom_navigation_bar.dart';
 
+class ToggleBottomNavNotification extends Notification {
+  final bool show;
+  const ToggleBottomNavNotification({required this.show});
+}
+
 class AppScaffold extends StatefulWidget {
   final AppBottomTab? initialTab;
 
@@ -36,6 +41,7 @@ class _AppScaffoldState extends State<AppScaffold> {
 
   late AppBottomTab _currentTab;
   late final PageController _pageController;
+  bool _showBottomNav = true;
 
   int get _currentIndex {
     final index = _customerTabs.indexOf(_currentTab);
@@ -85,9 +91,18 @@ class _AppScaffoldState extends State<AppScaffold> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: PageView(
+    return NotificationListener<ToggleBottomNavNotification>(
+      onNotification: (notification) {
+        if (mounted) {
+          setState(() {
+            _showBottomNav = notification.show;
+          });
+        }
+        return true;
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: PageView(
         controller: _pageController,
         onPageChanged: (index) {
           if (index < 0 || index >= _customerTabs.length) return;
@@ -98,12 +113,14 @@ class _AppScaffoldState extends State<AppScaffold> {
         },
         children: _screens,
       ),
-      bottomNavigationBar: AppBottomNavigationBar(
-        currentTab: _currentTab,
-        onTabSelected: (tab) => _onTabSelected(tab, context),
-      ),
+      bottomNavigationBar: _showBottomNav
+          ? AppBottomNavigationBar(
+              currentTab: _currentTab,
+              onTabSelected: (tab) => _onTabSelected(tab, context),
+            )
+          : null,
       endDrawer: const NotificationDrawer(),
-    );
+    ),);
   }
 }
 

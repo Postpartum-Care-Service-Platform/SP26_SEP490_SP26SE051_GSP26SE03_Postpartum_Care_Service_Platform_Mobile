@@ -282,16 +282,23 @@ class _BookingStep2RoomSelectionState extends State<BookingStep2RoomSelection> {
                       ),
                       SizedBox(height: 16 * scale),
                       Expanded(
-                        child: SingleChildScrollView(
-                          child: _buildTwoColumnMap(
-                            context,
-                            currentFloorRooms,
-                            selectedRoomId,
-                            scale,
-                            onRoomTap: (room) {
-                              widget.onRoomSelected(room.id);
-                            },
+                        child: GridView.builder(
+                          padding: EdgeInsets.symmetric(vertical: 8 * scale),
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 12 * scale,
+                            crossAxisSpacing: 12 * scale,
+                            childAspectRatio: 0.95, // Giúp card cân đối hơn
                           ),
+                          itemCount: currentFloorRooms.length,
+                          itemBuilder: (context, index) {
+                            final room = currentFloorRooms[index];
+                            return _RoomTile(
+                              room: room,
+                              isSelected: selectedRoomId == room.id,
+                              onTap: () => widget.onRoomSelected(room.id),
+                            );
+                          },
                         ),
                       ),
                     ],
@@ -306,51 +313,7 @@ class _BookingStep2RoomSelectionState extends State<BookingStep2RoomSelection> {
   }
 }
 
-Widget _buildTwoColumnMap(
-  BuildContext context,
-  List<RoomEntity> rooms,
-  int? selectedRoomId,
-  double scale, {
-  required void Function(RoomEntity room) onRoomTap,
-}) {
-  // Chia danh sách phòng thành 2 dãy lần lượt (ziczac) theo index
-  final col1 = <RoomEntity>[];
-  final col2 = <RoomEntity>[];
-
-  for (var i = 0; i < rooms.length; i++) {
-    if (i.isEven) {
-      col1.add(rooms[i]);
-    } else {
-      col2.add(rooms[i]);
-    }
-  }
-
-  Widget buildColumn(List<RoomEntity> columnRooms) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: columnRooms
-          .map((room) => Padding(
-                padding: EdgeInsets.symmetric(vertical: 6 * scale),
-                child: _RoomTile(
-                  room: room,
-                  isSelected: selectedRoomId == room.id,
-                  onTap: () => onRoomTap(room),
-                ),
-              ))
-          .toList(),
-    );
-  }
-
-  return Row(
-    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Flexible(child: buildColumn(col1)),
-      SizedBox(width: 12 * scale),
-      Flexible(child: buildColumn(col2)),
-    ],
-  );
-}
+// Removed _buildTwoColumnMap as it is replaced by GridView.builder
 
 class _RoomTile extends StatelessWidget {
   final RoomEntity room;
@@ -370,14 +333,10 @@ class _RoomTile extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 120 * scale,
         constraints: BoxConstraints(
-          minHeight: 110 * scale,
+          minHeight: 130 * scale,
         ),
-        padding: EdgeInsets.symmetric(
-          horizontal: 10 * scale,
-          vertical: 10 * scale,
-        ),
+        padding: EdgeInsets.all(12 * scale),
         decoration: BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(12 * scale),
@@ -403,6 +362,7 @@ class _RoomTile extends StatelessWidget {
         ),
         child: Column(
           mainAxisSize: MainAxisSize.max,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Top row: icon + radio
@@ -452,7 +412,7 @@ class _RoomTile extends StatelessWidget {
             Text(
               room.name,
               style: AppTextStyles.tinos(
-                fontSize: 15 * scale,
+                fontSize: 18 * scale,
                 fontWeight: FontWeight.bold,
                 color: AppColors.textPrimary,
               ),
@@ -460,23 +420,17 @@ class _RoomTile extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            SizedBox(height: 4 * scale),
             // Room type
-            SizedBox(
-              height: 28 * scale,
-              child: Center(
-                child: Text(
-                  room.roomTypeName,
-                  style: AppTextStyles.arimo(
-                    fontSize: 13 * scale,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textSecondary,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
+            Text(
+              room.roomTypeName,
+              style: AppTextStyles.arimo(
+                fontSize: 14 * scale,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textSecondary,
               ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

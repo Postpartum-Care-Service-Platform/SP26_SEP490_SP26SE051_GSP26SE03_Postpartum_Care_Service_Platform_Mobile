@@ -20,6 +20,7 @@ abstract class BookingRemoteDataSource {
     required int packageId,
     required int roomId,
     required DateTime startDate,
+    required List<int> familyProfileIds,
     double? discountAmount,
   });
 
@@ -95,6 +96,7 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
     required int packageId,
     required int roomId,
     required DateTime startDate,
+    required List<int> familyProfileIds,
     double? discountAmount,
   }) async {
     try {
@@ -103,6 +105,7 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
         'packageId': packageId,
         'roomId': roomId,
         'startDate': startDate.toIso8601String().split('T')[0],
+        'familyProfileIds': familyProfileIds,
       };
       if (discountAmount != null) {
         body['discountAmount'] = discountAmount;

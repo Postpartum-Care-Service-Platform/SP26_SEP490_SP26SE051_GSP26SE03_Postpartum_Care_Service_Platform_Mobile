@@ -18,10 +18,12 @@ import '../bloc/booking_event.dart';
 import '../bloc/booking_state.dart';
 
 class BookingStep2FamilyProfileSelection extends StatefulWidget {
+  final String? accountId;
   final void Function(List<int> selectedIds) onSelectionChanged;
 
   const BookingStep2FamilyProfileSelection({
     super.key,
+    this.accountId,
     required this.onSelectionChanged,
   });
 
@@ -52,7 +54,8 @@ class _BookingStep2FamilyProfileSelectionState
   }
 
   String _getGenderLabel(String? gender) {
-    if (gender == null || gender.trim().isEmpty) return AppStrings.bookingNotUpdated;
+    if (gender == null || gender.trim().isEmpty)
+      return AppStrings.bookingNotUpdated;
 
     final normalized = gender.trim().toLowerCase();
     if (normalized == 'male' || normalized == 'nam') return AppStrings.male;
@@ -64,7 +67,10 @@ class _BookingStep2FamilyProfileSelectionState
   }
 
   bool _isMomOrBabyType(MemberTypeModel type) {
-    final normalized = type.name.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+    final normalized = type.name.trim().toLowerCase().replaceAll(
+      RegExp(r'\s+'),
+      ' ',
+    );
     return normalized == 'mom' || normalized == 'baby';
   }
 
@@ -73,33 +79,38 @@ class _BookingStep2FamilyProfileSelectionState
 
     List<MemberTypeModel> memberTypes;
     try {
-      final allTypes = await InjectionContainer.familyProfileRepository.getMemberTypes();
-      memberTypes = allTypes
-          .where((t) => t.isActive)
-          .where(_isMomOrBabyType)
-          .toList()
-        ..sort((a, b) {
-          int rank(MemberTypeModel t) {
-            final name = t.name.trim().toLowerCase();
-            if (name == 'mom') return 0;
-            if (name == 'baby') return 1;
-            return 99;
-          }
+      final allTypes = await InjectionContainer.familyProfileRepository
+          .getMemberTypes();
+      memberTypes =
+          allTypes.where((t) => t.isActive).where(_isMomOrBabyType).toList()
+            ..sort((a, b) {
+              int rank(MemberTypeModel t) {
+                final name = t.name.trim().toLowerCase();
+                if (name == 'mom') return 0;
+                if (name == 'baby') return 1;
+                return 99;
+              }
 
-          final byRank = rank(a).compareTo(rank(b));
-          if (byRank != 0) return byRank;
-          return a.name.compareTo(b.name);
-        });
+              final byRank = rank(a).compareTo(rank(b));
+              if (byRank != 0) return byRank;
+              return a.name.compareTo(b.name);
+            });
     } catch (e) {
       if (!mounted) return;
-      AppToast.showError(context, message: 'Không tải được loại thành viên: $e');
+      AppToast.showError(
+        context,
+        message: 'Không tải được loại thành viên: $e',
+      );
       return;
     }
 
     if (!mounted) return;
 
     if (memberTypes.isEmpty) {
-      AppToast.showWarning(context, message: 'Không có loại thành viên Mom/Baby để thêm mới.');
+      AppToast.showWarning(
+        context,
+        message: 'Không có loại thành viên Mom/Baby để thêm mới.',
+      );
       return;
     }
 
@@ -112,58 +123,68 @@ class _BookingStep2FamilyProfileSelectionState
           padding: EdgeInsets.only(top: 12 * scale),
           child: FamilyProfileFormDrawer(
             memberTypes: memberTypes,
-            onSave: ({
-              required String fullName,
-              int? memberTypeId,
-              DateTime? dateOfBirth,
-              String? gender,
-              String? address,
-              String? phoneNumber,
-              File? avatar,
-            }) async {
-              if (_isSubmitting) return;
+            onSave:
+                ({
+                  required String fullName,
+                  int? memberTypeId,
+                  DateTime? dateOfBirth,
+                  String? gender,
+                  String? address,
+                  String? phoneNumber,
+                  File? avatar,
+                }) async {
+                  if (_isSubmitting) return;
 
-              _isSubmitting = true;
-              AppLoading.show(context, message: AppStrings.processing);
+                  _isSubmitting = true;
+                  AppLoading.show(context, message: AppStrings.processing);
 
-              try {
-                final request = CreateFamilyProfileRequestModel(
-                  memberTypeId: memberTypeId,
-                  fullName: fullName,
-                  dateOfBirth: dateOfBirth,
-                  gender: gender,
-                  address: address,
-                  phoneNumber: phoneNumber,
-                  avatar: avatar,
-                );
+                  try {
+                    final request = CreateFamilyProfileRequestModel(
+                      memberTypeId: memberTypeId,
+                      fullName: fullName,
+                      dateOfBirth: dateOfBirth,
+                      gender: gender,
+                      address: address,
+                      phoneNumber: phoneNumber,
+                      avatar: avatar,
+                    );
 
-                final created = await InjectionContainer
-                    .familyProfileRepository
-                    .createFamilyProfile(request);
+                    final created = await InjectionContainer
+                        .familyProfileRepository
+                        .createFamilyProfile(request);
 
-                if (!mounted || !sheetContext.mounted) return;
+                    if (!mounted || !sheetContext.mounted) return;
 
-                Navigator.of(sheetContext).pop();
-                AppLoading.hide(context);
-                AppToast.showSuccess(context, message: AppStrings.updateSuccess);
+                    Navigator.of(sheetContext).pop();
+                    AppLoading.hide(context);
+                    AppToast.showSuccess(
+                      context,
+                      message: AppStrings.updateSuccess,
+                    );
 
-                context.read<BookingBloc>().add(const BookingLoadFamilyProfiles());
+                    context.read<BookingBloc>().add(
+                      BookingLoadFamilyProfiles(accountId: widget.accountId),
+                    );
 
-                if (created.memberTypeId == 2 || created.memberTypeId == 3) {
-                  final nextIds = [...selectedIds];
-                  if (!nextIds.contains(created.id)) {
-                    nextIds.add(created.id);
-                    widget.onSelectionChanged(nextIds);
+                    if (created.memberTypeId == 2 ||
+                        created.memberTypeId == 3) {
+                      final nextIds = [...selectedIds];
+                      if (!nextIds.contains(created.id)) {
+                        nextIds.add(created.id);
+                        widget.onSelectionChanged(nextIds);
+                      }
+                    }
+                  } catch (e) {
+                    if (!mounted) return;
+                    AppLoading.hide(context);
+                    AppToast.showError(
+                      context,
+                      message: '${AppStrings.updateFailed}: $e',
+                    );
+                  } finally {
+                    _isSubmitting = false;
                   }
-                }
-              } catch (e) {
-                if (!mounted) return;
-                AppLoading.hide(context);
-                AppToast.showError(context, message: '${AppStrings.updateFailed}: $e');
-              } finally {
-                _isSubmitting = false;
-              }
-            },
+                },
           ),
         );
       },
@@ -206,7 +227,9 @@ class _BookingStep2FamilyProfileSelectionState
           if (profiles.isEmpty) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (context.mounted) {
-                context.read<BookingBloc>().add(const BookingLoadFamilyProfiles());
+                context.read<BookingBloc>().add(
+                  BookingLoadFamilyProfiles(accountId: widget.accountId),
+                );
               }
             });
             return const Center(child: AppLoadingIndicator());
@@ -311,7 +334,9 @@ class _BookingStep2FamilyProfileSelectionState
                       color: AppColors.white,
                       borderRadius: BorderRadius.circular(14 * scale),
                       border: Border.all(
-                        color: isSelected ? AppColors.primary : AppColors.borderLight,
+                        color: isSelected
+                            ? AppColors.primary
+                            : AppColors.borderLight,
                         width: isSelected ? 2 : 1,
                       ),
                     ),
@@ -321,11 +346,13 @@ class _BookingStep2FamilyProfileSelectionState
                         CircleAvatar(
                           radius: 22 * scale,
                           backgroundColor: AppColors.borderLight,
-                          backgroundImage: (profile.avatarUrl != null &&
+                          backgroundImage:
+                              (profile.avatarUrl != null &&
                                   profile.avatarUrl!.isNotEmpty)
                               ? NetworkImage(profile.avatarUrl!)
                               : null,
-                          child: (profile.avatarUrl == null ||
+                          child:
+                              (profile.avatarUrl == null ||
                                   profile.avatarUrl!.isEmpty)
                               ? Icon(
                                   profile.memberTypeId == 3
@@ -400,7 +427,9 @@ class _BookingStep2FamilyProfileSelectionState
                   borderRadius: BorderRadius.circular(21 * scale),
                   child: InkWell(
                     borderRadius: BorderRadius.circular(21 * scale),
-                    onTap: _isSubmitting ? null : () => _openCreateMemberForm(selectedIds),
+                    onTap: _isSubmitting
+                        ? null
+                        : () => _openCreateMemberForm(selectedIds),
                     child: Icon(
                       Icons.add_rounded,
                       size: 24 * scale,

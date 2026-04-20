@@ -149,6 +149,62 @@ class BookingStep4Summary extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (bookingBloc.selectedCustomer != null) ...[
+                _SummarySection(
+                  title: 'Thông tin khách hàng đặt gói',
+                  child: Container(
+                    padding: EdgeInsets.all(12 * scale),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(12 * scale),
+                      border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(8 * scale),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.person_pin_rounded,
+                            color: AppColors.primary,
+                            size: 24 * scale,
+                          ),
+                        ),
+                        SizedBox(width: 12 * scale),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                bookingBloc.selectedCustomer!.displayName,
+                                style: AppTextStyles.arimo(
+                                  fontSize: 15 * scale,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              SizedBox(height: 2 * scale),
+                              Text(
+                                'SĐT: ${bookingBloc.selectedCustomer!.phone ?? "N/A"}',
+                                style: AppTextStyles.arimo(
+                                  fontSize: 13 * scale,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: 14 * scale),
+              ],
               IntrinsicHeight(
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -14,6 +14,7 @@ import '../../../family_profile/domain/entities/family_profile_entity.dart';
 import '../../../family_profile/domain/usecases/get_family_profiles_usecase.dart';
 import 'booking_event.dart';
 import 'booking_state.dart';
+import '../../../../features/employee/account/data/models/account_model.dart';
 
 /// Booking BloC
 class BookingBloc extends Bloc<BookingEvent, BookingState> {
@@ -36,6 +37,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   List<PackageEntity>? _packages;
   List<FamilyProfileEntity>? _familyProfiles;
   List<RoomEntity>? _rooms;
+  AccountModel? _selectedCustomer;
 
   // Read-only accessors for UI to restore selections when navigating between steps
   DateTime? get selectedDate => _selectedDate;
@@ -53,6 +55,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   }
 
   List<RoomEntity>? get rooms => _rooms;
+  AccountModel? get selectedCustomer => _selectedCustomer;
 
   BookingBloc({
     required this.createBookingUsecase,
@@ -81,6 +84,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     on<BookingLoadAll>(_onLoadAll);
     on<BookingCancelRequested>(_onCancelBooking);
     on<BookingReset>(_onReset);
+    on<BookingSelectCustomer>(_onSelectCustomer);
   }
 
   Future<void> _onLoadPackages(
@@ -307,8 +311,9 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   ) async {
     if (_selectedPackageId == null ||
         _selectedRoomId == null ||
-        _selectedDate == null) {
-      emit(const BookingError('Vui lòng chọn đầy đủ thông tin'));
+        _selectedDate == null ||
+        event.familyProfileIds.isEmpty) {
+      emit(const BookingError('Vui lòng chọn đầy đủ thông tin (bao gồm thành viên gia đình)'));
       return;
     }
 
@@ -319,6 +324,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         packageId: _selectedPackageId!,
         roomId: _selectedRoomId!,
         startDate: _selectedDate!,
+        familyProfileIds: event.familyProfileIds,
         discountAmount: event.discountAmount,
       );
       emit(BookingCreated(booking));
@@ -419,6 +425,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     _selectedFamilyProfileIds = [];
     _selectedRoomId = null;
     _selectedDate = null;
+    _selectedCustomer = null;
     _packages = null;
     _familyProfiles = null;
     _rooms = null;
@@ -451,6 +458,12 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       }
     } catch (_) {
       // Ignore if package/room not found
+    }
+  }
+
+  void _onSelectCustomer(BookingSelectCustomer event, Emitter<BookingState> emit) {
+    if (event.customer is AccountModel) {
+      _selectedCustomer = event.customer as AccountModel;
     }
   }
 }

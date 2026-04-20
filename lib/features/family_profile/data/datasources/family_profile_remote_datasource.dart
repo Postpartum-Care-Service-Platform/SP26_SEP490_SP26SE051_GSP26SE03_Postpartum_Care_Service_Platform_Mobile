@@ -31,23 +31,24 @@ class FamilyProfileRemoteDataSourceImpl
     implements FamilyProfileRemoteDataSource {
   final Dio dio;
 
-  FamilyProfileRemoteDataSourceImpl({Dio? dio})
-      : dio = dio ?? ApiClient.dio;
+  FamilyProfileRemoteDataSourceImpl({Dio? dio}) : dio = dio ?? ApiClient.dio;
 
   @override
   Future<List<FamilyProfileModel>> getMyFamilyProfiles() async {
     try {
-      final response = await dio.get(
-        ApiEndpoints.getMyFamilyProfiles,
-      );
+      final response = await dio.get(ApiEndpoints.getMyFamilyProfiles);
 
       final List<dynamic> data = response.data as List<dynamic>;
       return data
-          .map((json) => FamilyProfileModel.fromJson(json as Map<String, dynamic>))
+          .map(
+            (json) => FamilyProfileModel.fromJson(json as Map<String, dynamic>),
+          )
           .toList();
     } on DioException catch (e) {
       if (e.response != null) {
-        throw Exception('Failed to load family profiles: ${e.response?.statusCode}');
+        throw Exception(
+          'Failed to load family profiles: ${e.response?.statusCode}',
+        );
       } else {
         throw Exception('Network error: ${e.message}');
       }
@@ -73,9 +74,7 @@ class FamilyProfileRemoteDataSourceImpl
       final List<dynamic> data = response.data as List<dynamic>;
       return data
           .map(
-            (json) => FamilyProfileModel.fromJson(
-              json as Map<String, dynamic>,
-            ),
+            (json) => FamilyProfileModel.fromJson(json as Map<String, dynamic>),
           )
           .toList();
     } on DioException catch (e) {
@@ -114,14 +113,12 @@ class FamilyProfileRemoteDataSourceImpl
       final List<dynamic> data = raw is List<dynamic>
           ? raw
           : (raw is Map<String, dynamic> && raw['data'] is List<dynamic>)
-              ? raw['data'] as List<dynamic>
-              : const [];
+          ? raw['data'] as List<dynamic>
+          : const [];
 
       return data
           .map(
-            (json) => FamilyProfileModel.fromJson(
-              json as Map<String, dynamic>,
-            ),
+            (json) => FamilyProfileModel.fromJson(json as Map<String, dynamic>),
           )
           .toList();
     } on DioException catch (e) {
@@ -144,9 +141,7 @@ class FamilyProfileRemoteDataSourceImpl
   @override
   Future<List<MemberTypeModel>> getMemberTypes() async {
     try {
-      final response = await dio.get(
-        ApiEndpoints.getMemberTypes,
-      );
+      final response = await dio.get(ApiEndpoints.getMemberTypes);
 
       final List<dynamic> data = response.data as List<dynamic>;
       return data
@@ -154,7 +149,9 @@ class FamilyProfileRemoteDataSourceImpl
           .toList();
     } on DioException catch (e) {
       if (e.response != null) {
-        throw Exception('Failed to load member types: ${e.response?.statusCode}');
+        throw Exception(
+          'Failed to load member types: ${e.response?.statusCode}',
+        );
       } else {
         throw Exception('Network error: ${e.message}');
       }
@@ -166,14 +163,14 @@ class FamilyProfileRemoteDataSourceImpl
   @override
   Future<MemberTypeModel> getMemberTypeById(int id) async {
     try {
-      final response = await dio.get(
-        ApiEndpoints.getMemberTypeById(id),
-      );
+      final response = await dio.get(ApiEndpoints.getMemberTypeById(id));
 
       return MemberTypeModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       if (e.response != null) {
-        throw Exception('Failed to load member type: ${e.response?.statusCode}');
+        throw Exception(
+          'Failed to load member type: ${e.response?.statusCode}',
+        );
       } else {
         throw Exception('Network error: ${e.message}');
       }
@@ -212,12 +209,12 @@ class FamilyProfileRemoteDataSourceImpl
         data: FormData.fromMap(formDataMap),
       );
 
-      return FamilyProfileModel.fromJson(
-        response.data as Map<String, dynamic>,
-      );
+      return FamilyProfileModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       if (e.response != null) {
-        throw Exception('Failed to create family profile: ${e.response?.statusCode}');
+        throw Exception(
+          'Failed to create family profile: ${e.response?.statusCode}',
+        );
       } else {
         throw Exception('Network error: ${e.message}');
       }
@@ -257,12 +254,12 @@ class FamilyProfileRemoteDataSourceImpl
         data: FormData.fromMap(formDataMap),
       );
 
-      return FamilyProfileModel.fromJson(
-        response.data as Map<String, dynamic>,
-      );
+      return FamilyProfileModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       if (e.response != null) {
-        throw Exception('Failed to update family profile: ${e.response?.statusCode}');
+        throw Exception(
+          'Failed to update family profile: ${e.response?.statusCode}',
+        );
       } else {
         throw Exception('Network error: ${e.message}');
       }

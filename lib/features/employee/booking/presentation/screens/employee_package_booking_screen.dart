@@ -32,14 +32,15 @@ class _EmployeePackageBookingScreenState
     extends State<EmployeePackageBookingScreen> {
   AccountModel? _selectedCustomer;
 
-  void _selectCustomer(AccountModel customer) {
+  void _selectCustomer(AccountModel customer, BookingBloc bloc) {
     setState(() {
       _selectedCustomer = customer;
     });
+    bloc.add(BookingSelectCustomer(customer));
     Navigator.of(context).pop();
   }
 
-  Future<void> _showCustomerSearchDialog() async {
+  Future<void> _showCustomerSearchDialog(BookingBloc bloc) async {
     final scale = AppResponsive.scaleFactor(context);
     await showModalBottomSheet<void>(
       context: context,
@@ -47,7 +48,7 @@ class _EmployeePackageBookingScreenState
       backgroundColor: Colors.transparent,
       builder: (context) => _CustomerSearchBottomSheet(
         selectedCustomer: _selectedCustomer,
-        onSelectCustomer: _selectCustomer,
+        onSelectCustomer: (customer) => _selectCustomer(customer, bloc),
         scale: scale,
       ),
     );
@@ -67,8 +68,15 @@ class _EmployeePackageBookingScreenState
       return;
     }
 
-    context.read<BookingBloc>().add(
-      BookingCreateBookingForCustomer(_selectedCustomer!.id, discountAmount: 0),
+    final bookingBloc = context.read<BookingBloc>();
+    final familyProfileIds = bookingBloc.selectedFamilyProfileIds;
+
+    bookingBloc.add(
+      BookingCreateBookingForCustomer(
+        customerId: _selectedCustomer!.id,
+        familyProfileIds: familyProfileIds,
+        discountAmount: 0,
+      ),
     );
   }
 
@@ -78,72 +86,80 @@ class _EmployeePackageBookingScreenState
 
     return BlocProvider(
       create: (_) => InjectionContainer.bookingBloc,
-      child: BlocListener<BookingBloc, BookingState>(
-        listener: (context, state) {
-          if (state is BookingCreated) {
-            final bookingBloc = context.read<BookingBloc>();
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => BlocProvider.value(
-                  value: bookingBloc,
-                  child: PaymentScreen(booking: state.booking),
-                ),
-              ),
-            );
-          } else if (state is BookingError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  state.message,
-                  style: AppTextStyles.arimo(color: AppColors.white),
-                ),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        },
-        child: EmployeeScaffold(
-          showFab: false,
-          appBar: AppAppBar(
-            title: 'Đặt gói cho khách hàng',
-            centerTitle: true,
-            onBackPressed: widget.onBackToDefaultStaffPage,
-          ),
-          body: Column(
-            children: [
-              Padding(
-                padding: EdgeInsets.fromLTRB(
-                  16 * scale,
-                  12 * scale,
-                  16 * scale,
-                  8 * scale,
-                ),
-                child: _buildCustomerSelector(scale),
-              ),
-              const Divider(height: 1),
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.all(8 * scale),
-                  child: ServicesBookingFlow(
-                    key: ValueKey(_selectedCustomer?.id ?? 'no-customer'),
-                    familyProfilesAccountId: _selectedCustomer?.id,
-                    onBackToLocationSelection: () {
-                      Navigator.of(context).maybePop();
-                    },
-                    onConfirmOverride: () => _onStaffConfirmBooking(context),
+      child: Builder(
+        builder: (context) {
+          return BlocListener<BookingBloc, BookingState>(
+            listener: (context, state) {
+              if (state is BookingCreated) {
+                final bookingBloc = context.read<BookingBloc>();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => BlocProvider.value(
+                      value: bookingBloc,
+                      child: PaymentScreen(booking: state.booking),
+                    ),
                   ),
-                ),
+                );
+              } else if (state is BookingError) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      state.message,
+                      style: AppTextStyles.arimo(color: AppColors.white),
+                    ),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            child: EmployeeScaffold(
+              showFab: false,
+              appBar: AppAppBar(
+                title: 'Đặt gói cho khách hàng',
+                centerTitle: true,
+                onBackPressed: widget.onBackToDefaultStaffPage,
               ),
-            ],
-          ),
-        ),
+              body: Column(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      16 * scale,
+                      12 * scale,
+                      16 * scale,
+                      8 * scale,
+                    ),
+                    child: _buildCustomerSelector(
+                      scale,
+                      context.read<BookingBloc>(),
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.all(8 * scale),
+                      child: ServicesBookingFlow(
+                        key: ValueKey(_selectedCustomer?.id ?? 'no-customer'),
+                        familyProfilesAccountId: _selectedCustomer?.id,
+                        onBackToLocationSelection: () {
+                          Navigator.of(context).maybePop();
+                        },
+                        onConfirmOverride: () =>
+                            _onStaffConfirmBooking(context),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildCustomerSelector(double scale) {
+  Widget _buildCustomerSelector(double scale, BookingBloc bloc) {
     return InkWell(
-      onTap: _showCustomerSearchDialog,
+      onTap: () => _showCustomerSearchDialog(bloc),
       borderRadius: BorderRadius.circular(12 * scale),
       child: Container(
         padding: EdgeInsets.all(14 * scale),
