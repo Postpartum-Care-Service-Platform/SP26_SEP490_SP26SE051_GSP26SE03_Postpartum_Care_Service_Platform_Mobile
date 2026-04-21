@@ -11,6 +11,7 @@ class ChatHubService {
   bool _handlersRegistered = false;
   final bool _loggingEnabled = true;
   bool _starting = false;
+  int? _activeConversationId;
 
   final _messageController = StreamController<ChatRealtimeMessage>.broadcast();
   final _messagesReadController =
@@ -68,14 +69,21 @@ class ChatHubService {
             },
             transport: HttpTransportType.WebSockets, // Cố gắng ép dùng WebSockets
             skipNegotiation: false,
-            logMessageContent: true, // Log cả nội dung tin nhắn thô
+            logMessageContent: false, 
           ),
         )
         .build();
 
     _connection?.onclose(({error}) => _log('[Hub] Connection closed. Error: $error'));
     _connection?.onreconnecting(({error}) => _log('[Hub] Connection reconnecting. Error: $error'));
-    _connection?.onreconnected(({connectionId}) => _log('[Hub] Connection reconnected. ID: $connectionId'));
+    _connection?.onreconnected(({connectionId}) async {
+        _log('[Hub] Connection reconnected. ID: $connectionId');
+        // Tự động join lại group nếu có hội thoại đang active
+        if (_activeConversationId != null) {
+          _log('[Hub] Auto-rejoining conversation $_activeConversationId after reconnect');
+          await joinConversation(_activeConversationId!);
+        }
+    });
 
     if (!_handlersRegistered) {
       _registerHandlers();
@@ -101,12 +109,14 @@ class ChatHubService {
 
   Future<void> stop() async {
     _log('[Hub] stop() requested');
+    _activeConversationId = null;
     await _connection?.stop();
     _log('[Hub] connection.stop() done.');
   }
 
   Future<void> joinConversation(int conversationId) async {
     _log('[Hub] Requesting to JoinConversation($conversationId)');
+    _activeConversationId = conversationId;
     await _ensureConnected();
     try {
       await _connection?.invoke('JoinConversation', args: [conversationId]);
@@ -118,6 +128,9 @@ class ChatHubService {
 
   Future<void> leaveConversation(int conversationId) async {
     _log('[Hub] Requesting to LeaveConversation($conversationId)');
+    if (_activeConversationId == conversationId) {
+      _activeConversationId = null;
+    }
     await _ensureConnected();
     try {
       await _connection?.invoke('LeaveConversation', args: [conversationId]);
@@ -263,6 +276,27 @@ class ChatHubService {
           conversationId: conversationId,
           staffId: staffId,
           staffName: staffName,
+          timestamp: DateTime.tryParse(tsRaw ?? '') ?? DateTime.now(),
+        ),
+      );
+    });
+
+    _connection?.on('NewSupportRequest', (args) {
+      _log('[Hub] NewSupportRequest raw=$args');
+      final payload = _mapFromArgs(args);
+      final requestId = _intOrNull(payload['requestId']) ??
+          _intOrNull(payload['requestid']) ??
+          _intOrNull(payload['RequestId']);
+      final conversationId = _intOrNull(payload['conversationId']) ??
+          _intOrNull(payload['conversationid']) ??
+          _intOrNull(payload['ConversationId']);
+      final tsRaw = (payload['timestamp'] ?? payload['Timestamp'])?.toString();
+      if (requestId == null || conversationId == null) return;
+
+      _supportCreatedController.add(
+        ChatRealtimeSupportRequestCreated(
+          requestId: requestId,
+          conversationId: conversationId,
           timestamp: DateTime.tryParse(tsRaw ?? '') ?? DateTime.now(),
         ),
       );

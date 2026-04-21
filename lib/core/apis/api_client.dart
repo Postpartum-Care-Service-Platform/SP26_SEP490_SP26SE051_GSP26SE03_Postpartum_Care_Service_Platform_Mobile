@@ -66,7 +66,7 @@ class ApiClient {
     );
 
     // For development with localhost and self-signed certificates
-    if (isLocalhost && !kReleaseMode) {
+    if (isLocalhost && !kReleaseMode && !kIsWeb) {
       (_dio!.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
         final client = HttpClient();
         client.badCertificateCallback =
@@ -322,7 +322,7 @@ class ApiClient {
     );
 
     // For development with localhost and self-signed certificates
-    if (isLocalhost && !kReleaseMode) {
+    if (isLocalhost && !kReleaseMode && !kIsWeb) {
       (_refreshDio!.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
         final client = HttpClient();
         client.badCertificateCallback =
