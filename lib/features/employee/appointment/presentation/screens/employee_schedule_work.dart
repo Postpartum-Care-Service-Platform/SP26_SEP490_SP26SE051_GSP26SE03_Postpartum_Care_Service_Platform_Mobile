@@ -269,12 +269,31 @@ class _LoadedContentState extends State<_LoadedContent> {
         debugPrint('Dashboard: Error loading appointments: $e');
       }
 
+      // Bookings của tôi (Dành riêng cho Home Staff)
+      int myWorkBookingsCount = 0;
+      try {
+        final myBookings = await _bookingRemote.getBookingsByHomeStaff();
+        // Đếm các booking đang cần xử lý (chưa hoàn thành/hủy)
+        myWorkBookingsCount = myBookings.where((b) {
+          final s = b.status.toLowerCase();
+          return s == 'pending' || 
+                 s == 'confirmed' || 
+                 s == 'inprogress' || 
+                 s == 'in_progress' || 
+                 s == 'checked_in' || 
+                 s == 'active';
+        }).length;
+      } catch (e) {
+        debugPrint('Dashboard: Error loading my bookings count: $e');
+      }
+
       return _DashboardSummary(
         mySupportRequests: mySupportCount,
         pendingSupportRequests: pendingSupportCount,
         unscheduledContracts: draftContractsCount,
         todaysBookings: pendingBookingsCount,
         pendingAppointments: systemPendingAppts,
+        myWorkBookings: myWorkBookingsCount,
       );
     } catch (e) {
       debugPrint('Dashboard: Global summary error: $e');
@@ -356,6 +375,9 @@ class _LoadedContentState extends State<_LoadedContent> {
                 },
                 onPendingAppointmentsTap: () {
                   AppRouter.push(context, AppRoutes.employeeAppointmentList);
+                },
+                onMyBookingsTap: () {
+                  AppRouter.push(context, AppRoutes.employeeMyBookings);
                 },
               ),
               SizedBox(height: 1 * AppResponsive.scaleFactor(context)),
@@ -673,6 +695,7 @@ class _DashboardSummary {
   final int unscheduledContracts;
   final int todaysBookings;
   final int pendingAppointments;
+  final int myWorkBookings;
 
   const _DashboardSummary({
     required this.mySupportRequests,
@@ -680,6 +703,7 @@ class _DashboardSummary {
     required this.unscheduledContracts,
     required this.todaysBookings,
     required this.pendingAppointments,
+    required this.myWorkBookings,
   });
 
   const _DashboardSummary.empty()
@@ -687,14 +711,16 @@ class _DashboardSummary {
         pendingSupportRequests = 0,
         unscheduledContracts = 0,
         todaysBookings = 0,
-        pendingAppointments = 0;
+        pendingAppointments = 0,
+        myWorkBookings = 0;
 
   bool get isAllZero =>
       mySupportRequests == 0 &&
       pendingSupportRequests == 0 &&
       unscheduledContracts == 0 &&
       todaysBookings == 0 &&
-      pendingAppointments == 0;
+      pendingAppointments == 0 &&
+      myWorkBookings == 0;
 }
 
 class _DashboardSummaryRow extends StatelessWidget {
@@ -705,6 +731,7 @@ class _DashboardSummaryRow extends StatelessWidget {
   final VoidCallback? onContractsTap;
   final VoidCallback? onBookingsTap;
   final VoidCallback? onPendingAppointmentsTap;
+  final VoidCallback? onMyBookingsTap;
 
   const _DashboardSummaryRow({
     required this.summaryFuture,
@@ -714,6 +741,7 @@ class _DashboardSummaryRow extends StatelessWidget {
     this.onContractsTap,
     this.onBookingsTap,
     this.onPendingAppointmentsTap,
+    this.onMyBookingsTap,
   });
 
   @override
@@ -758,12 +786,12 @@ class _DashboardSummaryRow extends StatelessWidget {
               SizedBox(width: 8 * scale),
               Expanded(
                 child: _DashboardMiniCard(
-                  icon: Icons.event_note,
-                  title: 'Lịch hẹn cần xử lý',
-                  value: isLoading ? null : '${summary?.pendingAppointments ?? 0}',
+                  icon: Icons.book_online,
+                  title: 'Booking của tôi',
+                  value: isLoading ? null : '${summary?.myWorkBookings ?? 0}',
                   color: const Color(0xFFF97316),
                   scale: scale,
-                  onTap: onPendingAppointmentsTap,
+                  onTap: onMyBookingsTap,
                 ),
               ),
             ],
