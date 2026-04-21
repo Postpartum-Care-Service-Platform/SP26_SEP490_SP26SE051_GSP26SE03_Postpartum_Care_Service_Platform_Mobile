@@ -15,6 +15,10 @@ import '../../../../core/widgets/app_bottom_navigation_bar.dart';
 import '../../../../core/widgets/app_app_bar.dart';
 import '../widgets/booking_history/booking_card.dart';
 import '../widgets/booking_history/booking_history_helpers.dart';
+import '../../../../core/routing/app_routes.dart';
+import '../../../../core/routing/app_router.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
 
 class BookingHistoryScreen extends StatelessWidget {
   const BookingHistoryScreen({super.key});
@@ -35,13 +39,42 @@ class BookingHistoryScreen extends StatelessWidget {
           titleFontWeight: FontWeight.w700,
           onBackPressed: () {
             if (context.mounted) {
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(
-                  builder: (_) =>
-                      const AppScaffold(initialTab: AppBottomTab.profile),
-                ),
-                (route) => false,
-              );
+              final authState = context.read<AuthBloc>().state;
+              String? role;
+              String? memberType;
+
+              if (authState is AuthSuccess) {
+                role = authState.user?.role.toLowerCase();
+                memberType = authState.user?.memberType?.toLowerCase();
+              } else if (authState is AuthCurrentAccountLoaded) {
+                role = authState.account.roleName.toLowerCase();
+                memberType = authState.account.memberType?.toLowerCase() ??
+                    authState.account.ownerProfile?.memberTypeName
+                        ?.toLowerCase();
+              }
+
+              final isEmployee = role == 'staff' ||
+                  role == 'manager' ||
+                  role == 'admin' ||
+                  role == 'homestaff' ||
+                  (memberType != null &&
+                      (memberType.contains('staff') ||
+                          memberType.contains('nurse')));
+
+              if (isEmployee) {
+                AppRouter.pushAndRemoveUntil(
+                  context,
+                  AppRoutes.employeePortal,
+                );
+              } else {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        const AppScaffold(initialTab: AppBottomTab.profile),
+                  ),
+                  (route) => false,
+                );
+              }
             }
           },
         ),

@@ -47,6 +47,7 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
   }
 
   Future<void> _refresh() async {
+    if (!mounted) return;
     setState(() {
       _futureBookings = _loadBookings();
     });
@@ -170,13 +171,15 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
       message: 'Bạn có chắc chắn muốn xác nhận gói dịch vụ này?',
       color: const Color(0xFF2563EB),
     );
-    if (!confirmed) return;
+    if (!confirmed || !mounted) return;
 
+    final messenger = ScaffoldMessenger.of(context);
     setState(() => _isActionInProgress = true);
     try {
       final message = await _dataSource.confirmBooking(booking.id);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      
+      messenger.showSnackBar(
         SnackBar(
           content: Text(
             message,
@@ -188,7 +191,7 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
       await _refresh();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(
           content: Text(
             'Lỗi xác nhận booking: $e',
@@ -212,13 +215,15 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
       message: 'Hành động này sẽ hủy hoàn toàn gói dịch vụ. Tiếp tục?',
       color: const Color(0xFFDC2626),
     );
-    if (!confirmed) return;
+    if (!confirmed || !mounted) return;
 
+    final messenger = ScaffoldMessenger.of(context);
     setState(() => _isActionInProgress = true);
     try {
       final message = await _dataSource.cancelBooking(booking.id);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+
+      messenger.showSnackBar(
         SnackBar(
           content: Text(
             message,
@@ -230,7 +235,7 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
       await _refresh();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(
           content: Text(
             'Lỗi hủy booking: $e',
@@ -255,13 +260,15 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
           'Bạn xác nhận khách đã sử dụng hết dịch vụ và muốn kết thúc booking này?',
       color: const Color(0xFF16A34A),
     );
-    if (!confirmed) return;
+    if (!confirmed || !mounted) return;
 
+    final messenger = ScaffoldMessenger.of(context);
     setState(() => _isActionInProgress = true);
     try {
       final message = await _dataSource.completeBooking(booking.id);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+
+      messenger.showSnackBar(
         SnackBar(
           content: Text(
             message,
@@ -273,7 +280,7 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
       await _refresh();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(
           content: Text(
             'Lỗi hoàn thành booking: $e',
@@ -298,13 +305,15 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
           'Xác nhận khách hàng đã đến trung tâm và bắt đầu sử dụng dịch vụ?',
       color: const Color(0xFF0D9488), // teal color for check-in
     );
-    if (!confirmed) return;
+    if (!confirmed || !mounted) return;
 
+    final messenger = ScaffoldMessenger.of(context);
     setState(() => _isActionInProgress = true);
     try {
       final message = await _dataSource.checkInBooking(booking.id);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+
+      messenger.showSnackBar(
         SnackBar(
           content: Text(
             message,
@@ -316,7 +325,7 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
       await _refresh();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(
           content: Text(
             'Lỗi check-in booking: $e',
@@ -927,6 +936,10 @@ class _BookingItem extends StatelessWidget {
         statusColor = const Color(0xFFF97316); // orange
         statusIcon = 'wait';
         break;
+      case 'pendingcustomerconfirm':
+        statusColor = const Color(0xFF9333EA); // purple
+        statusIcon = 'wait_customer';
+        break;
       case 'confirmed':
         statusColor = const Color(0xFF2563EB); // blue
         statusIcon = 'check';
@@ -1199,6 +1212,8 @@ class _BookingItem extends StatelessWidget {
     switch (iconKey) {
       case 'wait':
         return Icons.hourglass_empty_rounded;
+      case 'wait_customer':
+        return Icons.hourglass_bottom_rounded;
       case 'check':
         return Icons.check_circle_outline_rounded;
       case 'in_progress':
@@ -1216,6 +1231,8 @@ class _BookingItem extends StatelessWidget {
     switch (status.toLowerCase()) {
       case 'pending':
         return 'CHỜ XỬ LÝ';
+      case 'pendingcustomerconfirm':
+        return 'CHỜ KHÁCH XÁC NHẬN';
       case 'confirmed':
         return 'ĐÃ XÁC NHẬN';
       case 'in_progress':
