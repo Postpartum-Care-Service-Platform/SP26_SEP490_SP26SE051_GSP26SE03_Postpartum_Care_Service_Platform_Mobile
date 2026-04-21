@@ -7,6 +7,11 @@ import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_widgets.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/app_bottom_navigation_bar.dart';
+import '../../../../core/routing/app_routes.dart';
+import '../../../../core/routing/app_router.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class BookingCancelledScreen extends StatelessWidget {
   final String? message;
@@ -67,14 +72,44 @@ class BookingCancelledScreen extends StatelessWidget {
               AppWidgets.primaryButton(
                 text: AppStrings.bookingCancelledBackToServices,
                 onPressed: () {
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(
-                      builder: (_) => const AppScaffold(
-                        initialTab: AppBottomTab.services,
-                      ),
-                    ),
-                    (route) => false,
-                  );
+                  final authState = context.read<AuthBloc>().state;
+                  String? role;
+                  String? memberType;
+
+                  if (authState is AuthSuccess) {
+                    role = authState.user?.role.toLowerCase();
+                    memberType = authState.user?.memberType?.toLowerCase();
+                  } else if (authState is AuthCurrentAccountLoaded) {
+                    role = authState.account.roleName.toLowerCase();
+                    memberType = authState.account.memberType?.toLowerCase() ??
+                        authState.account.ownerProfile?.memberTypeName
+                            ?.toLowerCase();
+                  } else if (authState is AuthGetAccountByIdSuccess) {
+                    role = authState.account.roleName.toLowerCase();
+                    memberType = authState.account.memberType?.toLowerCase() ??
+                        authState.account.ownerProfile?.memberTypeName
+                            ?.toLowerCase();
+                  }
+
+                  final isEmployee = role == 'staff' ||
+                      role == 'manager' ||
+                      role == 'admin' ||
+                      role == 'homestaff' ||
+                      (memberType != null &&
+                          (memberType.contains('staff') ||
+                              memberType.contains('nurse')));
+
+                  if (isEmployee) {
+                    AppRouter.pushAndRemoveUntil(
+                      context,
+                      AppRoutes.employeePortal,
+                    );
+                  } else {
+                    AppRouter.pushAndRemoveUntil(
+                      context,
+                      AppRoutes.home,
+                    );
+                  }
                 },
               ),
             ],
