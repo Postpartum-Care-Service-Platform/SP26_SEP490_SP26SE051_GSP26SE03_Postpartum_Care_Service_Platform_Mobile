@@ -208,12 +208,18 @@ class _LoadedContentState extends State<_LoadedContent> {
   String _statusFilter = 'all';
   DateTime? _dateFilter;
 
+  static const int _pageSize = 5;
+  int _currentPageUpcoming = 0;
+  int _currentPageCompleted = 0;
+
   void _clearFilters() {
     setState(() {
       _searchQuery = '';
       _searchController.clear();
       _statusFilter = 'all';
       _dateFilter = null;
+      _currentPageUpcoming = 0;
+      _currentPageCompleted = 0;
     });
   }
 
@@ -414,6 +420,32 @@ class _LoadedContentState extends State<_LoadedContent> {
         .where((a) => a.status == AppointmentStatus.completed)
         .toList();
 
+    // Pagination logic for upcoming appointments
+    final totalUpcomingPages = (upcomingAppointments.length / _pageSize).ceil();
+    final safeCurrentPageUpcoming = _currentPageUpcoming >= totalUpcomingPages
+        ? (totalUpcomingPages > 0 ? totalUpcomingPages - 1 : 0)
+        : _currentPageUpcoming;
+    final startUpcoming = safeCurrentPageUpcoming * _pageSize;
+    final endUpcoming = (startUpcoming + _pageSize) > upcomingAppointments.length
+        ? upcomingAppointments.length
+        : (startUpcoming + _pageSize);
+    final visibleUpcoming = upcomingAppointments.isEmpty
+        ? <AppointmentEntity>[]
+        : upcomingAppointments.sublist(startUpcoming, endUpcoming);
+
+    // Pagination logic for completed appointments
+    final totalCompletedPages = (completedAppointments.length / _pageSize).ceil();
+    final safeCurrentPageCompleted = _currentPageCompleted >= totalCompletedPages
+        ? (totalCompletedPages > 0 ? totalCompletedPages - 1 : 0)
+        : _currentPageCompleted;
+    final startCompleted = safeCurrentPageCompleted * _pageSize;
+    final endCompleted = (startCompleted + _pageSize) > completedAppointments.length
+        ? completedAppointments.length
+        : (startCompleted + _pageSize);
+    final visibleCompleted = completedAppointments.isEmpty
+        ? <AppointmentEntity>[]
+        : completedAppointments.sublist(startCompleted, endCompleted);
+
     return Column(
       children: [
         _buildSearchBar(scale),
@@ -436,17 +468,42 @@ class _LoadedContentState extends State<_LoadedContent> {
                           title: 'Lịch hẹn sắp tới',
                         ),
                         const SizedBox(height: 12),
-                        ...upcomingAppointments.map(
+                        ...visibleUpcoming.map(
                           (appointment) => Padding(
                             padding: const EdgeInsets.only(bottom: 12),
                             child: _AppointmentCard(
                               appointment: appointment,
                               onConfirm: () => _handleConfirm(appointment),
                               onComplete: () => _handleComplete(appointment),
-                              onCancel: () => _handleCancel(appointment),
                             ),
                           ),
                         ),
+                        if (upcomingAppointments.length > _pageSize) ...[
+                          const SizedBox(height: 4),
+                          _AppointmentPaginationControls(
+                            currentPage: safeCurrentPageUpcoming,
+                            totalPages: totalUpcomingPages,
+                            onPageSelected: (page) {
+                              setState(() {
+                                _currentPageUpcoming = page;
+                              });
+                            },
+                            onPrevious: safeCurrentPageUpcoming > 0
+                                ? () {
+                                    setState(() {
+                                      _currentPageUpcoming = safeCurrentPageUpcoming - 1;
+                                    });
+                                  }
+                                : null,
+                            onNext: safeCurrentPageUpcoming < totalUpcomingPages - 1
+                                ? () {
+                                    setState(() {
+                                      _currentPageUpcoming = safeCurrentPageUpcoming + 1;
+                                    });
+                                  }
+                                : null,
+                          ),
+                        ],
                       ]),
                     ),
                   ),
@@ -461,7 +518,7 @@ class _LoadedContentState extends State<_LoadedContent> {
                           iconColor: AppColors.textSecondary.withValues(alpha: 0.5),
                         ),
                         const SizedBox(height: 12),
-                        ...completedAppointments.map(
+                        ...visibleCompleted.map(
                           (appointment) => Padding(
                             padding: const EdgeInsets.only(bottom: 12),
                             child: _CompletedAppointmentCard(
@@ -469,6 +526,32 @@ class _LoadedContentState extends State<_LoadedContent> {
                             ),
                           ),
                         ),
+                        if (completedAppointments.length > _pageSize) ...[
+                          const SizedBox(height: 4),
+                          _AppointmentPaginationControls(
+                            currentPage: safeCurrentPageCompleted,
+                            totalPages: totalCompletedPages,
+                            onPageSelected: (page) {
+                              setState(() {
+                                _currentPageCompleted = page;
+                              });
+                            },
+                            onPrevious: safeCurrentPageCompleted > 0
+                                ? () {
+                                    setState(() {
+                                      _currentPageCompleted = safeCurrentPageCompleted - 1;
+                                    });
+                                  }
+                                : null,
+                            onNext: safeCurrentPageCompleted < totalCompletedPages - 1
+                                ? () {
+                                    setState(() {
+                                      _currentPageCompleted = safeCurrentPageCompleted + 1;
+                                    });
+                                  }
+                                : null,
+                          ),
+                        ],
                       ]),
                     ),
                   ),
@@ -508,20 +591,6 @@ class _LoadedContentState extends State<_LoadedContent> {
     }
   }
 
-  Future<void> _handleCancel(AppointmentEntity appointment) async {
-    final confirmed = await _showConfirmDialog(
-      title: 'Hủy Lịch hẹn',
-      message: 'Bạn có chắc chắn muốn hủy lịch hẹn này? Thao tác này không thể hoàn tác.',
-      color: const Color(0xFFDC2626),
-      icon: Icons.close_rounded,
-    );
-    if (confirmed && mounted) {
-      context.read<AppointmentBloc>().add(
-        CancelAppointmentEvent(appointment.id),
-      );
-    }
-  }
-
   Widget _buildSearchBar(double scale) {
     final padding = AppResponsive.pagePadding(context);
     return Padding(
@@ -541,7 +610,11 @@ class _LoadedContentState extends State<_LoadedContent> {
         ),
         child: TextField(
           controller: _searchController,
-          onChanged: (value) => setState(() => _searchQuery = value),
+          onChanged: (value) => setState(() {
+            _searchQuery = value;
+            _currentPageUpcoming = 0;
+            _currentPageCompleted = 0;
+          }),
           decoration: InputDecoration(
             hintText: 'Tìm theo tên khách, SĐT, email...',
             hintStyle: AppTextStyles.arimo(
@@ -554,7 +627,11 @@ class _LoadedContentState extends State<_LoadedContent> {
                     icon: const Icon(Icons.close_rounded, size: 18),
                     onPressed: () {
                       _searchController.clear();
-                      setState(() => _searchQuery = '');
+                      setState(() {
+                        _searchQuery = '';
+                        _currentPageUpcoming = 0;
+                        _currentPageCompleted = 0;
+                      });
                     },
                   )
                 : null,
@@ -593,7 +670,13 @@ class _LoadedContentState extends State<_LoadedContent> {
               label: Text(filter['label']!),
               selected: isSelected,
               onSelected: (selected) {
-                if (selected) setState(() => _statusFilter = filter['id']!);
+                if (selected) {
+                  setState(() {
+                    _statusFilter = filter['id']!;
+                    _currentPageUpcoming = 0;
+                    _currentPageCompleted = 0;
+                  });
+                }
               },
               labelStyle: AppTextStyles.arimo(
                 fontSize: 13,
@@ -707,13 +790,10 @@ class _AppointmentCard extends StatelessWidget {
   final AppointmentEntity appointment;
   final VoidCallback onConfirm;
   final VoidCallback onComplete;
-  final VoidCallback onCancel;
-
   const _AppointmentCard({
     required this.appointment,
     required this.onConfirm,
     required this.onComplete,
-    required this.onCancel,
   });
 
   @override
@@ -856,19 +936,6 @@ class _AppointmentCard extends StatelessWidget {
                           color: const Color(0xFF16A34A),
                         ),
                       ),
-                    if (appointment.status == AppointmentStatus.pending || 
-                        appointment.status == AppointmentStatus.scheduled)
-                      const SizedBox(width: 10),
-                    
-                    Expanded(
-                      child: _ActionIconButton(
-                        onTap: onCancel,
-                        icon: Icons.close_rounded,
-                        label: 'Hủy lịch',
-                        color: const Color(0xFFDC2626),
-                        isOutlined: true,
-                      ),
-                    ),
                   ],
                 ),
               ],
@@ -903,53 +970,151 @@ class _CompletedAppointmentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.background, width: 1.5),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF0FDF4),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 24),
+        color: const Color(0xFFFAFAFA),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: const Color(0xFF16A34A).withValues(alpha: 0.2),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF16A34A).withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        ],
+      ),
+      child: Column(
+        children: [
+          // Header with Status
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF16A34A).withValues(alpha: 0.06),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Row(
               children: [
-                Text(
-                  appointment.appointmentTypeName ?? appointment.name ?? 'Lịch hẹn',
-                  style: AppTextStyles.arimo(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8F7EE),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    'Đã hoàn thành',
+                    style: AppTextStyles.arimo(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF16A34A),
+                    ),
                   ),
                 ),
+                const Spacer(),
                 Text(
-                  '${appointment.customer?.username ?? 'Khách khách'} • ${_formatDate(appointment.appointmentDate)}',
+                  '#${appointment.id}',
                   style: AppTextStyles.arimo(
                     fontSize: 12,
-                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF16A34A),
                   ),
                 ),
               ],
             ),
           ),
-          Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary.withValues(alpha: 0.3)),
+          
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Title and Date
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            appointment.appointmentTypeName ?? appointment.name ?? 'Lịch hẹn',
+                            style: AppTextStyles.arimo(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.textPrimary.withValues(alpha: 0.7),
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Icon(Icons.access_time_rounded, size: 14, color: AppColors.textSecondary.withValues(alpha: 0.7)),
+                              const SizedBox(width: 4),
+                              Text(
+                                _formatDateTime(appointment.appointmentDate),
+                                style: AppTextStyles.arimo(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textSecondary.withValues(alpha: 0.7),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Divider(height: 1, color: Color(0xFFF1F5F9)),
+                ),
+                
+                // Customer Info
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 18,
+                      backgroundColor: const Color(0xFFF1F5F9),
+                      child: Icon(Icons.person_outline_rounded, size: 18, color: AppColors.textSecondary.withValues(alpha: 0.5)),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            appointment.customer?.username?.isNotEmpty == true ? appointment.customer!.username! : 'Khách lẻ',
+                            style: AppTextStyles.arimo(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary.withValues(alpha: 0.7),
+                            ),
+                          ),
+                          Text(
+                            appointment.customer?.phone ?? appointment.customer?.email ?? 'Không có thông tin liên hệ',
+                            style: AppTextStyles.arimo(
+                              fontSize: 12,
+                              color: AppColors.textSecondary.withValues(alpha: 0.7),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
+  String _formatDateTime(DateTime date) {
+    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year} | ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 }
 
@@ -1142,6 +1307,178 @@ class _AppointmentSkeletonCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.circular(999),
+      ),
+    );
+  }
+}
+
+class _AppointmentPaginationControls extends StatelessWidget {
+  final int currentPage;
+  final int totalPages;
+  final VoidCallback? onPrevious;
+  final VoidCallback? onNext;
+  final ValueChanged<int>? onPageSelected;
+
+  const _AppointmentPaginationControls({
+    required this.currentPage,
+    required this.totalPages,
+    this.onPrevious,
+    this.onNext,
+    this.onPageSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (totalPages <= 1) return const SizedBox.shrink();
+    
+    final scale = AppResponsive.scaleFactor(context);
+    final primaryColor = AppColors.primary;
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8 * scale, vertical: 6 * scale),
+      decoration: BoxDecoration(
+        color: primaryColor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12 * scale),
+        border: Border.all(color: primaryColor.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _PaginationButton(
+              onPressed: onPrevious,
+              icon: Icons.chevron_left,
+              label: 'Trước',
+              scale: scale,
+              color: primaryColor,
+            ),
+          ),
+          SizedBox(width: 8 * scale),
+          SizedBox(
+            width: 140 * scale,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ...() {
+                  List<Widget> items = [];
+                  int start = (currentPage - 1).clamp(0, totalPages - 1);
+                  int end = (start + 2).clamp(0, totalPages - 1);
+                  
+                  if (end == totalPages - 1 && totalPages >= 3) {
+                    start = (end - 2).clamp(0, totalPages - 1);
+                  }
+
+                  if (start > 0) {
+                    items.add(Text('...', style: TextStyle(color: primaryColor, fontSize: 11 * scale)));
+                  }
+
+                  for (int i = start; i <= end; i++) {
+                    final index = i;
+                    final isSelected = index == currentPage;
+                    items.add(
+                      GestureDetector(
+                        onTap: () => onPageSelected?.call(index),
+                        child: Container(
+                          margin: EdgeInsets.symmetric(horizontal: 2 * scale),
+                          width: 28 * scale,
+                          height: 28 * scale,
+                          decoration: BoxDecoration(
+                            color: isSelected ? primaryColor : Colors.white,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isSelected ? primaryColor : primaryColor.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            '${index + 1}',
+                            style: AppTextStyles.arimo(
+                              fontSize: 11 * scale,
+                              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                              color: isSelected ? Colors.white : primaryColor,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+
+                  if (end < totalPages - 1) {
+                    items.add(Text('...', style: TextStyle(color: primaryColor, fontSize: 11 * scale)));
+                  }
+                  
+                  return items;
+                }(),
+              ],
+            ),
+          ),
+          SizedBox(width: 8 * scale),
+          Expanded(
+            child: _PaginationButton(
+              onPressed: onNext,
+              icon: Icons.chevron_right,
+              label: 'Sau',
+              isTrailingIcon: true,
+              scale: scale,
+              color: primaryColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PaginationButton extends StatelessWidget {
+  final VoidCallback? onPressed;
+  final IconData icon;
+  final String label;
+  final bool isTrailingIcon;
+  final double scale;
+  final Color color;
+
+  const _PaginationButton({
+    this.onPressed,
+    required this.icon,
+    required this.label,
+    this.isTrailingIcon = false,
+    required this.scale,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return FilledButton(
+      onPressed: onPressed,
+      style: FilledButton.styleFrom(
+        backgroundColor: color,
+        foregroundColor: Colors.white,
+        disabledBackgroundColor: color.withValues(alpha: 0.15),
+        disabledForegroundColor: color.withValues(alpha: 0.4),
+        padding: EdgeInsets.zero,
+        minimumSize: Size(0, 32 * scale),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8 * scale),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (!isTrailingIcon) ...[
+            Icon(icon, size: 14 * scale),
+            SizedBox(width: 2 * scale),
+          ],
+          Text(
+            label,
+            style: AppTextStyles.arimo(
+              fontSize: 10 * scale,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          if (isTrailingIcon) ...[
+            SizedBox(width: 2 * scale),
+            Icon(icon, size: 14 * scale),
+          ],
+        ],
       ),
     );
   }
