@@ -12,172 +12,195 @@ import '../screens/notification_screen.dart';
 import 'notification_item.dart';
 
 /// Notification drawer widget - Simplified version
-class NotificationDrawer extends StatelessWidget {
+class NotificationDrawer extends StatefulWidget {
   const NotificationDrawer({super.key});
+
+  @override
+  State<NotificationDrawer> createState() => _NotificationDrawerState();
+}
+
+class _NotificationDrawerState extends State<NotificationDrawer> {
+  @override
+  void initState() {
+    super.initState();
+    // Use addPostFrameCallback to ensure context is available and avoid "setstate during build" issues
+    // although dispatching events usually doesn't trigger that, it's safer.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final state = context.read<NotificationBloc>().state;
+        if (state is NotificationInitial) {
+          context.read<NotificationBloc>().add(const NotificationLoadRequested());
+        } else {
+          // Refresh to get new notifications every time the drawer is opened
+          context.read<NotificationBloc>().add(const NotificationRefresh());
+        }
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
 
     return Drawer(
-        width: MediaQuery.of(context).size.width * 0.85,
-        backgroundColor: AppColors.white,
-        child: SafeArea(
-          child: Column(
-            children: [
-              // Simple Header
-              Padding(
-                padding: EdgeInsets.all(16 * scale),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      AppStrings.notificationTitle,
-                      style: AppTextStyles.arimo(
-                        fontSize: 18 * scale,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                      ),
+      width: MediaQuery.of(context).size.width * 0.85,
+      backgroundColor: AppColors.white,
+      child: SafeArea(
+        child: Column(
+          children: [
+            // Simple Header
+            Padding(
+              padding: EdgeInsets.all(16 * scale),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    AppStrings.notificationTitle,
+                    style: AppTextStyles.arimo(
+                      fontSize: 18 * scale,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
                     ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.close_rounded,
-                        color: AppColors.textPrimary,
-                        size: 24,
-                      ),
-                      onPressed: () => Navigator.of(context).pop(),
-                      padding: EdgeInsets.zero,
-                      constraints: BoxConstraints(),
+                  ),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.close_rounded,
+                      color: AppColors.textPrimary,
+                      size: 24,
                     ),
-                  ],
-                ),
+                    onPressed: () => Navigator.of(context).pop(),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
               ),
-              Divider(height: 1, color: AppColors.borderLight),
-              // Content
-              Expanded(
-                child: BlocBuilder<NotificationBloc, NotificationState>(
-                  builder: (context, state) {
-                    if (state is NotificationLoading) {
-                      return const Center(
-                        child: AppLoadingIndicator(
-                          color: AppColors.primary,
-                        ),
-                      );
-                    }
+            ),
+            Divider(height: 1, color: AppColors.borderLight),
+            // Content
+            Expanded(
+              child: BlocBuilder<NotificationBloc, NotificationState>(
+                builder: (context, state) {
+                  if (state is NotificationLoading || state is NotificationInitial) {
+                    return const Center(
+                      child: AppLoadingIndicator(
+                        color: AppColors.primary,
+                      ),
+                    );
+                  }
 
-                    if (state is NotificationError) {
-                      return Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(24 * scale),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                state.message,
-                                style: AppTextStyles.arimo(
-                                  fontSize: 14 * scale,
-                                  color: AppColors.textSecondary,
-                                ),
-                                textAlign: TextAlign.center,
+                  if (state is NotificationError) {
+                    return Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(24 * scale),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              state.message,
+                              style: AppTextStyles.arimo(
+                                fontSize: 14 * scale,
+                                color: AppColors.textSecondary,
                               ),
-                              SizedBox(height: 16 * scale),
-                              TextButton(
-                                onPressed: () {
-                                  context.read<NotificationBloc>().add(
-                                        const NotificationLoadRequested(),
-                                      );
-                                },
-                                child: Text(AppStrings.retry),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }
-
-                    if (state is NotificationLoaded) {
-                      final displayNotifications = state.notifications.take(5).toList();
-
-                      if (displayNotifications.isEmpty) {
-                        return Center(
-                          child: Text(
-                            AppStrings.noNotifications,
-                            style: AppTextStyles.arimo(
-                              fontSize: 14 * scale,
-                              color: AppColors.textSecondary,
+                              textAlign: TextAlign.center,
                             ),
-                          ),
-                        );
-                      }
+                            SizedBox(height: 16 * scale),
+                            TextButton(
+                              onPressed: () {
+                                context.read<NotificationBloc>().add(
+                                      const NotificationLoadRequested(),
+                                    );
+                              },
+                              child: Text(AppStrings.retry),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
 
-                      return Column(
-                        children: [
-                          Expanded(
-                            child: ListView.separated(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 16 * scale,
-                                vertical: 8 * scale,
-                              ),
-                              itemCount: displayNotifications.length,
-                              separatorBuilder: (context, index) => SizedBox(height: 8 * scale),
-                              itemBuilder: (context, index) {
-                                final notification = displayNotifications[index];
-                                return NotificationItem(
-                                  notification: notification,
-                                  onTap: () {
-                                    if (!notification.isRead) {
-                                      context.read<NotificationBloc>().add(
-                                            NotificationMarkAsRead(notification.id),
-                                          );
-                                    }
-                                  },
+                  if (state is NotificationLoaded) {
+                    final displayNotifications = state.notifications.take(5).toList();
+
+                    if (displayNotifications.isEmpty) {
+                      return Center(
+                        child: Text(
+                          AppStrings.noNotifications,
+                          style: AppTextStyles.arimo(
+                            fontSize: 14 * scale,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      );
+                    }
+
+                    return Column(
+                      children: [
+                        Expanded(
+                          child: ListView.separated(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16 * scale,
+                              vertical: 8 * scale,
+                            ),
+                            itemCount: displayNotifications.length,
+                            separatorBuilder: (context, index) => SizedBox(height: 8 * scale),
+                            itemBuilder: (context, index) {
+                              final notification = displayNotifications[index];
+                              return NotificationItem(
+                                notification: notification,
+                                onTap: () {
+                                  if (!notification.isRead) {
+                                    context.read<NotificationBloc>().add(
+                                          NotificationMarkAsRead(notification.id),
+                                        );
+                                  }
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                        // Simple View All button
+                        Padding(
+                          padding: EdgeInsets.all(16 * scale),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => const NotificationScreen(),
+                                  ),
                                 );
                               },
-                            ),
-                          ),
-                          // Simple View All button
-                          Padding(
-                            padding: EdgeInsets.all(16 * scale),
-                            child: SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (context) => const NotificationScreen(),
-                                    ),
-                                  );
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primary,
-                                  foregroundColor: AppColors.white,
-                                  padding: EdgeInsets.symmetric(vertical: 12 * scale),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12 * scale),
-                                  ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: AppColors.white,
+                                padding: EdgeInsets.symmetric(vertical: 12 * scale),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12 * scale),
                                 ),
-                                child: Text(
-                                  AppStrings.viewAll,
-                                  style: AppTextStyles.arimo(
-                                    fontSize: 15 * scale,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                              ),
+                              child: Text(
+                                AppStrings.viewAll,
+                                style: AppTextStyles.arimo(
+                                  fontSize: 15 * scale,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ),
                           ),
-                        ],
-                      );
-                    }
+                        ),
+                      ],
+                    );
+                  }
 
-                    return const SizedBox.shrink();
-                  },
-                ),
+                  return const SizedBox.shrink();
+                },
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-      );
+      ),
+    );
   }
 }
