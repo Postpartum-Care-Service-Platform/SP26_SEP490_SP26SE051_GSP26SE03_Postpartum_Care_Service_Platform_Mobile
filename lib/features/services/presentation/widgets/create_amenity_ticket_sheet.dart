@@ -145,7 +145,7 @@ class _CreateAmenityTicketSheetState extends State<CreateAmenityTicketSheet> {
       );
       
       if (selectedDateTime.isBefore(now)) {
-        AppToast.showError(context, message: 'Bạn không thể chọn thời gian trong quá khứ');
+        AppToast.showError(context, message: AppStrings.amenityPastTimeError);
         return;
       }
     }
@@ -278,7 +278,7 @@ class _CreateAmenityTicketSheetState extends State<CreateAmenityTicketSheet> {
       if (_calculatedEndTime == null) {
         AppToast.showError(
           context,
-          message: 'Không thể tính toán thời gian kết thúc',
+          message: AppStrings.amenityCalculateEndTimeError,
         );
         return;
       }
@@ -349,7 +349,7 @@ class _CreateAmenityTicketSheetState extends State<CreateAmenityTicketSheet> {
           if (errorMessage.toLowerCase().contains('overlap') || 
               errorMessage.toLowerCase().contains('trùng') ||
               errorMessage.toLowerCase().contains('conflict')) {
-            errorMessage = 'Thời gian đã chọn bị trùng với lịch trình hiện có. Vui lòng chọn thời gian khác.';
+            errorMessage = AppStrings.amenityConflictError;
           }
           AppToast.showError(
             parentContext,
@@ -415,7 +415,7 @@ class _CreateAmenityTicketSheetState extends State<CreateAmenityTicketSheet> {
                   borderRadius: BorderRadius.circular(8 * scale),
                 ),
                 child: Text(
-                  'Bắt buộc',
+                  AppStrings.requiredLabel,
                   style: AppTextStyles.arimo(
                     fontSize: 10 * scale,
                     fontWeight: FontWeight.w600,
@@ -440,7 +440,7 @@ class _CreateAmenityTicketSheetState extends State<CreateAmenityTicketSheet> {
             ),
             child: Center(
               child: Text(
-                'Không có dịch vụ tiện ích nào',
+                AppStrings.amenityNoServices,
                 style: AppTextStyles.arimo(
                   fontSize: 13 * scale,
                   color: AppColors.textSecondary,
@@ -557,7 +557,7 @@ class _CreateAmenityTicketSheetState extends State<CreateAmenityTicketSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Đã chọn: ${_selectedService!.name}',
+                        '${AppStrings.amenitySelectedValue}: ${_selectedService!.name}',
                         style: AppTextStyles.arimo(
                           fontSize: 13 * scale,
                           fontWeight: FontWeight.w600,
@@ -566,7 +566,7 @@ class _CreateAmenityTicketSheetState extends State<CreateAmenityTicketSheet> {
                       ),
                       SizedBox(height: 2 * scale),
                       Text(
-                        'Thời lượng: ${_selectedService!.duration} phút',
+                        '${AppStrings.amenityDuration}: ${_selectedService!.duration} ${AppStrings.amenityMinutes}',
                         style: AppTextStyles.arimo(
                           fontSize: 11 * scale,
                           color: AppColors.textSecondary,
@@ -638,7 +638,9 @@ class _CreateAmenityTicketSheetState extends State<CreateAmenityTicketSheet> {
 
             final picked = await showDatePicker(
               context: context,
-              initialDate: _selectedDate ?? minDate,
+              initialDate: (_selectedDate != null && !_selectedDate!.isBefore(minDate))
+                  ? _selectedDate!
+                  : minDate,
               firstDate: minDate,
               lastDate: maxDate.isBefore(minDate) ? minDate : maxDate,
               locale: const Locale('vi', 'VN'),

@@ -50,4 +50,7 @@ abstract class BookingRepository {
   /// Staff/Admin: Complete booking
   Future<String> completeBooking(int id);
 
+  /// Customer: Confirm checkout completion (2-step verification)
+  Future<String> confirmCompletion(int id);
+
 }

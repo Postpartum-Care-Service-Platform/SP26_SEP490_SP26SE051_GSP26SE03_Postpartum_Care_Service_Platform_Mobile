@@ -475,6 +475,13 @@ class AppStrings {
   static const String bookingSummarySelectedMembers = 'Thành viên đã chọn ({count})';
   static const String bookingSummaryNoSelectedMembers = 'Chưa chọn thành viên';
   static const String bookingSummaryStayDuration = 'Thời gian lưu trú';
+  static const String bookingIdLabel = 'Mã booking';
+  static const String bookingPackageLabel = 'Gói';
+  static const String bookingTypeLabel = 'Loại';
+  static const String bookingRoomLabel = 'Phòng';
+  static const String bookingFloorLabel = 'Tầng';
+  static const String bookingContractCodeLabel = 'Mã hợp đồng';
+  static const String bookingStatusLabel = 'Trạng thái';
   static const String bookingSummaryPaymentMethod = 'Phương thức thanh toán';
   static const String bookingSummaryPayOsSafe = 'Thanh toán online an toàn qua PayOS';
   static const String bookingNoFamilyMembers = 'Chưa có thành viên gia đình';
@@ -628,6 +635,9 @@ class AppStrings {
   static const String bookingStatusConfirmed = 'Đã xác nhận';
   static const String bookingStatusInProgress = 'Đang diễn ra';
   static const String bookingStatusCompleted = 'Đã hoàn thành';
+  static const String bookingAwaitingCustomerConfirmation =
+      'Chờ khách hàng xác thực để hoàn thành dịch vụ tại nhà';
+  static const String bookingConfirmCompletion = 'Xác nhận hoàn thành';
 
   // Transaction Status
   static const String transactionStatusPaid = 'Đã thanh toán';
@@ -635,6 +645,7 @@ class AppStrings {
   static const String transactionStatusRefunded = 'Đã hoàn tiền';
 
   // Services Screen
+  static const String servicesInfoCurrentPackage = 'Thông tin gói hiện tại';
   static const String servicesCurrentPackage = 'Gói hiện tại: ';
   static const String servicesBookingInfo = 'Thông tin đặt phòng';
   static const String servicesRoomNumber = 'Số phòng';
@@ -724,6 +735,7 @@ class AppStrings {
   // Schedule Screen
   static const String scheduleNoScheduleForDay =
       'Không có lịch trình cho ngày này';
+  static const String scheduleEnjoyRestDay = 'Hãy tận hưởng ngày nghỉ ngơi của bạn';
   static const String scheduleDay = 'Ngày';
   static const String scheduleMissed = 'Đã bỏ lỡ';
   static const String scheduleCancelled = 'Đã hủy';
@@ -756,6 +768,15 @@ class AppStrings {
       'Vui lòng chọn dịch vụ tiện ích';
   static const String amenityPleaseSelectTime =
       'Vui lòng chọn thời gian bắt đầu';
+  static const String amenityPastTimeError =
+      'Bạn không thể chọn thời gian trong quá khứ';
+  static const String amenityCalculateEndTimeError =
+      'Không thể tính toán thời gian kết thúc';
+  static const String amenityConflictError =
+      'Thời gian đã chọn bị trùng với lịch trình hiện có. Vui lòng chọn thời gian khác.';
+  static const String amenityNoServices = 'Không có dịch vụ tiện ích nào';
+  static const String amenitySelectedValue = 'Đã chọn';
+  static const String requiredLabel = 'Bắt buộc';
   static const String amenityStatusBooked = 'Đã đặt';
   static const String amenityStatusAccepted = 'Đã chấp nhận';
   static const String amenityStatusCompleted = 'Đã hoàn thành';

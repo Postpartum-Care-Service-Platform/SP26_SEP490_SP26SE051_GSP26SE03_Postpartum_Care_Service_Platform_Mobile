@@ -170,6 +170,20 @@ class BookingCancelled extends BookingState {
   List<Object?> get props => [bookingId, message];
 }
 
+/// Booking confirm completion success
+class BookingConfirmCompletionSuccess extends BookingState {
+  final int bookingId;
+  final String message;
+
+  const BookingConfirmCompletionSuccess({
+    required this.bookingId,
+    required this.message,
+  });
+
+  @override
+  List<Object?> get props => [bookingId, message];
+}
+
 /// Error state
 class BookingError extends BookingState {
   final String message;

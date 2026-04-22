@@ -120,6 +120,7 @@ class ApiEndpoints {
   static String completeBooking(int id) => '/Booking/$id/complete';
   static String checkInBooking(int id) => '/Booking/$id/check-in';
   static String cancelBooking(int id) => '/Booking/$id/cancel';
+  static String confirmCompletion(int id) => '/Booking/$id/confirm-completion';
   static const String createPaymentLink = '/Transaction/create-payment-link';
   static const String getAllTransactions = '/Transaction/all';
   static String checkPaymentStatus(String orderCode) =>

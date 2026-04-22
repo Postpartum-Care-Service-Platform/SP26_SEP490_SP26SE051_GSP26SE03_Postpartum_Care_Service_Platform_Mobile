@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../../../core/constants/app_enums.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/constants/app_assets.dart';
@@ -22,11 +23,16 @@ import 'schedule_day_view.dart';
 import 'service_action_card.dart';
 import 'create_refund_request_sheet.dart';
 import 'current_booking_staff_sheet.dart';
+import '../../../booking/presentation/bloc/booking_bloc.dart';
+import '../../../booking/presentation/bloc/booking_event.dart';
+import '../../../booking/presentation/bloc/booking_state.dart';
+import '../../../../core/widgets/app_toast.dart';
 
 class ServiceDashboard extends StatelessWidget {
   final NowPackageModel nowPackage;
+  final VoidCallback? onRefresh;
 
-  const ServiceDashboard({super.key, required this.nowPackage});
+  const ServiceDashboard({super.key, required this.nowPackage, this.onRefresh});
 
   bool get _isCheckoutExpired {
     final checkoutDate = nowPackage.checkoutDate;
@@ -47,7 +53,7 @@ class ServiceDashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
-    final isHomeService = nowPackage.type.toLowerCase() == 'home';
+    final isHomeService = nowPackage.typeEnum == ServiceLocationType.home;
 
     final basePadding = AppResponsive.pagePadding(context);
 
@@ -79,14 +85,17 @@ class ServiceDashboard extends StatelessWidget {
                 padding: EdgeInsets.only(
                   left: basePadding.left,
                   right: basePadding.right,
-                  top: 8 * scale,
+                  top: 4 * scale,
                   bottom: 24 * scale,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (isHomeService) ...[
-                      _HomeServiceDashboard(nowPackage: nowPackage),
+                      _HomeServiceDashboard(
+                        nowPackage: nowPackage,
+                        onRefresh: onRefresh,
+                      ),
                     ] else ...[
                       // Key Card - First element after header
                       ResortKeyCard(nowPackage: nowPackage),
@@ -444,8 +453,9 @@ class _BrandSideWavePainter extends CustomPainter {
 
 class _HomeServiceDashboard extends StatelessWidget {
   final NowPackageModel nowPackage;
+  final VoidCallback? onRefresh;
 
-  const _HomeServiceDashboard({required this.nowPackage});
+  const _HomeServiceDashboard({required this.nowPackage, this.onRefresh});
 
   DateTime _normalizeDate(DateTime date) {
     final local = date.toLocal();
@@ -487,6 +497,7 @@ class _HomeServiceDashboard extends StatelessWidget {
       child: _HomeServiceDashboardContent(
         serviceDates: serviceDates,
         nowPackage: nowPackage,
+        onRefresh: onRefresh,
       ),
     );
   }
@@ -495,10 +506,12 @@ class _HomeServiceDashboard extends StatelessWidget {
 class _HomeServiceDashboardContent extends StatefulWidget {
   final List<DateTime> serviceDates;
   final NowPackageModel nowPackage;
+  final VoidCallback? onRefresh;
 
   const _HomeServiceDashboardContent({
     required this.serviceDates,
     required this.nowPackage,
+    this.onRefresh,
   });
 
   @override
@@ -527,6 +540,10 @@ class _HomeServiceDashboardContentState
     setState(() {
       _isPackageExpanded = !_isPackageExpanded;
     });
+  }
+
+  void _handleConfirmCompletion() {
+    context.read<BookingBloc>().add(BookingConfirmCompletion(widget.nowPackage.bookingId));
   }
 
   DateTime _normalizeDate(DateTime date) {
@@ -645,6 +662,7 @@ class _HomeServiceDashboardContentState
     );
   }
 
+
   Widget _buildPackageDetailRow(String label, String value) {
     final scale = AppResponsive.scaleFactor(context);
     return Row(
@@ -709,8 +727,17 @@ class _HomeServiceDashboardContentState
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
 
-    return BlocBuilder<FamilyScheduleBloc, FamilyScheduleState>(
-      builder: (context, state) {
+    return BlocListener<BookingBloc, BookingState>(
+      listener: (context, state) {
+        if (state is BookingConfirmCompletionSuccess) {
+          AppToast.showSuccess(context, message: state.message);
+          widget.onRefresh?.call();
+        } else if (state is BookingError) {
+          AppToast.showError(context, message: state.message);
+        }
+      },
+      child: BlocBuilder<FamilyScheduleBloc, FamilyScheduleState>(
+        builder: (context, state) {
         if (state is FamilyScheduleLoading) {
           final height = MediaQuery.of(context).size.height;
           return SizedBox(
@@ -759,18 +786,20 @@ class _HomeServiceDashboardContentState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildPackageSummary(context),
-              SizedBox(height: 10 * scale),
+              SizedBox(height: 6 * scale),
               ScheduleCalendarPicker(
                 selectedDate: _selectedDate,
                 onDateSelected: _handleDateSelected,
                 datesWithSchedules: scheduleDates,
                 margin: EdgeInsets.zero,
               ),
-              SizedBox(height: 16 * scale),
+              SizedBox(height: 8 * scale),
               ScheduleDayView(
                 date: _selectedDate,
                 schedules: schedulesForDate,
                 dayNo: dayNo,
+                isPendingCustomerConfirm: widget.nowPackage.isPendingCustomerConfirm,
+                onConfirm: _handleConfirmCompletion,
                 margin: EdgeInsets.zero,
               ),
             ],
@@ -779,6 +808,7 @@ class _HomeServiceDashboardContentState
 
         return const SizedBox.shrink();
       },
-    );
-  }
+    ),
+  );
+}
 }

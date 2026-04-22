@@ -55,6 +55,9 @@ abstract class BookingRemoteDataSource {
 
   Future<PaymentStatusModel> checkPaymentStatus(String orderCode);
 
+  /// Customer: Confirm checkout completion (2-step verification)
+  Future<String> confirmCompletion(int id);
+
 }
 
 /// Booking Remote Data Source Implementation
@@ -342,6 +345,21 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
     }
   }
 
+
+  @override
+  Future<String> confirmCompletion(int id) async {
+    try {
+      final response = await dio.put(ApiEndpoints.confirmCompletion(id));
+
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        return data['message'] as String? ?? 'Xác nhận hoàn thành thành công';
+      }
+      return 'Xác nhận hoàn thành thành công';
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
 
   String _handleError(DioException error) {
     if (error.response != null) {

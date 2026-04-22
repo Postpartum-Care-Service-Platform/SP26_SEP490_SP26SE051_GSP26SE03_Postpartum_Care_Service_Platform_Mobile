@@ -109,6 +109,7 @@ import '../../features/booking/domain/usecases/create_payment_link_usecase.dart'
 import '../../features/booking/domain/usecases/check_payment_status_usecase.dart'
     as booking;
 import '../../features/booking/domain/usecases/create_booking_for_customer_usecase.dart';
+import '../../features/booking/domain/usecases/confirm_completion_usecase.dart';
 import '../../features/booking/presentation/bloc/booking_bloc.dart';
 import '../../features/contract/data/datasources/contract_remote_datasource.dart';
 import '../../features/contract/data/repositories/contract_repository_impl.dart';
@@ -481,6 +482,8 @@ class InjectionContainer {
       booking.CheckPaymentStatusUsecase(bookingRepository);
   static CreateBookingForCustomerUsecase get _createBookingForCustomerUsecase =>
       CreateBookingForCustomerUsecase(bookingRepository);
+  static ConfirmCompletionUsecase get _confirmCompletionUsecase =>
+      ConfirmCompletionUsecase(bookingRepository);
 
   static GetContractByBookingIdUsecase get _getContractByBookingIdUsecase =>
       GetContractByBookingIdUsecase(contractRepository);
@@ -660,6 +663,7 @@ class InjectionContainer {
         getPackagesUsecase: _getPackagesUsecase,
         getFamilyProfilesUsecase: _getFamilyProfilesUsecase,
         getRoomsByPackage: _getRoomsByPackage,
+        confirmCompletionUsecase: _confirmCompletionUsecase,
       );
 
   static ContractBloc get contractBloc => ContractBloc(
