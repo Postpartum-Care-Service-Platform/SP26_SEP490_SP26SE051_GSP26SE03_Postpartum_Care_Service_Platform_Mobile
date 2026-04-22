@@ -20,6 +20,8 @@ abstract class MenuRemoteDataSource {
   );
 
   Future<MenuRecordModel> deleteMenuRecord(int id);
+  Future<MenuModel> createCustomizedMenu(Map<String, dynamic> request);
+  Future<List<MenuModel>> getCustomizedMenus();
 }
 
 /// Menu Remote Data Source Implementation
@@ -118,6 +120,32 @@ class MenuRemoteDataSourceImpl implements MenuRemoteDataSource {
       return data
           .map((json) =>
               MenuRecordModel.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  @override
+  Future<MenuModel> createCustomizedMenu(Map<String, dynamic> request) async {
+    try {
+      final response = await dio.post(
+        ApiEndpoints.menus,
+        data: request,
+      );
+      return MenuModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  @override
+  Future<List<MenuModel>> getCustomizedMenus() async {
+    try {
+      final response = await dio.get(ApiEndpoints.myCustomizedMenus);
+      final List<dynamic> data = response.data as List<dynamic>;
+      return data
+          .map((json) => MenuModel.fromJson(json as Map<String, dynamic>))
           .toList();
     } on DioException catch (e) {
       throw _handleError(e);

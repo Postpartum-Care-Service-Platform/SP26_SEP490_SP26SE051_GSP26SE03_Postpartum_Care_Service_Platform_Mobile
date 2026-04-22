@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
@@ -7,6 +8,7 @@ import '../../../../core/utils/app_formatters.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_widgets.dart';
+import '../bloc/menu_bloc.dart';
 import '../../domain/entities/menu_entity.dart';
 import '../../domain/entities/menu_type_entity.dart';
 import 'menu_list_drawer.dart';
@@ -17,6 +19,7 @@ class MenuSelectionDrawer extends StatefulWidget {
   final DateTime selectedDate;
   final List<MenuTypeEntity> menuTypes;
   final List<MenuEntity> availableMenus;
+  final List<MenuEntity> customizedMenus;
   final Map<int, MenuEntity> savedSelections; // menuTypeId -> MenuEntity (saved)
   final Map<int, MenuEntity> unsavedSelections; // menuTypeId -> MenuEntity (unsaved)
   final Function(Map<int, MenuEntity>) onSave; // Callback to save all selections
@@ -26,6 +29,7 @@ class MenuSelectionDrawer extends StatefulWidget {
     required this.selectedDate,
     required this.menuTypes,
     required this.availableMenus,
+    required this.customizedMenus,
     required this.savedSelections,
     required this.unsavedSelections,
     required this.onSave,
@@ -121,16 +125,20 @@ class _MenuSelectionDrawerState extends State<MenuSelectionDrawer> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => MenuListDrawer(
-        selectedDate: widget.selectedDate,
-        menuType: menuType,
-        availableMenus: widget.availableMenus,
-        currentSelection: currentSelection,
-        onMenuSelected: (menu) {
-          setState(() {
-            _tempSelections[menuType.id] = menu;
-          });
-        },
+      builder: (context) => BlocProvider.value(
+        value: this.context.read<MenuBloc>(),
+        child: MenuListDrawer(
+          selectedDate: widget.selectedDate,
+          menuType: menuType,
+          availableMenus: widget.availableMenus,
+          customizedMenus: widget.customizedMenus,
+          currentSelection: currentSelection,
+          onMenuSelected: (menu) {
+            setState(() {
+              _tempSelections[menuType.id] = menu;
+            });
+          },
+        ),
       ),
     );
   }

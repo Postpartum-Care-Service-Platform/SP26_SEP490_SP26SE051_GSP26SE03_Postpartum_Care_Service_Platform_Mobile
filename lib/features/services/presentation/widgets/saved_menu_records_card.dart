@@ -18,6 +18,7 @@ class SavedMenuRecordsCard extends StatelessWidget {
   final DateTime date;
   final List<MenuRecordEntity> savedRecords;
   final List<MenuEntity> allMenus;
+  final List<MenuEntity> customizedMenus;
   final List<MenuTypeEntity> menuTypes;
 
   const SavedMenuRecordsCard({
@@ -25,12 +26,18 @@ class SavedMenuRecordsCard extends StatelessWidget {
     required this.date,
     required this.savedRecords,
     required this.allMenus,
+    required this.customizedMenus,
     required this.menuTypes,
   });
 
   MenuEntity? _getMenu(int menuId) {
     try {
-      return allMenus.firstWhere((m) => m.id == menuId);
+      // First look in center's menus
+      final menu = allMenus.where((m) => m.id == menuId).firstOrNull;
+      if (menu != null) return menu;
+      
+      // Then look in customized menus
+      return customizedMenus.where((m) => m.id == menuId).firstOrNull;
     } catch (e) {
       return null;
     }
