@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/constants/app_strings.dart';
 import 'package:dio/dio.dart';
 import '../../../../core/apis/api_client.dart';
 import '../../../../core/apis/api_endpoints.dart';
@@ -112,11 +113,11 @@ class _ServicesScreenState extends State<ServicesScreen> {
                       children: [
                         const Icon(Icons.error_outline, color: Colors.red),
                         const SizedBox(height: 12),
-                        const Text('Không thể tải gói dịch vụ hiện tại'),
+                        Text(AppStrings.loadPackagesError),
                         const SizedBox(height: 12),
                         ElevatedButton(
                           onPressed: _refreshNowPackage,
-                          child: const Text('Thử lại'),
+                          child: Text(AppStrings.retry),
                         ),
                       ],
                     ),
@@ -130,9 +131,15 @@ class _ServicesScreenState extends State<ServicesScreen> {
                 final isFullyPaid = nowPackage.remainingAmount <= 0;
 
                 if (nowPackage.isServiceUnlocked && isFullyPaid) {
-                  return ServiceDashboard(nowPackage: nowPackage);
+                  return ServiceDashboard(
+                    nowPackage: nowPackage,
+                    onRefresh: _refreshNowPackage,
+                  );
                 } else {
-                  return CurrentPackageView(nowPackage: nowPackage);
+                  return CurrentPackageView(
+                    nowPackage: nowPackage,
+                    onRefresh: _refreshNowPackage,
+                  );
                 }
               }
 

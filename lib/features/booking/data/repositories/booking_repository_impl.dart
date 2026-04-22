@@ -140,4 +140,13 @@ class BookingRepositoryImpl implements BookingRepository {
       throw Exception(e.toString());
     }
   }
+
+  @override
+  Future<String> confirmCompletion(int id) async {
+    try {
+      return await remoteDataSource.confirmCompletion(id);
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
 }

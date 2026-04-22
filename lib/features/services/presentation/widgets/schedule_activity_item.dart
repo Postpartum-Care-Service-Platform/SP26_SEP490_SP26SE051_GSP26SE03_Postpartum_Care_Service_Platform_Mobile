@@ -188,6 +188,8 @@ class ScheduleActivityItem extends StatelessWidget {
                               ? TextDecoration.lineThrough
                               : null,
                         ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ),

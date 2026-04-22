@@ -104,6 +104,8 @@ class CarePlanActivityItem extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   // Instruction
                   if (carePlan.instruction != null &&

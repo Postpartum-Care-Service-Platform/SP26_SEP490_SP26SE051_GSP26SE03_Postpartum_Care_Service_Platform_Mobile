@@ -11,6 +11,8 @@ import '../../features/appointment/presentation/screens/appointment_screen.dart'
 import '../../features/services/presentation/screens/services_screen.dart';
 import '../../features/chat/presentation/screens/conversation_list_screen.dart';
 import '../../features/notification/presentation/widgets/notification_drawer.dart';
+import '../../features/notification/presentation/bloc/notification_bloc.dart';
+import '../../features/notification/presentation/bloc/notification_event.dart';
 import 'app_bottom_navigation_bar.dart';
 
 class ToggleBottomNavNotification extends Notification {
@@ -62,6 +64,9 @@ class _AppScaffoldState extends State<AppScaffold> {
     
     // Trigger initial account load
     context.read<AuthBloc>().add(const AuthLoadCurrentAccount());
+    
+    // Trigger initial notification load for badges
+    context.read<NotificationBloc>().add(const NotificationLoadRequested());
 
     final initialTab = widget.initialTab ?? AppBottomTab.home;
     _currentTab = _customerTabs.contains(initialTab)

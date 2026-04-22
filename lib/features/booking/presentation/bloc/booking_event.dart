@@ -162,3 +162,13 @@ class BookingSelectCustomer extends BookingEvent {
   @override
   List<Object?> get props => [customer];
 }
+
+/// Confirm booking completion (customer confirm check-out)
+class BookingConfirmCompletion extends BookingEvent {
+  final int id;
+
+  const BookingConfirmCompletion(this.id);
+
+  @override
+  List<Object?> get props => [id];
+}

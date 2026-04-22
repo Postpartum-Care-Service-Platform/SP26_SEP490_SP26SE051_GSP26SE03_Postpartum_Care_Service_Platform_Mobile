@@ -6,6 +6,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../domain/entities/family_schedule_entity.dart';
+import '../../../../core/widgets/app_widgets.dart';
 import 'schedule_activity_item.dart';
 
 /// Schedule Day View Widget
@@ -16,11 +17,16 @@ class ScheduleDayView extends StatelessWidget {
   final int dayNo;
   final EdgeInsets? margin;
 
+  final bool isPendingCustomerConfirm;
+  final VoidCallback? onConfirm;
+
   const ScheduleDayView({
     super.key,
     required this.date,
     required this.schedules,
     required this.dayNo,
+    this.isPendingCustomerConfirm = false,
+    this.onConfirm,
     this.margin,
   });
 
@@ -54,10 +60,10 @@ class ScheduleDayView extends StatelessWidget {
     if (sortedSchedules.isEmpty) {
       return Container(
         width: double.infinity,
-        margin: margin ?? EdgeInsets.symmetric(horizontal: 20 * scale, vertical: 8 * scale),
+        margin: margin ?? EdgeInsets.symmetric(horizontal: 20 * scale, vertical: 4 * scale),
         padding: EdgeInsets.symmetric(
-          horizontal: 48 * scale,
-          vertical: 48 * scale,
+          horizontal: 24 * scale,
+          vertical: (isPendingCustomerConfirm ? 20 : 40) * scale,
         ),
         decoration: BoxDecoration(
           color: AppColors.white,
@@ -79,8 +85,8 @@ class ScheduleDayView extends StatelessWidget {
           children: [
             // Icon with background circle
             Container(
-              width: 80 * scale,
-              height: 80 * scale,
+              width: (isPendingCustomerConfirm ? 56 : 80) * scale,
+              height: (isPendingCustomerConfirm ? 56 : 80) * scale,
               decoration: BoxDecoration(
                 color: AppColors.primary.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
@@ -88,8 +94,8 @@ class ScheduleDayView extends StatelessWidget {
               child: Center(
                 child: SvgPicture.asset(
                   AppAssets.calendar,
-                  width: 40 * scale,
-                  height: 40 * scale,
+                  width: (isPendingCustomerConfirm ? 28 : 40) * scale,
+                  height: (isPendingCustomerConfirm ? 28 : 40) * scale,
                   colorFilter: ColorFilter.mode(
                     AppColors.primary.withValues(alpha: 0.6),
                     BlendMode.srcIn,
@@ -97,7 +103,7 @@ class ScheduleDayView extends StatelessWidget {
                 ),
               ),
             ),
-            SizedBox(height: 20 * scale),
+            SizedBox(height: (isPendingCustomerConfirm ? 12 : 20) * scale),
             // Main message
             Text(
               AppStrings.scheduleNoScheduleForDay,
@@ -111,13 +117,17 @@ class ScheduleDayView extends StatelessWidget {
             SizedBox(height: 8 * scale),
             // Sub message
             Text(
-              'Hãy tận hưởng ngày nghỉ ngơi của bạn',
+              AppStrings.scheduleEnjoyRestDay,
               style: AppTextStyles.arimo(
                 fontSize: 13 * scale,
                 color: AppColors.textSecondary,
               ),
               textAlign: TextAlign.center,
             ),
+            if (isPendingCustomerConfirm) ...[
+              SizedBox(height: 24 * scale),
+              _buildPendingConfirmationAlert(context, scale),
+            ],
           ],
         ),
       );
@@ -201,6 +211,56 @@ class ScheduleDayView extends StatelessWidget {
               isLast: isLast,
             );
           }),
+          if (isPendingCustomerConfirm) ...[
+            SizedBox(height: 20 * scale),
+            _buildPendingConfirmationAlert(context, scale),
+          ],
+        ],
+      ),
+    );
+  }
+  Widget _buildPendingConfirmationAlert(BuildContext context, double scale) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(12 * scale),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(16 * scale),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.2),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.info_outline_rounded,
+                color: AppColors.primary,
+                size: 20 * scale,
+              ),
+              SizedBox(width: 10 * scale),
+              Expanded(
+                child: Text(
+                  AppStrings.bookingAwaitingCustomerConfirmation,
+                  style: AppTextStyles.arimo(
+                    fontSize: 13 * scale,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12 * scale),
+          AppWidgets.primaryButton(
+            text: AppStrings.bookingConfirmCompletion,
+            height: 48 * scale,
+            isEnabled: onConfirm != null,
+            onPressed: onConfirm ?? () {},
+            icon: Icon(Icons.check_circle_outline_rounded, size: 18 * scale, color: Colors.white),
+          ),
         ],
       ),
     );

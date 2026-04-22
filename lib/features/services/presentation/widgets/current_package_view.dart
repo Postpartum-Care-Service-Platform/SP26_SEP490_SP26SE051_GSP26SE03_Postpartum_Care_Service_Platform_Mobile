@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/constants/app_enums.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
@@ -26,10 +27,12 @@ import 'services_formatters.dart';
 
 class CurrentPackageView extends StatelessWidget {
   final NowPackageModel nowPackage;
+  final VoidCallback? onRefresh;
 
   const CurrentPackageView({
     super.key,
     required this.nowPackage,
+    this.onRefresh,
   });
 
   @override
@@ -49,10 +52,10 @@ class CurrentPackageView extends StatelessWidget {
     final isOnOrAfterCheckin = !todayDate.isBefore(checkin);
     final showOverdueWarning = !isFullyPaid && isOnOrAfterCheckin;
 
-    return SafeArea(
+    final content = SafeArea(
       child: SingleChildScrollView(
         padding:
-            EdgeInsets.fromLTRB(20 * scale, 16 * scale, 20 * scale, 24 * scale),
+            EdgeInsets.fromLTRB(20 * scale, 12 * scale, 20 * scale, 24 * scale),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -124,13 +127,19 @@ class CurrentPackageView extends StatelessWidget {
               SizedBox(height: 16 * scale),
             ],
             ResortKeyCard(nowPackage: nowPackage),
-            SizedBox(height: 16 * scale),
+            SizedBox(height: 8 * scale),
             if (nowPackage.isServiceUnlocked) ...[
               _AccountQuickInfo(account: account),
-            SizedBox(height: 16 * scale),
-            _NowPackageDetailsCard(nowPackage: nowPackage),
-              SizedBox(height: 16 * scale),
-              _InProgressSection(nowPackage: nowPackage),
+              SizedBox(height: 8 * scale),
+              _NowPackageDetailsCard(nowPackage: nowPackage),
+              SizedBox(height: 8 * scale),
+              _InProgressSection(
+                nowPackage: nowPackage,
+                onRefresh: onRefresh,
+                onConfirm: () {
+                  context.read<BookingBloc>().add(BookingConfirmCompletion(nowPackage.bookingId));
+                },
+              ),
               SizedBox(height: 16 * scale),
             ],
             AppWidgets.sectionContainer(
@@ -259,7 +268,20 @@ class CurrentPackageView extends StatelessWidget {
         ),
       ),
     );
+
+    return BlocListener<BookingBloc, BookingState>(
+      listener: (context, state) {
+        if (state is BookingConfirmCompletionSuccess) {
+          AppToast.showSuccess(context, message: state.message);
+          onRefresh?.call();
+        } else if (state is BookingError) {
+          AppToast.showError(context, message: state.message);
+        }
+      },
+      child: content,
+    );
   }
+
 
   Widget _buildHeader(BuildContext context, double scale) {
     // Ẩn "Đặt gói dịch vụ" khi dịch vụ đã được mở (active hoặc InProgress)
@@ -295,15 +317,19 @@ class CurrentPackageView extends StatelessWidget {
 
 class _InProgressSection extends StatelessWidget {
   final NowPackageModel nowPackage;
+  final VoidCallback? onRefresh;
+  final VoidCallback? onConfirm;
 
   const _InProgressSection({
     required this.nowPackage,
+    this.onRefresh,
+    this.onConfirm,
   });
 
   @override
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
-    final isHomeService = nowPackage.type.toLowerCase() == 'home';
+    final isHomeService = nowPackage.typeEnum == ServiceLocationType.home;
 
     return AppWidgets.sectionContainer(
       context,
@@ -361,7 +387,11 @@ class _InProgressSection extends StatelessWidget {
         ),
         if (isHomeService) ...[
           SizedBox(height: 16 * scale),
-          _HomeServiceScheduleSection(nowPackage: nowPackage),
+          _HomeServiceScheduleSection(
+            nowPackage: nowPackage,
+            onRefresh: onRefresh,
+            onConfirm: onConfirm,
+          ),
         ] else ...[
           SizedBox(height: 12 * scale),
           _CenterServiceSummary(nowPackage: nowPackage),
@@ -419,9 +449,13 @@ class _CenterServiceSummary extends StatelessWidget {
 
 class _HomeServiceScheduleSection extends StatelessWidget {
   final NowPackageModel nowPackage;
+  final VoidCallback? onRefresh;
+  final VoidCallback? onConfirm;
 
   const _HomeServiceScheduleSection({
     required this.nowPackage,
+    this.onRefresh,
+    this.onConfirm,
   });
 
   DateTime _normalizeDate(DateTime date) =>
@@ -455,6 +489,7 @@ class _HomeServiceScheduleSection extends StatelessWidget {
       child: _HomeServiceScheduleContent(
         nowPackage: nowPackage,
         serviceDates: serviceDates,
+        onConfirm: onConfirm,
       ),
     );
   }
@@ -474,7 +509,7 @@ class _NowPackageDetailsCard extends StatelessWidget {
       padding: EdgeInsets.all(16 * scale),
       children: [
         Text(
-          'Thông tin gói hiện tại',
+          AppStrings.servicesInfoCurrentPackage,
           style: AppTextStyles.arimo(
             fontSize: 14 * scale,
             fontWeight: FontWeight.w700,
@@ -482,13 +517,13 @@ class _NowPackageDetailsCard extends StatelessWidget {
           ),
         ),
         SizedBox(height: 12 * scale),
-        _detailRow('Mã booking', nowPackage.bookingId.toString(), scale),
-        _detailRow('Gói', nowPackage.packageName, scale),
-        _detailRow('Loại', nowPackage.type, scale),
-        _detailRow('Phòng', nowPackage.roomName ?? '--', scale),
-        _detailRow('Tầng', nowPackage.floor?.toString() ?? '--', scale),
-        _detailRow('Mã hợp đồng', nowPackage.contractCode ?? '--', scale),
-        _detailRow('Trạng thái', nowPackage.contractStatus, scale),
+        _detailRow(AppStrings.bookingIdLabel, nowPackage.bookingId.toString(), scale),
+        _detailRow(AppStrings.bookingPackageLabel, nowPackage.packageName, scale),
+        _detailRow(AppStrings.bookingTypeLabel, nowPackage.type, scale),
+        _detailRow(AppStrings.bookingRoomLabel, nowPackage.roomName ?? '--', scale),
+        _detailRow(AppStrings.bookingFloorLabel, nowPackage.floor?.toString() ?? '--', scale),
+        _detailRow(AppStrings.bookingContractCodeLabel, nowPackage.contractCode ?? '--', scale),
+        _detailRow(AppStrings.bookingStatusLabel, nowPackage.contractStatus, scale),
       ],
     );
   }
@@ -634,10 +669,12 @@ class _AccountQuickInfo extends StatelessWidget {
 class _HomeServiceScheduleContent extends StatefulWidget {
   final NowPackageModel nowPackage;
   final List<DateTime> serviceDates;
+  final VoidCallback? onConfirm;
 
   const _HomeServiceScheduleContent({
     required this.nowPackage,
     required this.serviceDates,
+    this.onConfirm,
   });
 
   @override
@@ -746,6 +783,8 @@ class _HomeServiceScheduleContentState
                 date: _selectedDate,
                 schedules: schedulesForDate,
                 dayNo: dayNo,
+                isPendingCustomerConfirm: widget.nowPackage.isPendingCustomerConfirm,
+                onConfirm: widget.onConfirm,
                 margin: EdgeInsets.zero,
               ),
             ],

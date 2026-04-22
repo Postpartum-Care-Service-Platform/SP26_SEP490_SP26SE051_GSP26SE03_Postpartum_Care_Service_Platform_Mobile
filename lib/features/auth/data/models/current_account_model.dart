@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../../../core/constants/app_enums.dart';
 import '../../domain/entities/user_entity.dart';
 
 /// Owner profile model nested in CurrentAccountModel
@@ -198,15 +199,20 @@ class NowPackageModel extends Equatable {
 
   String get normalizedBookingStatus => bookingStatus.trim().toLowerCase();
 
+  BookingStatus get bookingStatusEnum => BookingStatus.fromString(bookingStatus);
+  ServiceLocationType get typeEnum => ServiceLocationType.fromString(type);
+  ContractStatus get contractStatusEnum => ContractStatus.fromString(contractStatus);
+
   bool get isInProgressStatus =>
-      normalizedBookingStatus == 'inprogress' ||
-      normalizedBookingStatus == 'in_progress' ||
-      normalizedBookingStatus == 'in progress';
+      bookingStatusEnum == BookingStatus.inProgress;
+
+  bool get isPendingCustomerConfirm =>
+      bookingStatusEnum == BookingStatus.pendingCustomerConfirm;
 
   bool get isServiceUnlocked =>
       serviceIsActive ||
       isInProgressStatus ||
-      (contractStatus == 'Signed' && remainingAmount <= 0);
+      (contractStatusEnum == ContractStatus.signed && remainingAmount <= 0);
 
   factory NowPackageModel.fromJson(Map<String, dynamic> json) {
     final rawPaidAmount = json['paidAmount'];

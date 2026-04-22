@@ -106,6 +106,8 @@ class AppointmentCard extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                           color: AppColors.textPrimary,
                         ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     if (_canEdit() || _canCancel())

@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/constants/app_strings.dart';
 import '../../domain/usecases/create_booking_usecase.dart';
 import '../../domain/usecases/cancel_booking_usecase.dart';
 import '../../domain/usecases/create_booking_for_customer_usecase.dart';
@@ -6,6 +7,7 @@ import '../../domain/usecases/get_booking_by_id_usecase.dart';
 import '../../domain/usecases/get_bookings_usecase.dart';
 import '../../domain/usecases/create_payment_link_usecase.dart';
 import '../../domain/usecases/check_payment_status_usecase.dart';
+import '../../domain/usecases/confirm_completion_usecase.dart';
 import '../../../package/domain/usecases/get_packages_usecase.dart';
 import '../../../package/domain/entities/package_entity.dart';
 import '../../../../../features/employee/room/domain/usecases/get_rooms_by_package.dart';
@@ -28,6 +30,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   final GetPackagesUsecase getPackagesUsecase;
   final GetFamilyProfilesUsecase getFamilyProfilesUsecase;
   final GetRoomsByPackage getRoomsByPackage;
+  final ConfirmCompletionUsecase confirmCompletionUsecase;
 
   // Current selection state
   int? _selectedPackageId;
@@ -68,6 +71,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     required this.getPackagesUsecase,
     required this.getFamilyProfilesUsecase,
     required this.getRoomsByPackage,
+    required this.confirmCompletionUsecase,
   }) : super(const BookingInitial()) {
     on<BookingLoadPackages>(_onLoadPackages);
     on<BookingSelectPackage>(_onSelectPackage);
@@ -85,6 +89,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     on<BookingCancelRequested>(_onCancelBooking);
     on<BookingReset>(_onReset);
     on<BookingSelectCustomer>(_onSelectCustomer);
+    on<BookingConfirmCompletion>(_onConfirmCompletion);
   }
 
   Future<void> _onLoadPackages(
@@ -202,13 +207,13 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     Emitter<BookingState> emit,
   ) async {
     if (_selectedPackageId == null) {
-      emit(const BookingError('Vui lòng chọn gói trước khi chọn phòng'));
+      emit(BookingError(AppStrings.bookingPleaseSelectPackage));
       return;
     }
 
     final startDate = event.startDate ?? _selectedDate;
     if (startDate == null) {
-      emit(const BookingError('Vui lòng chọn ngày bắt đầu trước khi chọn phòng'));
+      emit(BookingError(AppStrings.bookingPleaseSelectDate));
       return;
     }
 
@@ -287,7 +292,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         _selectedRoomId == null ||
         _selectedDate == null ||
         _selectedFamilyProfileIds.isEmpty) {
-      emit(const BookingError('Vui lòng chọn đầy đủ thông tin'));
+      emit(BookingError(AppStrings.errorFillAllFields));
       return;
     }
 
@@ -313,7 +318,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         _selectedRoomId == null ||
         _selectedDate == null ||
         event.familyProfileIds.isEmpty) {
-      emit(const BookingError('Vui lòng chọn đầy đủ thông tin (bao gồm thành viên gia đình)'));
+      emit(BookingError(AppStrings.homeServicePleaseCompleteInfo));
       return;
     }
 
@@ -346,7 +351,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       } else if (currentState is BookingLoaded) {
         bookingId = currentState.booking.id;
       } else {
-        emit(const BookingError('Vui lòng tạo booking trước'));
+        emit(BookingError(AppStrings.homeServicePleaseCreateBookingFirst));
         return;
       }
     }
@@ -412,6 +417,19 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     try {
       final message = await cancelBookingUsecase(event.id);
       emit(BookingCancelled(bookingId: event.id, message: message));
+    } catch (e) {
+      emit(BookingError(e.toString()));
+    }
+  }
+
+  Future<void> _onConfirmCompletion(
+    BookingConfirmCompletion event,
+    Emitter<BookingState> emit,
+  ) async {
+    emit(const BookingLoading());
+    try {
+      final message = await confirmCompletionUsecase(event.id);
+      emit(BookingConfirmCompletionSuccess(bookingId: event.id, message: message));
     } catch (e) {
       emit(BookingError(e.toString()));
     }
