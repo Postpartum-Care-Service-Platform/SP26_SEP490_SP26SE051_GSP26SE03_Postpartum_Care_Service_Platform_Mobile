@@ -1,6 +1,7 @@
 import '../entities/booking_entity.dart';
 import '../entities/payment_link_entity.dart';
 import '../entities/payment_status_entity.dart';
+import '../entities/booking_config_entity.dart';
 
 /// Booking Repository Interface
 abstract class BookingRepository {
@@ -53,4 +54,6 @@ abstract class BookingRepository {
   /// Customer: Confirm checkout completion (2-step verification)
   Future<String> confirmCompletion(int id);
 
+  /// Get booking configuration (surcharge, deposit %)
+  Future<BookingConfigEntity> getBookingConfig();
 }

@@ -41,6 +41,8 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
   bool _packagesLoadRequested = false;
   bool _profilesLoadRequested = false;
   bool _roomsLoadRequested = false;
+  bool _configLoadRequested = false;
+  bool _showPriceBreakdown = false;
 
   @override
   void initState() {
@@ -81,6 +83,15 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
   }
 
   Widget _buildStepContent(BuildContext context, BookingState state) {
+    if (!_configLoadRequested) {
+      _configLoadRequested = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) {
+          context.read<BookingBloc>().add(const BookingLoadConfig());
+        }
+      });
+    }
+
     switch (_currentStep) {
       case 0:
         if (state is! BookingPackagesLoaded &&
@@ -196,12 +207,12 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
           child: Row(
             children: [
               Expanded(
-                flex: 4,
+                flex: 5,
                 child: _buildEstimatedPrice(estimatedPrice, scale),
               ),
-              SizedBox(width: 12 * scale),
+              SizedBox(width: 8 * scale),
               Expanded(
-                flex: 6,
+                flex: 5,
                 child: _buildNextButton(context, state, scale),
               ),
             ],
@@ -212,34 +223,139 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
   }
 
   Widget _buildEstimatedPrice(double? price, double scale) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 12 * scale),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(10 * scale),
+    final bookingBloc = context.read<BookingBloc>();
+    final selectedPackage = bookingBloc.selectedPackage;
+
+    double basePrice = selectedPackage?.basePrice ?? 0;
+    final profiles = bookingBloc.familyProfiles ?? [];
+    final selectedIds = bookingBloc.selectedFamilyProfileIds;
+    final babyCount = profiles
+        .where((p) => selectedIds.contains(p.id) && p.memberTypeId == 3)
+        .length;
+
+    final extraPercentValue = (bookingBloc.config?.extraChildPricePercent ?? 70.0);
+    final extraPercent = extraPercentValue / 100.0;
+    double extraSurcharge = 0;
+    if (babyCount > 1) {
+      extraSurcharge = basePrice * extraPercent * (babyCount - 1);
+    }
+
+    return GestureDetector(
+      onTap: extraSurcharge > 0
+          ? () => setState(() => _showPriceBreakdown = !_showPriceBreakdown)
+          : null,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding:
+            EdgeInsets.symmetric(horizontal: 12 * scale, vertical: 10 * scale),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(12 * scale),
+          border: _showPriceBreakdown
+              ? Border.all(color: AppColors.primary, width: 1.2)
+              : Border.all(color: Colors.transparent, width: 1.2),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10 * scale,
+              offset: Offset(0, 4 * scale),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Text(
+                  AppStrings.bookingEstimatedPrice,
+                  style: AppTextStyles.arimo(
+                    fontSize: 10 * scale,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                if (extraSurcharge > 0) ...[
+                  SizedBox(width: 4 * scale),
+                  Icon(
+                    _showPriceBreakdown
+                        ? Icons.keyboard_arrow_down_rounded
+                        : Icons.keyboard_arrow_up_rounded,
+                    size: 14 * scale,
+                    color: AppColors.primary,
+                  ),
+                ],
+              ],
+            ),
+            if (_showPriceBreakdown && extraSurcharge > 0) ...[
+              SizedBox(height: 6 * scale),
+              _buildBreakdownRow(
+                'Giá gói',
+                formatPrice(basePrice),
+                scale,
+                isHighlight: false,
+              ),
+              SizedBox(height: 4 * scale),
+              _buildBreakdownRow(
+                'Phụ thu thêm (${extraPercentValue.toInt()}%)',
+                '+${formatPrice(extraSurcharge)}',
+                scale,
+                isHighlight: true,
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 4 * scale),
+                child: Divider(height: 1, color: AppColors.borderLight),
+              ),
+            ],
+            SizedBox(height: 2 * scale),
+            Text(
+              price != null
+                  ? formatPrice(price)
+                  : AppStrings.bookingPriceNotAvailable,
+              style: AppTextStyles.arimo(
+                fontSize: 15 * scale,
+                fontWeight: FontWeight.bold,
+                color:
+                    price != null ? AppColors.primary : AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            AppStrings.bookingEstimatedPrice,
+    );
+  }
+
+  Widget _buildBreakdownRow(
+    String label,
+    String value,
+    double scale, {
+    required bool isHighlight,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Text(
+            label,
             style: AppTextStyles.arimo(
               fontSize: 11 * scale,
               color: AppColors.textSecondary,
+              fontWeight: FontWeight.w500,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-          SizedBox(height: 4 * scale),
-          Text(
-            price != null ? formatPrice(price) : AppStrings.bookingPriceNotAvailable,
-            style: AppTextStyles.arimo(
-              fontSize: 16 * scale,
-              fontWeight: FontWeight.bold,
-              color: price != null ? AppColors.primary : AppColors.textSecondary,
-            ),
+        ),
+        SizedBox(width: 4 * scale),
+        Text(
+          value,
+          style: AppTextStyles.arimo(
+            fontSize: 11 * scale,
+            fontWeight: isHighlight ? FontWeight.bold : FontWeight.w600,
+            color: isHighlight ? AppColors.primary : AppColors.textPrimary,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -317,49 +433,54 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
   }
 
   double? _getEstimatedPrice(BookingState state) {
-    if (state is BookingSummaryReady) {
-      _cachedEstimatedPrice = state.package.basePrice;
+    final bookingBloc = context.read<BookingBloc>();
+    final selectedPackage = bookingBloc.selectedPackage;
+
+    if (selectedPackage == null) {
       return _cachedEstimatedPrice;
     }
 
-    if (state is BookingPackagesLoaded &&
-        state.selectedPackageId != null &&
-        state.packages.isNotEmpty) {
-      try {
-        final package = state.packages.firstWhere(
-          (p) => p.id == state.selectedPackageId,
-        );
-        _cachedEstimatedPrice = package.basePrice;
-        return _cachedEstimatedPrice;
-      } catch (_) {
-        return _cachedEstimatedPrice;
-      }
+    final double basePrice = selectedPackage.basePrice;
+
+    // Calculate extra child surcharge
+    final profiles = bookingBloc.familyProfiles ?? [];
+    final selectedIds = bookingBloc.selectedFamilyProfileIds;
+    final babyCount = profiles
+        .where((p) => selectedIds.contains(p.id) && p.memberTypeId == 3)
+        .length;
+
+    double extraSurcharge = 0;
+    if (babyCount > 1) {
+      final extraPercent = (bookingBloc.config?.extraChildPricePercent ?? 70.0) / 100.0;
+      extraSurcharge = basePrice * extraPercent * (babyCount - 1);
     }
 
-    if (state is BookingRoomsLoaded || state is BookingDateSelected) {
-      if (_cachedEstimatedPrice != null) {
-        return _cachedEstimatedPrice;
-      }
-    }
-
+    _cachedEstimatedPrice = basePrice + extraSurcharge;
     return _cachedEstimatedPrice;
   }
 
   bool _canProceed(BookingState state) {
     final bookingBloc = context.read<BookingBloc>();
 
+    bool hasMomSelected() {
+      final selectedIds = bookingBloc.selectedFamilyProfileIds;
+      final profiles = bookingBloc.familyProfiles ?? [];
+      return selectedIds.isNotEmpty &&
+          profiles.any((p) => selectedIds.contains(p.id) && p.memberTypeId == 2);
+    }
+
     switch (_currentStep) {
       case 0:
         return bookingBloc.selectedPackageId != null;
       case 1:
-        return bookingBloc.selectedFamilyProfileIds.isNotEmpty;
+        return hasMomSelected();
       case 2:
         return bookingBloc.selectedDate != null;
       case 3:
         return bookingBloc.selectedRoomId != null;
       case 4:
         return bookingBloc.selectedPackageId != null &&
-            bookingBloc.selectedFamilyProfileIds.isNotEmpty &&
+            hasMomSelected() &&
             bookingBloc.selectedDate != null &&
             bookingBloc.selectedRoomId != null;
       default:

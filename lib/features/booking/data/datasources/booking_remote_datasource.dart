@@ -4,6 +4,7 @@ import '../../../../core/apis/api_endpoints.dart';
 import '../models/booking_model.dart';
 import '../models/payment_link_model.dart';
 import '../models/payment_status_model.dart';
+import '../models/booking_config_model.dart';
 
 /// Booking Remote Data Source Interface
 abstract class BookingRemoteDataSource {
@@ -58,6 +59,8 @@ abstract class BookingRemoteDataSource {
   /// Customer: Confirm checkout completion (2-step verification)
   Future<String> confirmCompletion(int id);
 
+  /// Get booking configuration
+  Future<BookingConfigModel> getBookingConfig();
 }
 
 /// Booking Remote Data Source Implementation
@@ -356,6 +359,16 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
         return data['message'] as String? ?? 'Xác nhận hoàn thành thành công';
       }
       return 'Xác nhận hoàn thành thành công';
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  @override
+  Future<BookingConfigModel> getBookingConfig() async {
+    try {
+      final response = await dio.get(ApiEndpoints.bookingConfig);
+      return BookingConfigModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw _handleError(e);
     }

@@ -43,6 +43,7 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
   // Track deletion state
   int? _deletingCount;
   bool _isBulkSaving = false;
+  int? _bulkSaveCount;
 
   @override
   void initState() {
@@ -110,6 +111,22 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
       // Clear unsaved selections when changing date
       _unsavedSelections.clear();
     });
+  }
+
+  MenuEntity? _getMenuFromState(MenuLoaded state, int menuId) {
+    try {
+      // First look in center's menus
+      for (final menu in state.menus) {
+        if (menu.id == menuId) return menu;
+      }
+      // Then look in customized menus
+      for (final menu in state.customizedMenus) {
+        if (menu.id == menuId) return menu;
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
   }
 
   /// Get saved records for the selected date
@@ -219,15 +236,8 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 20 * scale),
                     children: savedRecords.map((record) {
                       // Find menu - skip if not found
-                      MenuEntity? menu;
-                      try {
-                        menu = state.menus.firstWhere(
-                          (m) => m.id == record.menuId,
-                        );
-                      } catch (e) {
-                        // Menu not found, skip this record
-                        return const SizedBox.shrink();
-                      }
+                      final menu = _getMenuFromState(state, record.menuId);
+                      if (menu == null) return const SizedBox.shrink();
 
                       // Find menu type - skip if not found
                       MenuTypeEntity? menuType;
@@ -400,8 +410,8 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
           if (!record.isActive) return false;
 
           try {
-            final existingMenu = state.menus.firstWhere((m) => m.id == record.menuId);
-            return existingMenu.menuTypeId == selectedMenu.menuTypeId;
+            final existingMenu = _getMenuFromState(state, record.menuId);
+            return existingMenu != null && existingMenu.menuTypeId == selectedMenu.menuTypeId;
           } catch (_) {
             return false;
           }
@@ -484,12 +494,7 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
       final recordDate = _normalizeDate(record.date);
       if (!selectedDates.contains(recordDate)) continue;
 
-      MenuEntity? menu;
-      try {
-        menu = state.menus.firstWhere((m) => m.id == record.menuId);
-      } catch (_) {
-        menu = null;
-      }
+      final menu = _getMenuFromState(state, record.menuId);
 
       if (menu == null) continue;
       final daySelections = selectionsByDate.putIfAbsent(recordDate, () => <int, MenuEntity>{});
@@ -512,15 +517,18 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
         context: bottomSheetContext,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
-        builder: (context) => MenuListDrawer(
-          selectedDate: activeDate,
-          menuType: menuType,
-          availableMenus: state.menus,
-          customizedMenus: state.customizedMenus,
-          currentSelection: currentSelection,
-          onMenuSelected: (menu) {
-            selectionsForActiveDate[menuType.id] = menu;
-          },
+        builder: (context) => BlocProvider.value(
+          value: this.context.read<MenuBloc>(),
+          child: MenuListDrawer(
+            selectedDate: activeDate,
+            menuType: menuType,
+            availableMenus: state.menus,
+            customizedMenus: state.customizedMenus,
+            currentSelection: currentSelection,
+            onMenuSelected: (menu) {
+              selectionsForActiveDate[menuType.id] = menu;
+            },
+          ),
         ),
       );
     }
@@ -582,7 +590,8 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
 
                 String mealSlot = 'unknown';
                 try {
-                  final existingMenu = state.menus.firstWhere((m) => m.id == record.menuId);
+                  final existingMenu = _getMenuFromState(state, record.menuId);
+                  if (existingMenu == null) throw Exception('Menu not found');
                   final menuTypeName = inferMenuTypeNameByMenu(existingMenu);
                   mealSlot = inferMealSlot(menuTypeName);
                 } catch (_) {
@@ -664,24 +673,22 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
 
               setState(() {
                 _isBulkSaving = true;
+                _bulkSaveCount = requestDates.length;
               });
 
-              AppLoading.show(context, message: AppStrings.processing);
-
-              this.context.read<MenuBloc>().add(
-                MenuRecordsSaveRequested(
-                  requests: saveRequests,
-                  existingRecords: state.myMenuRecords,
-                ),
-              );
-
+              // Close sheet first
               Navigator.of(sheetContext).pop();
 
-              AppToast.showSuccess(
-                this.context,
-                message: AppStrings.menuBulkSaveSuccess
-                    .replaceAll('{count}', '${requestDates.length}'),
-              );
+              // Show loading on screen context
+              AppLoading.show(this.context, message: AppStrings.processing);
+
+              // Send event
+              this.context.read<MenuBloc>().add(
+                    MenuRecordsSaveRequested(
+                      requests: saveRequests,
+                      existingRecords: state.myMenuRecords,
+                    ),
+                  );
             }
 
             final sortedSelectedDates = selectedDates.toList()..sort();
@@ -1212,9 +1219,15 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
             );
           } else if (state is MenuLoaded && _isBulkSaving) {
             AppLoading.hide(context);
+            final count = _bulkSaveCount ?? 0;
             setState(() {
               _isBulkSaving = false;
+              _bulkSaveCount = null;
             });
+            AppToast.showSuccess(
+              context,
+              message: AppStrings.menuBulkSaveSuccess.replaceAll('{count}', '$count'),
+            );
           }
         },
         builder: (context, state) {
@@ -1392,11 +1405,9 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
     final savedRecords = _getSavedRecordsForDate(state);
     
     for (final record in savedRecords) {
-      try {
-        final menu = state.menus.firstWhere((m) => m.id == record.menuId);
+      final menu = _getMenuFromState(state, record.menuId);
+      if (menu != null) {
         savedSelections[menu.menuTypeId] = menu;
-      } catch (e) {
-        // Menu not found, skip
       }
     }
 

@@ -172,3 +172,8 @@ class BookingConfirmCompletion extends BookingEvent {
   @override
   List<Object?> get props => [id];
 }
+
+/// Load booking system configuration (surcharge, deposit)
+class BookingLoadConfig extends BookingEvent {
+  const BookingLoadConfig();
+}

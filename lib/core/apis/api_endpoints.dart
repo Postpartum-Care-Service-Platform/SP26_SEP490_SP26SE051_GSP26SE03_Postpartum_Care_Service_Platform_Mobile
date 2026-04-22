@@ -126,6 +126,9 @@ class ApiEndpoints {
   static String checkPaymentStatus(String orderCode) =>
       '/Transaction/check-status/$orderCode';
 
+  // System Setting endpoints
+  static const String bookingConfig = '/SystemSetting/booking-config';
+
   // Contract endpoints
   static String getContractByBookingId(int bookingId) =>
       '/Contract/my/$bookingId';

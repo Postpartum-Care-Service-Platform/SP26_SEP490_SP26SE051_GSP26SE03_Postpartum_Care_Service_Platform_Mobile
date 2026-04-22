@@ -493,6 +493,7 @@ class AppStrings {
   static const String bookingProfileMember = 'Thành viên';
   static const String bookingSummaryServiceInfoWithCount =
       'Thành viên đã chọn ({count})';
+  static const String bookingExtraChildSurcharge = 'Phụ thu em bé thêm';
 
   // Home Service Booking Screen
   static const String homeServiceBookingTitle = 'Đặt dịch vụ tại nhà';

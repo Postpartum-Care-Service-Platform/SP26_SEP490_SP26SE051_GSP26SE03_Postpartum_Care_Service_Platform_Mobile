@@ -79,22 +79,20 @@ class _CreateCustomMenuScreenState extends State<CreateCustomMenuScreen> {
       }
       
       // Determine if food matches meal type
-      if (typeName.contains('sáng')) {
-        // Breakfast
-        if (typeName.contains('phụ')) return foodType.contains('snack');
-        return foodType.contains('breakfast');
-      } else if (typeName.contains('trưa')) {
-        // Lunch
-        return foodType.contains('lunch');
-      } else if (typeName.contains('phụ')) {
-        // Any Snack/Phụ
+      // Check for snack meals (Phụ) first to avoid overlap with Sáng/Trưa/Chiều names
+      if (typeName.contains('phụ')) {
         return foodType.contains('snack');
-      } else if (typeName.contains('chiều') || typeName.contains('tối')) {
-        // Dinner
-        return foodType.contains('dinner') || foodType.contains('lunch'); // Dinner often has lunch items too
       }
       
-      return true; // Default to show all if unknown
+      if (typeName.contains('sáng')) {
+        return foodType.contains('breakfast');
+      } else if (typeName.contains('trưa')) {
+        return foodType.contains('lunch');
+      } else if (typeName.contains('chiều') || typeName.contains('tối')) {
+        return foodType.contains('dinner');
+      }
+      
+      return true; // Default to show all if unknown menu type
     }).toList();
   }
 

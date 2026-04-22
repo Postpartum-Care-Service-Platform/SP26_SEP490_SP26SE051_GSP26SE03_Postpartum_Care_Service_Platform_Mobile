@@ -14,6 +14,8 @@ import '../../../../../features/employee/room/domain/usecases/get_rooms_by_packa
 import '../../../../../features/employee/room/domain/entities/room_entity.dart';
 import '../../../family_profile/domain/entities/family_profile_entity.dart';
 import '../../../family_profile/domain/usecases/get_family_profiles_usecase.dart';
+import '../../domain/usecases/get_booking_config_usecase.dart';
+import '../../domain/entities/booking_config_entity.dart';
 import 'booking_event.dart';
 import 'booking_state.dart';
 import '../../../../features/employee/account/data/models/account_model.dart';
@@ -31,6 +33,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   final GetFamilyProfilesUsecase getFamilyProfilesUsecase;
   final GetRoomsByPackage getRoomsByPackage;
   final ConfirmCompletionUsecase confirmCompletionUsecase;
+  final GetBookingConfigUsecase getBookingConfigUsecase;
 
   // Current selection state
   int? _selectedPackageId;
@@ -41,6 +44,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   List<FamilyProfileEntity>? _familyProfiles;
   List<RoomEntity>? _rooms;
   AccountModel? _selectedCustomer;
+  BookingConfigEntity? _config;
 
   // Read-only accessors for UI to restore selections when navigating between steps
   DateTime? get selectedDate => _selectedDate;
@@ -59,6 +63,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
   List<RoomEntity>? get rooms => _rooms;
   AccountModel? get selectedCustomer => _selectedCustomer;
+  BookingConfigEntity? get config => _config;
 
   BookingBloc({
     required this.createBookingUsecase,
@@ -72,6 +77,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     required this.getFamilyProfilesUsecase,
     required this.getRoomsByPackage,
     required this.confirmCompletionUsecase,
+    required this.getBookingConfigUsecase,
   }) : super(const BookingInitial()) {
     on<BookingLoadPackages>(_onLoadPackages);
     on<BookingSelectPackage>(_onSelectPackage);
@@ -90,6 +96,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     on<BookingReset>(_onReset);
     on<BookingSelectCustomer>(_onSelectCustomer);
     on<BookingConfirmCompletion>(_onConfirmCompletion);
+    on<BookingLoadConfig>(_onLoadConfig);
   }
 
   Future<void> _onLoadPackages(
@@ -193,6 +200,18 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       emit(
         BookingFamilyProfilesLoaded(
           profiles: currentState.profiles,
+          selectedFamilyProfileIds: _selectedFamilyProfileIds,
+        ),
+      );
+      return;
+    }
+
+    // Nếu đang ở state khác (ví dụ vừa back từ step sau) nhưng đã có profiles cached,
+    // emit lại BookingFamilyProfilesLoaded để UI step 2 có thể cập nhật checkbox mượt mà.
+    if (_familyProfiles != null) {
+      emit(
+        BookingFamilyProfilesLoaded(
+          profiles: _familyProfiles!,
           selectedFamilyProfileIds: _selectedFamilyProfileIds,
         ),
       );
@@ -482,6 +501,19 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   void _onSelectCustomer(BookingSelectCustomer event, Emitter<BookingState> emit) {
     if (event.customer is AccountModel) {
       _selectedCustomer = event.customer as AccountModel;
+    }
+  }
+
+  Future<void> _onLoadConfig(
+    BookingLoadConfig event,
+    Emitter<BookingState> emit,
+  ) async {
+    try {
+      final config = await getBookingConfigUsecase();
+      _config = config;
+      emit(BookingConfigLoaded(config));
+    } catch (_) {
+      // Nếu lỗi thì giữ giá trị mặc định (null) hoặc log
     }
   }
 }

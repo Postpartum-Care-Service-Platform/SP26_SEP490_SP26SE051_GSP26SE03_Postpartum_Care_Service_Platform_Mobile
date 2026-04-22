@@ -141,8 +141,18 @@ class BookingStep4Summary extends StatelessWidget {
             .where((profile) => selectedIds.contains(profile.id))
             .toList();
 
-        final totalPrice = package.basePrice;
-        final depositAmount = totalPrice * 0.1;
+        final basePrice = package.basePrice;
+        final babyCount = selectedProfiles.where((p) => p.memberTypeId == 3).length;
+
+        final extraPercent = (bookingBloc.config?.extraChildPricePercent ?? 70.0) / 100.0;
+        double extraSurcharge = 0;
+        if (babyCount > 1) {
+          extraSurcharge = basePrice * extraPercent * (babyCount - 1);
+        }
+
+        final totalPrice = basePrice + extraSurcharge;
+        final depositPercent = (bookingBloc.config?.depositPercentage ?? 10.0) / 100.0;
+        final depositAmount = totalPrice * depositPercent;
 
         return SingleChildScrollView(
           padding: EdgeInsets.all(16 * scale),
@@ -347,9 +357,17 @@ class BookingStep4Summary extends StatelessWidget {
                   children: [
                     _PriceRow(
                       label: AppStrings.bookingTotalPrice,
-                      amount: totalPrice,
+                      amount: basePrice,
                       scale: scale,
                     ),
+                    if (extraSurcharge > 0) ...[
+                      SizedBox(height: 8 * scale),
+                      _PriceRow(
+                        label: '${AppStrings.bookingExtraChildSurcharge} (${(extraPercent * 100).toInt()}%)',
+                        amount: extraSurcharge,
+                        scale: scale,
+                      ),
+                    ],
                     Divider(height: 22 * scale),
                     _PriceRow(
                       label: AppStrings.bookingFinalAmount,
@@ -369,7 +387,7 @@ class BookingStep4Summary extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            AppStrings.bookingDeposit,
+                            '${AppStrings.bookingDeposit} (${(depositPercent * 100).toInt()}%)',
                             style: AppTextStyles.arimo(
                               fontSize: 14 * scale,
                               color: AppColors.textSecondary,

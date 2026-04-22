@@ -324,6 +324,16 @@ class _BookingStep2FamilyProfileSelectionState
                     if (isSelected) {
                       next.remove(profile.id);
                     } else {
+                      // Rule: Only 1 Mom (memberTypeId == 2) can be selected
+                      if (profile.memberTypeId == 2) {
+                        final existingMom = filteredProfiles.firstWhere(
+                          (p) => p.memberTypeId == 2 && selectedIds.contains(p.id),
+                          orElse: () => profile, // Fallback if none found
+                        );
+                        if (existingMom.id != profile.id && selectedIds.contains(existingMom.id)) {
+                          next.remove(existingMom.id);
+                        }
+                      }
                       next.add(profile.id);
                     }
                     widget.onSelectionChanged(next);
@@ -404,6 +414,16 @@ class _BookingStep2FamilyProfileSelectionState
                             if (isSelected) {
                               next.remove(profile.id);
                             } else {
+                              // Rule: Only 1 Mom (memberTypeId == 2)
+                              if (profile.memberTypeId == 2) {
+                                final existingMom = filteredProfiles.firstWhere(
+                                  (p) => p.memberTypeId == 2 && selectedIds.contains(p.id),
+                                  orElse: () => profile,
+                                );
+                                if (existingMom.id != profile.id && selectedIds.contains(existingMom.id)) {
+                                  next.remove(existingMom.id);
+                                }
+                              }
                               next.add(profile.id);
                             }
                             widget.onSelectionChanged(next);

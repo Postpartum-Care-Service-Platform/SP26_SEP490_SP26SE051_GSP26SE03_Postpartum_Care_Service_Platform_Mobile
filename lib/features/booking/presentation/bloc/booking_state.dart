@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/booking_entity.dart';
+import '../../domain/entities/booking_config_entity.dart';
 import '../../domain/entities/payment_link_entity.dart';
 import '../../domain/entities/payment_status_entity.dart';
 import '../../../package/domain/entities/package_entity.dart';
@@ -182,6 +183,16 @@ class BookingConfirmCompletionSuccess extends BookingState {
 
   @override
   List<Object?> get props => [bookingId, message];
+}
+
+/// Booking configuration loaded
+class BookingConfigLoaded extends BookingState {
+  final dynamic config; // Using dynamic to avoid import issues if needed, but BookingConfigEntity is preferred
+
+  const BookingConfigLoaded(this.config);
+
+  @override
+  List<Object?> get props => [config];
 }
 
 /// Error state

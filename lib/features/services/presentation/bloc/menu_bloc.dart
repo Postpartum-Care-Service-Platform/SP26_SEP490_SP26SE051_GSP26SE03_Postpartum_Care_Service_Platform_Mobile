@@ -249,13 +249,17 @@ class MenuBloc extends Bloc<MenuEvent, MenuState> {
     try {
       final createRequests = <Map<String, dynamic>>[];
       final updateRequests = <Map<String, dynamic>>[];
-      final menus = state is MenuLoaded ? (state as MenuLoaded).menus : <MenuEntity>[];
+      
+      final currentState = state is MenuLoaded ? (state as MenuLoaded) : null;
+      if (currentState == null) return;
+      
+      final allAvailableMenus = [...currentState.menus, ...currentState.customizedMenus];
       final allMenuRecords = await getMyMenuRecordsUsecase();
 
       for (final req in event.requests) {
         MenuEntity? menu;
         try {
-          menu = menus.firstWhere((m) => m.id == req.menuId);
+          menu = allAvailableMenus.firstWhere((m) => m.id == req.menuId);
         } catch (e) {
           continue;
         }
@@ -274,7 +278,7 @@ class MenuBloc extends Bloc<MenuEvent, MenuState> {
               return false;
             }
             try {
-              final recordMenu = menus.firstWhere((m) => m.id == r.menuId);
+              final recordMenu = allAvailableMenus.firstWhere((m) => m.id == r.menuId);
               return recordMenu.menuTypeId == menuTypeId;
             } catch (e) {
               return false;

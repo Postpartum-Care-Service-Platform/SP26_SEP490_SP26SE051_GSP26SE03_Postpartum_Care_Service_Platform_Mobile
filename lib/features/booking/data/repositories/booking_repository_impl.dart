@@ -1,6 +1,7 @@
 import '../../domain/entities/booking_entity.dart';
 import '../../domain/entities/payment_link_entity.dart';
 import '../../domain/entities/payment_status_entity.dart';
+import '../../domain/entities/booking_config_entity.dart';
 import '../../domain/repositories/booking_repository.dart';
 import '../datasources/booking_remote_datasource.dart';
 
@@ -145,6 +146,15 @@ class BookingRepositoryImpl implements BookingRepository {
   Future<String> confirmCompletion(int id) async {
     try {
       return await remoteDataSource.confirmCompletion(id);
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
+
+  @override
+  Future<BookingConfigEntity> getBookingConfig() async {
+    try {
+      return await remoteDataSource.getBookingConfig();
     } catch (e) {
       throw Exception(e.toString());
     }
