@@ -127,6 +127,12 @@ import '../../features/services/domain/usecases/get_my_menu_records_by_date_usec
 import '../../features/services/domain/usecases/create_menu_records_usecase.dart';
 import '../../features/services/domain/usecases/update_menu_records_usecase.dart';
 import '../../features/services/domain/usecases/delete_menu_record_usecase.dart';
+import '../../features/services/domain/usecases/get_customized_menus_usecase.dart';
+import '../../features/services/domain/usecases/create_customized_menu_usecase.dart';
+import '../../features/services/domain/usecases/get_foods_usecase.dart';
+import '../../features/services/data/datasources/food_remote_datasource.dart';
+import '../../features/services/data/repositories/food_repository_impl.dart';
+import '../../features/services/domain/repositories/food_repository.dart';
 import '../../features/services/presentation/bloc/menu_bloc.dart';
 import '../../features/services/data/datasources/family_schedule_remote_datasource.dart';
 import '../../features/services/data/datasources/staff_schedule_remote_datasource.dart';
@@ -238,6 +244,9 @@ class InjectionContainer {
 
   static MenuRemoteDataSource get _menuRemoteDataSource =>
       MenuRemoteDataSourceImpl(dio: ApiClient.dio);
+ 
+  static FoodRemoteDataSource get _foodRemoteDataSource =>
+      FoodRemoteDataSourceImpl(dio: ApiClient.dio);
 
   static FamilyScheduleRemoteDataSource get _familyScheduleRemoteDataSource =>
       FamilyScheduleRemoteDataSourceImpl(dio: ApiClient.dio);
@@ -312,6 +321,9 @@ class InjectionContainer {
 
   static MenuRepository get menuRepository =>
       MenuRepositoryImpl(_menuRemoteDataSource);
+ 
+  static FoodRepository get foodRepository =>
+      FoodRepositoryImpl(remoteDataSource: _foodRemoteDataSource);
 
   static FamilyScheduleRepository get familyScheduleRepository =>
       FamilyScheduleRepositoryImpl(
@@ -505,6 +517,15 @@ class InjectionContainer {
   static DeleteMenuRecordUsecase get _deleteMenuRecordUsecase =>
       DeleteMenuRecordUsecase(menuRepository);
 
+  static GetCustomizedMenusUseCase get _getCustomizedMenusUseCase =>
+      GetCustomizedMenusUseCase(menuRepository);
+
+  static CreateCustomizedMenuUseCase get _createCustomizedMenuUseCase =>
+      CreateCustomizedMenuUseCase(menuRepository);
+
+  static GetFoodsUseCase get _getFoodsUseCase =>
+      GetFoodsUseCase(foodRepository);
+
   static GetMySchedulesUsecase get _getMySchedulesUsecase =>
       GetMySchedulesUsecase(familyScheduleRepository);
   static GetMySchedulesByDateUsecase get _getMySchedulesByDateUsecase =>
@@ -679,6 +700,9 @@ class InjectionContainer {
     createMenuRecordsUsecase: _createMenuRecordsUsecase,
     updateMenuRecordsUsecase: _updateMenuRecordsUsecase,
     deleteMenuRecordUsecase: _deleteMenuRecordUsecase,
+    getCustomizedMenusUseCase: _getCustomizedMenusUseCase,
+    createCustomizedMenuUseCase: _createCustomizedMenuUseCase,
+    getFoodsUseCase: _getFoodsUseCase,
   );
 
   static FamilyScheduleBloc get familyScheduleBloc => FamilyScheduleBloc(

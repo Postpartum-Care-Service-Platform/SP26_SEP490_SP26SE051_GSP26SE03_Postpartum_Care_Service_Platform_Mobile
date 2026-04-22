@@ -6,6 +6,9 @@ import '../../domain/usecases/get_my_menu_records_by_date_usecase.dart';
 import '../../domain/usecases/create_menu_records_usecase.dart';
 import '../../domain/usecases/update_menu_records_usecase.dart';
 import '../../domain/usecases/delete_menu_record_usecase.dart';
+import '../../domain/usecases/get_customized_menus_usecase.dart';
+import '../../domain/usecases/create_customized_menu_usecase.dart';
+import '../../domain/usecases/get_foods_usecase.dart';
 import '../../domain/entities/menu_entity.dart';
 import '../../domain/entities/menu_record_entity.dart';
 import 'menu_event.dart';
@@ -20,6 +23,9 @@ class MenuBloc extends Bloc<MenuEvent, MenuState> {
   final CreateMenuRecordsUsecase createMenuRecordsUsecase;
   final UpdateMenuRecordsUsecase updateMenuRecordsUsecase;
   final DeleteMenuRecordUsecase deleteMenuRecordUsecase;
+  final GetCustomizedMenusUseCase getCustomizedMenusUseCase;
+  final CreateCustomizedMenuUseCase createCustomizedMenuUseCase;
+  final GetFoodsUseCase getFoodsUseCase;
 
   MenuBloc({
     required this.getMenusUsecase,
@@ -29,6 +35,9 @@ class MenuBloc extends Bloc<MenuEvent, MenuState> {
     required this.createMenuRecordsUsecase,
     required this.updateMenuRecordsUsecase,
     required this.deleteMenuRecordUsecase,
+    required this.getCustomizedMenusUseCase,
+    required this.createCustomizedMenuUseCase,
+    required this.getFoodsUseCase,
   }) : super(const MenuInitial()) {
     on<MenuLoadRequested>(_onMenuLoadRequested);
     on<MenuTypesLoadRequested>(_onMenuTypesLoadRequested);
@@ -39,6 +48,9 @@ class MenuBloc extends Bloc<MenuEvent, MenuState> {
     on<MenuRecordDeleteRequested>(_onMenuRecordDeleteRequested);
     on<MenuRecordsDeleteRequested>(_onMenuRecordsDeleteRequested);
     on<MenuRecordsSaveRequested>(_onMenuRecordsSaveRequested);
+    on<CustomizedMenusLoadRequested>(_onCustomizedMenusLoadRequested);
+    on<CustomizedMenuCreateRequested>(_onCustomizedMenuCreateRequested);
+    on<FoodsLoadRequested>(_onFoodsLoadRequested);
     on<MenuRefresh>(_onMenuRefresh);
   }
 
@@ -48,16 +60,16 @@ class MenuBloc extends Bloc<MenuEvent, MenuState> {
   ) async {
     emit(const MenuLoading());
     try {
-      // Load all data: menus, menu types, and all menu records
       final menus = await getMenusUsecase();
       final menuTypes = await getMenuTypesUsecase();
-      // This calls /api/MenuRecord/my to get all menu records
       final myMenuRecords = await getMyMenuRecordsUsecase();
+      final customizedMenus = await getCustomizedMenusUseCase();
 
       emit(MenuLoaded(
         menus: menus,
         menuTypes: menuTypes,
         myMenuRecords: myMenuRecords,
+        customizedMenus: customizedMenus,
       ));
     } catch (e) {
       emit(MenuError(e.toString()));
@@ -109,7 +121,6 @@ class MenuBloc extends Bloc<MenuEvent, MenuState> {
     Emitter<MenuState> emit,
   ) async {
     try {
-      // Normalize date to remove time component for consistent key matching
       final normalizedDate = DateTime(
         event.date.year,
         event.date.month,
@@ -150,7 +161,6 @@ class MenuBloc extends Bloc<MenuEvent, MenuState> {
       final createdRecords = await createMenuRecordsUsecase(requestData);
       if (state is MenuLoaded) {
         final currentState = state as MenuLoaded;
-        // Add newly created records to the existing list
         final updatedRecords = [
           ...currentState.myMenuRecords,
           ...createdRecords,
@@ -187,7 +197,6 @@ class MenuBloc extends Bloc<MenuEvent, MenuState> {
           for (final item in updatedRecords) item.id: item,
         };
 
-        // Update existing records in the list
         final updatedList = currentState.myMenuRecords
             .map((record) => updatedById[record.id] ?? record)
             .toList();
@@ -205,7 +214,6 @@ class MenuBloc extends Bloc<MenuEvent, MenuState> {
   ) async {
     try {
       await deleteMenuRecordUsecase(event.id);
-      // Reload menu records from API to get latest data
       final myMenuRecords = await getMyMenuRecordsUsecase();
       if (state is MenuLoaded) {
         final currentState = state as MenuLoaded;
@@ -221,11 +229,9 @@ class MenuBloc extends Bloc<MenuEvent, MenuState> {
     Emitter<MenuState> emit,
   ) async {
     try {
-      // Delete all records
       for (final id in event.ids) {
         await deleteMenuRecordUsecase(id);
       }
-      // Reload menu records from API to get latest data
       final myMenuRecords = await getMyMenuRecordsUsecase();
       if (state is MenuLoaded) {
         final currentState = state as MenuLoaded;
@@ -241,66 +247,40 @@ class MenuBloc extends Bloc<MenuEvent, MenuState> {
     Emitter<MenuState> emit,
   ) async {
     try {
-      // Separate into create and update requests
       final createRequests = <Map<String, dynamic>>[];
       final updateRequests = <Map<String, dynamic>>[];
-
-      // Get menus from state
       final menus = state is MenuLoaded ? (state as MenuLoaded).menus : <MenuEntity>[];
-
-      // Always fetch latest records from server to avoid stale state causing duplicate create
       final allMenuRecords = await getMyMenuRecordsUsecase();
 
       for (final req in event.requests) {
-        // Find menu to get menuTypeId
         MenuEntity? menu;
         try {
           menu = menus.firstWhere((m) => m.id == req.menuId);
         } catch (e) {
-          // Menu not found, skip
           continue;
         }
 
-        // Find existing record by menuTypeId and date (one record per menuType per date)
-        // Search in all menu records to ensure we don't miss any existing records
         final menuTypeId = menu.menuTypeId;
-        final normalizedDate = DateTime(
-          req.date.year,
-          req.date.month,
-          req.date.day,
-        );
+        final normalizedDate = DateTime(req.date.year, req.date.month, req.date.day);
         
         MenuRecordEntity? existingRecord;
         try {
-          existingRecord = allMenuRecords.firstWhere(
-            (r) {
-              if (!r.isActive) return false;
-              
-              // Normalize record date for comparison
-              final recordDate = DateTime(
-                r.date.year,
-                r.date.month,
-                r.date.day,
-              );
-              
-              // Check if date matches
-              if (recordDate.year != normalizedDate.year ||
-                  recordDate.month != normalizedDate.month ||
-                  recordDate.day != normalizedDate.day) {
-                return false;
-              }
-              
-              // Check if menuTypeId matches
-              try {
-                final recordMenu = menus.firstWhere((m) => m.id == r.menuId);
-                return recordMenu.menuTypeId == menuTypeId;
-              } catch (e) {
-                return false;
-              }
-            },
-          );
+          existingRecord = allMenuRecords.firstWhere((r) {
+            if (!r.isActive) return false;
+            final recordDate = DateTime(r.date.year, r.date.month, r.date.day);
+            if (recordDate.year != normalizedDate.year ||
+                recordDate.month != normalizedDate.month ||
+                recordDate.day != normalizedDate.day) {
+              return false;
+            }
+            try {
+              final recordMenu = menus.firstWhere((m) => m.id == r.menuId);
+              return recordMenu.menuTypeId == menuTypeId;
+            } catch (e) {
+              return false;
+            }
+          });
         } catch (e) {
-          // No existing record found
           existingRecord = null;
         }
 
@@ -311,42 +291,106 @@ class MenuBloc extends Bloc<MenuEvent, MenuState> {
         };
 
         if (existingRecord != null && existingRecord.id > 0) {
-          // Update existing record (user changed menu for this meal type and date)
           requestData['id'] = existingRecord.id;
           updateRequests.add(requestData);
         } else {
-          // Create new record (no existing record for this meal type and date)
           createRequests.add(requestData);
         }
       }
 
-      // Execute create and update operations
-      // Note: Both APIs support batch operations (multiple records in one request)
-      // We separate create and update to call the appropriate API endpoints
       List<MenuRecordEntity> createdRecords = [];
       List<MenuRecordEntity> updatedRecords = [];
 
-      // Create new records (batch operation)
       if (createRequests.isNotEmpty) {
         createdRecords = await createMenuRecordsUsecase(createRequests);
       }
-
-      // Update existing records (batch operation)
       if (updateRequests.isNotEmpty) {
         updatedRecords = await updateMenuRecordsUsecase(updateRequests);
       }
 
-      // Update state with new and updated records
       if (state is MenuLoaded) {
         final currentState = state as MenuLoaded;
-        // Merge: remove old records that were updated, add new ones
         final updatedList = [
-          ...currentState.myMenuRecords
-              .where((r) => !updateRequests.any((ur) => ur['id'] == r.id)),
+          ...currentState.myMenuRecords.where((r) => !updateRequests.any((ur) => ur['id'] == r.id)),
           ...createdRecords,
           ...updatedRecords,
         ];
         emit(currentState.copyWith(myMenuRecords: updatedList));
+      }
+    } catch (e) {
+      emit(MenuError(e.toString()));
+    }
+  }
+
+  Future<void> _onCustomizedMenusLoadRequested(
+    CustomizedMenusLoadRequested event,
+    Emitter<MenuState> emit,
+  ) async {
+    try {
+      final customizedMenus = await getCustomizedMenusUseCase();
+      if (state is MenuLoaded) {
+        emit((state as MenuLoaded).copyWith(customizedMenus: customizedMenus));
+      } else {
+        emit(MenuLoaded(
+          menus: const [],
+          menuTypes: const [],
+          myMenuRecords: const [],
+          customizedMenus: customizedMenus,
+        ));
+      }
+    } catch (e) {
+      emit(MenuError(e.toString()));
+    }
+  }
+
+  Future<void> _onCustomizedMenuCreateRequested(
+    CustomizedMenuCreateRequested event,
+    Emitter<MenuState> emit,
+  ) async {
+    try {
+      final newMenu = await createCustomizedMenuUseCase(event.request);
+      if (state is MenuLoaded) {
+        final currentState = state as MenuLoaded;
+        final updatedCustomMenus = [...currentState.customizedMenus, newMenu];
+        
+        emit(CustomizedMenuCreateSuccess(
+          newMenu: newMenu,
+          menus: currentState.menus,
+          menuTypes: currentState.menuTypes,
+          myMenuRecords: currentState.myMenuRecords,
+          customizedMenus: updatedCustomMenus,
+          foods: currentState.foods,
+          menuRecordsByDate: currentState.menuRecordsByDate,
+        ));
+      } else {
+        emit(CustomizedMenuCreateSuccess(
+          newMenu: newMenu,
+          menus: const [],
+          menuTypes: const [],
+          myMenuRecords: const [],
+          customizedMenus: [newMenu],
+        ));
+      }
+    } catch (e) {
+      emit(MenuError(e.toString()));
+    }
+  }
+
+  Future<void> _onFoodsLoadRequested(
+    FoodsLoadRequested event,
+    Emitter<MenuState> emit,
+  ) async {
+    try {
+      final foods = await getFoodsUseCase();
+      if (state is MenuLoaded) {
+        emit((state as MenuLoaded).copyWith(foods: foods));
+      } else {
+        emit(MenuLoaded(
+          menus: const [],
+          menuTypes: const [],
+          myMenuRecords: const [],
+          foods: foods,
+        ));
       }
     } catch (e) {
       emit(MenuError(e.toString()));
@@ -361,11 +405,13 @@ class MenuBloc extends Bloc<MenuEvent, MenuState> {
       final menus = await getMenusUsecase();
       final menuTypes = await getMenuTypesUsecase();
       final myMenuRecords = await getMyMenuRecordsUsecase();
+      final customizedMenus = await getCustomizedMenusUseCase();
 
       emit(MenuLoaded(
         menus: menus,
         menuTypes: menuTypes,
         myMenuRecords: myMenuRecords,
+        customizedMenus: customizedMenus,
       ));
     } catch (e) {
       emit(MenuError(e.toString()));

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
@@ -11,6 +12,9 @@ import '../../domain/entities/menu_entity.dart';
 import '../../domain/entities/menu_type_entity.dart';
 import '../../domain/entities/food_entity.dart';
 import 'menu_list_item.dart';
+import '../bloc/menu_bloc.dart';
+import '../bloc/menu_state.dart';
+import '../screens/create_custom_menu_screen.dart';
 
 /// Menu List Drawer Widget
 /// Shows list of menus for a specific meal type and allows selecting one
@@ -18,6 +22,7 @@ class MenuListDrawer extends StatefulWidget {
   final DateTime selectedDate;
   final MenuTypeEntity menuType;
   final List<MenuEntity> availableMenus;
+  final List<MenuEntity> customizedMenus;
   final MenuEntity? currentSelection; // Currently selected menu (saved or unsaved)
   final Function(MenuEntity) onMenuSelected; // Callback when menu is selected
 
@@ -26,6 +31,7 @@ class MenuListDrawer extends StatefulWidget {
     required this.selectedDate,
     required this.menuType,
     required this.availableMenus,
+    required this.customizedMenus,
     this.currentSelection,
     required this.onMenuSelected,
   });
@@ -35,15 +41,19 @@ class MenuListDrawer extends StatefulWidget {
 }
 
 class _MenuListDrawerState extends State<MenuListDrawer> {
-  final List<MenuEntity> _menusForType = [];
+  int _selectedTabIndex = 0; // 0: Center, 1: Mine
 
   @override
   void initState() {
     super.initState();
-    // Filter menus for this menu type
-    _menusForType.addAll(
-      widget.availableMenus.where((menu) => menu.menuTypeId == widget.menuType.id).toList(),
-    );
+    
+    // If the current selection is a customized menu, start on the "Mine" tab
+    if (widget.currentSelection != null) {
+      final isCustomized = widget.customizedMenus.any((m) => m.id == widget.currentSelection!.id);
+      if (isCustomized) {
+        _selectedTabIndex = 1;
+      }
+    }
   }
 
   String _formatDate(DateTime date) {
@@ -183,70 +193,250 @@ class _MenuListDrawerState extends State<MenuListDrawer> {
             ),
           ),
 
-          // Content
+          // Tab Bar
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20 * scale, vertical: 8 * scale),
+            child: Container(
+              padding: EdgeInsets.all(5 * scale),
+              decoration: BoxDecoration(
+                color: AppColors.homeServiceScheduleHighlightBg.withValues(alpha: 0.8),
+                borderRadius: BorderRadius.circular(14 * scale),
+                border: Border.all(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                   _buildTab(0, AppStrings.menuCustomCenter),
+                   _buildTab(1, AppStrings.menuCustomMine),
+                ],
+              ),
+            ),
+          ),
           Flexible(
-            child: _menusForType.isEmpty
-                ? Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(40 * scale),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.restaurant_menu,
-                            size: 64 * scale,
-                            color: AppColors.textSecondary,
-                          ),
-                          SizedBox(height: 16 * scale),
-                          Text(
-                            AppStrings.menuNoMenuForType
-                                .replaceAll('{type}', widget.menuType.name),
-                            style: AppTextStyles.arimo(
-                              fontSize: 16 * scale,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                : ListView(
-                    shrinkWrap: true,
-                    padding: EdgeInsets.all(20 * scale),
-                    children: [
-                      // Menu list in 2-column layout
-                      for (int i = 0; i < _menusForType.length; i += 2)
-                        Padding(
-                          padding: EdgeInsets.only(bottom: 12 * scale),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: MenuListItem(
-                                  menu: _menusForType[i],
-                                  isSelected:
-                                      widget.currentSelection?.id == _menusForType[i].id,
-                                  onTap: () => _openMenuDetail(_menusForType[i]),
-                                ),
-                              ),
-                              SizedBox(width: 12 * scale),
-                              if (i + 1 < _menusForType.length)
-                                Expanded(
-                                  child: MenuListItem(
-                                    menu: _menusForType[i + 1],
-                                    isSelected: widget.currentSelection?.id ==
-                                        _menusForType[i + 1].id,
-                                    onTap: () => _openMenuDetail(_menusForType[i + 1]),
-                                  ),
-                                )
-                              else
-                                const Expanded(child: SizedBox.shrink()),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
+            child: BlocBuilder<MenuBloc, MenuState>(
+              builder: (context, state) {
+                return _buildContent(state);
+              },
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTab(int index, String title) {
+    final scale = AppResponsive.scaleFactor(context);
+    final isSelected = _selectedTabIndex == index;
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _selectedTabIndex = index),
+        child: Container(
+          padding: EdgeInsets.symmetric(vertical: 10 * scale),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(10 * scale),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 4 * scale,
+                      offset: Offset(0, 2 * scale),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Text(
+            title,
+            style: AppTextStyles.arimo(
+              fontSize: 14 * scale,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              color: isSelected ? AppColors.primary : AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContent(MenuState state) {
+    final scale = AppResponsive.scaleFactor(context);
+    
+    // Calculate menus for type dynamically from state
+    List<MenuEntity> menusForType = widget.availableMenus.where((m) => m.menuTypeId == widget.menuType.id).toList();
+    List<MenuEntity> customizedMenusForType = widget.customizedMenus.where((m) => m.menuTypeId == widget.menuType.id).toList();
+
+    if (state is MenuLoaded) {
+      menusForType = state.menus.where((m) => m.menuTypeId == widget.menuType.id).toList();
+      customizedMenusForType = state.customizedMenus.where((m) => m.menuTypeId == widget.menuType.id).toList();
+    }
+
+    final menusToShow = _selectedTabIndex == 0 ? menusForType : customizedMenusForType;
+
+    if (_selectedTabIndex == 1 && menusToShow.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.all(32 * scale),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: EdgeInsets.all(20 * scale),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.05),
+                  shape: BoxShape.circle,
+                ),
+                child: SvgPicture.asset(
+                  AppAssets.pencilFeedback,
+                  width: 48 * scale,
+                  height: 48 * scale,
+                  colorFilter: ColorFilter.mode(
+                    AppColors.primary.withValues(alpha: 0.5),
+                    BlendMode.srcIn,
+                  ),
+                ),
+              ),
+              SizedBox(height: 16 * scale),
+              Text(
+                'Bạn chưa có thực đơn cá nhân nào cho bữa này',
+                style: AppTextStyles.arimo(
+                  fontSize: 15 * scale,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textSecondary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 8 * scale),
+              Text(
+                'Hãy tạo thực đơn mang dấu ấn riêng của bạn!',
+                style: AppTextStyles.arimo(
+                  fontSize: 13 * scale,
+                  color: AppColors.textSecondary.withValues(alpha: 0.6),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 24 * scale),
+              _buildAddCustomButton(),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (menusToShow.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.all(40 * scale),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.restaurant_menu, size: 64 * scale, color: AppColors.textSecondary),
+              SizedBox(height: 16 * scale),
+              Text(
+                AppStrings.menuNoMenuForType.replaceAll('{type}', widget.menuType.name),
+                style: AppTextStyles.arimo(color: AppColors.textSecondary),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return ListView(
+      shrinkWrap: true,
+      padding: EdgeInsets.fromLTRB(20 * scale, 0, 20 * scale, 20 * scale),
+      children: [
+        if (_selectedTabIndex == 1) ...[
+          _buildAddCustomButton(),
+          SizedBox(height: 16 * scale),
+        ],
+        for (int i = 0; i < menusToShow.length; i += 2)
+          Padding(
+            padding: EdgeInsets.only(bottom: 12 * scale),
+            child: Row(
+              children: [
+                Expanded(
+                  child: MenuListItem(
+                    menu: menusToShow[i],
+                    isSelected: widget.currentSelection?.id == menusToShow[i].id,
+                    onTap: () => _openMenuDetail(menusToShow[i]),
+                  ),
+                ),
+                SizedBox(width: 12 * scale),
+                if (i + 1 < menusToShow.length)
+                  Expanded(
+                    child: MenuListItem(
+                      menu: menusToShow[i + 1],
+                      isSelected: widget.currentSelection?.id == menusToShow[i + 1].id,
+                      onTap: () => _openMenuDetail(menusToShow[i + 1]),
+                    ),
+                  )
+                else
+                  const Expanded(child: SizedBox.shrink()),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildAddCustomButton() {
+    final scale = AppResponsive.scaleFactor(context);
+
+    return InkWell(
+      onTap: () async {
+        final menuBloc = context.read<MenuBloc>();
+        final result = await Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => BlocProvider.value(
+              value: menuBloc,
+              child: CreateCustomMenuScreen(menuType: widget.menuType),
+            ),
+          ),
+        );
+
+        if (result != null && result is MenuEntity && mounted) {
+          // Select the new menu in the parent, but stay in the drawer
+          widget.onMenuSelected(result);
+        }
+      },
+      borderRadius: BorderRadius.circular(16 * scale),
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 14 * scale, horizontal: 24 * scale),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(16 * scale),
+          border: Border.all(
+            color: AppColors.primary,
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              blurRadius: 10 * scale,
+              offset: Offset(0, 4 * scale),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.add_circle, color: AppColors.primary, size: 22 * scale),
+            SizedBox(width: 10 * scale),
+            Text(
+              AppStrings.menuCustomTitle,
+              style: AppTextStyles.arimo(
+                fontSize: 15 * scale,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

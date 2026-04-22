@@ -52,7 +52,16 @@ class MenuRepositoryImpl implements MenuRepository {
 
   @override
   Future<MenuRecordEntity> deleteMenuRecord(int id) async {
-    final model = await dataSource.deleteMenuRecord(id);
-    return model;
+    return await dataSource.deleteMenuRecord(id);
+  }
+
+  @override
+  Future<MenuEntity> createCustomizedMenu(Map<String, dynamic> request) async {
+    return await dataSource.createCustomizedMenu(request);
+  }
+
+  @override
+  Future<List<MenuEntity>> getCustomizedMenus() async {
+    return await dataSource.getCustomizedMenus();
   }
 }

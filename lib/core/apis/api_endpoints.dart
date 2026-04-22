@@ -250,6 +250,12 @@ class ApiEndpoints {
   /// Get all menu types
   static const String menuTypes = '/MenuType';
 
+  /// Get my customized menus
+  static const String myCustomizedMenus = '/Menu/byCurrentCustomer';
+
+  /// Get all foods
+  static const String foods = '/Food';
+
   /// Get my menu records
   static const String myMenuRecords = '/MenuRecord/my';
 

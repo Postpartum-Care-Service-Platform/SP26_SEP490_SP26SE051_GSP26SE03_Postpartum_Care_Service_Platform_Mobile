@@ -28,4 +28,10 @@ abstract class MenuRepository {
 
   /// Delete menu record (soft delete)
   Future<MenuRecordEntity> deleteMenuRecord(int id);
+
+  /// Create customized menu
+  Future<MenuEntity> createCustomizedMenu(Map<String, dynamic> request);
+
+  /// Get my customized menus
+  Future<List<MenuEntity>> getCustomizedMenus();
 }

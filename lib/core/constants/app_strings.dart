@@ -972,4 +972,13 @@ class AppStrings {
   static const String refundRequestFillAllFields = 'Vui lòng điền đầy đủ thông tin';
   static const String refundRequestBookingId = 'Mã booking';
 
+  static const String menuCustomTitle = 'Tạo thực đơn cá nhân';
+  static const String menuCustomNameHint = 'Tên thực đơn (ví dụ: Buổi sáng yêu thích)';
+  static const String menuCustomDescHint = 'Mô tả ngắn gọn';
+  static const String menuCustomSelectFoods = 'Chọn món ăn';
+  static const String menuCustomCreate = 'Tạo thực đơn';
+  static const String menuCustomSuccess = 'Đã tạo thực đơn cá nhân thành công';
+  static const String menuCustomError = 'Lỗi khi tạo thực đơn';
+  static const String menuCustomCenter = 'Thực đơn trung tâm';
+  static const String menuCustomMine = 'Thực đơn của tôi';
 }

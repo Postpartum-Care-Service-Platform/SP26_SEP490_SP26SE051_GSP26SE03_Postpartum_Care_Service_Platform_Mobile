@@ -88,6 +88,25 @@ class MenuRecordsSaveRequested extends MenuEvent {
   List<Object?> get props => [requests, existingRecords];
 }
 
+/// Load customized menus for the current user
+class CustomizedMenusLoadRequested extends MenuEvent {
+  const CustomizedMenusLoadRequested();
+}
+
+/// Create a new customized menu
+class CustomizedMenuCreateRequested extends MenuEvent {
+  final Map<String, dynamic> request;
+  const CustomizedMenuCreateRequested(this.request);
+
+  @override
+  List<Object?> get props => [request];
+}
+
+/// Load all available foods
+class FoodsLoadRequested extends MenuEvent {
+  const FoodsLoadRequested();
+}
+
 /// Refresh event
 class MenuRefresh extends MenuEvent {
   const MenuRefresh();

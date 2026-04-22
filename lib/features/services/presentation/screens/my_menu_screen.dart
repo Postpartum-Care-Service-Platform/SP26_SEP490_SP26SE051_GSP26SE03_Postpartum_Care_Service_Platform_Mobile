@@ -16,6 +16,7 @@ import '../../../../core/services/current_account_cache_service.dart';
 import '../bloc/menu_bloc.dart';
 import '../bloc/menu_event.dart';
 import '../bloc/menu_state.dart';
+import 'create_custom_menu_screen.dart';
 import '../widgets/menu_calendar_picker.dart';
 import '../widgets/menu_selection_drawer.dart';
 import '../widgets/menu_list_drawer.dart';
@@ -515,6 +516,7 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
           selectedDate: activeDate,
           menuType: menuType,
           availableMenus: state.menus,
+          customizedMenus: state.customizedMenus,
           currentSelection: currentSelection,
           onMenuSelected: (menu) {
             selectionsForActiveDate[menuType.id] = menu;
@@ -1287,6 +1289,7 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
                           date: _selectedDate,
                           savedRecords: savedRecords,
                           allMenus: state.menus,
+                          customizedMenus: state.customizedMenus,
                           menuTypes: state.menuTypes,
                         ),
 
@@ -1401,21 +1404,25 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => MenuSelectionDrawer(
-        selectedDate: _selectedDate,
-        menuTypes: state.menuTypes,
-        availableMenus: state.menus,
-        savedSelections: savedSelections,
-        unsavedSelections: _unsavedSelections,
-        onSave: (selections) {
-          // Update unsaved selections with new selections from drawer
-          setState(() {
-            _unsavedSelections.clear();
-            _unsavedSelections.addAll(selections);
-          });
-          // Automatically save after closing drawer
-          _handleSaveMenus();
-        },
+      builder: (context) => BlocProvider.value(
+        value: this.context.read<MenuBloc>(),
+        child: MenuSelectionDrawer(
+          selectedDate: _selectedDate,
+          menuTypes: state.menuTypes,
+          availableMenus: state.menus,
+          customizedMenus: state.customizedMenus,
+          savedSelections: savedSelections,
+          unsavedSelections: _unsavedSelections,
+          onSave: (selections) {
+            // Update unsaved selections with new selections from drawer
+            setState(() {
+              _unsavedSelections.clear();
+              _unsavedSelections.addAll(selections);
+            });
+            // Automatically save after closing drawer
+            _handleSaveMenus();
+          },
+        ),
       ),
     );
   }
