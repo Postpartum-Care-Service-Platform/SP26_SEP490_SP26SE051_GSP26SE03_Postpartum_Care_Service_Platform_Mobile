@@ -71,6 +71,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     on<ChatAcceptSupportRequestSubmitted>(_onAcceptSupportRequest);
     on<ChatResolveSupportRequestSubmitted>(_onResolveSupportRequest);
     on<ChatAccountDetailRequested>(_onAccountDetailRequested);
+    on<ChatSupportStatusReset>(_onSupportStatusReset);
   }
 
   final GetConversationsUsecase _getConversationsUsecase;
@@ -305,6 +306,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       selectedConversation: optimisticConversation,
       conversations: optimisticList,
       sendStatus: ChatSendStatus.sending,
+      supportStatus: ChatSupportStatus.idle,
       isAiTyping: !selected.hasActiveSupport && !event.isStaff,
       errorMessage: null,
     ));
@@ -604,7 +606,6 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     final currentRequest = state.supportRequest;
     _setConversationActiveSupport(event.data.conversationId, true, emit);
     emit(state.copyWith(
-      supportStatus: ChatSupportStatus.success,
       supportRequest: currentRequest == null
           ? SupportRequest(
               id: event.data.requestId,
@@ -637,7 +638,6 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     final currentRequest = state.supportRequest;
     _setConversationActiveSupport(event.data.conversationId, false, emit);
     emit(state.copyWith(
-      supportStatus: ChatSupportStatus.success,
       supportRequest: currentRequest == null
           ? SupportRequest(
               id: event.data.requestId,
@@ -853,6 +853,13 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     } catch (_) {
       // Ignore individual profile fetch errors
     }
+  }
+
+  Future<void> _onSupportStatusReset(
+    ChatSupportStatusReset event,
+    Emitter<ChatState> emit,
+  ) async {
+    emit(state.copyWith(supportStatus: ChatSupportStatus.idle));
   }
 }
 

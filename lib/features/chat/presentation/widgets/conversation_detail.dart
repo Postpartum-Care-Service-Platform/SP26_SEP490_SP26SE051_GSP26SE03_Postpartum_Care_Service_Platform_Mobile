@@ -60,6 +60,8 @@ class ConversationDetail extends StatelessWidget {
                 context,
                 message: AppStrings.chatRequestSupportSuccess,
               );
+              // Reset status ngay lập tức để không bị trigger lại khi state thay đổi
+              context.read<ChatBloc>().add(const ChatSupportStatusReset());
             }
             if (state.errorMessage != null &&
                 (state.sendStatus == ChatSendStatus.failure ||

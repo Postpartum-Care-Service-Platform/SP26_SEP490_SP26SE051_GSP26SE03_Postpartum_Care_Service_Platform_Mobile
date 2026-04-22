@@ -160,3 +160,7 @@ class ChatAccountDetailRequested extends ChatEvent {
   @override
   List<Object?> get props => [accountId];
 }
+
+class ChatSupportStatusReset extends ChatEvent {
+  const ChatSupportStatusReset();
+}
