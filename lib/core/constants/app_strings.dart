@@ -683,7 +683,7 @@ class AppStrings {
   static const String servicesAmenityRequestDescription =
       'Gọi nước, đồ dùng em bé, dọn phòng,...';
   static const String servicesExploreAmenities =
-      'Khám phá các dịch vụ tiện ích';
+      'Nhân viên đảm nhiệm dịch vụ';
   static const String servicesCheckoutExpiredMessage =
       'Bạn đã quá ngày check-out. Vui lòng đến quầy lễ tân để được hỗ trợ check-out.';
 
