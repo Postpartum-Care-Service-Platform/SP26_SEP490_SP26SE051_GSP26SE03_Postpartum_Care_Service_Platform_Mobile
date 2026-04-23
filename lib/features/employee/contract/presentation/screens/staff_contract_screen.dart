@@ -1908,8 +1908,8 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                 ],
 
                 // Additional Action: Chỉnh sửa
-                // Ẩn nếu hợp đồng đã ký, đã in, hoặc đã có file ký hoặc đã hủy
-                if (!isSigned && !isPrinted && !isCancelled && !hasSignedFile) ...[
+                // Chỉ hiện nút chỉnh sửa khi hợp đồng ở trạng thái draft
+                if (contract.status.toLowerCase() == 'draft') ...[
                   _ActionButton(
                     icon: Icons.edit_note_rounded,
                     label: 'Chỉnh sửa',

@@ -299,6 +299,24 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
   Future<void> _handleCheckIn(BookingModel booking) async {
     if (_isActionInProgress) return;
 
+    final now = DateTime.now();
+    final isToday = booking.startDate.year == now.year &&
+        booking.startDate.month == now.month &&
+        booking.startDate.day == now.day;
+
+    if (!isToday) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Chỉ được phép check-in vào đúng ngày bắt đầu của gói dịch vụ.',
+            style: AppTextStyles.arimo(color: AppColors.white),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     final confirmed = await _showConfirmDialog(
       title: 'Check-in Khách',
       message:
@@ -569,7 +587,10 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
                                   ].contains(booking.status.toLowerCase())
                               ? () => _handleComplete(booking)
                               : null,
-                          onCheckIn: booking.status.toLowerCase() == 'confirmed'
+                          onCheckIn: booking.status.toLowerCase() == 'confirmed' &&
+                                  booking.startDate.year == DateTime.now().year &&
+                                  booking.startDate.month == DateTime.now().month &&
+                                  booking.startDate.day == DateTime.now().day
                               ? () => _handleCheckIn(booking)
                               : null,
                           onViewContract: !widget.useHomeStaffBookings &&

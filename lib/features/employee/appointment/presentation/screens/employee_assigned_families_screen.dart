@@ -33,6 +33,7 @@ class _EmployeeAssignedFamiliesScreenState
   late DateTime _fromDate;
   late DateTime _toDate;
   late Future<List<_AssignedCustomer>> _futureCustomers;
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -137,6 +138,12 @@ class _EmployeeAssignedFamiliesScreenState
           now.isAfter(a.startAt!) &&
           now.isBefore(a.endAt!));
 
+      final hasUpcomingActivity = activities.any((a) =>
+          a.startAt != null &&
+          DateTime(a.startAt!.year, a.startAt!.month, a.startAt!.day)
+              .isAtSameMomentAs(today) &&
+          a.status.toLowerCase() == 'scheduled');
+
       result.add(
         _AssignedCustomer(
           customerId: customerId,
@@ -147,6 +154,7 @@ class _EmployeeAssignedFamiliesScreenState
           activities: activities,
           hasTodayActivity: hasTodayActivity,
           isCurrentlyActive: isCurrentlyActive,
+          hasUpcomingActivity: hasUpcomingActivity,
         ),
       );
     }
@@ -154,6 +162,8 @@ class _EmployeeAssignedFamiliesScreenState
     result.sort((a, b) {
       if (a.isCurrentlyActive && !b.isCurrentlyActive) return -1;
       if (!a.isCurrentlyActive && b.isCurrentlyActive) return 1;
+      if (a.hasUpcomingActivity && !b.hasUpcomingActivity) return -1;
+      if (!a.hasUpcomingActivity && b.hasUpcomingActivity) return 1;
       if (a.hasTodayActivity && !b.hasTodayActivity) return -1;
       if (!a.hasTodayActivity && b.hasTodayActivity) return 1;
       return a.displayName.compareTo(b.displayName);
@@ -390,7 +400,7 @@ class _EmployeeAssignedFamiliesScreenState
                                   return;
                                 }
 
-                                final checkData = await _askForCheckInDetails(sheetContext);
+                                final checkData = await _askForCheckInDetails(sheetContext, activity.activity);
                                 if (!sheetContext.mounted || checkData == null) {
                                   return;
                                 }
@@ -400,10 +410,12 @@ class _EmployeeAssignedFamiliesScreenState
                                   checkData.note,
                                   checkData.imagePaths,
                                 );
-                                if (!success || !sheetContext.mounted || !mounted) {
+                                if (!success || !mounted) {
                                   return;
                                 }
 
+                                // Cập nhật ngay lập tức dữ liệu trên UI (Bottom Sheet)
+                                // Loại bỏ kiểm tra sheetContext.mounted ở đây vì có thể bị false sai lệch sau khi đóng dialog
                                 setSheetState(() {
                                   final index = initialActivities.indexWhere(
                                     (item) => item.staffScheduleId == activity.staffScheduleId,
@@ -412,12 +424,21 @@ class _EmployeeAssignedFamiliesScreenState
                                     initialActivities[index] = initialActivities[index].copyWith(
                                       status: 'StaffDone',
                                       note: checkData.note,
+                                      images: checkData.imagePaths,
+                                      checkedAt: DateTime.now(),
                                     );
                                   }
+                                  // Chuyển tab sang 'Đã làm' để user thấy ngay kết quả
+                                  filter = _ActivityFilter.staffDone;
                                 });
 
-                                setState(() {
-                                  _futureCustomers = _loadAssignedCustomers();
+                                // Cập nhật ngầm dữ liệu màn hình chính để đồng bộ hoàn toàn
+                                _loadAssignedCustomers().then((newCustomers) {
+                                  if (mounted) {
+                                    setState(() {
+                                      _futureCustomers = Future.value(newCustomers);
+                                    });
+                                  }
                                 });
                               },
                             ),
@@ -435,7 +456,7 @@ class _EmployeeAssignedFamiliesScreenState
     );
   }
 
-  Future<_CheckInDetails?> _askForCheckInDetails(BuildContext context) async {
+  Future<_CheckInDetails?> _askForCheckInDetails(BuildContext context, String activityName) async {
     final scale = AppResponsive.scaleFactor(context);
     final controller = TextEditingController();
     final picker = ImagePicker();
@@ -466,6 +487,37 @@ class _EmployeeAssignedFamiliesScreenState
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(12 * scale),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(8 * scale),
+                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Hoạt động',
+                            style: AppTextStyles.arimo(
+                              fontSize: 11 * scale,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          SizedBox(height: 4 * scale),
+                          Text(
+                            activityName,
+                            style: AppTextStyles.arimo(
+                              fontSize: 14 * scale,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 16 * scale),
                     Text(
                       'Vui lòng chụp ảnh hoặc chọn ảnh minh chứng kết quả trước khi nhấn xác nhận.',
                       style: AppTextStyles.arimo(
@@ -824,7 +876,42 @@ class _EmployeeAssignedFamiliesScreenState
   }
 
   Widget _buildMainContent(List<_AssignedCustomer> customers, double scale) {
-    if (customers.length == 1) {
+    var displayCustomers = customers;
+    if (_searchQuery.isNotEmpty) {
+      final q = _searchQuery.toLowerCase();
+      displayCustomers = customers.where((c) => c.displayName.toLowerCase().contains(q)).toList();
+    }
+
+    Widget searchBar = Padding(
+      padding: EdgeInsets.fromLTRB(20 * scale, 12 * scale, 20 * scale, 4 * scale),
+      child: TextField(
+        onChanged: (val) {
+          setState(() {
+            _searchQuery = val;
+          });
+        },
+        decoration: InputDecoration(
+          hintText: 'Tìm kiếm gia đình...',
+          prefixIcon: Icon(Icons.search, color: AppColors.primary),
+          filled: true,
+          fillColor: AppColors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12 * scale),
+            borderSide: BorderSide(color: AppColors.borderLight),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12 * scale),
+            borderSide: BorderSide(color: AppColors.borderLight),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12 * scale),
+            borderSide: BorderSide(color: AppColors.primary),
+          ),
+        ),
+      ),
+    );
+
+    if (customers.length == 1 && _searchQuery.isEmpty) {
       final customer = customers.first;
       return SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -843,17 +930,73 @@ class _EmployeeAssignedFamiliesScreenState
       );
     }
 
-    return ListView.separated(
-      padding: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 16 * scale),
-      itemCount: customers.length,
-      separatorBuilder: (_, __) => SizedBox(height: 16 * scale),
-      itemBuilder: (context, index) {
-        final c = customers[index];
-        return _FamilyCard(
-          customer: c,
-          onTap: () => _showActivitiesTimelineBottomSheet(c),
-        );
-      },
+    final todayFamilies = displayCustomers.where((c) => c.hasTodayActivity).toList();
+    final otherFamilies = displayCustomers.where((c) => !c.hasTodayActivity).toList();
+
+    return Column(
+      children: [
+        if (customers.length > 5) searchBar,
+        Expanded(
+          child: ListView(
+            padding: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 16 * scale),
+            children: [
+              if (todayFamilies.isNotEmpty) ...[
+                Padding(
+                  padding: EdgeInsets.only(left: 4 * scale, bottom: 12 * scale),
+                  child: Text(
+                    'CÓ LỊCH HÔM NAY',
+                    style: AppTextStyles.arimo(
+                      fontSize: 12 * scale,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                ...todayFamilies.map((c) => Padding(
+                  padding: EdgeInsets.only(bottom: 16 * scale),
+                  child: _FamilyCard(
+                    customer: c,
+                    onTap: () => _showActivitiesTimelineBottomSheet(c),
+                  ),
+                )),
+                SizedBox(height: 8 * scale),
+              ],
+              if (otherFamilies.isNotEmpty) ...[
+                Padding(
+                  padding: EdgeInsets.only(left: 4 * scale, bottom: 12 * scale, top: todayFamilies.isNotEmpty ? 8 * scale : 0),
+                  child: Text(
+                    'CÁC GIA ĐÌNH KHÁC',
+                    style: AppTextStyles.arimo(
+                      fontSize: 12 * scale,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textSecondary,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                ...otherFamilies.map((c) => Padding(
+                  padding: EdgeInsets.only(bottom: 16 * scale),
+                  child: _FamilyCard(
+                    customer: c,
+                    onTap: () => _showActivitiesTimelineBottomSheet(c),
+                  ),
+                )),
+              ],
+              if (displayCustomers.isEmpty)
+                Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(32 * scale),
+                    child: Text(
+                      'Không tìm thấy gia đình phù hợp.',
+                      style: AppTextStyles.arimo(color: AppColors.textSecondary),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -977,6 +1120,7 @@ class _AssignedCustomer {
   final List<_AssignedActivity> activities;
   final bool hasTodayActivity;
   final bool isCurrentlyActive;
+  final bool hasUpcomingActivity;
 
   _AssignedCustomer({
     required this.customerId,
@@ -987,6 +1131,7 @@ class _AssignedCustomer {
     required this.activities,
     this.hasTodayActivity = false,
     this.isCurrentlyActive = false,
+    this.hasUpcomingActivity = false,
   });
 }
 
@@ -1072,9 +1217,25 @@ class _FocusFamilyCard extends StatelessWidget {
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: customer.hasUpcomingActivity 
+            ? AppColors.primary.withValues(alpha: 0.03) 
+            : AppColors.white,
           borderRadius: BorderRadius.circular(20 * scale),
-          border: Border.all(color: AppColors.primary.withValues(alpha: 0.3), width: 1),
+          border: Border.all(
+            color: customer.hasUpcomingActivity 
+              ? AppColors.primary 
+              : AppColors.primary.withValues(alpha: 0.3), 
+            width: customer.hasUpcomingActivity ? 2 : 1,
+          ),
+          boxShadow: customer.hasUpcomingActivity
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    blurRadius: 12 * scale,
+                    offset: const Offset(0, 4),
+                  )
+                ]
+              : null,
         ),
         child: Column(
           children: [
@@ -1211,14 +1372,27 @@ class _FamilyCard extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.all(16 * scale),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: customer.hasUpcomingActivity 
+            ? AppColors.primary.withValues(alpha: 0.03) 
+            : AppColors.white,
           borderRadius: BorderRadius.circular(12 * scale),
           border: Border.all(
-            color: customer.hasTodayActivity 
-              ? AppColors.primary.withValues(alpha: 0.4)
-              : AppColors.borderLight.withValues(alpha: 0.5),
-            width: 1,
+            color: customer.hasUpcomingActivity 
+              ? AppColors.primary 
+              : (customer.hasTodayActivity 
+                  ? AppColors.primary.withValues(alpha: 0.4)
+                  : AppColors.borderLight.withValues(alpha: 0.5)),
+            width: customer.hasUpcomingActivity ? 2 : 1,
           ),
+          boxShadow: customer.hasUpcomingActivity
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    blurRadius: 8 * scale,
+                    offset: const Offset(0, 4),
+                  )
+                ]
+              : null,
         ),
         child: Row(
           children: [
@@ -1261,6 +1435,22 @@ class _FamilyCard extends StatelessWidget {
                 width: 8 * scale,
                 height: 8 * scale,
                 decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle),
+              )
+            else if (customer.hasUpcomingActivity)
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8 * scale, vertical: 4 * scale),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12 * scale),
+                ),
+                child: Text(
+                  'SẮP TỚI',
+                  style: AppTextStyles.arimo(
+                    fontSize: 9 * scale,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primary,
+                  ),
+                ),
               )
             else
               const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.borderLight),
@@ -1489,6 +1679,10 @@ class _ActivityItem extends StatelessWidget {
             .isAtSameMomentAs(today);
     final hasStarted = activity.startAt != null && now.isAfter(activity.startAt!);
 
+    final activityNameLower = activity.activity.toLowerCase();
+    final isForMom = activityNameLower.contains('mẹ') || activityNameLower.contains('sản phụ');
+    final isForBaby = activityNameLower.contains('bé') || activityNameLower.contains('trẻ');
+
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1515,23 +1709,13 @@ class _ActivityItem extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                if (!hasStarted && isScheduled && isToday) ...[
-                  SizedBox(height: 4 * scale),
-                  Text(
-                    'Chờ tới giờ',
-                    style: AppTextStyles.arimo(
-                      fontSize: 9 * scale,
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
+          SizedBox(width: 8 * scale),
           // Middle: Timeline line & dot
           SizedBox(
-            width: 32 * scale,
+            width: 20 * scale,
             child: Column(
               children: [
                 Container(
@@ -1594,17 +1778,67 @@ class _ActivityItem extends StatelessWidget {
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: Text(
-                          activity.activity,
-                          style: AppTextStyles.arimo(
-                            fontSize: 16 * scale,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.textPrimary,
-                          ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              activity.activity,
+                              style: AppTextStyles.arimo(
+                                fontSize: 16 * scale,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            if (isForMom || isForBaby) ...[
+                              SizedBox(height: 6 * scale),
+                              Wrap(
+                                spacing: 6 * scale,
+                                runSpacing: 4 * scale,
+                                children: [
+                                  if (isForMom)
+                                    Container(
+                                      padding: EdgeInsets.symmetric(horizontal: 6 * scale, vertical: 2 * scale),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFFDF2F8),
+                                        borderRadius: BorderRadius.circular(4 * scale),
+                                        border: Border.all(color: const Color(0xFFFBCFE8)),
+                                      ),
+                                      child: Text(
+                                        'Chăm sóc mẹ',
+                                        style: AppTextStyles.arimo(
+                                          fontSize: 10 * scale,
+                                          fontWeight: FontWeight.w700,
+                                          color: const Color(0xFFBE185D),
+                                        ),
+                                      ),
+                                    ),
+                                  if (isForBaby)
+                                    Container(
+                                      padding: EdgeInsets.symmetric(horizontal: 6 * scale, vertical: 2 * scale),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFEFF6FF),
+                                        borderRadius: BorderRadius.circular(4 * scale),
+                                        border: Border.all(color: const Color(0xFFBFDBFE)),
+                                      ),
+                                      child: Text(
+                                        'Chăm sóc bé',
+                                        style: AppTextStyles.arimo(
+                                          fontSize: 10 * scale,
+                                          fontWeight: FontWeight.w700,
+                                          color: const Color(0xFF1D4ED8),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ],
+                          ],
                         ),
                       ),
+                      SizedBox(width: 8 * scale),
                       Container(
                         padding: EdgeInsets.symmetric(horizontal: 8 * scale, vertical: 4 * scale),
                         decoration: BoxDecoration(
@@ -1622,7 +1856,7 @@ class _ActivityItem extends StatelessWidget {
                       ),
                     ],
                   ),
-                  SizedBox(height: 6 * scale),
+                  SizedBox(height: 8 * scale),
                   Row(
                     children: [
                       Icon(Icons.access_time_rounded, size: 14 * scale, color: AppColors.textSecondary),
