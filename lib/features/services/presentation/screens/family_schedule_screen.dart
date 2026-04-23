@@ -94,6 +94,16 @@ class _FamilyScheduleScreenState extends State<FamilyScheduleScreen> {
     });
   }
 
+  Future<void> _onRefresh() async {
+    final bloc = context.read<FamilyScheduleBloc>();
+    final nextState = bloc.stream.firstWhere(
+      (state) => state is FamilyScheduleLoaded || state is FamilyScheduleError,
+    );
+    bloc.add(const FamilyScheduleRefreshRequested());
+    // Wait for the next state that is either Loaded or Error
+    await nextState;
+  }
+
   /// Get schedules for the selected date
   List<FamilyScheduleEntity> _getSchedulesForDate(
     FamilyScheduleLoaded state,
@@ -179,35 +189,44 @@ class _FamilyScheduleScreenState extends State<FamilyScheduleScreen> {
             }
 
             if (state is FamilyScheduleError) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.error_outline,
-                      size: 64 * scale,
-                      color: AppColors.textSecondary,
+              return RefreshIndicator(
+                onRefresh: _onRefresh,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Container(
+                    height: MediaQuery.of(context).size.height -
+                        Scaffold.of(context).appBarMaxHeight!,
+                    alignment: Alignment.center,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 64 * scale,
+                          color: AppColors.textSecondary,
+                        ),
+                        SizedBox(height: 16 * scale),
+                        Text(
+                          state.message,
+                          style: TextStyle(
+                            fontSize: 16 * scale,
+                            color: AppColors.textSecondary,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: 24 * scale),
+                        AppWidgets.primaryButton(
+                          text: AppStrings.retry,
+                          onPressed: () {
+                            context
+                                .read<FamilyScheduleBloc>()
+                                .add(const FamilyScheduleLoadRequested());
+                          },
+                          width: 200,
+                        ),
+                      ],
                     ),
-                    SizedBox(height: 16 * scale),
-                    Text(
-                      state.message,
-                      style: TextStyle(
-                        fontSize: 16 * scale,
-                        color: AppColors.textSecondary,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    SizedBox(height: 24 * scale),
-                    AppWidgets.primaryButton(
-                      text: AppStrings.retry,
-                      onPressed: () {
-                        context
-                            .read<FamilyScheduleBloc>()
-                            .add(const FamilyScheduleLoadRequested());
-                      },
-                      width: 200,
-                    ),
-                  ],
+                  ),
                 ),
               );
             }
@@ -217,34 +236,39 @@ class _FamilyScheduleScreenState extends State<FamilyScheduleScreen> {
               final datesWithSchedules = _getDatesWithSchedules(state.schedules);
               final dayNo = _getDayNumber(state.schedules, _selectedDate) ?? 0;
 
-              return Column(
-                children: [
-                  // Calendar picker
-                  Padding(
-                    padding: EdgeInsets.only(top: 16 * scale),
-                    child: ScheduleCalendarPicker(
-                      selectedDate: _selectedDate,
-                      onDateSelected: _handleDateSelected,
-                      datesWithSchedules: datesWithSchedules,
-                      minDate: _minScheduleDate,
-                      maxDate: _maxScheduleDate,
-                      expandIconRight: 24,
-                    ),
-                  ),
+              return RefreshIndicator(
+                onRefresh: _onRefresh,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Column(
+                    children: [
+                      // Calendar picker
+                      Padding(
+                        padding: EdgeInsets.only(top: 16 * scale),
+                        child: ScheduleCalendarPicker(
+                          selectedDate: _selectedDate,
+                          onDateSelected: _handleDateSelected,
+                          datesWithSchedules: datesWithSchedules,
+                          minDate: _minScheduleDate,
+                          maxDate: _maxScheduleDate,
+                          expandIconRight: 24,
+                        ),
+                      ),
 
-                  SizedBox(height: 20 * scale),
+                      SizedBox(height: 20 * scale),
 
-                  // Day view with timeline
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: ScheduleDayView(
+                      // Day view with timeline
+                      ScheduleDayView(
                         date: _selectedDate,
                         schedules: schedulesForDate,
                         dayNo: dayNo,
                       ),
-                    ),
+                      
+                      // Extra padding at the bottom for better scrolling feel
+                      SizedBox(height: 32 * scale),
+                    ],
                   ),
-                ],
+                ),
               );
             }
 

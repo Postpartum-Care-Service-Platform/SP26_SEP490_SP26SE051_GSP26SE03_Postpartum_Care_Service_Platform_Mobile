@@ -31,7 +31,10 @@ class FamilyScheduleBloc
 
     try {
       final schedules = await getMySchedulesUsecase();
-      emit(FamilyScheduleLoaded(schedules: schedules));
+      emit(FamilyScheduleLoaded(
+        schedules: schedules,
+        timestamp: DateTime.now(),
+      ));
     } catch (e) {
       emit(FamilyScheduleError(
         message: e.toString().replaceAll('Exception: ', ''),
@@ -49,7 +52,10 @@ class FamilyScheduleBloc
 
     try {
       final schedules = await getMySchedulesUsecase();
-      emit(FamilyScheduleLoaded(schedules: schedules));
+      emit(FamilyScheduleLoaded(
+        schedules: schedules,
+        timestamp: DateTime.now(),
+      ));
     } catch (e) {
       emit(FamilyScheduleError(
         message: e.toString().replaceAll('Exception: ', ''),
@@ -65,7 +71,10 @@ class FamilyScheduleBloc
 
     try {
       final schedules = await getMySchedulesByDateUsecase(event.date);
-      emit(FamilyScheduleLoaded(schedules: schedules));
+      emit(FamilyScheduleLoaded(
+        schedules: schedules,
+        timestamp: DateTime.now(),
+      ));
     } catch (e) {
       emit(FamilyScheduleError(
         message: e.toString().replaceAll('Exception: ', ''),
@@ -89,12 +98,18 @@ class FamilyScheduleBloc
                 schedule.id == updatedSchedule.id ? updatedSchedule : schedule,
           )
           .toList();
-      emit(FamilyScheduleLoaded(schedules: updatedSchedules));
+      emit(FamilyScheduleLoaded(
+        schedules: updatedSchedules,
+        timestamp: DateTime.now(),
+      ));
     } catch (e) {
       emit(FamilyScheduleError(
         message: e.toString().replaceAll('Exception: ', ''),
       ));
-      emit(FamilyScheduleLoaded(schedules: current.schedules));
+      emit(FamilyScheduleLoaded(
+        schedules: current.schedules,
+        timestamp: DateTime.now(),
+      ));
     }
   }
 }

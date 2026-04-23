@@ -11,17 +11,24 @@ class AppDateTimeUtils {
   static DateTime? parseToVietnamTime(String? isoString) {
     if (isoString == null || isoString.isEmpty) return null;
     try {
-      // Parse as UTC DateTime
-      final utcDateTime = DateTime.parse(isoString);
+      final dateTime = DateTime.parse(isoString);
       
-      // If it's already UTC (ends with Z or isUtc is true), convert to Vietnam time
-      if (isoString.endsWith('Z') || utcDateTime.isUtc) {
-        // Convert UTC to Vietnam timezone (UTC+7)
-        return utcDateTime.add(vietnamTimeOffset);
+      // If it's UTC (ends with Z or isUtc is true), we treat the components as local
+      // because the server usually sends local time with 'Z' appended.
+      if (isoString.endsWith('Z') || dateTime.isUtc) {
+        return DateTime(
+          dateTime.year,
+          dateTime.month,
+          dateTime.day,
+          dateTime.hour,
+          dateTime.minute,
+          dateTime.second,
+          dateTime.millisecond,
+          dateTime.microsecond,
+        );
       }
       
-      // If it's not UTC, assume it's already in Vietnam time and return as is
-      return utcDateTime;
+      return dateTime;
     } catch (e) {
       return null;
     }

@@ -22,11 +22,12 @@ class FamilyScheduleLoading extends FamilyScheduleState {
 /// Loaded state
 class FamilyScheduleLoaded extends FamilyScheduleState {
   final List<FamilyScheduleEntity> schedules;
+  final DateTime? timestamp;
 
-  const FamilyScheduleLoaded({required this.schedules});
+  const FamilyScheduleLoaded({required this.schedules, this.timestamp});
 
   @override
-  List<Object?> get props => [schedules];
+  List<Object?> get props => [schedules, timestamp];
 }
 
 /// Error state
