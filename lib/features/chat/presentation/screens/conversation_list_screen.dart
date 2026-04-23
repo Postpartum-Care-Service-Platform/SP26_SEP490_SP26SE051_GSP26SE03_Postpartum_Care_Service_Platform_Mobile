@@ -220,26 +220,6 @@ class _SearchBar extends StatelessWidget {
             Icons.search_rounded,
             color: AppColors.textSecondary,
           ),
-          suffixIcon: Padding(
-            padding: EdgeInsets.only(right: 8 * scale),
-            child: Container(
-              width: 32 * scale,
-              height: 32 * scale,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12 * scale),
-              ),
-              child: Icon(
-                Icons.tune_rounded,
-                size: 18 * scale,
-                color: AppColors.primary,
-              ),
-            ),
-          ),
-          suffixIconConstraints: BoxConstraints(
-            minWidth: 40 * scale,
-            minHeight: 40 * scale,
-          ),
           hintText: AppStrings.chatSearchHint,
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(
