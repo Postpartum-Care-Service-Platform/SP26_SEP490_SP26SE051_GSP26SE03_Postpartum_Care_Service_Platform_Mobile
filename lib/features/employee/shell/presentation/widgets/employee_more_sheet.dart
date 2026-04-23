@@ -216,9 +216,6 @@ class EmployeeMoreSheet {
       case EmployeeQuickMenuExtraAction.room:
         AppRouter.push(context, AppRoutes.employeeRooms);
         break;
-      case EmployeeQuickMenuExtraAction.mealPlan:
-        AppRouter.push(context, AppRoutes.employeeMealPlan);
-        break;
       case EmployeeQuickMenuExtraAction.requests:
         AppRouter.push(context, AppRoutes.employeeRequests);
         break;
@@ -292,7 +289,6 @@ List<_MenuGroup> _buildGroupedItems(List<EmployeeQuickMenuItem> items) {
       case EmployeeQuickMenuExtraAction.bookings:
       case EmployeeQuickMenuExtraAction.amenityService:
       case EmployeeQuickMenuExtraAction.amenityTicket:
-      case EmployeeQuickMenuExtraAction.mealPlan:
       case EmployeeQuickMenuExtraAction.familyProfile:
       case EmployeeQuickMenuExtraAction.createCustomer:
       case EmployeeQuickMenuExtraAction.myBookings:

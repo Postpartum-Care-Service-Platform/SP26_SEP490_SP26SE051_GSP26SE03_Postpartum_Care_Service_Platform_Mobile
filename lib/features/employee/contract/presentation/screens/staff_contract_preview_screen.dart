@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 
@@ -56,9 +57,7 @@ class _StaffContractPreviewScreenState
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
-            );
+            return const _ContractLoadingWidget();
           }
 
           if (snapshot.hasError) {
@@ -325,6 +324,129 @@ class _StaffContractPreviewScreenState
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _ContractLoadingWidget extends StatefulWidget {
+  const _ContractLoadingWidget();
+
+  @override
+  State<_ContractLoadingWidget> createState() => _ContractLoadingWidgetState();
+}
+
+class _ContractLoadingWidgetState extends State<_ContractLoadingWidget> with SingleTickerProviderStateMixin {
+  int _messageIndex = 0;
+  late Timer _timer;
+  late AnimationController _pulseController;
+  late Animation<double> _scaleAnimation;
+
+  final List<String> _messages = [
+    'Đang khởi tạo bản thảo hợp đồng...',
+    'Đang kiểm tra thông tin đối tác...',
+    'Đang biên soạn các điều khoản dịch vụ...',
+    'Đang định dạng văn bản pháp lý...',
+    'Đang chuẩn bị bản xem trước...',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+
+    _scaleAnimation = Tween<double>(begin: 0.95, end: 1.05).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
+    _timer = Timer.periodic(const Duration(milliseconds: 1800), (timer) {
+      if (mounted) {
+        setState(() {
+          _messageIndex = (_messageIndex + 1) % _messages.length;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          ScaleTransition(
+            scale: _scaleAnimation,
+            child: Container(
+              width: 100 * scale,
+              height: 100 * scale,
+              padding: EdgeInsets.all(20 * scale),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    strokeWidth: 3 * scale,
+                  ),
+                  Icon(
+                    Icons.history_edu,
+                    size: 40 * scale,
+                    color: AppColors.primary,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SizedBox(height: 32 * scale),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 400),
+            transitionBuilder: (Widget child, Animation<double> animation) {
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, 0.2),
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: child,
+                ),
+              );
+            },
+            child: Text(
+              _messages[_messageIndex],
+              key: ValueKey<int>(_messageIndex),
+              textAlign: TextAlign.center,
+              style: AppTextStyles.arimo(
+                fontSize: 15 * scale,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary.withValues(alpha: 0.8),
+              ),
+            ),
+          ),
+          SizedBox(height: 12 * scale),
+          Text(
+            'Vui lòng đợi trong giây lát',
+            style: AppTextStyles.arimo(
+              fontSize: 12 * scale,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -17,7 +17,6 @@ enum EmployeeQuickMenuExtraAction {
   amenityService,
   amenityTicket,
   room,
-  mealPlan,
   requests,
   tasks,
   staffProfile,
@@ -359,7 +358,6 @@ List<_QuickMenuGroup> _buildQuickMenuGroups(List<EmployeeQuickMenuItem> items) {
       case EmployeeQuickMenuExtraAction.bookings:
       case EmployeeQuickMenuExtraAction.amenityService:
       case EmployeeQuickMenuExtraAction.amenityTicket:
-      case EmployeeQuickMenuExtraAction.mealPlan:
       case EmployeeQuickMenuExtraAction.familyProfile:
       case EmployeeQuickMenuExtraAction.createCustomer:
       case EmployeeQuickMenuExtraAction.myBookings:
@@ -663,16 +661,16 @@ class EmployeeQuickMenuPresets {
           action: EmployeeQuickMenuExtraAction.myBookings,
         ),
         EmployeeQuickMenuItem.bottom(
-          id: 'services',
-          label: 'Dịch vụ',
-          iconAsset: AppAssets.appIconThird,
-          tab: AppBottomTab.services,
-        ),
-        EmployeeQuickMenuItem.bottom(
           id: 'support_requests',
           label: 'Yêu cầu Chat',
           iconAsset: AppAssets.chatMessage,
           tab: AppBottomTab.supportRequests,
+        ),
+        EmployeeQuickMenuItem.extra(
+          id: 'wallet',
+          label: 'Ví tiền',
+          iconAsset: AppAssets.menuFirst,
+          action: EmployeeQuickMenuExtraAction.wallet,
         ),
       ];
     }
@@ -724,12 +722,13 @@ class EmployeeQuickMenuPresets {
         iconAsset: AppAssets.calendar,
         tab: AppBottomTab.appointment,
       ),
-      EmployeeQuickMenuItem.bottom(
-        id: 'services',
-        label: 'Dịch vụ',
-        iconAsset: AppAssets.appIconThird,
-        tab: AppBottomTab.services,
-      ),
+      if (!isHomeNurse)
+        EmployeeQuickMenuItem.bottom(
+          id: 'services',
+          label: 'Dịch vụ',
+          iconAsset: AppAssets.appIconThird,
+          tab: AppBottomTab.services,
+        ),
       EmployeeQuickMenuItem.bottom(
         id: 'support_requests',
         label: 'Yêu cầu Chat',
@@ -766,12 +765,13 @@ class EmployeeQuickMenuPresets {
         iconAsset: AppAssets.chatMessage, // Or a review star icon if available
         action: EmployeeQuickMenuExtraAction.feedbacks,
       ),
-      EmployeeQuickMenuItem.extra(
-        id: 'create_customer',
-        label: 'Tạo KH',
-        iconAsset: AppAssets.profile,
-        action: EmployeeQuickMenuExtraAction.createCustomer,
-      ),
+      if (!isHomeNurse)
+        EmployeeQuickMenuItem.extra(
+          id: 'create_customer',
+          label: 'Tạo KH',
+          iconAsset: AppAssets.profile,
+          action: EmployeeQuickMenuExtraAction.createCustomer,
+        ),
       EmployeeQuickMenuItem.extra(
         id: 'family_profile',
         label: 'Gia đình',
@@ -784,12 +784,6 @@ class EmployeeQuickMenuPresets {
           label: 'Tiện ích',
           iconAsset: AppAssets.serviceAmenity,
           action: EmployeeQuickMenuExtraAction.amenityService,
-        ),
-        EmployeeQuickMenuItem.extra(
-          id: 'meal_plan',
-          label: 'Suất ăn',
-          iconAsset: AppAssets.menuSecond,
-          action: EmployeeQuickMenuExtraAction.mealPlan,
         ),
       ],
 
