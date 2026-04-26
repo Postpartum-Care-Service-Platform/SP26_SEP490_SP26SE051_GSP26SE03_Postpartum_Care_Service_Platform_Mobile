@@ -15,6 +15,7 @@ class AvatarWidget extends StatelessWidget {
   final Color? backgroundColor;
   final double borderWidth;
   final Color? borderColor;
+  final IconData? fallbackIcon;
 
   const AvatarWidget({
     super.key,
@@ -26,6 +27,7 @@ class AvatarWidget extends StatelessWidget {
     this.backgroundColor,
     this.borderWidth = 0,
     this.borderColor,
+    this.fallbackIcon,
   });
 
   String _getInitials(String name) {
@@ -101,6 +103,15 @@ class AvatarWidget extends StatelessWidget {
   }
 
   Widget _buildInitialsWidget(String? name, double size, double scale) {
+    if (fallbackIcon != null && (name == null || name.isEmpty || name == '?')) {
+      return Center(
+        child: Icon(
+          fallbackIcon,
+          size: size * 0.5,
+          color: AppColors.primary,
+        ),
+      );
+    }
     return Container(
       width: size,
       height: size,

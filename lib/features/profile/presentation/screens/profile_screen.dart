@@ -19,6 +19,7 @@ import '../../../../core/routing/app_routes.dart';
 import '../widgets/profile_header.dart';
 import '../widgets/profile_menu_item.dart';
 import 'account_details_screen.dart';
+import '../../../package_request/presentation/screens/package_request_list_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -160,6 +161,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
                                   builder: (_) => const BookingHistoryScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          ProfileMenuItem(
+                            icon: Icons.tune_rounded,
+                            title: 'Cá nhân hoá gói dịch vụ',
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => BlocProvider(
+                                    create: (_) => InjectionContainer.packageRequestBloc,
+                                    child: const PackageRequestListScreen(),
+                                  ),
                                 ),
                               );
                             },

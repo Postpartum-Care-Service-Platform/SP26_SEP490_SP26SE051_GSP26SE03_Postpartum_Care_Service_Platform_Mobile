@@ -7,6 +7,7 @@ import '../models/package_model.dart';
 /// Package remote data source interface
 abstract class PackageRemoteDataSource {
   Future<List<PackageModel>> getPackages();
+  Future<List<PackageModel>> getMyCustomPackages();
   Future<PackageModel> getPackageById(int id);
   Future<NowPackageModel> getNowPackage();
 }
@@ -81,6 +82,23 @@ class PackageRemoteDataSourceImpl implements PackageRemoteDataSource {
       throw Exception('Lỗi kết nối mạng: ${e.message}');
     } catch (e) {
       throw Exception('Lỗi không mong muốn: $e');
+    }
+  }
+
+  @override
+  Future<List<PackageModel>> getMyCustomPackages() async {
+    try {
+      final response = await dio.get(ApiEndpoints.packagesCustomMy);
+      final List<dynamic> data = response.data as List<dynamic>;
+      return data
+          .map((json) => PackageModel.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      if (e is DioException && e.response != null) {
+        throw Exception(
+            'Tải danh sách gói cá nhân hóa thất bại: ${e.response?.statusCode}');
+      }
+      throw Exception('Không thể tải gói cá nhân hóa: $e');
     }
   }
 

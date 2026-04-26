@@ -10,12 +10,14 @@ class PackageCard extends StatelessWidget {
   final PackageEntity package;
   final VoidCallback? onTap;
   final bool isUnavailable;
+  final double aspectRatio;
 
   const PackageCard({
     super.key,
     required this.package,
     this.onTap,
     this.isUnavailable = false,
+    this.aspectRatio = 3 / 4,
   });
 
   String _formatDate(DateTime? date) {
@@ -62,7 +64,7 @@ class PackageCard extends StatelessWidget {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(16 * scale),
           child: AspectRatio(
-            aspectRatio: 3 / 4,
+            aspectRatio: aspectRatio,
             child: Stack(
               fit: StackFit.expand,
               children: [

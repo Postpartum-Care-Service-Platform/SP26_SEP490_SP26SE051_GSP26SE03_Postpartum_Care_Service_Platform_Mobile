@@ -98,9 +98,17 @@ class ApiEndpoints {
   static const String getMemberTypes = '/member-types';
   static String getMemberTypeById(int id) => '/member-types/$id';
 
+  // Health Record endpoints
+  static String createHealthRecord(int familyProfileId) =>
+      '/HealthRecord/Create/$familyProfileId';
+  static String getHealthRecordsByFamilyProfile(int familyProfileId) =>
+      '/HealthRecord/GetByFamilyProfile/$familyProfileId';
+  static const String getHealthConditions = '/HealthCondition/GetAll';
+
   // Package endpoints
   static const String packages = '/Packages/center';
   static const String nowPackage = '/Packages/nowPackage';
+  static const String packagesCustomMy = '/Packages/custom/my';
   static String packageById(int id) => '/Packages/$id';
   static const String packageTypes = '/PackageType';
 
@@ -373,4 +381,30 @@ class ApiEndpoints {
 
   static const String myWallet = '/Wallet/me';
   static const String myWalletTransactions = '/Wallet/me/transactions';
+
+  // ==========================================
+  // Package Request endpoints
+  // ==========================================
+
+  /// Get all package requests
+  static const String packageRequestGetAll = '/PackageRequest/GetAll';
+
+  /// Get package request by ID
+  static String packageRequestGetById(int id) =>
+      '/PackageRequest/GetById/$id';
+
+  /// Create package request
+  static const String packageRequestCreate = '/PackageRequest/Create';
+
+  /// Approve package request
+  static String packageRequestApprove(int id) =>
+      '/PackageRequest/Approve/$id';
+
+  /// Reject package request
+  static String packageRequestReject(int id) =>
+      '/PackageRequest/Reject/$id';
+
+  /// Request revision for package request
+  static String packageRequestRevision(int id) =>
+      '/PackageRequest/RequestRevision/$id';
 }

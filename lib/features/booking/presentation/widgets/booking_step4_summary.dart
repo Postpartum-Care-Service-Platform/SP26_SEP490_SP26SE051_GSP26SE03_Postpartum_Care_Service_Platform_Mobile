@@ -1,3 +1,4 @@
+import '../../../../core/widgets/avatar_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -777,20 +778,13 @@ class _SelectedMemberTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 18 * scale,
-            backgroundColor: AppColors.borderLight,
-            backgroundImage: (profile.avatarUrl != null &&
-                    profile.avatarUrl!.isNotEmpty)
-                ? NetworkImage(profile.avatarUrl!)
-                : null,
-            child: (profile.avatarUrl == null || profile.avatarUrl!.isEmpty)
-                ? Icon(
-                    Icons.person,
-                    size: 18 * scale,
-                    color: AppColors.primary,
-                  )
-                : null,
+          AvatarWidget(
+            imageUrl: profile.avatarUrl,
+            displayName: profile.fullName,
+            size: 36 * scale,
+            fallbackIcon: profile.memberTypeId == 3
+                ? Icons.child_care_rounded
+                : Icons.pregnant_woman_rounded,
           ),
           SizedBox(width: 10 * scale),
           Expanded(

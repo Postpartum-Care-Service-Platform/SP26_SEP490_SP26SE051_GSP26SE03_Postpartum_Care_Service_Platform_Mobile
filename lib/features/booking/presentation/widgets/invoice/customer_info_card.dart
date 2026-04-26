@@ -96,10 +96,23 @@ class CustomerInfoCard extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      Icon(
-                        Icons.person_outline_rounded,
-                        size: 18 * scale,
-                        color: AppColors.primary,
+                      CircleAvatar(
+                        radius: 18 * scale,
+                        backgroundColor: AppColors.borderLight,
+                        backgroundImage: (target.avatarUrl != null &&
+                                target.avatarUrl!.isNotEmpty)
+                            ? NetworkImage(target.avatarUrl!)
+                            : null,
+                        child: (target.avatarUrl == null ||
+                                target.avatarUrl!.isEmpty)
+                            ? Icon(
+                                target.memberTypeId == 3
+                                    ? Icons.child_care_rounded
+                                    : Icons.pregnant_woman_rounded,
+                                size: 18 * scale,
+                                color: AppColors.primary,
+                              )
+                            : null,
                       ),
                       SizedBox(width: 8 * scale),
                       Expanded(

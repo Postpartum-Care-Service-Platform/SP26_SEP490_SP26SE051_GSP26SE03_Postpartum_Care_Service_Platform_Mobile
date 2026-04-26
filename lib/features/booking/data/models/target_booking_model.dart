@@ -5,12 +5,16 @@ class TargetBookingModel {
   final int familyProfileId;
   final String fullName;
   final String? relationship;
+  final String? avatarUrl;
+  final int? memberTypeId;
 
   TargetBookingModel({
     required this.id,
     required this.familyProfileId,
     required this.fullName,
     this.relationship,
+    this.avatarUrl,
+    this.memberTypeId,
   });
 
   factory TargetBookingModel.fromJson(Map<String, dynamic> json) {
@@ -19,6 +23,8 @@ class TargetBookingModel {
       familyProfileId: (json['familyProfileId'] as num?)?.toInt() ?? 0,
       fullName: (json['fullName'] as String?) ?? '',
       relationship: json['relationship'] as String?,
+      avatarUrl: json['avatarUrl'] as String?,
+      memberTypeId: (json['memberTypeId'] as num?)?.toInt(),
     );
   }
 
@@ -28,6 +34,8 @@ class TargetBookingModel {
       'familyProfileId': familyProfileId,
       'fullName': fullName,
       'relationship': relationship,
+      'avatarUrl': avatarUrl,
+      'memberTypeId': memberTypeId,
     };
   }
 
@@ -37,6 +45,8 @@ class TargetBookingModel {
       familyProfileId: familyProfileId,
       fullName: fullName,
       relationship: relationship,
+      avatarUrl: avatarUrl,
+      memberTypeId: memberTypeId,
     );
   }
 }

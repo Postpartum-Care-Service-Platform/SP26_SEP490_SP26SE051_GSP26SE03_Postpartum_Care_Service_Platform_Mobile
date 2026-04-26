@@ -7,10 +7,12 @@ import 'package_state.dart';
 /// Package BloC
 class PackageBloc extends Bloc<PackageEvent, PackageState> {
   final GetPackagesUsecase getPackagesUsecase;
-
-  PackageBloc({
-    required this.getPackagesUsecase,
-  }) : super(const PackageInitial()) {
+  final GetMyCustomPackagesUsecase getMyCustomPackagesUsecase;
+ 
+   PackageBloc({
+     required this.getPackagesUsecase,
+     required this.getMyCustomPackagesUsecase,
+   }) : super(const PackageInitial()) {
     on<PackageLoadRequested>(_onLoadRequested);
     on<PackageRefresh>(_onRefresh);
     on<PackageFilterChanged>(_onFilterChanged);
@@ -29,9 +31,19 @@ class PackageBloc extends Bloc<PackageEvent, PackageState> {
     try {
       final packages = await getPackagesUsecase();
       final categorized = _categorizePackages(packages);
+      
+      // Also fetch personalized if possible, or just start with empty
+      List<PackageEntity> personalized = [];
+      try {
+        personalized = await getMyCustomPackagesUsecase();
+      } catch (_) {
+        // Silently fail or handle later
+      }
+
       emit(PackageLoaded(
         centerPackages: categorized.centerPackages,
         homePackages: categorized.homePackages,
+        personalizedPackages: personalized,
         currentFilter: PackageFilter.center,
       ));
     } catch (e) {
@@ -46,17 +58,25 @@ class PackageBloc extends Bloc<PackageEvent, PackageState> {
     try {
       final packages = await getPackagesUsecase();
       final categorized = _categorizePackages(packages);
+      
+      List<PackageEntity> personalized = [];
+      try {
+        personalized = await getMyCustomPackagesUsecase();
+      } catch (_) {}
+
       final currentState = state;
       if (currentState is PackageLoaded) {
         emit(PackageLoaded(
           centerPackages: categorized.centerPackages,
           homePackages: categorized.homePackages,
+          personalizedPackages: personalized,
           currentFilter: currentState.currentFilter,
         ));
       } else {
         emit(PackageLoaded(
           centerPackages: categorized.centerPackages,
           homePackages: categorized.homePackages,
+          personalizedPackages: personalized,
           currentFilter: PackageFilter.center,
         ));
       }
