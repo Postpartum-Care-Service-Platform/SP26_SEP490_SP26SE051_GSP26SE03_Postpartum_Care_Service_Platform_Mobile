@@ -10,7 +10,11 @@ abstract class BookingEvent extends Equatable {
 
 /// Load packages for selection
 class BookingLoadPackages extends BookingEvent {
-  const BookingLoadPackages();
+  final bool isPersonalized;
+  const BookingLoadPackages({this.isPersonalized = false});
+
+  @override
+  List<Object?> get props => [isPersonalized];
 }
 
 /// Select package

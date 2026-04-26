@@ -340,6 +340,7 @@ class AppWidgets {
     bool enabled = true,
     int? maxLines = 1,
     int? minLines,
+    TextInputType? keyboardType,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -368,6 +369,7 @@ class AppWidgets {
             validator: validator,
             maxLines: maxLines,
             minLines: minLines,
+            keyboardType: keyboardType,
             style: AppTextStyles.arimo(
               fontSize: 14,
               fontWeight: FontWeight.normal,

@@ -30,6 +30,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   final CreatePaymentLinkUsecase createPaymentLinkUsecase;
   final CheckPaymentStatusUsecase checkPaymentStatusUsecase;
   final GetPackagesUsecase getPackagesUsecase;
+  final GetMyCustomPackagesUsecase getMyCustomPackagesUsecase;
   final GetFamilyProfilesUsecase getFamilyProfilesUsecase;
   final GetRoomsByPackage getRoomsByPackage;
   final ConfirmCompletionUsecase confirmCompletionUsecase;
@@ -74,6 +75,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     required this.createPaymentLinkUsecase,
     required this.checkPaymentStatusUsecase,
     required this.getPackagesUsecase,
+    required this.getMyCustomPackagesUsecase,
     required this.getFamilyProfilesUsecase,
     required this.getRoomsByPackage,
     required this.confirmCompletionUsecase,
@@ -103,24 +105,20 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     BookingLoadPackages event,
     Emitter<BookingState> emit,
   ) async {
-    // Nếu đã có packages cached, emit lại luôn (cho phép quay lại step 1)
-    if (_packages != null && _packages!.isNotEmpty) {
-      emit(
-        BookingPackagesLoaded(
-          packages: _packages!,
-          selectedPackageId: _selectedPackageId,
-        ),
-      );
-      return;
-    }
-
+    // Nếu đã có packages cached VÀ loại package (personalized hay không) trùng khớp, emit lại luôn
+    // Tuy nhiên để đảm bảo mượt mà khi switch tab, ta cho phép load lại nếu type khác.
+    // Để đơn giản, ta sẽ luôn load lại nếu event yêu cầu refresh hoặc type khác type hiện tại.
+    
     if (state is BookingLoading) {
       return;
     }
-
+ 
     emit(const BookingLoading());
     try {
-      final packages = await getPackagesUsecase();
+      final packages = event.isPersonalized 
+          ? await getMyCustomPackagesUsecase()
+          : await getPackagesUsecase();
+      
       _packages = packages;
       emit(
         BookingPackagesLoaded(

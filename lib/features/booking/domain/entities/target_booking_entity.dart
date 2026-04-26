@@ -6,12 +6,16 @@ class TargetBookingEntity extends Equatable {
   final int familyProfileId;
   final String fullName;
   final String? relationship;
+  final String? avatarUrl;
+  final int? memberTypeId;
 
   const TargetBookingEntity({
     required this.id,
     required this.familyProfileId,
     required this.fullName,
     this.relationship,
+    this.avatarUrl,
+    this.memberTypeId,
   });
 
   @override
@@ -20,5 +24,7 @@ class TargetBookingEntity extends Equatable {
         familyProfileId,
         fullName,
         relationship,
+        avatarUrl,
+        memberTypeId,
       ];
 }

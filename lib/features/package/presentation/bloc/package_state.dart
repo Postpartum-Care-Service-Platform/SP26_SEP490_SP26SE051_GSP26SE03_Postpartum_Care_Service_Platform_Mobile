@@ -22,15 +22,17 @@ class PackageLoading extends PackageState {
 
 /// Loaded state
 class PackageLoaded extends PackageState {
-  final List<PackageEntity> centerPackages;
-  final List<PackageEntity> homePackages;
-  final PackageFilter currentFilter;
-
-  const PackageLoaded({
-    required this.centerPackages,
-    required this.homePackages,
-    this.currentFilter = PackageFilter.center,
-  });
+   final List<PackageEntity> centerPackages;
+   final List<PackageEntity> homePackages;
+   final List<PackageEntity> personalizedPackages;
+   final PackageFilter currentFilter;
+ 
+   const PackageLoaded({
+     required this.centerPackages,
+     required this.homePackages,
+     this.personalizedPackages = const [],
+     this.currentFilter = PackageFilter.center,
+   });
 
   List<PackageEntity> get allPackages => [...centerPackages, ...homePackages];
   
@@ -40,20 +42,24 @@ class PackageLoaded extends PackageState {
         return centerPackages;
       case PackageFilter.home:
         return homePackages;
+      case PackageFilter.personalized:
+        return personalizedPackages;
     }
   }
 
   @override
-  List<Object?> get props => [centerPackages, homePackages, currentFilter];
+  List<Object?> get props => [centerPackages, homePackages, personalizedPackages, currentFilter];
 
   PackageLoaded copyWith({
     List<PackageEntity>? centerPackages,
     List<PackageEntity>? homePackages,
+    List<PackageEntity>? personalizedPackages,
     PackageFilter? currentFilter,
   }) {
     return PackageLoaded(
       centerPackages: centerPackages ?? this.centerPackages,
       homePackages: homePackages ?? this.homePackages,
+      personalizedPackages: personalizedPackages ?? this.personalizedPackages,
       currentFilter: currentFilter ?? this.currentFilter,
     );
   }

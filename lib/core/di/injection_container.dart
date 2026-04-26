@@ -188,6 +188,12 @@ import '../../features/employee/feedback/data/repositories/staff_feedback_reposi
 import '../../features/employee/feedback/domain/repositories/staff_feedback_repository.dart';
 import '../../features/employee/feedback/domain/usecases/get_my_feedbacks_for_staff.dart';
 import '../../features/employee/feedback/presentation/bloc/staff_feedback_bloc.dart';
+import '../../features/health_record/data/repositories/health_record_repository_impl.dart';
+import '../../features/health_record/domain/repositories/health_record_repository.dart';
+import '../../features/health_record/presentation/bloc/health_record_bloc.dart';
+import '../../features/package_request/data/repositories/package_request_repository_impl.dart';
+import '../../features/package_request/domain/repositories/package_request_repository.dart';
+import '../../features/package_request/presentation/bloc/package_request_bloc.dart';
 import '../apis/api_client.dart';
 
 /// Centralized dependency injection container
@@ -264,6 +270,13 @@ class InjectionContainer {
   static StaffFeedbackRemoteDataSource get _staffFeedbackRemoteDataSource =>
       StaffFeedbackRemoteDataSourceImpl(dio: ApiClient.dio);
 
+  // Health Record
+  static HealthRecordRepository get healthRecordRepository =>
+      HealthRecordRepositoryImpl(dio: ApiClient.dio);
+
+  // Package Request
+  static PackageRequestRepository get packageRequestRepository =>
+      PackageRequestRepositoryImpl(dio: ApiClient.dio);
 
   // ==================== Repositories ====================
 
@@ -406,6 +419,9 @@ class InjectionContainer {
 
   static GetPackagesUsecase get _getPackagesUsecase =>
       GetPackagesUsecase(packageRepository);
+
+  static GetMyCustomPackagesUsecase get _getMyCustomPackagesUsecase =>
+      GetMyCustomPackagesUsecase(packageRepository);
 
   static GetCarePlanDetailsUsecase get _getCarePlanDetailsUsecase =>
       GetCarePlanDetailsUsecase(carePlanRepository);
@@ -610,6 +626,15 @@ class InjectionContainer {
     createFamilyProfileUsecase: _createFamilyProfileUsecase,
   );
 
+  static HealthRecordBloc get healthRecordBloc => HealthRecordBloc(
+    repository: healthRecordRepository,
+  );
+
+  static PackageRequestBloc get packageRequestBloc => PackageRequestBloc(
+    repository: packageRequestRepository,
+    packageRepository: packageRepository,
+  );
+
   static NotificationBloc get notificationBloc => NotificationBloc(
     getNotificationsUsecase: _getNotificationsUsecase,
     getNotificationByIdUsecase: _getNotificationByIdUsecase,
@@ -617,8 +642,10 @@ class InjectionContainer {
     getUnreadCountUsecase: _getUnreadCountUsecase,
   );
 
-  static PackageBloc get packageBloc =>
-      PackageBloc(getPackagesUsecase: _getPackagesUsecase);
+  static PackageBloc get packageBloc => PackageBloc(
+        getPackagesUsecase: _getPackagesUsecase,
+        getMyCustomPackagesUsecase: _getMyCustomPackagesUsecase,
+      );
 
   static CarePlanBloc get carePlanBloc =>
       CarePlanBloc(getCarePlanDetailsUsecase: _getCarePlanDetailsUsecase);
@@ -685,6 +712,7 @@ class InjectionContainer {
         createPaymentLinkUsecase: _createPaymentLinkUsecase,
         checkPaymentStatusUsecase: _checkPaymentStatusUsecase,
         getPackagesUsecase: _getPackagesUsecase,
+        getMyCustomPackagesUsecase: _getMyCustomPackagesUsecase,
         getFamilyProfilesUsecase: _getFamilyProfilesUsecase,
         getRoomsByPackage: _getRoomsByPackage,
         confirmCompletionUsecase: _confirmCompletionUsecase,

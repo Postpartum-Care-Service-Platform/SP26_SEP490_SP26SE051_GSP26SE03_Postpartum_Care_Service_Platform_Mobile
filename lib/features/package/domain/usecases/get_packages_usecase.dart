@@ -22,3 +22,13 @@ class GetNowPackageUsecase {
     return await repository.getNowPackage();
   }
 }
+
+class GetMyCustomPackagesUsecase {
+  final PackageRepository repository;
+
+  GetMyCustomPackagesUsecase(this.repository);
+
+  Future<List<PackageEntity>> call() async {
+    return await repository.getMyCustomPackages();
+  }
+}

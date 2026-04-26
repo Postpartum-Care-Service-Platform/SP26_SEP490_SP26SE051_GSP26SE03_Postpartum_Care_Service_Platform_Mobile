@@ -401,16 +401,20 @@ class _FamilyProfileFormDrawerState extends State<FamilyProfileFormDrawer> {
                                             fit: BoxFit.cover,
                                             errorBuilder: (context, error, stackTrace) =>
                                                 Icon(
-                                              Icons.person_rounded,
+                                              _selectedMemberTypeId == 3
+                                                  ? Icons.child_care_rounded
+                                                  : Icons.pregnant_woman_rounded,
                                               size: 60 * scale,
-                                              color: AppColors.textSecondary,
+                                              color: AppColors.primary,
                                             ),
                                           ),
                                         )
                                       : Icon(
-                                          Icons.person_rounded,
+                                          _selectedMemberTypeId == 3
+                                              ? Icons.child_care_rounded
+                                              : Icons.pregnant_woman_rounded,
                                           size: 60 * scale,
-                                          color: AppColors.textSecondary,
+                                          color: AppColors.primary,
                                         ),
                             ),
                           ),

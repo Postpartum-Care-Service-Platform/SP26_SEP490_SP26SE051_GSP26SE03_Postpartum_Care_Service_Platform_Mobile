@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 enum PackageFilter {
   center,
   home,
+  personalized,
 }
 
 /// Package events
