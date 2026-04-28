@@ -155,17 +155,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
 
                           ProfileMenuItem(
-                            icon: Icons.history_rounded,
-                            title: AppStrings.bookingHistory,
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const BookingHistoryScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                          ProfileMenuItem(
                             icon: Icons.tune_rounded,
                             title: 'Cá nhân hoá gói dịch vụ',
                             onTap: () {
@@ -175,6 +164,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     create: (_) => InjectionContainer.packageRequestBloc,
                                     child: const PackageRequestListScreen(),
                                   ),
+                                ),
+                              );
+                            },
+                          ),
+                          ProfileMenuItem(
+                            svgIcon: AppAssets.notificationBell,
+                            title: AppStrings.notifications,
+                            onTap: () {
+                              AppRouter.push(context, AppRoutes.notifications);
+                            },
+                          ),
+                        ],
+                      ),
+
+                      SizedBox(height: 12 * scale),
+
+                      AppWidgets.sectionHeader(
+                        context,
+                        title: 'Dịch vụ',
+                      ),
+                      AppWidgets.sectionContainer(
+                        context,
+                        children: [
+                          ProfileMenuItem(
+                            icon: Icons.history_rounded,
+                            title: AppStrings.bookingHistory,
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const BookingHistoryScreen(),
                                 ),
                               );
                             },
@@ -195,13 +214,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 AppRoutes.feedback,
                                 arguments: {'isReadOnly': true},
                               );
-                            },
-                          ),
-                          ProfileMenuItem(
-                            svgIcon: AppAssets.notificationBell,
-                            title: AppStrings.notifications,
-                            onTap: () {
-                              AppRouter.push(context, AppRoutes.notifications);
                             },
                           ),
                         ],

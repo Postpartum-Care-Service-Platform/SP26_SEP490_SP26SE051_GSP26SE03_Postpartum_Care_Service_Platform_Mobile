@@ -5,6 +5,7 @@ import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/widgets/app_widgets.dart';
 import '../../domain/entities/family_profile_entity.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 
 /// Family member card widget
 class FamilyMemberCard extends StatelessWidget {
@@ -52,8 +53,32 @@ class FamilyMemberCard extends StatelessWidget {
                 ),
               ],
             ),
-            child: Material(
-              color: Colors.transparent,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16 * scale),
+              child: Slidable(
+                key: ValueKey('slidable_family_member_${member.id}'),
+                enabled: !member.isOwner && onDelete != null,
+                endActionPane: ActionPane(
+                  motion: const BehindMotion(),
+                  extentRatio: 0.2,
+                  children: [
+                    CustomSlidableAction(
+                      onPressed: (context) {
+                        if (onDelete != null) onDelete!();
+                      },
+                      backgroundColor: Colors.red.shade400,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.zero,
+                      child: Icon(
+                        Icons.delete_outline_rounded,
+                        color: Colors.white,
+                        size: 24 * scale,
+                      ),
+                    ),
+                  ],
+                ),
+                child: Material(
+                  color: AppColors.white,
               child: InkWell(
                 onTap: onTap,
                 borderRadius: BorderRadius.circular(16 * scale),
@@ -193,6 +218,8 @@ class FamilyMemberCard extends StatelessWidget {
                 ),
               ),
             ),
+          ),
+          ),
           ),
           if (member.isOwner)
             Positioned(

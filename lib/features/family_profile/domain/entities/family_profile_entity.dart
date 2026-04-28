@@ -15,6 +15,7 @@ class FamilyProfileEntity extends Equatable {
   final DateTime updatedAt;
   final String? memberTypeName;
   final bool isOwner;
+  final bool isDeleted;
 
   const FamilyProfileEntity({
     required this.id,
@@ -30,6 +31,7 @@ class FamilyProfileEntity extends Equatable {
     required this.updatedAt,
     this.memberTypeName,
     required this.isOwner,
+    this.isDeleted = false,
   });
 
   @override
@@ -47,5 +49,6 @@ class FamilyProfileEntity extends Equatable {
         updatedAt,
         memberTypeName,
         isOwner,
+        isDeleted,
       ];
 }

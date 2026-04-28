@@ -13,6 +13,8 @@ import '../../../family_profile/data/models/create_family_profile_request_model.
 import '../../../family_profile/data/models/member_type_model.dart';
 import '../../../family_profile/domain/entities/family_profile_entity.dart';
 import '../../../family_profile/presentation/widgets/family_profile_form_drawer.dart';
+import '../../../health_record/domain/entities/health_record_entity.dart';
+import '../../../health_record/presentation/screens/health_record_screen.dart';
 import '../bloc/booking_bloc.dart';
 import '../bloc/booking_event.dart';
 import '../bloc/booking_state.dart';
@@ -35,6 +37,7 @@ class BookingStep2FamilyProfileSelection extends StatefulWidget {
 class _BookingStep2FamilyProfileSelectionState
     extends State<BookingStep2FamilyProfileSelection> {
   bool _isSubmitting = false;
+  final Map<int, bool> _hasRecords = {};
 
   String _getMemberTypeLabel(FamilyProfileEntity profile) {
     if (profile.isOwner) return AppStrings.bookingProfileOwner;
@@ -240,8 +243,16 @@ class _BookingStep2FamilyProfileSelectionState
             .where((p) => p.memberTypeId == 2 || p.memberTypeId == 3)
             .toList();
 
-        return ListView(
-          padding: EdgeInsets.all(16 * scale),
+        return RefreshIndicator(
+          color: AppColors.primary,
+          onRefresh: () async {
+            context.read<BookingBloc>().add(
+              BookingLoadFamilyProfiles(accountId: widget.accountId),
+            );
+          },
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.all(16 * scale),
           children: [
             Container(
               margin: EdgeInsets.only(bottom: 14 * scale),
@@ -314,12 +325,23 @@ class _BookingStep2FamilyProfileSelectionState
               final profile = filteredProfiles[index];
               final isSelected = selectedIds.contains(profile.id);
               return Padding(
+                key: ValueKey(profile.id),
                 padding: EdgeInsets.only(
                   bottom: index < filteredProfiles.length - 1 ? 10 * scale : 0,
                 ),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(14 * scale),
                   onTap: () {
+                    final hasRecord = _hasRecords[profile.id];
+                    if (hasRecord == false) {
+                      AppToast.showError(context, message: 'Vui lòng cập nhật hồ sơ y tế cho ${profile.fullName} trước khi chọn');
+                      return;
+                    }
+                    if (hasRecord == null) {
+                      AppToast.showInfo(context, message: 'Đang kiểm tra hồ sơ y tế...');
+                      return;
+                    }
+
                     final next = [...selectedIds];
                     if (isSelected) {
                       next.remove(profile.id);
@@ -337,6 +359,21 @@ class _BookingStep2FamilyProfileSelectionState
                       next.add(profile.id);
                     }
                     widget.onSelectionChanged(next);
+                  },
+                  onLongPress: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => BlocProvider(
+                          create: (_) => InjectionContainer.healthRecordBloc,
+                          child: HealthRecordScreen(
+                            familyProfileId: profile.id,
+                            isBaby: profile.memberTypeId == 3,
+                            memberName: profile.fullName,
+                            avatarUrl: profile.avatarUrl,
+                          ),
+                        ),
+                      ),
+                    );
                   },
                   child: Container(
                     padding: EdgeInsets.all(14 * scale),
@@ -404,12 +441,41 @@ class _BookingStep2FamilyProfileSelectionState
                                   color: AppColors.textSecondary,
                                 ),
                               ),
+                              SizedBox(height: 6 * scale),
+                              _HealthRecordInfo(
+                                familyProfileId: profile.id, 
+                                scale: scale,
+                                onRecordStatusKnown: (hasRecord) {
+                                  if (_hasRecords[profile.id] != hasRecord) {
+                                    setState(() {
+                                      _hasRecords[profile.id] = hasRecord;
+                                    });
+                                  }
+                                  // If auto-selected by Bloc but lacks a record, unselect it immediately
+                                  if (!hasRecord && selectedIds.contains(profile.id)) {
+                                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                                      final next = [...selectedIds]..remove(profile.id);
+                                      widget.onSelectionChanged(next);
+                                    });
+                                  }
+                                },
+                              ),
                             ],
                           ),
                         ),
                         Checkbox(
                           value: isSelected,
                           onChanged: (_) {
+                            final hasRecord = _hasRecords[profile.id];
+                            if (hasRecord == false) {
+                              AppToast.showError(context, message: 'Vui lòng cập nhật hồ sơ y tế cho ${profile.fullName} trước khi chọn');
+                              return;
+                            }
+                            if (hasRecord == null) {
+                              AppToast.showInfo(context, message: 'Đang kiểm tra hồ sơ y tế...');
+                              return;
+                            }
+
                             final next = [...selectedIds];
                             if (isSelected) {
                               next.remove(profile.id);
@@ -429,6 +495,15 @@ class _BookingStep2FamilyProfileSelectionState
                             widget.onSelectionChanged(next);
                           },
                           activeColor: AppColors.primary,
+                          fillColor: WidgetStateProperty.resolveWith((states) {
+                            if (_hasRecords[profile.id] == false) {
+                              return AppColors.borderLight;
+                            }
+                            if (states.contains(WidgetState.selected)) {
+                              return AppColors.primary;
+                            }
+                            return null;
+                          }),
                         ),
                       ],
                     ),
@@ -459,6 +534,140 @@ class _BookingStep2FamilyProfileSelectionState
                 ),
               ),
             ),
+          ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _HealthRecordInfo extends StatefulWidget {
+  final int familyProfileId;
+  final double scale;
+  final void Function(bool hasRecord) onRecordStatusKnown;
+
+  const _HealthRecordInfo({
+    super.key,
+    required this.familyProfileId,
+    required this.scale,
+    required this.onRecordStatusKnown,
+  });
+
+  @override
+  State<_HealthRecordInfo> createState() => _HealthRecordInfoState();
+}
+
+class _HealthRecordInfoState extends State<_HealthRecordInfo> {
+  late Future<List<HealthRecordEntity>> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchData();
+  }
+
+  void _fetchData() {
+    _future = InjectionContainer.healthRecordRepository
+        .getHealthRecordsByFamilyProfile(widget.familyProfileId).then((records) {
+      final hasRecord = records.isNotEmpty;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) widget.onRecordStatusKnown(hasRecord);
+      });
+      return records;
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant _HealthRecordInfo oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.familyProfileId != widget.familyProfileId) {
+      _fetchData();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = widget.scale;
+    return FutureBuilder<List<HealthRecordEntity>>(
+      future: _future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return SizedBox(
+            height: 12 * scale,
+            width: 12 * scale,
+            child: CircularProgressIndicator(
+              strokeWidth: 2 * scale,
+              color: AppColors.primary,
+            ),
+          );
+        }
+        if (snapshot.hasError) {
+          return Text(
+            'Lỗi tải hồ sơ y tế',
+            style: AppTextStyles.arimo(
+              fontSize: 11 * scale,
+              color: Colors.red,
+            ).copyWith(fontStyle: FontStyle.italic),
+          );
+        }
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return Text(
+            'Chưa có hồ sơ y tế',
+            style: AppTextStyles.arimo(
+              fontSize: 11 * scale,
+              color: AppColors.textSecondary.withValues(alpha: 0.7),
+            ).copyWith(fontStyle: FontStyle.italic),
+          );
+        }
+
+        final record = snapshot.data!.last; // Lấy hồ sơ mới nhất
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (record.generalCondition != null &&
+                record.generalCondition!.isNotEmpty) ...[
+              Text(
+                'Sức khỏe: ${record.generalCondition}',
+                style: AppTextStyles.arimo(
+                  fontSize: 12 * scale,
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              SizedBox(height: 4 * scale),
+            ],
+            if (record.conditions.isNotEmpty)
+              Wrap(
+                spacing: 6 * scale,
+                runSpacing: 4 * scale,
+                children: record.conditions.map((c) {
+                  return Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 6 * scale,
+                      vertical: 2 * scale,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(4 * scale),
+                      border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Text(
+                      c.name,
+                      style: AppTextStyles.arimo(
+                        fontSize: 10 * scale,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
           ],
         );
       },

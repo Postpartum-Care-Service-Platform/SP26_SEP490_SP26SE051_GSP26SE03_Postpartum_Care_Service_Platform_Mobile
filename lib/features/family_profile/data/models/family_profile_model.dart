@@ -16,6 +16,7 @@ class FamilyProfileModel extends Equatable {
   final DateTime updatedAt;
   final String? memberTypeName;
   final bool isOwner;
+  final bool isDeleted;
 
   const FamilyProfileModel({
     required this.id,
@@ -31,6 +32,7 @@ class FamilyProfileModel extends Equatable {
     required this.updatedAt,
     this.memberTypeName,
     required this.isOwner,
+    this.isDeleted = false,
   });
 
   factory FamilyProfileModel.fromJson(Map<String, dynamic> json) =>
@@ -49,7 +51,8 @@ class FamilyProfileModel extends Equatable {
         createdAt: DateTime.parse(json['createdAt'] as String),
         updatedAt: DateTime.parse(json['updatedAt'] as String),
         memberTypeName: json['memberTypeName'] as String?,
-        isOwner: json['isOwner'] as bool,
+        isOwner: json['isOwner'] as bool? ?? false,
+        isDeleted: json['isDeleted'] as bool? ?? false,
       );
 
   Map<String, dynamic> toJson() => {
@@ -66,6 +69,7 @@ class FamilyProfileModel extends Equatable {
         'updatedAt': updatedAt.toIso8601String(),
         'memberTypeName': memberTypeName,
         'isOwner': isOwner,
+        'isDeleted': isDeleted,
       };
 
   FamilyProfileEntity toEntity() => FamilyProfileEntity(
@@ -82,6 +86,7 @@ class FamilyProfileModel extends Equatable {
         updatedAt: updatedAt,
         memberTypeName: memberTypeName,
         isOwner: isOwner,
+        isDeleted: isDeleted,
       );
 
   @override
@@ -99,5 +104,6 @@ class FamilyProfileModel extends Equatable {
         updatedAt,
         memberTypeName,
         isOwner,
+        isDeleted,
       ];
 }

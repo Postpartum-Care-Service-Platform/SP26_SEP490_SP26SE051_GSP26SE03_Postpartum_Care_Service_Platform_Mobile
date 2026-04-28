@@ -25,6 +25,7 @@ abstract class FamilyProfileRemoteDataSource {
     int id,
     UpdateFamilyProfileRequestModel request,
   );
+  Future<void> deleteFamilyProfile(int id);
 }
 
 class FamilyProfileRemoteDataSourceImpl
@@ -259,6 +260,23 @@ class FamilyProfileRemoteDataSourceImpl
       if (e.response != null) {
         throw Exception(
           'Failed to update family profile: ${e.response?.statusCode}',
+        );
+      } else {
+        throw Exception('Network error: ${e.message}');
+      }
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  @override
+  Future<void> deleteFamilyProfile(int id) async {
+    try {
+      await dio.delete(ApiEndpoints.deleteFamilyProfile(id));
+    } on DioException catch (e) {
+      if (e.response != null) {
+        throw Exception(
+          'Failed to delete family profile: ${e.response?.statusCode}',
         );
       } else {
         throw Exception('Network error: ${e.message}');

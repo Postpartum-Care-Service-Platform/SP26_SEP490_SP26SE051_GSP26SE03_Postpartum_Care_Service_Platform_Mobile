@@ -5,11 +5,14 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_loading.dart';
+import '../../../../core/widgets/app_widgets.dart';
 import '../../../package/presentation/bloc/package_bloc.dart';
 import '../../../package/presentation/bloc/package_event.dart';
 import '../../../package/presentation/bloc/package_state.dart';
 import '../../../package/presentation/widgets/package_card.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../package_request/presentation/bloc/package_request_bloc.dart';
+import '../../../package_request/presentation/widgets/create_package_request_sheet.dart';
 import '../../../booking/presentation/bloc/booking_bloc.dart';
 import '../../../booking/presentation/bloc/booking_state.dart';
 import 'package_detail_bottom_sheet.dart';
@@ -174,6 +177,17 @@ class BookingStep1PackageSelection extends StatelessWidget {
                               'Không có gói dịch vụ nào trong mục này',
                               style: AppTextStyles.arimo(fontSize: 16 * scale, color: AppColors.textSecondary),
                             ),
+                            SizedBox(height: 24 * scale),
+                            Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 40 * scale),
+                              child: AppWidgets.primaryButton(
+                                text: 'Tạo yêu cầu cá nhân hoá',
+                                icon: Icon(Icons.add_rounded, color: AppColors.white, size: 20 * scale),
+                                onPressed: () {
+                                  _showCreateCustomPackageSheet(context);
+                                },
+                              ),
+                            ),
                           ],
                         ),
                       );
@@ -286,6 +300,22 @@ class BookingStep1PackageSelection extends StatelessWidget {
 
         return const SizedBox();
       },
+    );
+  }
+
+  void _showCreateCustomPackageSheet(BuildContext context) {
+    final height = MediaQuery.of(context).size.height;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        constraints: BoxConstraints(maxHeight: height * 0.9),
+        child: BlocProvider(
+          create: (_) => InjectionContainer.packageRequestBloc,
+          child: const CreatePackageRequestSheet(),
+        ),
+      ),
     );
   }
 }
