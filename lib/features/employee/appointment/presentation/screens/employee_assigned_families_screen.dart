@@ -1802,40 +1802,15 @@ class _ActivityItem extends StatelessWidget {
                   ],
                   if (isScheduled && isToday) ...[
                     SizedBox(height: 16 * scale),
-                    if (hasStarted) ...[
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: onCheck,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            padding: EdgeInsets.symmetric(vertical: 10 * scale),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10 * scale),
-                            ),
-                          ),
-                          icon: Icon(Icons.check_circle_outline_rounded, size: 18 * scale),
-                          label: Text(
-                            'Xác nhận hoàn tất',
-                            style: AppTextStyles.arimo(
-                              fontSize: 14 * scale,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 8 * scale),
-                    ],
                     SizedBox(
                       width: double.infinity,
-                      child: OutlinedButton.icon(
+                      child: ElevatedButton.icon(
                         onPressed: () => _showHealthRecordSelectionSheet(context, scale),
-                        style: OutlinedButton.styleFrom(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange[700],
+                          foregroundColor: Colors.white,
                           padding: EdgeInsets.symmetric(vertical: 10 * scale),
-                          side: const BorderSide(color: Colors.orange),
-                          foregroundColor: Colors.orange,
+                          elevation: 2,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10 * scale),
                           ),
@@ -1850,6 +1825,31 @@ class _ActivityItem extends StatelessWidget {
                         ),
                       ),
                     ),
+                    if (hasStarted) ...[
+                      SizedBox(height: 8 * scale),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: onCheck,
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Colors.orange),
+                            foregroundColor: Colors.orange,
+                            padding: EdgeInsets.symmetric(vertical: 10 * scale),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10 * scale),
+                            ),
+                          ),
+                          icon: Icon(Icons.check_circle_outline_rounded, size: 18 * scale),
+                          label: Text(
+                            'Xác nhận hoàn tất',
+                            style: AppTextStyles.arimo(
+                              fontSize: 14 * scale,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                   if (isDone) ...[
                     SizedBox(height: 10 * scale),
