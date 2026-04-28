@@ -339,17 +339,17 @@ class _PackageRequestListScreenState extends State<PackageRequestListScreen> {
         textColor = AppColors.primary;
         label = 'Đã soạn gói';
         break;
-      case 2:
+      case 3:
         bgColor = const Color(0xFF2E7D32).withValues(alpha: 0.1);
         textColor = const Color(0xFF2E7D32);
         label = 'Đã chấp nhận';
         break;
-      case 3:
+      case 4:
         bgColor = const Color(0xFFC62828).withValues(alpha: 0.1);
         textColor = const Color(0xFFC62828);
         label = 'Đã từ chối';
         break;
-      case 4:
+      case 2:
         bgColor = const Color(0xFF1565C0).withValues(alpha: 0.1);
         textColor = const Color(0xFF1565C0);
         label = 'Yêu cầu chỉnh sửa';
