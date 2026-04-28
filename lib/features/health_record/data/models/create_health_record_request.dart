@@ -6,7 +6,7 @@ class CreateHealthRecordRequest {
   final String? recordedByName;
   final String recordDate;
   final int? gestationalAgeWeeks;
-  final double? birthWeightGrams;
+  final int? birthWeightGrams;
   final double? weight;
   final double? height;
   final double? temperature;

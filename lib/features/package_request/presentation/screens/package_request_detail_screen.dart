@@ -357,21 +357,21 @@ class _PackageRequestDetailScreenState
           'label': 'Gói đã được soạn',
           'desc': 'Trung tâm đã soạn gói cho bạn, vui lòng xem xét',
         };
-      case 2:
+      case 3:
         return {
           'color': const Color(0xFF2E7D32),
           'icon': Icons.check_circle_outline_rounded,
           'label': 'Đã chấp nhận',
           'desc': 'Bạn đã chấp nhận gói dịch vụ này',
         };
-      case 3:
+      case 4:
         return {
           'color': const Color(0xFFC62828),
           'icon': Icons.cancel_outlined,
           'label': 'Đã từ chối',
           'desc': 'Yêu cầu này đã bị từ chối',
         };
-      case 4:
+      case 2:
         return {
           'color': const Color(0xFF1565C0),
           'icon': Icons.edit_note_rounded,
