@@ -205,22 +205,37 @@ class _FamilyProfileScreenState extends State<FamilyProfileScreen> {
   }
 
   void _showDeleteConfirmDialog(FamilyProfileEntity member) {
+    final bloc = this.context.read<FamilyProfileBloc>();
     showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
+      context: this.context,
+      builder: (dialogContext) => AlertDialog(
         title: const Text(AppStrings.confirmDelete),
         content: Text(AppStrings.confirmDeleteMessage.replaceAll('{name}', member.fullName)),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(dialogContext).pop(),
             child: const Text(AppStrings.cancel),
           ),
           TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text(AppStrings.deleteFeatureUnderDevelopment)),
-              );
+            onPressed: () async {
+              Navigator.of(dialogContext).pop();
+              AppLoading.show(this.context, message: AppStrings.processing);
+              try {
+                await bloc
+                    .getFamilyProfilesUsecase
+                    .repository
+                    .deleteFamilyProfile(member.id);
+                if (mounted) {
+                  AppLoading.hide(this.context);
+                  AppToast.showSuccess(this.context, message: 'Xóa thành công');
+                  bloc.add(const FamilyProfileRefreshed());
+                }
+              } catch (e) {
+                if (mounted) {
+                  AppLoading.hide(this.context);
+                  AppToast.showError(this.context, message: 'Xóa thất bại: $e');
+                }
+              }
             },
             child: const Text(
               AppStrings.delete,

@@ -21,4 +21,5 @@ abstract class FamilyProfileRepository {
     int id,
     UpdateFamilyProfileRequestModel request,
   );
+  Future<void> deleteFamilyProfile(int id);
 }

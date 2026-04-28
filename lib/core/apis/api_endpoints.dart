@@ -91,6 +91,7 @@ class ApiEndpoints {
       '/FamilyProfile/GetMyFamilyProfiles';
   static const String createFamilyProfile = '/FamilyProfile/Create';
   static String updateFamilyProfile(int id) => '/FamilyProfile/Update/$id';
+  static String deleteFamilyProfile(int id) => '/FamilyProfile/Delete/$id';
   static String getFamilyProfilesByCustomerId(String customerId) =>
       '/FamilyProfile/GetByCustomerId/$customerId';
   static String getFamilyProfilesByAccountId(String accountId) =>

@@ -16,6 +16,9 @@ import '../../../booking/presentation/widgets/booking_step4_summary.dart';
 import 'services_formatters.dart';
 import 'service_location_selection.dart';
 import '../../../../core/widgets/app_scaffold.dart';
+import '../../../../core/widgets/app_toast.dart';
+import '../../../../core/widgets/app_loading.dart';
+import '../../../../core/di/injection_container.dart';
 
 class ServicesBookingFlow extends StatefulWidget {
   final ServiceLocationType? locationType;
@@ -362,8 +365,58 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
   Widget _buildNextButton(BuildContext context, BookingState state, double scale) {
     return ElevatedButton(
       onPressed: _canProceed(state)
-          ? () {
+          ? () async {
               if (_currentStep < 4) {
+                if (_currentStep == 1) {
+                  // Check health records for selected IDs
+                  showDialog(
+                    context: this.context,
+                    barrierDismissible: false,
+                    builder: (_) => const Center(
+                      child: AppLoadingIndicator(color: AppColors.white),
+                    ),
+                  );
+
+                  bool allHaveRecords = true;
+                  String? missingName;
+
+                  try {
+                    final bookingBloc = this.context.read<BookingBloc>();
+                    final selectedIds = bookingBloc.selectedFamilyProfileIds;
+                    final profiles = bookingBloc.familyProfiles ?? [];
+                    
+                    for (final id in selectedIds) {
+                      final records = await InjectionContainer.healthRecordRepository.getHealthRecordsByFamilyProfile(id);
+                      if (records.isEmpty) {
+                        allHaveRecords = false;
+                        missingName = profiles.firstWhere((p) => p.id == id).fullName;
+                        break;
+                      }
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      Navigator.of(this.context, rootNavigator: true).pop(); // dismiss loading
+                      AppToast.showError(this.context, message: 'Lỗi kiểm tra hồ sơ sức khỏe. Vui lòng thử lại.');
+                    }
+                    return;
+                  }
+
+                  if (mounted) {
+                    Navigator.of(this.context, rootNavigator: true).pop(); // dismiss loading
+                  }
+
+                  if (!allHaveRecords) {
+                    if (mounted) {
+                      AppToast.showError(
+                        this.context, 
+                        message: 'Vui lòng cập nhật hồ sơ sức khỏe cho $missingName trước khi tiếp tục (Ấn giữ vào thẻ thành viên)',
+                        duration: const Duration(seconds: 4),
+                      );
+                    }
+                    return;
+                  }
+                }
+
                 setState(() {
                   _currentStep++;
                   if (_currentStep == 1) {
@@ -462,25 +515,26 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
   bool _canProceed(BookingState state) {
     final bookingBloc = context.read<BookingBloc>();
 
-    bool hasMomSelected() {
+    bool hasMomAndBabySelected() {
       final selectedIds = bookingBloc.selectedFamilyProfileIds;
       final profiles = bookingBloc.familyProfiles ?? [];
-      return selectedIds.isNotEmpty &&
-          profiles.any((p) => selectedIds.contains(p.id) && p.memberTypeId == 2);
+      final hasMom = profiles.any((p) => selectedIds.contains(p.id) && p.memberTypeId == 2);
+      final hasBaby = profiles.any((p) => selectedIds.contains(p.id) && p.memberTypeId == 3);
+      return selectedIds.isNotEmpty && hasMom && hasBaby;
     }
 
     switch (_currentStep) {
       case 0:
         return bookingBloc.selectedPackageId != null;
       case 1:
-        return hasMomSelected();
+        return hasMomAndBabySelected();
       case 2:
         return bookingBloc.selectedDate != null;
       case 3:
         return bookingBloc.selectedRoomId != null;
       case 4:
         return bookingBloc.selectedPackageId != null &&
-            hasMomSelected() &&
+            hasMomAndBabySelected() &&
             bookingBloc.selectedDate != null &&
             bookingBloc.selectedRoomId != null;
       default:

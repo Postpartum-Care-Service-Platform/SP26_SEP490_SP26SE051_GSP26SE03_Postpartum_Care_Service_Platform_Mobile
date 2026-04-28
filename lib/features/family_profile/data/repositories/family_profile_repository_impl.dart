@@ -15,7 +15,7 @@ class FamilyProfileRepositoryImpl implements FamilyProfileRepository {
   Future<List<FamilyProfileEntity>> getMyFamilyProfiles() async {
     try {
       final models = await remoteDataSource.getMyFamilyProfiles();
-      return models.map((model) => model.toEntity()).toList();
+      return models.map((model) => model.toEntity()).where((e) => !e.isDeleted).toList();
     } catch (e) {
       rethrow;
     }
@@ -29,7 +29,7 @@ class FamilyProfileRepositoryImpl implements FamilyProfileRepository {
       final models = await remoteDataSource.getFamilyProfilesByCustomerId(
         customerId,
       );
-      return models.map((model) => model.toEntity()).toList();
+      return models.map((model) => model.toEntity()).where((e) => !e.isDeleted).toList();
     } catch (e) {
       rethrow;
     }
@@ -43,7 +43,7 @@ class FamilyProfileRepositoryImpl implements FamilyProfileRepository {
       final models = await remoteDataSource.getFamilyProfilesByAccountId(
         accountId,
       );
-      return models.map((model) => model.toEntity()).toList();
+      return models.map((model) => model.toEntity()).where((e) => !e.isDeleted).toList();
     } catch (e) {
       rethrow;
     }
@@ -87,6 +87,15 @@ class FamilyProfileRepositoryImpl implements FamilyProfileRepository {
     try {
       final model = await remoteDataSource.updateFamilyProfile(id, request);
       return model.toEntity();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> deleteFamilyProfile(int id) async {
+    try {
+      await remoteDataSource.deleteFamilyProfile(id);
     } catch (e) {
       rethrow;
     }
