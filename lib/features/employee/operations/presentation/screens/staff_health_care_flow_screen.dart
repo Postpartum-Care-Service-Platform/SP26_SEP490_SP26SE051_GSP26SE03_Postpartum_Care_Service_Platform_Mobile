@@ -794,7 +794,7 @@ class _StaffHealthCareFlowScreenState extends State<StaffHealthCareFlowScreen> {
     final height = double.tryParse(_heightController.text);
     final temp = double.tryParse(_tempController.text);
     final gestationalAge = int.tryParse(_gestationalAgeController.text);
-    final birthWeight = double.tryParse(_birthWeightController.text);
+    final birthWeight = int.tryParse(_birthWeightController.text.replaceAll(RegExp(r'[^0-9]'), ''));
 
     // Validation Logic
     if (weight != null) {

@@ -95,7 +95,7 @@ class _CreateHealthRecordSheetState extends State<CreateHealthRecordSheet> {
         familyProfileId: widget.familyProfileId,
         recordDate: _recordDate.toIso8601String(),
         gestationalAgeWeeks: int.tryParse(_gestationalAgeController.text),
-        birthWeightGrams: double.tryParse(_birthWeightController.text.replaceAll(',', '.')),
+        birthWeightGrams: int.tryParse(_birthWeightController.text.replaceAll(RegExp(r'[^0-9]'), '')),
         weight: widget.isBaby ? 0.0 : double.tryParse(_weightController.text.replaceAll(',', '.')),
         height: widget.isBaby ? 0.0 : double.tryParse(_heightController.text.replaceAll(',', '.')),
         temperature: double.tryParse(_temperatureController.text.replaceAll(',', '.')),

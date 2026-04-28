@@ -52,7 +52,7 @@ class HealthRecordModel extends Equatable {
   final String? recordedByName;
   final DateTime recordDate;
   final int? gestationalAgeWeeks;
-  final double? birthWeightGrams;
+  final int? birthWeightGrams;
   final double? weight;
   final double? height;
   final double? temperature;
@@ -90,7 +90,7 @@ class HealthRecordModel extends Equatable {
       recordedByName: json['recordedByName'] as String?,
       recordDate: DateTime.parse(json['recordDate'] as String),
       gestationalAgeWeeks: json['gestationalAgeWeeks'] as int?,
-      birthWeightGrams: (json['birthWeightGrams'] as num?)?.toDouble(),
+      birthWeightGrams: json['birthWeightGrams'] as int?,
       weight: (json['weight'] as num?)?.toDouble(),
       height: (json['height'] as num?)?.toDouble(),
       temperature: (json['temperature'] as num?)?.toDouble(),
