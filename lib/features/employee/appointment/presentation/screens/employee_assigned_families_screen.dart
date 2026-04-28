@@ -14,6 +14,14 @@ import '../../../../../core/widgets/app_app_bar.dart';
 import '../../../../../features/employee/customer_profile/presentation/screens/employee_customer_family_profiles_screen.dart';
 import '../../../../../features/employee/shell/presentation/widgets/employee_scaffold.dart';
 import '../../../../../core/widgets/app_toast.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../../core/di/injection_container.dart';
+import '../../../../health_record/presentation/bloc/activity_restriction_bloc.dart';
+import '../../../../health_record/presentation/bloc/activity_restriction_state.dart';
+import '../../../../health_record/domain/entities/activity_restriction_entity.dart';
+import '../../../operations/presentation/screens/staff_health_care_flow_screen.dart';
+import '../../../customer_profile/data/datasources/employee_customer_profile_remote_datasource.dart';
+import '../../../../family_profile/domain/entities/family_profile_entity.dart';
 
 class EmployeeAssignedFamiliesScreen extends StatefulWidget {
   final VoidCallback? onBackToDefaultStaffPage;
@@ -80,14 +88,7 @@ class _EmployeeAssignedFamiliesScreenState
       final firstFamily = firstRow['familyScheduleResponse'] as Map<String, dynamic>?;
       final firstBooking = firstRow['booking'] as Map<String, dynamic>?;
       
-      final bookingStatus = (
-        firstRow['bookingStatus'] ?? 
-        firstFamily?['bookingStatus'] ?? 
-        firstBooking?['status'] ?? 
-        ''
-      ).toString().toLowerCase();
-
-
+      
       final first = items.first;
       final family = first['familyScheduleResponse'] as Map<String, dynamic>?;
 
@@ -227,232 +228,76 @@ class _EmployeeAssignedFamiliesScreenState
     }
   }
 
-  Future<void> _showActivitiesTimelineBottomSheet(
-    _AssignedCustomer customer,
-  ) async {
-    await showModalBottomSheet<void>(
+  void _showRestrictionWarning(BuildContext context, ActivityRestrictionEntity restriction) {
+    final scale = AppResponsive.scaleFactor(context);
+    showDialog(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) {
-        final scale = AppResponsive.scaleFactor(sheetContext);
-        final initialActivities = List<_AssignedActivity>.from(customer.activities);
-        var filter = _ActivityFilter.scheduled;
-
-        return StatefulBuilder(
-          builder: (context, setSheetState) {
-            final filteredActivities = _filterActivities(initialActivities, filter);
-            final calendarDays = _buildCalendarDays(filteredActivities);
-
-            return FractionallySizedBox(
-              heightFactor: 0.9,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  borderRadius: BorderRadius.vertical(
-                    top: Radius.circular(22 * scale),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    SizedBox(height: 10 * scale),
-                    Container(
-                      width: 46 * scale,
-                      height: 5 * scale,
-                      decoration: BoxDecoration(
-                        color: AppColors.borderLight,
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        16 * scale,
-                        12 * scale,
-                        12 * scale,
-                        8 * scale,
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  customer.displayName,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: AppTextStyles.arimo(
-                                    fontSize: 18 * scale,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                                SizedBox(height: 4 * scale),
-                                Text(
-                                  'Timeline hoạt động trong tháng • ${customer.assignmentsCount} lịch',
-                                  style: AppTextStyles.arimo(
-                                    fontSize: 13 * scale,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () => Navigator.of(sheetContext).pop(),
-                            icon: const Icon(Icons.close_rounded),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16 * scale),
-                      child: _FilterTabs(
-                        current: filter,
-                        onChanged: (next) {
-                          setSheetState(() {
-                            filter = next;
-                          });
-                        },
-                      ),
-                    ),
-                    SizedBox(height: 12 * scale),
-                    Expanded(
-                      child: SingleChildScrollView(
-                        padding: EdgeInsets.fromLTRB(
-                          16 * scale,
-                          12 * scale,
-                          16 * scale,
-                          16 * scale,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(
-                              width: double.infinity,
-                              child: OutlinedButton.icon(
-                                onPressed: () {
-                                  Navigator.of(sheetContext).pop();
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => EmployeeCustomerFamilyProfilesScreen(
-                                        customerId: customer.customerId,
-                                        customerName: customer.displayName,
-                                      ),
-                                    ),
-                                  );
-                                },
-                                icon: Icon(Icons.open_in_new_rounded, size: 20 * scale),
-                                label: Text(
-                                  'Mở hồ sơ gia đình',
-                                  style: AppTextStyles.arimo(
-                                    fontSize: 15 * scale,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                style: OutlinedButton.styleFrom(
-                                  padding: EdgeInsets.symmetric(vertical: 14 * scale),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10 * scale),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: 16 * scale),
-                            _ActivitiesVerticalList(
-                              days: calendarDays,
-                              onCheckPressed: (activity) async {
-                                final now = DateTime.now();
-                                final status = activity.status.toLowerCase();
-
-                                final activityDate = activity.startAt != null
-                                    ? DateTime(activity.startAt!.year, activity.startAt!.month, activity.startAt!.day)
-                                    : null;
-                                final today = DateTime(now.year, now.month, now.day);
-
-                                if (status != 'scheduled') {
-                                  _showStatusNotice(
-                                    sheetContext,
-                                    'Trạng thái không hợp lệ',
-                                    'Bạn chỉ có thể cập nhật những hoạt động đang ở trạng thái "Sắp tới".',
-                                    isError: true,
-                                  );
-                                  return;
-                                }
-
-                                if (activityDate == null || !activityDate.isAtSameMomentAs(today)) {
-                                  _showStatusNotice(
-                                    sheetContext,
-                                    'Thời gian không phù hợp',
-                                    'Bạn chỉ được phép cập nhật hoạt động diễn ra trong ngày hôm nay.',
-                                    isError: true,
-                                  );
-                                  return;
-                                }
-
-                                if (activity.startAt != null && now.isBefore(activity.startAt!)) {
-                                  _showStatusNotice(
-                                    sheetContext,
-                                    'Chưa tới giờ',
-                                    'Hoạt động này chưa đến giờ thực hiện. Vui lòng quay lại sau.',
-                                    isError: true,
-                                  );
-                                  return;
-                                }
-
-                                final checkData = await _askForCheckInDetails(sheetContext, activity.activity);
-                                if (!sheetContext.mounted || checkData == null) {
-                                  return;
-                                }
-
-                                final success = await _checkSchedule(
-                                  activity.staffScheduleId,
-                                  checkData.note,
-                                  checkData.imagePaths,
-                                );
-                                if (!success || !mounted) {
-                                  return;
-                                }
-
-                                // Cập nhật ngay lập tức dữ liệu trên UI (Bottom Sheet)
-                                // Loại bỏ kiểm tra sheetContext.mounted ở đây vì có thể bị false sai lệch sau khi đóng dialog
-                                setSheetState(() {
-                                  final index = initialActivities.indexWhere(
-                                    (item) => item.staffScheduleId == activity.staffScheduleId,
-                                  );
-                                  if (index != -1) {
-                                    initialActivities[index] = initialActivities[index].copyWith(
-                                      status: 'StaffDone',
-                                      note: checkData.note,
-                                      images: checkData.imagePaths,
-                                      checkedAt: DateTime.now(),
-                                    );
-                                  }
-                                  // Chuyển tab sang 'Đã làm' để user thấy ngay kết quả
-                                  filter = _ActivityFilter.staffDone;
-                                });
-
-                                // Cập nhật ngầm dữ liệu màn hình chính để đồng bộ hoàn toàn
-                                _loadAssignedCustomers().then((newCustomers) {
-                                  if (mounted) {
-                                    setState(() {
-                                      _futureCustomers = Future.value(newCustomers);
-                                    });
-                                  }
-                                });
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFFFFF7ED),
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16 * scale)),
+        title: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 28),
+            SizedBox(width: 8 * scale),
+            Text('Cảnh báo Chống chỉ định', style: AppTextStyles.arimo(fontWeight: FontWeight.w800, fontSize: 18 * scale, color: Colors.orange[900])),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Hoạt động này có thể không phù hợp với tình trạng sức khỏe hiện tại:',
+              style: AppTextStyles.arimo(fontSize: 14 * scale, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 12 * scale),
+            Container(
+              padding: EdgeInsets.all(12 * scale),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8 * scale),
+                border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
               ),
-            );
+              child: Text(
+                restriction.reason ?? 'Không có lý do chi tiết.',
+                style: AppTextStyles.arimo(fontSize: 13 * scale, color: Colors.orange[800]),
+              ),
+            ),
+            SizedBox(height: 16 * scale),
+            Text(
+              'Bạn có muốn tiếp tục thực hiện không?',
+              style: AppTextStyles.arimo(fontSize: 14 * scale),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Quay lại'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
+            child: const Text('Vẫn tiếp tục'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _navigateToTimeline(BuildContext context, _AssignedCustomer customer) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => EmployeeActivitiesTimelineScreen(
+          customer: customer,
+          onStatusUpdated: () {
+            setState(() {
+              _futureCustomers = _loadAssignedCustomers();
+            });
           },
-        );
-      },
+        ),
+      ),
     );
   }
 
@@ -811,29 +656,28 @@ class _EmployeeAssignedFamiliesScreenState
         centerTitle: true,
         showBackButton: true,
         onBackPressed: widget.onBackToDefaultStaffPage,
+        actions: [
+          IconButton(
+            onPressed: () {
+              setState(() {
+                _futureCustomers = _loadAssignedCustomers();
+              });
+            },
+            icon: const Icon(Icons.refresh_rounded, color: AppColors.primary),
+            tooltip: 'Làm mới',
+          ),
+        ],
       ),
       body: FutureBuilder<List<_AssignedCustomer>>(
         future: _futureCustomers,
         builder: (context, snapshot) {
-          final customers = snapshot.data ?? const <_AssignedCustomer>[];
-
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator(color: AppColors.primary));
-          } else if (snapshot.hasError) {
-            return Center(
-              child: Padding(
-                padding: EdgeInsets.all(24 * scale),
-                child: Text('Tải dữ liệu thất bại: ${snapshot.error}', textAlign: TextAlign.center),
-              ),
-            );
-          } else if (customers.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: EdgeInsets.all(24 * scale),
-                child: Text('Bạn chưa được phân công hộ gia đình nào.', textAlign: TextAlign.center),
-              ),
-            );
-          } else {
+          }
+
+          final customers = snapshot.data ?? const <_AssignedCustomer>[];
+
+          if (snapshot.hasError) {
             return RefreshIndicator(
               onRefresh: () async {
                 setState(() {
@@ -841,35 +685,96 @@ class _EmployeeAssignedFamiliesScreenState
                 });
                 await _futureCustomers;
               },
-              child: Column(
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
                 children: [
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(20 * scale, 16 * scale, 20 * scale, 0),
-                    child: _buildWelcomeHeader(scale),
-                  ),
-                  Expanded(
-                    child: customers.isEmpty
-                        ? ListView(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            children: [
-                              SizedBox(height: 100 * scale),
-                              Center(
-                                child: Padding(
-                                  padding: EdgeInsets.all(24 * scale),
-                                  child: const Text(
-                                    'Bạn chưa có lịch phân công nào trong khoảng thời gian này.',
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          )
-                        : _buildMainContent(customers, scale),
+                  SizedBox(height: 100 * scale),
+                  Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24 * scale),
+                      child: Column(
+                        children: [
+                          Icon(Icons.error_outline_rounded, size: 48 * scale, color: AppColors.red),
+                          SizedBox(height: 16 * scale),
+                          Text(
+                            'Tải dữ liệu thất bại\n${snapshot.error}', 
+                            textAlign: TextAlign.center,
+                            style: AppTextStyles.arimo(color: AppColors.textSecondary),
+                          ),
+                          SizedBox(height: 24 * scale),
+                          ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                _futureCustomers = _loadAssignedCustomers();
+                              });
+                            },
+                            child: const Text('Thử lại'),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),
             );
           }
+
+          if (customers.isEmpty) {
+            return RefreshIndicator(
+              onRefresh: () async {
+                setState(() {
+                  _futureCustomers = _loadAssignedCustomers();
+                });
+                await _futureCustomers;
+              },
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  SizedBox(height: 100 * scale),
+                  Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24 * scale),
+                      child: Column(
+                        children: [
+                          Icon(Icons.people_outline_rounded, size: 64 * scale, color: AppColors.borderLight),
+                          SizedBox(height: 16 * scale),
+                          Text(
+                            'Bạn chưa được phân công hộ gia đình nào.',
+                            textAlign: TextAlign.center,
+                            style: AppTextStyles.arimo(
+                              fontSize: 16 * scale,
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return RefreshIndicator(
+            onRefresh: () async {
+              setState(() {
+                _futureCustomers = _loadAssignedCustomers();
+              });
+              await _futureCustomers;
+            },
+            child: Column(
+              children: [
+                Padding(
+                  padding: EdgeInsets.fromLTRB(20 * scale, 16 * scale, 20 * scale, 0),
+                  child: _buildWelcomeHeader(scale),
+                ),
+                Expanded(
+                  child: _buildMainContent(customers, scale),
+                ),
+              ],
+            ),
+          );
         },
       ),
     );
@@ -921,7 +826,7 @@ class _EmployeeAssignedFamiliesScreenState
           children: [
             _FocusFamilyCard(
               customer: customer,
-              onTap: () => _showActivitiesTimelineBottomSheet(customer),
+              onTap: () => _navigateToTimeline(context, customer),
             ),
             SizedBox(height: 24 * scale),
             _buildQuickStats(customer, scale),
@@ -957,7 +862,7 @@ class _EmployeeAssignedFamiliesScreenState
                   padding: EdgeInsets.only(bottom: 16 * scale),
                   child: _FamilyCard(
                     customer: c,
-                    onTap: () => _showActivitiesTimelineBottomSheet(c),
+                    onTap: () => _navigateToTimeline(context, c),
                   ),
                 )),
                 SizedBox(height: 8 * scale),
@@ -979,7 +884,7 @@ class _EmployeeAssignedFamiliesScreenState
                   padding: EdgeInsets.only(bottom: 16 * scale),
                   child: _FamilyCard(
                     customer: c,
-                    onTap: () => _showActivitiesTimelineBottomSheet(c),
+                    onTap: () => _navigateToTimeline(context, c),
                   ),
                 )),
               ],
@@ -1579,10 +1484,12 @@ class _FilterTabs extends StatelessWidget {
 }
 
 class _ActivitiesVerticalList extends StatelessWidget {
+  final String customerId;
   final List<_CalendarDay> days;
   final Function(_AssignedActivity) onCheckPressed;
 
   const _ActivitiesVerticalList({
+    required this.customerId,
     required this.days,
     required this.onCheckPressed,
   });
@@ -1643,6 +1550,7 @@ class _ActivitiesVerticalList extends StatelessWidget {
               return _ActivityItem(
                 activity: act,
                 onCheck: () => onCheckPressed(act),
+                customerId: customerId,
                 isLast: isLast,
               );
             }),
@@ -1657,10 +1565,12 @@ class _ActivityItem extends StatelessWidget {
   final _AssignedActivity activity;
   final VoidCallback onCheck;
   final bool isLast;
+  final String customerId;
 
   const _ActivityItem({
     required this.activity,
     required this.onCheck,
+    required this.customerId,
     this.isLast = false,
   });
 
@@ -1890,24 +1800,49 @@ class _ActivityItem extends StatelessWidget {
                       ),
                     ),
                   ],
-                  if (isScheduled && isToday && hasStarted) ...[
+                  if (isScheduled && isToday) ...[
                     SizedBox(height: 16 * scale),
+                    if (hasStarted) ...[
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: onCheck,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(vertical: 10 * scale),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10 * scale),
+                            ),
+                          ),
+                          icon: Icon(Icons.check_circle_outline_rounded, size: 18 * scale),
+                          label: Text(
+                            'Xác nhận hoàn tất',
+                            style: AppTextStyles.arimo(
+                              fontSize: 14 * scale,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 8 * scale),
+                    ],
                     SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: onCheck,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
+                      child: OutlinedButton.icon(
+                        onPressed: () => _showHealthRecordSelectionSheet(context, scale),
+                        style: OutlinedButton.styleFrom(
                           padding: EdgeInsets.symmetric(vertical: 10 * scale),
-                          elevation: 0,
+                          side: const BorderSide(color: Colors.orange),
+                          foregroundColor: Colors.orange,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10 * scale),
                           ),
                         ),
-                        icon: Icon(Icons.check_circle_outline_rounded, size: 18 * scale),
+                        icon: Icon(Icons.medical_services_outlined, size: 18 * scale),
                         label: Text(
-                          'Xác nhận hoàn tất',
+                          'Ghi nhận sức khỏe',
                           style: AppTextStyles.arimo(
                             fontSize: 14 * scale,
                             fontWeight: FontWeight.w700,
@@ -1934,9 +1869,9 @@ class _ActivityItem extends StatelessWidget {
                       ],
                     ),
                   ],
-                ],
+                  ],
+                ),
               ),
-            ),
             ),
           ),
         ],
@@ -2192,5 +2127,585 @@ class _ActivityItem extends StatelessWidget {
     if (start == null || end == null) return '--:--';
     final fmt = DateFormat('HH:mm');
     return '${fmt.format(start)} - ${fmt.format(end)}';
+  }
+
+  Future<void> _showHealthRecordSelectionSheet(BuildContext context, double scale) async {
+    // 1. Detect target type from activity name
+    final activityNameLower = activity.activity.toLowerCase();
+    final isForMom = activityNameLower.contains('mẹ') || activityNameLower.contains('sản phụ');
+    final isForBaby = activityNameLower.contains('bé') || activityNameLower.contains('trẻ');
+
+    // 2. Show loading overlay
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+    );
+
+    try {
+      // 3. Fetch family members
+      final ds = EmployeeCustomerProfileRemoteDataSource();
+      final allMembers = await ds.getFamilyProfilesByAccountId(customerId);
+      
+      // Filter out Head of Family - only Mom and Baby need health records
+      final members = allMembers.where((m) {
+        final type = m.memberTypeName?.toLowerCase() ?? '';
+        return !type.contains('head of family') && !type.contains('chủ hộ');
+      }).toList();
+      
+      if (context.mounted) Navigator.pop(context); // Hide loading
+
+      if (members.isEmpty) {
+        if (context.mounted) AppToast.showInfo(context, message: 'Khách hàng này chưa có hồ sơ gia đình.');
+        return;
+      }
+
+      // 4. Try automatic selection
+      FamilyProfileEntity? autoSelected;
+      if (isForMom && !isForBaby) {
+        final moms = members.where((m) => m.memberTypeName?.toLowerCase().contains('mom') ?? false).toList();
+        if (moms.length == 1) autoSelected = moms.first;
+      } else if (isForBaby && !isForMom) {
+        final babies = members.where((m) => m.memberTypeName?.toLowerCase().contains('baby') ?? false).toList();
+        if (babies.length == 1) autoSelected = babies.first;
+      }
+
+      if (autoSelected != null) {
+        if (context.mounted) {
+          StaffHealthCareFlowScreen.showAsBottomSheet(
+            context,
+            familyProfileId: autoSelected.id,
+            familyMemberName: autoSelected.fullName,
+            memberType: autoSelected.memberTypeName,
+            activityName: activity.activity,
+          );
+        }
+        return;
+      }
+
+      // 5. If ambiguous or no match, show member selection sheet
+      if (context.mounted) {
+        final selectedMember = await showModalBottomSheet<FamilyProfileEntity>(
+          context: context,
+          backgroundColor: Colors.white,
+          isScrollControlled: true,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32 * scale))),
+          builder: (context) {
+            return Container(
+              padding: EdgeInsets.fromLTRB(24 * scale, 12 * scale, 24 * scale, 24 * scale),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 40 * scale,
+                      height: 4 * scale,
+                      decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+                    ),
+                    SizedBox(height: 24 * scale),
+                    Text(
+                      'Chọn người cần ghi nhận',
+                      style: AppTextStyles.arimo(fontSize: 18 * scale, fontWeight: FontWeight.w900),
+                    ),
+                    SizedBox(height: 20 * scale),
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: members.length,
+                      separatorBuilder: (_, __) => SizedBox(height: 12 * scale),
+                      itemBuilder: (context, index) {
+                        final m = members[index];
+                        final isBaby = m.memberTypeName?.toLowerCase().contains('baby') ?? false;
+                        return InkWell(
+                          onTap: () => Navigator.pop(context, m),
+                          borderRadius: BorderRadius.circular(16 * scale),
+                          child: Container(
+                            padding: EdgeInsets.all(12 * scale),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: AppColors.borderLight.withValues(alpha: 0.2)),
+                              borderRadius: BorderRadius.circular(16 * scale),
+                            ),
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  backgroundColor: (isBaby ? Colors.pink : AppColors.primary).withValues(alpha: 0.1),
+                                  child: Icon(isBaby ? Icons.child_care_rounded : Icons.person, color: isBaby ? Colors.pink : AppColors.primary),
+                                ),
+                                SizedBox(width: 16 * scale),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(m.fullName, style: AppTextStyles.arimo(fontWeight: FontWeight.bold, fontSize: 16 * scale)),
+                                      Text(m.memberTypeName ?? '', style: AppTextStyles.arimo(fontSize: 12 * scale, color: AppColors.textSecondary)),
+                                    ],
+                                  ),
+                                ),
+                                const Icon(Icons.chevron_right_rounded, color: Colors.grey),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    SizedBox(height: 30 * scale),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+
+        if (selectedMember != null && context.mounted) {
+          // 4. Show Health Record form in bottom sheet
+          StaffHealthCareFlowScreen.showAsBottomSheet(
+            context,
+            familyProfileId: selectedMember.id,
+            familyMemberName: selectedMember.fullName,
+            memberType: selectedMember.memberTypeName,
+            activityName: activity.activity,
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context); // Hide loading
+        AppToast.showError(context, message: 'Lỗi tải danh sách thành viên: $e');
+      }
+    }
+  }
+}
+
+class EmployeeActivitiesTimelineScreen extends StatefulWidget {
+  final _AssignedCustomer customer;
+  final VoidCallback onStatusUpdated;
+
+  const EmployeeActivitiesTimelineScreen({
+    super.key,
+    required this.customer,
+    required this.onStatusUpdated,
+  });
+
+  @override
+  State<EmployeeActivitiesTimelineScreen> createState() => _EmployeeActivitiesTimelineScreenState();
+}
+
+class _EmployeeActivitiesTimelineScreenState extends State<EmployeeActivitiesTimelineScreen> {
+  late List<_AssignedActivity> _activities;
+  _ActivityFilter _filter = _ActivityFilter.scheduled;
+
+  @override
+  void initState() {
+    super.initState();
+    _activities = List<_AssignedActivity>.from(widget.customer.activities);
+  }
+
+  List<_AssignedActivity> _filterActivities(List<_AssignedActivity> source, _ActivityFilter filter) {
+    if (filter == _ActivityFilter.all) return source;
+    return source.where((activity) {
+      final normalized = activity.status.toLowerCase();
+      switch (filter) {
+        case _ActivityFilter.scheduled: return normalized == 'scheduled';
+        case _ActivityFilter.missed: return normalized == 'missed';
+        case _ActivityFilter.staffDone: return normalized == 'staffdone' || normalized == 'staff_done';
+        case _ActivityFilter.done: return normalized == 'done' || normalized == 'completed';
+        default: return true;
+      }
+    }).toList();
+  }
+
+  List<_CalendarDay> _buildCalendarDays(List<_AssignedActivity> activities) {
+    if (activities.isEmpty) return const [];
+    final sorted = [...activities]..sort((a, b) {
+      final aTime = a.startAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final bTime = b.startAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+      return aTime.compareTo(bTime);
+    });
+    final daysMap = <DateTime, List<_AssignedActivity>>{};
+    for (final act in sorted) {
+      final start = act.startAt;
+      if (start == null) continue;
+      final date = DateTime(start.year, start.month, start.day);
+      daysMap.putIfAbsent(date, () => []).add(act);
+    }
+    final result = daysMap.entries.map((e) => _CalendarDay(date: e.key, activities: e.value)).toList();
+    result.sort((a, b) => a.date.compareTo(b.date));
+    return result;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+    final filteredActivities = _filterActivities(_activities, _filter);
+    final calendarDays = _buildCalendarDays(filteredActivities);
+
+    return EmployeeScaffold(
+      appBar: AppAppBar(
+        title: widget.customer.displayName,
+        centerTitle: true,
+        showBackButton: true,
+        actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => EmployeeCustomerFamilyProfilesScreen(
+                    customerId: widget.customer.customerId,
+                    customerName: widget.customer.displayName,
+                  ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.account_circle_outlined, color: AppColors.primary),
+            tooltip: 'Hồ sơ gia đình',
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: EdgeInsets.all(16 * scale),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Timeline hoạt động trong tháng • ${widget.customer.assignmentsCount} lịch',
+                  style: AppTextStyles.arimo(
+                    fontSize: 13 * scale,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                SizedBox(height: 16 * scale),
+                _FilterTabs(
+                  current: _filter,
+                  onChanged: (next) {
+                    setState(() {
+                      _filter = next;
+                    });
+                  },
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(16 * scale, 0, 16 * scale, 16 * scale),
+              child: _ActivitiesVerticalList(
+                customerId: widget.customer.customerId,
+                days: calendarDays,
+                onCheckPressed: (activity) => _handleCheckIn(activity),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _handleCheckIn(_AssignedActivity activity) async {
+    final now = DateTime.now();
+    final status = activity.status.toLowerCase();
+    final activityDate = activity.startAt != null
+        ? DateTime(activity.startAt!.year, activity.startAt!.month, activity.startAt!.day)
+        : null;
+    final today = DateTime(now.year, now.month, now.day);
+
+    if (status != 'scheduled') {
+      _showStatusNotice(context, 'Trạng thái không hợp lệ', 'Bạn chỉ có thể cập nhật những hoạt động đang ở trạng thái "Sắp tới".', isError: true);
+      return;
+    }
+
+    if (activityDate == null || !activityDate.isAtSameMomentAs(today)) {
+      _showStatusNotice(context, 'Thời gian không phù hợp', 'Bạn chỉ được phép cập nhật hoạt động diễn ra trong ngày hôm nay.', isError: true);
+      return;
+    }
+
+    if (activity.startAt != null && now.isBefore(activity.startAt!)) {
+      _showStatusNotice(context, 'Chưa tới giờ', 'Hoạt động này chưa đến giờ thực hiện. Vui lòng quay lại sau.', isError: true);
+      return;
+    }
+
+    final checkData = await _askForCheckInDetails(context, activity.activity);
+    if (!mounted || checkData == null) return;
+
+    final success = await _checkSchedule(activity.staffScheduleId, checkData.note, checkData.imagePaths);
+    if (!success || !mounted) return;
+
+    setState(() {
+      final index = _activities.indexWhere((item) => item.staffScheduleId == activity.staffScheduleId);
+      if (index != -1) {
+        _activities[index] = _activities[index].copyWith(
+          status: 'StaffDone',
+          note: checkData.note,
+          images: checkData.imagePaths,
+          checkedAt: DateTime.now(),
+        );
+      }
+      _filter = _ActivityFilter.staffDone;
+    });
+
+    widget.onStatusUpdated();
+  }
+
+  Future<_CheckInDetails?> _askForCheckInDetails(BuildContext context, String activityName) async {
+    final scale = AppResponsive.scaleFactor(context);
+    final controller = TextEditingController();
+    final picker = ImagePicker();
+    List<String> imagePaths = [];
+
+    final result = await showDialog<_CheckInDetails>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: AppColors.white,
+              surfaceTintColor: Colors.transparent,
+              scrollable: true,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16 * scale),
+              ),
+              title: Row(
+                children: [
+                  const Icon(Icons.check_circle_outline_rounded, color: AppColors.primary),
+                  SizedBox(width: 8 * scale),
+                  const Text('Xác nhận hoàn tất'),
+                ],
+              ),
+              content: SizedBox(
+                width: 300 * scale,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(12 * scale),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(8 * scale),
+                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Hoạt động',
+                            style: AppTextStyles.arimo(
+                              fontSize: 11 * scale,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          SizedBox(height: 4 * scale),
+                          Text(
+                            activityName,
+                            style: AppTextStyles.arimo(
+                              fontSize: 14 * scale,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 16 * scale),
+                    Text(
+                      'Vui lòng chụp ảnh hoặc chọn ảnh minh chứng kết quả trước khi nhấn xác nhận.',
+                      style: AppTextStyles.arimo(
+                        fontSize: 13 * scale,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    SizedBox(height: 16 * scale),
+                    TextField(
+                      controller: controller,
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        labelText: 'Ghi chú',
+                        hintText: 'Nhập ghi chú (tuỳ chọn)',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12 * scale),
+                        ),
+                        contentPadding: EdgeInsets.all(12 * scale),
+                      ),
+                    ),
+                    SizedBox(height: 20 * scale),
+                    Text(
+                      'Hình ảnh minh chứng (${imagePaths.length})',
+                      style: AppTextStyles.arimo(
+                        fontSize: 14 * scale,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 10 * scale),
+                    if (imagePaths.isNotEmpty) ...[
+                      SizedBox(
+                        height: 80 * scale,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: imagePaths.length,
+                          separatorBuilder: (_, __) => SizedBox(width: 8 * scale),
+                          itemBuilder: (context, index) {
+                            return Stack(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8 * scale),
+                                  child: Image.file(
+                                    File(imagePaths[index]),
+                                    width: 80 * scale,
+                                    height: 80 * scale,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                Positioned(
+                                  top: 2,
+                                  right: 2,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        imagePaths.removeAt(index);
+                                      });
+                                    },
+                                    child: Container(
+                                      decoration: const BoxDecoration(
+                                        color: Colors.black54,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.close,
+                                        size: 16,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                      SizedBox(height: 12 * scale),
+                    ],
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final image = await picker.pickImage(
+                            source: ImageSource.camera,
+                            imageQuality: 70,
+                            maxWidth: 1200,
+                          );
+                          if (image != null) {
+                            setState(() {
+                              imagePaths.add(image.path);
+                            });
+                          }
+                        },
+                        icon: const Icon(Icons.camera_alt_outlined),
+                        label: const Text('Chụp ảnh minh chứng'),
+                        style: OutlinedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(vertical: 12 * scale),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10 * scale),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Huỷ'),
+                ),
+                ElevatedButton(
+                  onPressed: imagePaths.isEmpty
+                      ? null
+                      : () {
+                          Navigator.of(dialogContext).pop(_CheckInDetails(
+                            note: controller.text.trim(),
+                            imagePaths: imagePaths,
+                          ));
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: AppColors.borderLight,
+                  ),
+                  child: const Text('Xác nhận'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    return result;
+  }
+
+  void _showStatusNotice(BuildContext context, String title, String message, {bool isError = false}) {
+    final scale = AppResponsive.scaleFactor(context);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.white,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16 * scale)),
+        title: Row(
+          children: [
+            Icon(
+              isError ? Icons.error_outline_rounded : Icons.info_outline_rounded,
+              color: isError ? AppColors.red : AppColors.primary,
+            ),
+            SizedBox(width: 8 * scale),
+            Text(title, style: AppTextStyles.arimo(fontWeight: FontWeight.w800, fontSize: 18 * scale)),
+          ],
+        ),
+        content: Text(
+          message,
+          style: AppTextStyles.arimo(fontSize: 14 * scale, color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Đã hiểu'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<bool> _checkSchedule(int staffScheduleId, String? note, List<String> imagePaths) async {
+    try {
+      final formDataMap = {
+        'StaffScheduleId': staffScheduleId,
+        'Note': note ?? '',
+      };
+      final formData = FormData.fromMap(formDataMap);
+      if (imagePaths.isNotEmpty) {
+        for (final path in imagePaths) {
+          final file = await MultipartFile.fromFile(path, filename: path.split('/').last);
+          formData.files.add(MapEntry('Images', file));
+        }
+      }
+      await ApiClient.dio.patch(ApiEndpoints.checkStaffSchedule, data: formData);
+      if (!mounted) return false;
+      AppToast.showSuccess(context, message: 'Cập nhật lịch thành công.');
+      return true;
+    } catch (e) {
+      if (!mounted) return false;
+      String errorMessage = e.toString();
+      if (e is DioException) {
+        final data = e.response?.data;
+        if (data is Map && data.containsKey('error')) {
+          errorMessage = data['error'].toString();
+        }
+      }
+      _showStatusNotice(context, 'Cập nhật thất bại', errorMessage, isError: true);
+      return false;
+    }
   }
 }

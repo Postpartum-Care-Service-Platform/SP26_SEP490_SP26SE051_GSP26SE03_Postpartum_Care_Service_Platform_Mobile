@@ -17,6 +17,19 @@ class GetHealthRecords extends HealthRecordEvent {
   List<Object?> get props => [familyProfileId];
 }
 
+class GetLatestHealthRecord extends HealthRecordEvent {
+  final int familyProfileId;
+
+  const GetLatestHealthRecord(this.familyProfileId);
+
+  @override
+  List<Object?> get props => [familyProfileId];
+}
+
+class GetHealthConditions extends HealthRecordEvent {
+  const GetHealthConditions();
+}
+
 class CreateHealthRecord extends HealthRecordEvent {
   final int familyProfileId;
   final CreateHealthRecordRequest request;
@@ -25,4 +38,19 @@ class CreateHealthRecord extends HealthRecordEvent {
 
   @override
   List<Object?> get props => [familyProfileId, request];
+}
+
+class UpdateHealthRecord extends HealthRecordEvent {
+  final int id;
+  final int familyProfileId; // Để refresh sau khi update
+  final CreateHealthRecordRequest request;
+
+  const UpdateHealthRecord({
+    required this.id,
+    required this.familyProfileId,
+    required this.request,
+  });
+
+  @override
+  List<Object?> get props => [id, familyProfileId, request];
 }

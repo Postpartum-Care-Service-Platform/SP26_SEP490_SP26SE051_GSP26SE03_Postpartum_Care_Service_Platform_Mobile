@@ -103,7 +103,17 @@ class ApiEndpoints {
       '/HealthRecord/Create/$familyProfileId';
   static String getHealthRecordsByFamilyProfile(int familyProfileId) =>
       '/HealthRecord/GetByFamilyProfile/$familyProfileId';
+  static String getLatestHealthRecord(int familyProfileId) =>
+      '/HealthRecord/GetLatest/$familyProfileId';
+  static String getHealthRecordById(int id) => '/HealthRecord/GetById/$id';
+  static String updateHealthRecord(int id) => '/HealthRecord/Update/$id';
   static const String getHealthConditions = '/HealthCondition/GetAll';
+
+  // Activity Restriction endpoints
+  static String checkActivityRestriction(int activityId) =>
+      '/ActivityCondition/CheckRestriction/$activityId';
+  static const String batchCheckRestrictions =
+      '/ActivityCondition/BatchCheckRestrictions';
 
   // Package endpoints
   static const String packages = '/Packages/center';

@@ -37,15 +37,15 @@ class CreateHealthRecordRequest {
 
   Map<String, dynamic> toJson() {
     return {
-      'recordDate': recordDate.split('T').first,
-      'gestationalAgeWeeks': gestationalAgeWeeks ?? 0,
-      'birthWeightGrams': birthWeightGrams?.toInt() ?? 0,
-      'weight': weight?.toInt() ?? 0,
-      'height': height?.toInt() ?? 0,
-      'temperature': temperature?.toInt() ?? 0,
-      'generalCondition': generalCondition ?? '',
-      'note': note ?? '',
-      'conditionIds': conditionIds ?? [],
+      'RecordDate': recordDate.split('T').first,
+      'GestationalAgeWeeks': gestationalAgeWeeks,
+      'BirthWeightGrams': birthWeightGrams,
+      'Weight': weight,
+      'Height': height,
+      'Temperature': temperature,
+      'GeneralCondition': generalCondition ?? '',
+      'Note': note ?? '',
+      'ConditionIds': conditionIds ?? [],
     };
   }
 }

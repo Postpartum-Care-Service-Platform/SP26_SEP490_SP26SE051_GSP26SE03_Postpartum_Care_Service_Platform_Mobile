@@ -21,6 +21,26 @@ class HealthRecordLoaded extends HealthRecordState {
   List<Object?> get props => [records];
 }
 
+class HealthRecordLatestLoaded extends HealthRecordState {
+  final HealthRecordEntity record;
+
+  const HealthRecordLatestLoaded(this.record);
+
+  @override
+  List<Object?> get props => [record];
+}
+
+class HealthConditionsLoaded extends HealthRecordState {
+  final List<HealthConditionEntity> conditions;
+
+  const HealthConditionsLoaded(this.conditions);
+
+  @override
+  List<Object?> get props => [conditions];
+}
+
+class HealthRecordNotFound extends HealthRecordState {}
+
 class HealthRecordError extends HealthRecordState {
   final String message;
 
@@ -28,6 +48,18 @@ class HealthRecordError extends HealthRecordState {
 
   @override
   List<Object?> get props => [message];
+}
+
+class HealthRecordActionLoading extends HealthRecordState {}
+
+class HealthRecordActionSuccess extends HealthRecordState {
+  final HealthRecordEntity record;
+  final String message;
+
+  const HealthRecordActionSuccess(this.record, this.message);
+
+  @override
+  List<Object?> get props => [record, message];
 }
 
 class CreateHealthRecordLoading extends HealthRecordState {}

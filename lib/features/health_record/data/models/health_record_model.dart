@@ -4,12 +4,16 @@ import '../../domain/entities/health_record_entity.dart';
 class HealthConditionModel extends Equatable {
   final int id;
   final String name;
+  final String? code;
+  final String? description;
   final String category;
   final String appliesTo;
 
   const HealthConditionModel({
     required this.id,
     required this.name,
+    this.code,
+    this.description,
     required this.category,
     required this.appliesTo,
   });
@@ -18,6 +22,8 @@ class HealthConditionModel extends Equatable {
     return HealthConditionModel(
       id: json['id'] as int,
       name: json['name'] as String,
+      code: json['code'] as String?,
+      description: json['description'] as String?,
       category: json['category'] as String,
       appliesTo: json['appliesTo'] as String,
     );
@@ -27,13 +33,15 @@ class HealthConditionModel extends Equatable {
     return HealthConditionEntity(
       id: id,
       name: name,
+      code: code,
+      description: description,
       category: category,
       appliesTo: appliesTo,
     );
   }
 
   @override
-  List<Object?> get props => [id, name, category, appliesTo];
+  List<Object?> get props => [id, name, code, description, category, appliesTo];
 }
 
 class HealthRecordModel extends Equatable {

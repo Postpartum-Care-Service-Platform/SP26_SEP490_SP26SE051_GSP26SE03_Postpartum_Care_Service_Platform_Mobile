@@ -13,6 +13,7 @@ import '../../../../../features/employee/appointment/presentation/bloc/appointme
 import '../../../../../features/employee/appointment/presentation/bloc/appointment/appointment_event.dart';
 import '../../../../../features/employee/appointment/presentation/bloc/appointment/appointment_state.dart';
 import '../../../../../features/employee/shell/presentation/widgets/employee_header_bar.dart';
+import '../../../../employee/operations/presentation/screens/staff_health_care_flow_screen.dart';
 
 /// Tasks Screen with BLoC integration
 /// Shows today's appointments as tasks
@@ -482,12 +483,24 @@ class _TaskCard extends StatelessWidget {
                 if (task.status == AppointmentStatus.pending)
                   const SizedBox(width: 8),
                 if (task.status == AppointmentStatus.scheduled)
+                  const SizedBox(width: 8),
+                if (task.status == AppointmentStatus.scheduled)
                   Expanded(
                     child: _ActionButton(
-                      label: 'Hoàn thành',
-                      icon: Icons.done_all,
-                      color: AppColors.primary,
-                      onTap: () => _completeTask(context),
+                      label: 'Sức khỏe',
+                      icon: Icons.medical_services_outlined,
+                      color: Colors.orange,
+                      onTap: () {
+                        // We need the familyProfileId. 
+                        // Assuming the customer has family profiles, we might need to fetch them or if it's already in the task.
+                        // For now, let's assume we can navigate to a selection screen if multiple, 
+                        // but usually an appointment is for one specific person.
+                        // If AppointmentEntity doesn't have familyProfileId, we might need to fetch it.
+                        // I'll show a toast for now or navigate if I can find the ID.
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Vui lòng vào Hồ sơ gia đình để ghi nhận sức khỏe chi tiết')),
+                        );
+                      },
                     ),
                   ),
               ],

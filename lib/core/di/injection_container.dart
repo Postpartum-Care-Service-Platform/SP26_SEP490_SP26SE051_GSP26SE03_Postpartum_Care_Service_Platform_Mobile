@@ -190,7 +190,10 @@ import '../../features/employee/feedback/domain/usecases/get_my_feedbacks_for_st
 import '../../features/employee/feedback/presentation/bloc/staff_feedback_bloc.dart';
 import '../../features/health_record/data/repositories/health_record_repository_impl.dart';
 import '../../features/health_record/domain/repositories/health_record_repository.dart';
+import '../../features/health_record/domain/repositories/activity_restriction_repository.dart';
+import '../../features/health_record/data/repositories/activity_restriction_repository_impl.dart';
 import '../../features/health_record/presentation/bloc/health_record_bloc.dart';
+import '../../features/health_record/presentation/bloc/activity_restriction_bloc.dart';
 import '../../features/package_request/data/repositories/package_request_repository_impl.dart';
 import '../../features/package_request/domain/repositories/package_request_repository.dart';
 import '../../features/package_request/presentation/bloc/package_request_bloc.dart';
@@ -273,6 +276,9 @@ class InjectionContainer {
   // Health Record
   static HealthRecordRepository get healthRecordRepository =>
       HealthRecordRepositoryImpl(dio: ApiClient.dio);
+
+  static ActivityRestrictionRepository get activityRestrictionRepository =>
+      ActivityRestrictionRepositoryImpl(dio: ApiClient.dio);
 
   // Package Request
   static PackageRequestRepository get packageRequestRepository =>
@@ -628,6 +634,10 @@ class InjectionContainer {
 
   static HealthRecordBloc get healthRecordBloc => HealthRecordBloc(
     repository: healthRecordRepository,
+  );
+
+  static ActivityRestrictionBloc get activityRestrictionBloc => ActivityRestrictionBloc(
+    repository: activityRestrictionRepository,
   );
 
   static PackageRequestBloc get packageRequestBloc => PackageRequestBloc(

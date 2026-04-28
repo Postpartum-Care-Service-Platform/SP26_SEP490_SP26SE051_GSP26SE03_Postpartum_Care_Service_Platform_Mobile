@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../../../../core/constants/app_colors.dart';
 import '../../../../../../../core/utils/app_text_styles.dart';
 import '../../../../../family_profile/domain/entities/family_profile_entity.dart';
+import '../../../../operations/presentation/screens/staff_health_care_flow_screen.dart';
 
 class CustomerProfileFamilyTab extends StatelessWidget {
   final Future<List<FamilyProfileEntity>> future;
@@ -298,34 +299,38 @@ class _FamilyMemberItem extends StatelessWidget {
                                 color: isBaby ? const Color(0xFFDB2777) : AppColors.textSecondary,
                               ),
                             ),
-                            SizedBox(height: 8 * scale),
-                            Row(
-                              children: [
-                                if (member.phoneNumber != null) ...[
-                                  Icon(Icons.phone_iphone_rounded, size: 12 * scale, color: AppColors.textSecondary),
-                                  SizedBox(width: 4 * scale),
-                                  Text(
-                                    member.phoneNumber!,
+                            SizedBox(height: 12 * scale),
+                            if (!(member.memberTypeName?.toLowerCase().contains('head of family') ?? false) && 
+                                !(member.memberTypeName?.toLowerCase().contains('chủ hộ') ?? false))
+                              SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton.icon(
+                                  onPressed: () {
+                                    StaffHealthCareFlowScreen.showAsBottomSheet(
+                                      context,
+                                      familyProfileId: member.id,
+                                      familyMemberName: member.fullName,
+                                      memberType: member.memberTypeName,
+                                    );
+                                  },
+                                  icon: Icon(Icons.medical_services_outlined, size: 16 * scale),
+                                  label: Text(
+                                    'Ghi nhận sức khỏe',
                                     style: AppTextStyles.arimo(
                                       fontSize: 12 * scale,
-                                      color: AppColors.textSecondary,
+                                      fontWeight: FontWeight.w700,
                                     ),
                                   ),
-                                  SizedBox(width: 12 * scale),
-                                ],
-                                if (member.dateOfBirth != null) ...[
-                                  Icon(Icons.cake_outlined, size: 12 * scale, color: AppColors.textSecondary),
-                                  SizedBox(width: 4 * scale),
-                                  Text(
-                                    '${member.dateOfBirth!.day}/${member.dateOfBirth!.month}/${member.dateOfBirth!.year}',
-                                    style: AppTextStyles.arimo(
-                                      fontSize: 12 * scale,
-                                      color: AppColors.textSecondary,
+                                  style: OutlinedButton.styleFrom(
+                                    padding: EdgeInsets.symmetric(vertical: 8 * scale),
+                                    side: const BorderSide(color: AppColors.primary),
+                                    foregroundColor: AppColors.primary,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10 * scale),
                                     ),
                                   ),
-                                ],
-                              ],
-                            ),
+                                ),
+                              ),
                           ],
                         ),
                       ),

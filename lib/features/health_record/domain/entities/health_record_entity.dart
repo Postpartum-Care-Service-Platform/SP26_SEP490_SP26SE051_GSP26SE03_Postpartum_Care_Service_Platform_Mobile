@@ -3,18 +3,22 @@ import 'package:equatable/equatable.dart';
 class HealthConditionEntity extends Equatable {
   final int id;
   final String name;
+  final String? code;
+  final String? description;
   final String category;
   final String appliesTo;
 
   const HealthConditionEntity({
     required this.id,
     required this.name,
+    this.code,
+    this.description,
     required this.category,
     required this.appliesTo,
   });
 
   @override
-  List<Object?> get props => [id, name, category, appliesTo];
+  List<Object?> get props => [id, name, code, description, category, appliesTo];
 }
 
 class HealthRecordEntity extends Equatable {
