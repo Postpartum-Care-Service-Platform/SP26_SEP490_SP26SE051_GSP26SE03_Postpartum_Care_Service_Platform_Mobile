@@ -868,6 +868,7 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
       {'value': 'inprogress', 'label': 'Đang thực hiện'},
       {'value': 'completed', 'label': 'Đã hoàn thành'},
       {'value': 'cancelled', 'label': 'Đã hủy'},
+      {'value': 'noshow', 'label': 'Không tới'},
     ];
 
     return Container(
@@ -977,6 +978,10 @@ class _BookingItem extends StatelessWidget {
       case 'cancelled':
         statusColor = const Color(0xFFDC2626); // red
         statusIcon = 'cancel';
+        break;
+      case 'noshow':
+        statusColor = const Color(0xFF6B7280); // gray
+        statusIcon = 'no_show';
         break;
       default:
         statusColor = AppColors.textSecondary;
@@ -1243,6 +1248,8 @@ class _BookingItem extends StatelessWidget {
         return Icons.done_all_rounded;
       case 'cancel':
         return Icons.cancel_outlined;
+      case 'no_show':
+        return Icons.person_off_rounded;
       default:
         return Icons.info_outline_rounded;
     }
@@ -1263,6 +1270,8 @@ class _BookingItem extends StatelessWidget {
         return 'HOÀN THÀNH';
       case 'cancelled':
         return 'ĐÃ HỦY';
+      case 'noshow':
+        return 'KHÔNG TỚI';
       default:
         return status.toUpperCase();
     }

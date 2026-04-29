@@ -1,288 +1,333 @@
-// ignore_for_file: lines_longer_than_80_chars
-import 'package:flutter/material.dart'; // Import Flutter material package.
-import 'package:flutter_bloc/flutter_bloc.dart'; // Import flutter_bloc package.
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 
-import '../../../../../core/constants/app_colors.dart'; // Import app colors.
-import '../../../../../core/di/injection_container.dart'; // Import DI container.
-import '../../../../../core/utils/app_text_styles.dart'; // Import text styles.
-import '../../../../../features/employee/room/domain/entities/room_entity.dart'; // Import room entity.
-import '../../../../../features/employee/room/domain/entities/room_status.dart'; // Import room status.
-import '../../../../../features/employee/room/presentation/bloc/room/room_bloc.dart'; // Import room bloc.
-import '../../../../../features/employee/room/presentation/bloc/room/room_event.dart'; // Import room events.
-import '../../../../../features/employee/room/presentation/bloc/room/room_state.dart'; // Import room states.
+import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/di/injection_container.dart';
+import '../../../../../core/utils/app_responsive.dart';
+import '../../../../../core/utils/app_text_styles.dart';
+import '../../../../../core/widgets/app_loading.dart';
+import '../../../../../core/widgets/app_widgets.dart';
+import '../../../../../features/employee/room/domain/entities/room_entity.dart';
+import '../../../../../features/employee/room/domain/entities/room_status.dart';
+import '../../../../../features/employee/room/presentation/bloc/room/room_bloc.dart';
+import '../../../../../features/employee/room/presentation/bloc/room/room_event.dart';
+import '../../../../../features/employee/room/presentation/bloc/room/room_state.dart';
+import '../../../../../features/employee/shell/presentation/widgets/employee_scaffold.dart';
 
 /// Booking filter options for rooms.
 enum BookingFilter {
-  // Define booking filter enum.
-  all, // Show all rooms.
-  occupied, // Show rooms currently occupied.
-  upcoming, // Show rooms with upcoming bookings.
-  empty, // Show rooms with no bookings.
-} // End booking filter enum.
+  all,
+  occupied,
+  upcoming,
+  empty,
+}
 
 enum BookingState {
-  // Define booking state enum.
-  occupied, // Currently occupied.
-  upcoming, // Upcoming booking.
-  empty, // No active booking.
-} // End booking state enum.
+  occupied,
+  upcoming,
+  empty,
+}
 
 DateTime _normalizeDate(DateTime value) {
-  // Normalize date to day start.
-  return DateTime(
-    value.year,
-    value.month,
-    value.day,
-  ); // Return normalized date.
-} // End _normalizeDate.
+  return DateTime(value.year, value.month, value.day);
+}
 
 BookingState _getBookingState(RoomEntity room, DateTime now) {
-  // Get booking state.
-  if (room.isOccupied) {
-    // Check occupied.
-    return BookingState.occupied; // Return occupied.
-  } // End occupied.
+  if (room.isOccupied) return BookingState.occupied;
 
-  final startDate = room.bookingStartDate; // Get booking start date.
-  final endDate = room.bookingEndDate; // Get booking end date.
-  final nowDate = _normalizeDate(now); // Normalize now.
+  final startDate = room.bookingStartDate;
+  final endDate = room.bookingEndDate;
+  final nowDate = _normalizeDate(now);
 
   if (startDate != null && endDate != null) {
-    // Check booking range.
-    final start = _normalizeDate(startDate); // Normalize start.
-    final end = _normalizeDate(endDate); // Normalize end.
-    if (nowDate.isBefore(start)) {
-      // Upcoming booking.
-      return BookingState.upcoming; // Return upcoming.
-    } // End upcoming.
-    if (nowDate.isAfter(end)) {
-      // Past booking.
-      return BookingState.empty; // Return empty.
-    } // End past booking.
-  } // End range check.
+    final start = _normalizeDate(startDate);
+    final end = _normalizeDate(endDate);
+    if (nowDate.isBefore(start)) return BookingState.upcoming;
+    if (nowDate.isAfter(end)) return BookingState.empty;
+  }
 
   if (startDate != null && nowDate.isBefore(_normalizeDate(startDate))) {
-    // Upcoming without end.
-    return BookingState.upcoming; // Return upcoming.
-  } // End upcoming without end.
+    return BookingState.upcoming;
+  }
 
-  return BookingState.empty; // Default empty.
-} // End _getBookingState.
+  return BookingState.empty;
+}
 
 class EmployeeRoomsScreen extends StatelessWidget {
-  // Define EmployeeRoomsScreen widget.
-  const EmployeeRoomsScreen({super.key}); // Constructor.
+  const EmployeeRoomsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Build widget.
     return BlocProvider(
-      // Provide RoomBloc to subtree.
-      create: (_) =>
-          InjectionContainer.roomBloc
-            ..add(const LoadAllRooms()), // Create bloc and load rooms.
-      child: const _EmployeeRoomsView(), // Render view.
-    ); // End BlocProvider.
-  } // End build.
-} // End EmployeeRoomsScreen.
+      create: (_) => InjectionContainer.roomBloc..add(const LoadAllRooms()),
+      child: const _EmployeeRoomsView(),
+    );
+  }
+}
 
 class _EmployeeRoomsView extends StatefulWidget {
-  // Define stateful rooms view.
-  const _EmployeeRoomsView(); // Constructor.
+  const _EmployeeRoomsView();
 
   @override
-  State<_EmployeeRoomsView> createState() => _EmployeeRoomsViewState(); // Create state.
-} // End _EmployeeRoomsView.
+  State<_EmployeeRoomsView> createState() => _EmployeeRoomsViewState();
+}
 
 class _EmployeeRoomsViewState extends State<_EmployeeRoomsView> {
-  // Define state for rooms view.
-  BookingFilter _selectedFilter =
-      BookingFilter.all; // Track current booking filter.
+  BookingFilter _selectedFilter = BookingFilter.all;
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Build UI.
-    return Scaffold(
-      // Build scaffold.
-      backgroundColor: AppColors.background, // Set background color.
+    final scale = AppResponsive.scaleFactor(context);
+
+    return EmployeeScaffold(
       appBar: AppBar(
-        // Build app bar.
-        title: const Text('Phòng ở'), // Set title.
-        backgroundColor: AppColors.background, // Set app bar background.
-        foregroundColor: AppColors.textPrimary, // Set app bar foreground.
-        elevation: 0, // Remove elevation.
+        title: Text(
+          'Quản lý Phòng ở',
+          style: AppTextStyles.tinos(
+            fontSize: 22 * scale,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        centerTitle: true,
         actions: [
-          // Define app bar actions.
           IconButton(
-            // Add refresh button.
-            tooltip: 'Làm mới', // Tooltip text.
-            onPressed: () => context.read<RoomBloc>().add(
-              const RefreshRooms(),
-            ), // Trigger refresh.
-            icon: const Icon(Icons.refresh_rounded), // Refresh icon.
-          ), // End IconButton.
-        ], // End actions.
-      ), // End AppBar.
+            onPressed: () => context.read<RoomBloc>().add(const RefreshRooms()),
+            icon: const Icon(Icons.refresh_rounded, color: AppColors.primary),
+            tooltip: 'Làm mới',
+          ),
+        ],
+      ),
       body: BlocBuilder<RoomBloc, RoomState>(
-        // Build body based on RoomState.
         builder: (context, state) {
-          // Build with state.
           if (state is RoomLoading || state is RoomInitial) {
-            // Check loading state.
-            return const Center(
-              // Center loading indicator.
-              child: CircularProgressIndicator(
-                color: AppColors.primary,
-              ), // Loading indicator.
-            ); // End Center.
-          } // End loading state.
+            return const Center(child: AppLoadingIndicator(color: AppColors.primary));
+          }
 
           if (state is RoomError) {
-            // Check error state.
-            return Center(
-              // Center error message.
-              child: Padding(
-                // Add padding.
-                padding: const EdgeInsets.all(20), // Padding value.
-                child: Text(
-                  // Error text.
-                  'Không tải được danh sách phòng: ${state.message}', // Error message.
-                  textAlign: TextAlign.center, // Center align.
-                ), // End Text.
-              ), // End Padding.
-            ); // End Center.
-          } // End error state.
+            return _buildErrorState(state.message, scale);
+          }
 
           if (state is RoomEmpty) {
-            // Check empty state.
-            return const Center(
-              child: Text('Hiện chưa có phòng nào.'),
-            ); // Empty text.
-          } // End empty state.
+            return _buildEmptyState(scale);
+          }
 
           if (state is RoomLoaded) {
-            // Check loaded state.
-            final rooms =
-                [...state.rooms] // Clone list.
-                  ..sort((a, b) {
-                    // Sort rooms.
-                    final floorA = a.floor ?? -1; // Determine floor A.
-                    final floorB = b.floor ?? -1; // Determine floor B.
-                    if (floorA != floorB) {
-                      // Compare floors when different.
-                      return floorA.compareTo(floorB); // Compare floors.
-                    } // End floor compare.
-                    return a.name.compareTo(b.name); // Compare names.
-                  }); // End sort.
+            final allRooms = state.rooms;
+            final filteredBySearch = allRooms.where((room) {
+              final query = _searchQuery.toLowerCase();
+              return room.name.toLowerCase().contains(query) ||
+                  room.roomTypeName.toLowerCase().contains(query);
+            }).toList();
 
-            final floors = _extractFloors(rooms); // Extract floor list.
+            final sortedRooms = [...filteredBySearch]
+              ..sort((a, b) {
+                final floorA = a.floor ?? -1;
+                final floorB = b.floor ?? -1;
+                if (floorA != floorB) return floorA.compareTo(floorB);
+                return a.name.compareTo(b.name);
+              });
+
+            final floors = _extractFloors(sortedRooms);
 
             return DefaultTabController(
-              // Build tab controller for floors.
-              length: floors.length, // Set tab count.
+              length: floors.length,
               child: Column(
-                // Build column layout.
                 children: [
-                  // Column children.
-                  _FloorTabBar(floors: floors), // Render floor tabs.
+                  _buildSearchBar(scale),
+                  _FloorTabBar(floors: floors, scale: scale),
                   _BookingFilterBar(
-                    // Render booking filter bar.
-                    selectedFilter: _selectedFilter, // Pass current filter.
-                    onSelected: (filter) {
-                      // Handle filter change.
-                      setState(
-                        () => _selectedFilter = filter,
-                      ); // Update filter.
-                    }, // End onSelected.
-                  ), // End _BookingFilterBar.
+                    selectedFilter: _selectedFilter,
+                    onSelected: (filter) => setState(() => _selectedFilter = filter),
+                    scale: scale,
+                  ),
                   Expanded(
-                    // Expand tab view.
                     child: TabBarView(
-                      // Build tab views.
                       children: floors.map((floor) {
-                        // Map each floor to list.
-                        final floorRooms = rooms.where((room) {
-                          // Filter by floor.
-                          if (floor.isAllFloors) {
-                            // Check all floors tab.
-                            return true; // Keep all floors when selected.
-                          } // End all floors.
-                          if (floor.isUnknownFloor) {
-                            // Handle unknown floor.
-                            return room.floor == null; // Match null floors.
-                          } // End unknown floor.
-                          return room.floor ==
-                              floor.value; // Match floor value.
-                        }).toList(); // Convert to list.
+                        final floorRooms = sortedRooms.where((room) {
+                          if (floor.isAllFloors) return true;
+                          if (floor.isUnknownFloor) return room.floor == null;
+                          return room.floor == floor.value;
+                        }).toList();
 
-                        final filteredRooms = _applyBookingFilter(
-                          // Apply booking filter.
-                          floorRooms, // Rooms for floor.
-                          _selectedFilter, // Selected filter.
-                        ); // End filter.
+                        final filteredRooms = _applyBookingFilter(floorRooms, _selectedFilter);
 
                         if (filteredRooms.isEmpty) {
-                          // Check empty list.
-                          return const Center(
-                            // Center empty text.
-                            child: Text(
-                              'Không có phòng phù hợp.',
-                            ), // Empty message.
-                          ); // End Center.
-                        } // End empty list.
+                          return _buildNoResultsState(scale);
+                        }
 
-                        return ListView.separated(
-                          // Build rooms list.
-                          padding: const EdgeInsets.all(16), // List padding.
-                          itemCount: filteredRooms.length, // Number of items.
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(height: 10), // Separator.
-                          itemBuilder: (_, index) => _RoomCard(
+                        return GridView.builder(
+                          padding: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 8 * scale),
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: AppResponsive.isTablet(context) ? 3 : 2,
+                            childAspectRatio: 1.15, // More compact aspect ratio
+                            crossAxisSpacing: 10 * scale,
+                            mainAxisSpacing: 10 * scale,
+                          ),
+                          itemCount: filteredRooms.length,
+                          itemBuilder: (context, index) => _RoomCard(
                             room: filteredRooms[index],
-                          ), // Build card.
-                        ); // End ListView.
-                      }).toList(), // End map.
-                    ), // End TabBarView.
-                  ), // End Expanded.
-                ], // End children.
-              ), // End Column.
-            ); // End DefaultTabController.
-          } // End RoomLoaded state.
+                            scale: scale,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
 
-          return const SizedBox.shrink(); // Fallback empty widget.
-        }, // End builder.
-      ), // End BlocBuilder.
-    ); // End Scaffold.
-  } // End build.
+          return const SizedBox.shrink();
+        },
+      ),
+    );
+  }
+
+  Widget _buildSearchBar(double scale) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 8 * scale),
+      child: Container(
+        height: 48 * scale,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16 * scale),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 15 * scale,
+              offset: const Offset(0, 4),
+            ),
+          ],
+          border: Border.all(color: AppColors.borderLight.withValues(alpha: 0.1)),
+        ),
+        child: TextField(
+          controller: _searchController,
+          onChanged: (value) => setState(() => _searchQuery = value),
+          decoration: InputDecoration(
+            hintText: 'Tìm kiếm tên phòng hoặc loại phòng...',
+            hintStyle: AppTextStyles.arimo(fontSize: 14 * scale, color: AppColors.third),
+            prefixIcon: Icon(Icons.search_rounded, color: AppColors.primary, size: 22 * scale),
+            suffixIcon: _searchQuery.isNotEmpty
+                ? IconButton(
+                    icon: Icon(Icons.clear_rounded, color: AppColors.third, size: 20 * scale),
+                    onPressed: () {
+                      _searchController.clear();
+                      setState(() => _searchQuery = '');
+                    },
+                  )
+                : null,
+            border: InputBorder.none,
+            contentPadding: EdgeInsets.symmetric(vertical: 12 * scale),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorState(String message, double scale) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(24 * scale),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline_rounded, size: 56 * scale, color: AppColors.red),
+            SizedBox(height: 16 * scale),
+            Text(
+              'Đã xảy ra lỗi khi tải dữ liệu',
+              style: AppTextStyles.tinos(fontSize: 18 * scale, fontWeight: FontWeight.w700),
+            ),
+            SizedBox(height: 8 * scale),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: AppTextStyles.arimo(fontSize: 14 * scale, color: AppColors.textSecondary),
+            ),
+            SizedBox(height: 24 * scale),
+            ElevatedButton(
+              onPressed: () => context.read<RoomBloc>().add(const LoadAllRooms()),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(horizontal: 24 * scale, vertical: 12 * scale),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12 * scale)),
+              ),
+              child: const Text('Thử lại'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(double scale) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.meeting_room_outlined, size: 72 * scale, color: AppColors.third),
+          SizedBox(height: 16 * scale),
+          Text(
+            'Chưa có dữ liệu phòng',
+            style: AppTextStyles.tinos(
+              fontSize: 18 * scale,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoResultsState(double scale) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.search_off_rounded, size: 56 * scale, color: AppColors.third),
+          SizedBox(height: 12 * scale),
+          Text(
+            'Không tìm thấy phòng phù hợp',
+            style: AppTextStyles.arimo(fontSize: 14 * scale, color: AppColors.textSecondary),
+          ),
+        ],
+      ),
+    );
+  }
 
   List<_FloorTabData> _extractFloors(List<RoomEntity> rooms) {
-    // Extract floor list.
-    final floors = <int?>{}; // Initialize set.
+    final floorsSet = <int?>{};
     for (final room in rooms) {
-      // Loop rooms.
-      floors.add(room.floor); // Add floor.
-    } // End loop.
+      floorsSet.add(room.floor);
+    }
 
-    final sorted =
-        floors
-            .toList() // Convert to list.
-          ..sort((a, b) {
-            // Sort floors.
-            final valueA = a ?? -1; // Map null to -1.
-            final valueB = b ?? -1; // Map null to -1.
-            return valueA.compareTo(valueB); // Compare values.
-          }); // End sort.
+    final sorted = floorsSet.toList()
+      ..sort((a, b) {
+        final valueA = a ?? -1;
+        final valueB = b ?? -1;
+        return valueA.compareTo(valueB);
+      });
 
-    final results = <_FloorTabData>[]; // Init results list.
-    results.add(const _FloorTabData.all()); // Add all floors tab.
+    final results = <_FloorTabData>[];
+    results.add(const _FloorTabData.all());
 
     for (final floor in sorted) {
-      // Loop sorted floors.
       if (floor == null) {
-        // Handle null floor.
-        results.add(const _FloorTabData.unknown()); // Add unknown tab.
+        results.add(const _FloorTabData.unknown());
       } else {
-        // Handle normal floor.
         results.add(
           _FloorTabData(
             value: floor,
@@ -290,321 +335,390 @@ class _EmployeeRoomsViewState extends State<_EmployeeRoomsView> {
             isAllFloors: false,
             isUnknownFloor: false,
           ),
-        ); // Add floor tab.
-      } // End floor check.
-    } // End loop.
+        );
+      }
+    }
 
-    return results; // Return tab data.
-  } // End _extractFloors.
+    return results;
+  }
 
-  List<RoomEntity> _applyBookingFilter(
-    // Apply booking filter.
-    List<RoomEntity> rooms, // Input rooms.
-    BookingFilter filter, // Selected filter.
-  ) {
-    // Start filter method.
-    final now = DateTime.now(); // Current time.
+  List<RoomEntity> _applyBookingFilter(List<RoomEntity> rooms, BookingFilter filter) {
+    final now = DateTime.now();
     switch (filter) {
-      // Switch by filter.
-      case BookingFilter.all: // All rooms.
-        return rooms; // Return all.
-      case BookingFilter.occupied: // Occupied rooms.
-        return rooms
-            .where(
-              (room) => _getBookingState(room, now) == BookingState.occupied,
-            )
-            .toList(); // Filter occupied.
-      case BookingFilter.upcoming: // Upcoming rooms.
-        return rooms
-            .where(
-              (room) => _getBookingState(room, now) == BookingState.upcoming,
-            )
-            .toList(); // Filter upcoming.
-      case BookingFilter.empty: // Empty rooms.
-        return rooms
-            .where((room) => _getBookingState(room, now) == BookingState.empty)
-            .toList(); // Filter empty.
-    } // End switch.
-  } // End _applyBookingFilter.
-} // End _EmployeeRoomsViewState.
+      case BookingFilter.all:
+        return rooms;
+      case BookingFilter.occupied:
+        return rooms.where((room) => _getBookingState(room, now) == BookingState.occupied).toList();
+      case BookingFilter.upcoming:
+        return rooms.where((room) => _getBookingState(room, now) == BookingState.upcoming).toList();
+      case BookingFilter.empty:
+        return rooms.where((room) => _getBookingState(room, now) == BookingState.empty).toList();
+    }
+  }
+}
 
 class _FloorTabData {
-  // Define floor tab data.
-  final int? value; // Floor value.
-  final String label; // Tab label.
-  final bool isAllFloors; // Whether tab is all floors.
-  final bool isUnknownFloor; // Whether tab is unknown floors.
+  final int? value;
+  final String label;
+  final bool isAllFloors;
+  final bool isUnknownFloor;
 
   const _FloorTabData({
-    // Constructor.
-    required this.value, // Floor value.
-    required this.label, // Label.
-    required this.isAllFloors, // All floors flag.
-    required this.isUnknownFloor, // Unknown floors flag.
-  }); // End constructor.
+    required this.value,
+    required this.label,
+    required this.isAllFloors,
+    required this.isUnknownFloor,
+  });
 
-  const _FloorTabData.all() // Factory for all floors.
-    : value = null, // Set value.
-      label = 'Tất cả', // Set label.
-      isAllFloors = true, // Set all floors.
-      isUnknownFloor = false; // Set unknown flag.
+  const _FloorTabData.all()
+    : value = null,
+      label = 'Tất cả',
+      isAllFloors = true,
+      isUnknownFloor = false;
 
-  const _FloorTabData.unknown() // Factory for unknown floors.
-    : value = null, // Set value.
-      label = 'Chưa rõ tầng', // Set label.
-      isAllFloors = false, // Set all floors.
-      isUnknownFloor = true; // Set unknown.
-} // End _FloorTabData.
+  const _FloorTabData.unknown()
+    : value = null,
+      label = 'Khác',
+      isAllFloors = false,
+      isUnknownFloor = true;
+}
 
 class _FloorTabBar extends StatelessWidget {
-  // Define floor tab bar.
-  final List<_FloorTabData> floors; // Floor data list.
+  final List<_FloorTabData> floors;
+  final double scale;
 
-  const _FloorTabBar({required this.floors}); // Constructor.
+  const _FloorTabBar({required this.floors, required this.scale});
 
   @override
   Widget build(BuildContext context) {
-    // Build widget.
     return Container(
-      // Wrap TabBar.
-      color: AppColors.background, // Background color.
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4), // Padding.
+      margin: EdgeInsets.fromLTRB(16 * scale, 4 * scale, 16 * scale, 0),
+      height: 44 * scale,
       child: TabBar(
-        // Build TabBar.
-        isScrollable: true, // Allow horizontal scroll.
-        indicatorColor: AppColors.primary, // Indicator color.
-        labelColor: AppColors.primary, // Selected label color.
-        unselectedLabelColor:
-            AppColors.textSecondary, // Unselected label color.
-        labelStyle: AppTextStyles.arimo(
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
-        ), // Label style.
-        tabs: floors
-            .map((floor) => Tab(text: floor.label))
-            .toList(), // Build tabs.
-      ), // End TabBar.
-    ); // End Container.
-  } // End build.
-} // End _FloorTabBar.
+        isScrollable: true,
+        indicator: BoxDecoration(
+          borderRadius: BorderRadius.circular(12 * scale),
+          color: AppColors.primary,
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.3),
+              blurRadius: 10 * scale,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        labelColor: Colors.white,
+        unselectedLabelColor: AppColors.textSecondary,
+        labelStyle: AppTextStyles.arimo(fontSize: 14 * scale, fontWeight: FontWeight.w700),
+        indicatorSize: TabBarIndicatorSize.tab,
+        dividerColor: Colors.transparent,
+        padding: EdgeInsets.zero,
+        labelPadding: EdgeInsets.symmetric(horizontal: 16 * scale),
+        tabs: floors.map((floor) => Tab(text: floor.label)).toList(),
+      ),
+    );
+  }
+}
 
 class _BookingFilterBar extends StatelessWidget {
-  // Define booking filter bar.
-  final BookingFilter selectedFilter; // Current filter.
-  final ValueChanged<BookingFilter> onSelected; // Callback for selection.
+  final BookingFilter selectedFilter;
+  final ValueChanged<BookingFilter> onSelected;
+  final double scale;
 
   const _BookingFilterBar({
-    // Constructor.
-    required this.selectedFilter, // Selected filter.
-    required this.onSelected, // Selection callback.
-  }); // End constructor.
+    required this.selectedFilter,
+    required this.onSelected,
+    required this.scale,
+  });
 
   @override
   Widget build(BuildContext context) {
-    // Build widget.
-    return Padding(
-      // Add padding.
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 8,
-      ), // Padding value.
-      child: Wrap(
-        // Wrap chips.
-        spacing: 8, // Horizontal spacing.
-        runSpacing: 6, // Vertical spacing.
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 12 * scale),
+      child: Row(
         children: [
-          // Chip list.
           _FilterChip(
-            // All chip.
-            label: 'Tất cả', // Label.
-            isSelected: selectedFilter == BookingFilter.all, // Selected.
-            onTap: () => onSelected(BookingFilter.all), // On tap.
-          ), // End chip.
+            label: 'Tất cả',
+            isSelected: selectedFilter == BookingFilter.all,
+            onTap: () => onSelected(BookingFilter.all),
+            scale: scale,
+          ),
+          SizedBox(width: 8 * scale),
           _FilterChip(
-            // Occupied chip.
-            label: 'Đang ở', // Label.
-            isSelected: selectedFilter == BookingFilter.occupied, // Selected.
-            onTap: () => onSelected(BookingFilter.occupied), // On tap.
-            color: const Color(0xFFB45309), // Chip color.
-          ), // End chip.
+            label: 'Đang ở',
+            isSelected: selectedFilter == BookingFilter.occupied,
+            onTap: () => onSelected(BookingFilter.occupied),
+            color: const Color(0xFFEF4444),
+            scale: scale,
+          ),
+          SizedBox(width: 8 * scale),
           _FilterChip(
-            // Upcoming chip.
-            label: 'Sắp tới', // Label.
-            isSelected: selectedFilter == BookingFilter.upcoming, // Selected.
-            onTap: () => onSelected(BookingFilter.upcoming), // On tap.
-            color: const Color(0xFF2563EB), // Chip color.
-          ), // End chip.
+            label: 'Sắp tới',
+            isSelected: selectedFilter == BookingFilter.upcoming,
+            onTap: () => onSelected(BookingFilter.upcoming),
+            color: const Color(0xFF3B82F6),
+            scale: scale,
+          ),
+          SizedBox(width: 8 * scale),
           _FilterChip(
-            // Empty chip.
-            label: 'Trống', // Label.
-            isSelected: selectedFilter == BookingFilter.empty, // Selected.
-            onTap: () => onSelected(BookingFilter.empty), // On tap.
-            color: const Color(0xFF15803D), // Chip color.
-          ), // End chip.
-        ], // End chip list.
-      ), // End Wrap.
-    ); // End Padding.
-  } // End build.
-} // End _BookingFilterBar.
+            label: 'Trống',
+            isSelected: selectedFilter == BookingFilter.empty,
+            onTap: () => onSelected(BookingFilter.empty),
+            color: const Color(0xFF10B981),
+            scale: scale,
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class _FilterChip extends StatelessWidget {
-  // Define filter chip widget.
-  final String label; // Chip label.
-  final bool isSelected; // Selected flag.
-  final VoidCallback onTap; // Tap callback.
-  final Color? color; // Optional color.
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final Color? color;
+  final double scale;
 
   const _FilterChip({
-    // Constructor.
-    required this.label, // Label.
-    required this.isSelected, // Selection.
-    required this.onTap, // Tap callback.
-    this.color, // Color.
-  }); // End constructor.
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+    this.color,
+    required this.scale,
+  });
 
   @override
   Widget build(BuildContext context) {
-    // Build widget.
-    final displayColor = color ?? AppColors.primary; // Determine color.
+    final displayColor = color ?? AppColors.primary;
     return InkWell(
-      // Build tap effect.
-      onTap: onTap, // Handle tap.
-      borderRadius: BorderRadius.circular(20), // Rounded corners.
-      child: Container(
-        // Chip container.
-        padding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 6,
-        ), // Padding.
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12 * scale),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 8 * scale),
         decoration: BoxDecoration(
-          // Decoration.
-          color: isSelected
-              ? displayColor.withValues(alpha: 0.15)
-              : Colors.white, // Background.
-          borderRadius: BorderRadius.circular(20), // Border radius.
+          color: isSelected ? displayColor : Colors.white,
+          borderRadius: BorderRadius.circular(12 * scale),
           border: Border.all(
-            color: isSelected ? displayColor : AppColors.borderLight,
-          ), // Border.
-        ), // End decoration.
+            color: isSelected ? displayColor : AppColors.borderLight.withValues(alpha: 0.1),
+            width: 1.5,
+          ),
+          boxShadow: isSelected ? [
+            BoxShadow(
+              color: displayColor.withValues(alpha: 0.2),
+              blurRadius: 8 * scale,
+              offset: const Offset(0, 4),
+            )
+          ] : [],
+        ),
         child: Text(
-          // Chip text.
-          label, // Text label.
+          label,
           style: AppTextStyles.arimo(
-            // Text style.
-            fontSize: 12, // Font size.
-            fontWeight: FontWeight.w600, // Font weight.
-            color: isSelected
-                ? displayColor
-                : AppColors.textSecondary, // Text color.
-          ), // End style.
-        ), // End Text.
-      ), // End Container.
-    ); // End InkWell.
-  } // End build.
-} // End _FilterChip.
+            fontSize: 12 * scale,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+            color: isSelected ? Colors.white : AppColors.textSecondary,
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _RoomCard extends StatelessWidget {
-  // Define room card.
-  final RoomEntity room; // Room data.
+  final RoomEntity room;
+  final double scale;
 
-  const _RoomCard({required this.room}); // Constructor.
+  const _RoomCard({required this.room, required this.scale});
 
   @override
   Widget build(BuildContext context) {
-    // Build card.
-    final bookingColor = _bookingStatusColor(room); // Booking status color.
+    final state = _getBookingState(room, DateTime.now());
+    final statusColor = _getStatusColor(state);
+    final statusText = _getStatusText(state);
+
+    String? dateInfo;
+    if (state == BookingState.occupied && room.bookingEndDate != null) {
+      dateInfo = DateFormat('dd/MM').format(room.bookingEndDate!);
+    } else if (state == BookingState.upcoming && room.bookingStartDate != null) {
+      dateInfo = DateFormat('dd/MM').format(room.bookingStartDate!);
+    }
+
     return Container(
-      // Card container.
-      padding: const EdgeInsets.all(14), // Padding.
       decoration: BoxDecoration(
-        // Decoration.
-        color: Colors.white, // Background.
-        borderRadius: BorderRadius.circular(14), // Rounded corners.
-        border: Border.all(color: AppColors.borderLight), // Border.
-      ), // End decoration.
-      child: Column(
-        // Column layout.
-        crossAxisAlignment: CrossAxisAlignment.start, // Align start.
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20 * scale),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 15 * scale,
+            offset: const Offset(0, 6),
+          ),
+        ],
+        border: Border.all(
+          color: statusColor.withValues(alpha: 0.15),
+          width: 1,
+        ),
+      ),
+      child: Stack(
         children: [
-          // Children.
-          Row(
-            // First row.
-            children: [
-              // Row children.
-              Expanded(
-                // Expand name.
-                child: Text(
-                  // Room name.
-                  room.name, // Name text.
-                  style: AppTextStyles.arimo(
-                    // Style.
-                    fontSize: 16, // Font size.
-                    fontWeight: FontWeight.w700, // Font weight.
-                    color: AppColors.textPrimary, // Text color.
-                  ), // End style.
-                ), // End Text.
-              ), // End Expanded.
-              Container(
-                // Booking status pill.
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ), // Padding.
-                decoration: BoxDecoration(
-                  // Decoration.
-                  color: bookingColor.withValues(alpha: 0.12), // Background.
-                  borderRadius: BorderRadius.circular(20), // Radius.
-                ), // End decoration.
-                child: Text(
-                  // Booking status text.
-                  _bookingStatusText(room), // Booking label.
-                  style: AppTextStyles.arimo(
-                    // Style.
-                    fontSize: 12, // Font size.
-                    fontWeight: FontWeight.w700, // Weight.
-                    color: bookingColor, // Color.
-                  ), // End style.
-                ), // End Text.
-              ), // End booking pill.
-            ], // End row children.
-          ), // End Row.
-          const SizedBox(height: 8), // Spacing.
-          Text('Loại phòng: ${room.roomTypeName}'), // Room type.
-          Text('Tầng: ${room.floor?.toString() ?? 'Chưa cập nhật'}'), // Floor.
-          Text(
-            'Tình trạng phòng: ${room.status.displayText}',
-          ), // Room status text.
-          Text(
-            'Hoạt động: ${room.isActive ? 'Có' : 'Không'}',
-          ), // Active status.
-        ], // End children.
-      ), // End Column.
-    ); // End Container.
-  } // End build.
+          // Background ghost icon for texture
+          Positioned(
+            right: -10 * scale,
+            bottom: -10 * scale,
+            child: Icon(
+              _getStatusIcon(state),
+              size: 80 * scale,
+              color: statusColor.withValues(alpha: 0.04),
+            ),
+          ),
+          // Main Content
+          Padding(
+            padding: EdgeInsets.all(14 * scale),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8 * scale, vertical: 4 * scale),
+                      decoration: BoxDecoration(
+                        color: statusColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8 * scale),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(_getStatusIcon(state), size: 12 * scale, color: statusColor),
+                          SizedBox(width: 4 * scale),
+                          Text(
+                            'T${room.floor ?? '?' }',
+                            style: AppTextStyles.arimo(
+                              fontSize: 10 * scale,
+                              fontWeight: FontWeight.w800,
+                              color: statusColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (dateInfo != null)
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 6 * scale, vertical: 2 * scale),
+                        decoration: BoxDecoration(
+                          color: AppColors.background,
+                          borderRadius: BorderRadius.circular(6 * scale),
+                          border: Border.all(color: AppColors.borderLight.withValues(alpha: 0.1)),
+                        ),
+                        child: Text(
+                          dateInfo,
+                          style: AppTextStyles.arimo(
+                            fontSize: 10 * scale,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const Spacer(),
+                Text(
+                  room.name,
+                  style: AppTextStyles.tinos(
+                    fontSize: 18 * scale,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                SizedBox(height: 2 * scale),
+                Row(
+                  children: [
+                    Icon(Icons.category_outlined, size: 10 * scale, color: AppColors.third),
+                    SizedBox(width: 4 * scale),
+                    Expanded(
+                      child: Text(
+                        room.roomTypeName,
+                        style: AppTextStyles.arimo(
+                          fontSize: 11 * scale,
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8 * scale),
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.symmetric(vertical: 6 * scale),
+                  decoration: BoxDecoration(
+                    color: statusColor,
+                    borderRadius: BorderRadius.circular(10 * scale),
+                    boxShadow: [
+                      BoxShadow(
+                        color: statusColor.withValues(alpha: 0.3),
+                        blurRadius: 6 * scale,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    statusText,
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.arimo(
+                      fontSize: 10 * scale,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Interactive layer
+          Positioned.fill(
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  // Action for room detail
+                },
+                borderRadius: BorderRadius.circular(20 * scale),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-  Color _bookingStatusColor(RoomEntity room) {
-    // Determine booking color.
-    final state = _getBookingState(room, DateTime.now()); // Get booking state.
+  Color _getStatusColor(BookingState state) {
     switch (state) {
-      case BookingState.occupied:
-        return const Color(0xFFB45309); // Amber.
-      case BookingState.upcoming:
-        return const Color(0xFF2563EB); // Blue.
-      case BookingState.empty:
-        return const Color(0xFF15803D); // Green.
+      case BookingState.occupied: return const Color(0xFFEF4444);
+      case BookingState.upcoming: return const Color(0xFF3B82F6);
+      case BookingState.empty: return const Color(0xFF10B981);
     }
-  } // End _bookingStatusColor.
+  }
 
-  String _bookingStatusText(RoomEntity room) {
-    // Determine booking text.
-    final state = _getBookingState(room, DateTime.now()); // Get booking state.
+  String _getStatusText(BookingState state) {
     switch (state) {
-      case BookingState.occupied:
-        return 'Đang ở';
-      case BookingState.upcoming:
-        return 'Sắp tới';
-      case BookingState.empty:
-        return 'Trống';
+      case BookingState.occupied: return 'ĐANG CÓ KHÁCH';
+      case BookingState.upcoming: return 'ĐÃ ĐƯỢC ĐẶT';
+      case BookingState.empty: return 'ĐANG TRỐNG';
     }
-  } // End _bookingStatusText.
-} // End _RoomCard.
+  }
+
+  IconData _getStatusIcon(BookingState state) {
+    switch (state) {
+      case BookingState.occupied: return Icons.person_rounded;
+      case BookingState.upcoming: return Icons.event_available_rounded;
+      case BookingState.empty: return Icons.no_meeting_room_rounded;
+    }
+  }
+}

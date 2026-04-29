@@ -58,9 +58,8 @@ class _EmployeeScheduleContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return EmployeeScaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
+      body: Column(
+        children: [
             const EmployeeHeaderBar(
               title: 'Portal Nhân viên',
               subtitle: 'Quản lý công việc',
@@ -123,7 +122,6 @@ class _EmployeeScheduleContent extends StatelessWidget {
             ),
           ],
         ),
-      ),
     );
   }
 }
@@ -500,99 +498,170 @@ class _HeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+    final now = DateTime.now();
+    final dateStr = DateFormat('EEEE, d MMMM', 'vi').format(now);
+
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, authState) {
         String staffName = 'Nhân viên';
+        String? avatarUrl;
+        int? experience;
+        int? level;
         if (authState is AuthCurrentAccountLoaded) {
           final account = authState.account;
-          // Ưu tiên username cho staff, fallback sang email prefix
           staffName = account.username.isNotEmpty
               ? account.username
               : account.email.split('@').first;
+          avatarUrl = account.avatarUrl;
+          experience = account.experience;
+          level = account.level;
         }
 
         return Container(
+          margin: EdgeInsets.symmetric(vertical: 8 * scale),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppColors.primary.withValues(alpha: 0.1),
-                AppColors.primary.withValues(alpha: 0.05),
-                AppColors.white,
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(20),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24 * scale),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.06),
-                blurRadius: 16,
-                offset: const Offset(0, 8),
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 16 * scale,
+                offset: Offset(0, 8 * scale),
               ),
             ],
+            border: Border.all(
+              color: AppColors.borderLight.withValues(alpha: 0.1),
+              width: 1,
+            ),
           ),
-          padding: const EdgeInsets.all(20),
-          child: Row(
+          clipBehavior: Clip.antiAlias,
+          child: Column(
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              Padding(
+                padding: EdgeInsets.all(20 * scale),
+                child: Row(
                   children: [
-                    Text(
-                      _getGreeting(),
-                      style: AppTextStyles.arimo(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.textSecondary,
+                    Container(
+                      width: 64 * scale,
+                      height: 64 * scale,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                        ),
+                        borderRadius: BorderRadius.circular(20 * scale),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF6366F1).withValues(alpha: 0.2),
+                            blurRadius: 12 * scale,
+                            offset: Offset(0, 4 * scale),
+                          ),
+                        ],
                       ),
+                      child: avatarUrl != null && avatarUrl.isNotEmpty
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(20 * scale),
+                              child: Image.network(avatarUrl, fit: BoxFit.cover),
+                            )
+                          : Icon(
+                              Icons.person_rounded,
+                              color: Colors.white,
+                              size: 32 * scale,
+                            ),
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      staffName,
-                      style: AppTextStyles.arimo(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Portal Nhân viên • Quản lý công việc',
-                      style: AppTextStyles.arimo(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.textSecondary,
+                    SizedBox(width: 16 * scale),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _getGreeting(),
+                            style: AppTextStyles.arimo(
+                              fontSize: 13 * scale,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          SizedBox(height: 4 * scale),
+                          Text(
+                            staffName,
+                            style: AppTextStyles.arimo(
+                              fontSize: 22 * scale,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textPrimary,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          SizedBox(height: 8 * scale),
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 8 * scale,
+                              vertical: 2 * scale,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8 * scale),
+                            ),
+                            child: Text(
+                              '${experience ?? 0} năm kinh nghiệm',
+                              style: AppTextStyles.arimo(
+                                fontSize: 11 * scale,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF8B5CF6),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
               Container(
-                width: 56,
-                height: 56,
+                padding: EdgeInsets.symmetric(horizontal: 20 * scale, vertical: 12 * scale),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.primary,
-                      AppColors.primary.withValues(alpha: 0.8),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                  color: AppColors.background.withValues(alpha: 0.5),
+                  border: Border(
+                    top: BorderSide(
+                      color: AppColors.borderLight.withValues(alpha: 0.05),
+                    ),
                   ),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.calendar_today_rounded,
+                      size: 14 * scale,
+                      color: AppColors.primary,
+                    ),
+                    SizedBox(width: 8 * scale),
+                    Text(
+                      dateStr,
+                      style: AppTextStyles.arimo(
+                        fontSize: 12 * scale,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 10 * scale, vertical: 4 * scale),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20 * scale),
+                      ),
+                      child: Text(
+                        'Online',
+                        style: AppTextStyles.arimo(
+                          fontSize: 11 * scale,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
+                      ),
                     ),
                   ],
-                ),
-                child: const Icon(
-                  Icons.dashboard_rounded,
-                  color: AppColors.white,
-                  size: 28,
                 ),
               ),
             ],
@@ -1333,6 +1402,8 @@ class _BookingCard extends StatelessWidget {
         return const Color(0xFFEF4444); // Red
       case 'completed':
         return const Color(0xFF10B981); // Emerald Green
+      case 'noshow':
+        return const Color(0xFF6B7280); // Gray
       default:
         return AppColors.textSecondary;
     }
@@ -1350,6 +1421,8 @@ class _BookingCard extends StatelessWidget {
         return 'Đã hủy bỏ';
       case 'completed':
         return 'Đã hoàn thành';
+      case 'noshow':
+        return 'Không tới';
       default:
         return status;
     }
