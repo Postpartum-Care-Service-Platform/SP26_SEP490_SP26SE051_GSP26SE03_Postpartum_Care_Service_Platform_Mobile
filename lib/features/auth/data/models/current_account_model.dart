@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import '../../../../core/constants/app_enums.dart';
 import '../../domain/entities/user_entity.dart';
 
@@ -18,6 +19,8 @@ class OwnerProfileModel extends Equatable {
   final DateTime updatedAt;
   final bool isDeleted;
   final bool isOwner;
+  final String? certificate;
+  final int? experience;
 
   const OwnerProfileModel({
     required this.id,
@@ -34,7 +37,15 @@ class OwnerProfileModel extends Equatable {
     required this.updatedAt,
     required this.isDeleted,
     required this.isOwner,
+    this.certificate,
+    this.experience,
   });
+
+  /// Get list of certificate URLs if they are comma-separated
+  List<String> get certificateList {
+    if (certificate == null || certificate!.isEmpty) return [];
+    return certificate!.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+  }
 
   factory OwnerProfileModel.fromJson(Map<String, dynamic> json) =>
       OwnerProfileModel(
@@ -54,6 +65,8 @@ class OwnerProfileModel extends Equatable {
         updatedAt: DateTime.parse(json['updatedAt'] as String),
         isDeleted: json['isDeleted'] as bool? ?? false,
         isOwner: json['isOwner'] as bool? ?? false,
+        certificate: json['certificate'] as String?,
+        experience: json['experience'] as int?,
       );
 
   @override
@@ -72,6 +85,8 @@ class OwnerProfileModel extends Equatable {
         updatedAt,
         isDeleted,
         isOwner,
+        certificate,
+        experience,
       ];
 }
 
@@ -332,6 +347,9 @@ class CurrentAccountModel extends Equatable {
   final OwnerProfileModel? ownerProfile;
   final NowPackageModel? nowPackage;
   final String? memberType;
+  final String? certificate;
+  final int? experience;
+  final int? level;
 
   const CurrentAccountModel({
     required this.id,
@@ -348,36 +366,51 @@ class CurrentAccountModel extends Equatable {
     this.ownerProfile,
     this.nowPackage,
     this.memberType,
+    this.certificate,
+    this.experience,
+    this.level,
   });
 
   /// Get display name - prefer fullName from ownerProfile, fallback to username
   String get displayName => ownerProfile?.fullName ?? username;
 
-  factory CurrentAccountModel.fromJson(Map<String, dynamic> json) =>
-      CurrentAccountModel(
-        id: json['id'] as String,
-        roleId: json['roleId'] as int,
-        email: json['email'] as String,
-        phone: json['phone'] as String,
-        username: json['username'] as String,
-        isActive: json['isActive'] as bool,
-        createdAt: DateTime.parse(json['createdAt'] as String),
-        updatedAt: DateTime.parse(json['updatedAt'] as String),
-        roleName: json['roleName'] as String,
-        isEmailVerified: json['isEmailVerified'] as bool? ?? false,
-        avatarUrl: json['avatarUrl'] as String?,
-        ownerProfile: json['ownerProfile'] != null
-            ? OwnerProfileModel.fromJson(
-                json['ownerProfile'] as Map<String, dynamic>,
-              )
-            : null,
-        nowPackage: json['nowPackage'] != null
-            ? NowPackageModel.fromJson(
-                json['nowPackage'] as Map<String, dynamic>,
-              )
-            : null,
-        memberType: json['memberType'] as String?,
-      );
+  /// Get list of certificate URLs
+  List<String> get certificateList {
+    if (certificate == null || certificate!.isEmpty) return [];
+    return certificate!.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+  }
+
+  factory CurrentAccountModel.fromJson(Map<String, dynamic> json) {
+    final ownerProfile = json['ownerProfile'] != null
+        ? OwnerProfileModel.fromJson(
+            json['ownerProfile'] as Map<String, dynamic>,
+          )
+        : null;
+
+    return CurrentAccountModel(
+      id: json['id'] as String,
+      roleId: json['roleId'] as int,
+      email: json['email'] as String,
+      phone: json['phone'] as String? ?? '',
+      username: json['username'] as String? ?? '',
+      isActive: json['isActive'] as bool? ?? true,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      roleName: json['roleName'] as String? ?? '',
+      isEmailVerified: json['isEmailVerified'] as bool? ?? false,
+      avatarUrl: json['avatarUrl'] as String?,
+      ownerProfile: ownerProfile,
+      nowPackage: json['nowPackage'] != null
+          ? NowPackageModel.fromJson(
+              json['nowPackage'] as Map<String, dynamic>,
+            )
+          : null,
+      memberType: json['memberType'] as String?,
+      certificate: (json['certificate'] as String?) ?? ownerProfile?.certificate,
+      experience: (json['experience'] as int?) ?? ownerProfile?.experience,
+      level: json['level'] as int?,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -407,10 +440,15 @@ class CurrentAccountModel extends Equatable {
                 'updatedAt': ownerProfile!.updatedAt.toIso8601String(),
                 'isDeleted': ownerProfile!.isDeleted,
                 'isOwner': ownerProfile!.isOwner,
+                'certificate': ownerProfile!.certificate,
+                'experience': ownerProfile!.experience,
               }
             : null,
         'nowPackage': nowPackage?.toJson(),
         'memberType': memberType,
+        'certificate': certificate,
+        'experience': experience,
+        'level': level,
       };
 
   UserEntity toEntity() => UserEntity(
@@ -437,5 +475,8 @@ class CurrentAccountModel extends Equatable {
         ownerProfile,
         nowPackage,
         memberType,
+        certificate,
+        experience,
+        level,
       ];
 }

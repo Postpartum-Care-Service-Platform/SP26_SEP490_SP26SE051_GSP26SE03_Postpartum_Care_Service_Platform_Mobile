@@ -191,6 +191,14 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
       if (mounted) {
         AppToast.showSuccess(context, message: 'Đã tải hợp đồng thành công');
       }
+
+      // Reload trạng thái sau khi xuất PDF (vì backend có thể đổi status sang Printed)
+      final updated = await _remote.getContractById(contract.id);
+      if (mounted) {
+        setState(() {
+          _contract = updated;
+        });
+      }
     } catch (e) {
       if (mounted) {
         AppToast.showError(context, message: 'Không thể tải hợp đồng: $e');
@@ -1616,8 +1624,12 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
       );
     }
 
-    return SingleChildScrollView(
-      child: Column(
+    return RefreshIndicator(
+      onRefresh: _init,
+      color: AppColors.primary,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header Card với mã hợp đồng và status
@@ -1926,8 +1938,9 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
           SizedBox(height: 32 * scale),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   /// Customer row with clear null fallback + booking-level customer lookup
   Widget _buildCustomerRow(ContractModel contract, double scale) {

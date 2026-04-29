@@ -71,6 +71,11 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
                   SizedBox(height: 20 * scale),
                   // Account details section
                   _buildAccountDetailsSection(scale, account),
+                  if (account.certificate != null &&
+                      account.certificate!.isNotEmpty) ...[
+                    SizedBox(height: 20 * scale),
+                    _buildCertificateSection(scale, account.certificate!),
+                  ],
                 ],
               ),
             ),
@@ -326,7 +331,80 @@ class _EmployeeProfileScreenState extends State<EmployeeProfileScreen> {
                 label: 'Khách hàng phụ trách',
                 value: account.ownerProfile!.fullName,
               ),
+            if (account.experience != null)
+              AccountInfoRow(
+                label: 'Kinh nghiệm',
+                value: '${account.experience} năm',
+              ),
+            if (account.level != null)
+              AccountInfoRow(label: 'Cấp bậc', value: 'Level ${account.level}'),
           ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCertificateSection(double scale, String certificateUrl) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AppWidgets.sectionHeader(context, title: 'Chứng chỉ hành nghề'),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16 * scale),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10 * scale,
+                offset: Offset(0, 4 * scale),
+              ),
+            ],
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Image.network(
+                certificateUrl,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    height: 200 * scale,
+                    color: AppColors.background,
+                    child: const Center(
+                      child: AppLoadingIndicator(color: AppColors.primary),
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    height: 100 * scale,
+                    color: AppColors.background,
+                    child: const Center(
+                      child: Icon(
+                        Icons.broken_image_outlined,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  );
+                },
+              ),
+              Padding(
+                padding: EdgeInsets.all(12 * scale),
+                child: Text(
+                  'Chứng chỉ chuyên môn đã được xác thực',
+                  style: AppTextStyles.arimo(
+                    fontSize: 12 * scale,
+                    fontStyle: FontStyle.italic,
+                    color: AppColors.textSecondary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
