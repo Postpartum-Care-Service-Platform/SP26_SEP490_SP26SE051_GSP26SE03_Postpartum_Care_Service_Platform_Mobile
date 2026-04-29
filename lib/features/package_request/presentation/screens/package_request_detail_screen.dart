@@ -13,6 +13,8 @@ import '../bloc/package_request_event.dart';
 import '../bloc/package_request_state.dart';
 import '../../../../core/widgets/app_network_image.dart';
 import '../../../../core/widgets/avatar_widget.dart';
+import '../../../package/domain/entities/package_entity.dart';
+import '../../../care_plan/domain/entities/care_plan_entity.dart';
 
 class PackageRequestDetailScreen extends StatefulWidget {
   final int requestId;
@@ -26,6 +28,8 @@ class PackageRequestDetailScreen extends StatefulWidget {
 
 class _PackageRequestDetailScreenState
     extends State<PackageRequestDetailScreen> {
+  int _currentDayNo = 0;
+  List<int> _availableDays = [];
   @override
   void initState() {
     super.initState();
@@ -64,7 +68,7 @@ class _PackageRequestDetailScreenState
           }
 
           if (state is PackageRequestDetailLoaded) {
-            return _buildDetail(scale, state.request);
+            return _buildDetail(scale, state);
           }
 
           if (state is PackageRequestError) {
@@ -92,7 +96,8 @@ class _PackageRequestDetailScreenState
     );
   }
 
-  Widget _buildDetail(double scale, PackageRequestEntity request) {
+  Widget _buildDetail(double scale, PackageRequestDetailLoaded state) {
+    final request = state.request;
     return SingleChildScrollView(
       padding: EdgeInsets.all(16 * scale),
       child: Column(
@@ -102,67 +107,67 @@ class _PackageRequestDetailScreenState
           _buildStatusCard(scale, request),
           SizedBox(height: 16 * scale),
 
-          // Package info
+          // Tổng quan yêu cầu
           _buildSection(
             scale,
-            title: 'Gói mẫu',
-            icon: Icons.inventory_2_outlined,
-            child: Row(
-              children: [
-                Container(
-                  width: 50 * scale,
-                  height: 50 * scale,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8 * scale),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: request.basePackageImageUrl != null &&
-                          request.basePackageImageUrl!.isNotEmpty
-                      ? AppNetworkImage(
-                          request.basePackageImageUrl!,
-                          fit: BoxFit.cover,
-                        )
-                      : Icon(Icons.inventory_2_outlined,
-                          color: AppColors.primary, size: 24 * scale),
-                ),
-                SizedBox(width: 12 * scale),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        request.basePackageName,
-                        style: AppTextStyles.tinos(
-                          fontSize: 18 * scale,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      if (request.packageName != null) ...[
-                        SizedBox(height: 4 * scale),
-                        Text(
-                          'Gói đã soạn: ${request.packageName}',
-                          style: AppTextStyles.arimo(
-                              fontSize: 14 * scale, color: AppColors.primary),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: 12 * scale),
-
-          // Request details
-          _buildSection(
-            scale,
-            title: 'Thông tin yêu cầu',
-            icon: Icons.description_outlined,
+            title: 'Thông tin tổng quan',
+            icon: Icons.info_outline,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // 1. Gói mẫu
+                Row(
+                  children: [
+                    Container(
+                      width: 40 * scale,
+                      height: 40 * scale,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8 * scale),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: request.basePackageImageUrl != null &&
+                              request.basePackageImageUrl!.isNotEmpty
+                          ? AppNetworkImage(
+                              request.basePackageImageUrl!,
+                              fit: BoxFit.cover,
+                            )
+                          : Icon(Icons.inventory_2_outlined,
+                              color: AppColors.primary, size: 20 * scale),
+                    ),
+                    SizedBox(width: 12 * scale),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            request.basePackageName,
+                            style: AppTextStyles.tinos(
+                              fontSize: 16 * scale,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          if (request.packageName != null) ...[
+                            SizedBox(height: 2 * scale),
+                            Text(
+                              'Gói đã soạn: ${request.packageName}',
+                              style: AppTextStyles.arimo(
+                                  fontSize: 13 * scale, color: AppColors.primary),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12 * scale),
+                  child: Divider(color: AppColors.borderLight, height: 1),
+                ),
+
+                // 2. Tiêu đề và mô tả
                 _buildDetailRow(scale, 'Tiêu đề', request.title),
                 SizedBox(height: 8 * scale),
                 _buildDetailRow(scale, 'Mô tả', request.description),
@@ -179,67 +184,97 @@ class _PackageRequestDetailScreenState
                     ),
                   ],
                 ),
+
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12 * scale),
+                  child: Divider(color: AppColors.borderLight, height: 1),
+                ),
+
+                // 3. Đối tượng phục vụ
+                Text(
+                  'Đối tượng phục vụ',
+                  style: AppTextStyles.arimo(
+                    fontSize: 13 * scale,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                SizedBox(height: 8 * scale),
+                Wrap(
+                  spacing: 8 * scale,
+                  runSpacing: 8 * scale,
+                  children: request.familyProfiles.map((p) {
+                    return Container(
+                      padding: EdgeInsets.symmetric(horizontal: 10 * scale, vertical: 6 * scale),
+                      decoration: BoxDecoration(
+                        color: _getMemberColor(p.memberType).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20 * scale),
+                        border: Border.all(
+                          color: _getMemberColor(p.memberType).withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          AvatarWidget(
+                            imageUrl: p.avatarUrl,
+                            displayName: p.fullName,
+                            size: 20 * scale,
+                            fallbackIcon: _getMemberIcon(p.memberType),
+                          ),
+                          SizedBox(width: 8 * scale),
+                          Text(
+                            p.fullName,
+                            style: AppTextStyles.arimo(
+                              fontSize: 13 * scale,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          SizedBox(width: 4 * scale),
+                          Text(
+                            '(${_translateMemberType(p.memberType)})',
+                            style: AppTextStyles.arimo(
+                              fontSize: 11 * scale,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
               ],
             ),
           ),
           SizedBox(height: 12 * scale),
 
-          // Family profiles
-          _buildSection(
-            scale,
-            title: 'Đối tượng phục vụ',
-            icon: Icons.family_restroom_rounded,
-            child: Column(
-              children: request.familyProfiles.map((p) {
-                return Container(
-                  margin: EdgeInsets.only(bottom: 8 * scale),
-                  padding: EdgeInsets.all(12 * scale),
-                  decoration: BoxDecoration(
-                    color: _getMemberColor(p.memberType)
-                        .withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(12 * scale),
-                    border: Border.all(
-                      color: _getMemberColor(p.memberType)
-                          .withValues(alpha: 0.15),
+          // Lịch trình nghỉ dưỡng
+          if (state.customCarePlans != null && state.customCarePlans!.isNotEmpty) ...[
+            _buildSection(
+              scale,
+              title: 'Lịch trình nghỉ dưỡng',
+              icon: Icons.calendar_month_rounded,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Hoạt động chăm sóc theo từng ngày',
+                    style: AppTextStyles.arimo(
+                      fontSize: 12 * scale,
+                      color: AppColors.textSecondary,
                     ),
                   ),
-                  child: Row(
-                    children: [
-                      AvatarWidget(
-                        imageUrl: p.avatarUrl,
-                        displayName: p.fullName,
-                        size: 40,
-                        fallbackIcon: _getMemberIcon(p.memberType),
-                      ),
-                      SizedBox(width: 12 * scale),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              p.fullName,
-                              style: AppTextStyles.arimo(
-                                fontSize: 15 * scale,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            Text(
-                              _translateMemberType(p.memberType),
-                              style: AppTextStyles.arimo(
-                                  fontSize: 13 * scale,
-                                  color: AppColors.textSecondary),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
+                  SizedBox(height: 12 * scale),
+                  // Day picker
+                  _buildDayPicker(scale, state.customCarePlans!),
+                  SizedBox(height: 16 * scale),
+                  // Timeline for the selected day
+                  _buildActivityTimeline(scale, state.customCarePlans!),
+                ],
+              ),
             ),
-          ),
-          SizedBox(height: 12 * scale),
+            SizedBox(height: 12 * scale),
+          ],
 
           // Reject reason / feedback
           if (request.rejectReason != null &&
@@ -631,5 +666,197 @@ class _PackageRequestDetailScreenState
       default:
         return type;
     }
+  }
+
+  Widget _buildDayPicker(double scale, List<CarePlanEntity> carePlans) {
+    final days = carePlans.map((e) => e.dayNo).toSet().toList()..sort();
+    if (days.isEmpty) return const SizedBox.shrink();
+
+    // ensure _currentDayNo is valid
+    bool updateState = false;
+    if (_availableDays.length != days.length || !_availableDays.every((d) => days.contains(d))) {
+      _availableDays = days;
+      if (_currentDayNo == 0 || !days.contains(_currentDayNo)) {
+        _currentDayNo = days.first;
+      }
+      updateState = true;
+    }
+
+    if (updateState) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() {});
+      });
+    }
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: days.map((dayNo) {
+          final isSelected = dayNo == _currentDayNo;
+          return GestureDetector(
+            onTap: () => setState(() => _currentDayNo = dayNo),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              margin: EdgeInsets.only(right: 10 * scale),
+              padding: EdgeInsets.symmetric(
+                horizontal: 16 * scale,
+                vertical: 8 * scale,
+              ),
+              decoration: BoxDecoration(
+                color: isSelected ? AppColors.primary : AppColors.white,
+                borderRadius: BorderRadius.circular(12 * scale),
+                border: Border.all(
+                  color: isSelected ? AppColors.primary : AppColors.borderLight,
+                  width: 1.5,
+                ),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.3),
+                          blurRadius: 8 * scale,
+                          offset: Offset(0, 2 * scale),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Text(
+                'Ngày $dayNo',
+                style: AppTextStyles.arimo(
+                  fontSize: 13 * scale,
+                  fontWeight: FontWeight.w600,
+                  color: isSelected ? AppColors.white : AppColors.textPrimary,
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildActivityTimeline(double scale, List<CarePlanEntity> carePlans) {
+    final dayActivities = carePlans.where((cp) => cp.dayNo == _currentDayNo).toList()
+      ..sort((a, b) {
+        final byOrder = a.sortOrder.compareTo(b.sortOrder);
+        if (byOrder != 0) return byOrder;
+        return a.startTime.compareTo(b.startTime);
+      });
+
+    if (dayActivities.isEmpty) {
+      return Center(
+        child: Text(
+          'Không có hoạt động nào cho ngày $_currentDayNo',
+          style: AppTextStyles.arimo(
+            fontSize: 13 * scale,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: dayActivities.asMap().entries.map((entry) {
+        final index = entry.key;
+        final activity = entry.value;
+        final isLast = index == dayActivities.length - 1;
+
+        return IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Timeline column
+              SizedBox(
+                width: 24 * scale,
+                child: Column(
+                  children: [
+                    // Dot
+                    Container(
+                      width: 12 * scale,
+                      height: 12 * scale,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.primary,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.3),
+                            blurRadius: 4 * scale,
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Line
+                    if (!isLast)
+                      Expanded(
+                        child: Container(
+                          width: 2 * scale,
+                          color: AppColors.primary.withValues(alpha: 0.2),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              SizedBox(width: 12 * scale),
+              // Activity card
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: 16 * scale),
+                  child: Container(
+                    padding: EdgeInsets.all(12 * scale),
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(12 * scale),
+                      border: Border.all(color: AppColors.borderLight),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Time badge
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8 * scale,
+                            vertical: 4 * scale,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6 * scale),
+                          ),
+                          child: Text(
+                            '${activity.startTime} - ${activity.endTime}',
+                            style: AppTextStyles.arimo(
+                              fontSize: 12 * scale,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 8 * scale),
+                        Text(
+                          activity.activityName,
+                          style: AppTextStyles.arimo(
+                            fontSize: 15 * scale,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        if (activity.instruction != null && activity.instruction!.isNotEmpty) ...[
+                          SizedBox(height: 4 * scale),
+                          Text(
+                            activity.instruction!,
+                            style: AppTextStyles.arimo(
+                              fontSize: 13 * scale,
+                              color: AppColors.textSecondary,
+                            ).copyWith(height: 1.4),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
   }
 }

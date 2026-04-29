@@ -123,6 +123,9 @@ class ApiEndpoints {
   static String packageById(int id) => '/Packages/$id';
   static const String packageTypes = '/PackageType';
 
+  // AI Recommendation endpoints
+  static const String aiRecommendPackage = '/ai/packages/recommend-for-family';
+
   // Package Activities (thay cho Care Plan cũ)
   static String getCarePlanDetailsByPackage(int packageId) =>
       '/package-activities/by-package/$packageId';

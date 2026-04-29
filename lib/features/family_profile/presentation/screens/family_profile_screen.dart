@@ -408,6 +408,7 @@ class _FamilyProfileScreenState extends State<FamilyProfileScreen> {
                         familyProfileId: member.id,
                         isBaby: typeName?.toLowerCase() == 'baby',
                         memberName: member.fullName,
+                        avatarUrl: member.avatarUrl,
                       ),
                     ),
                   ),

@@ -15,15 +15,28 @@ import '../../../package_request/presentation/bloc/package_request_bloc.dart';
 import '../../../package_request/presentation/widgets/create_package_request_sheet.dart';
 import '../../../booking/presentation/bloc/booking_bloc.dart';
 import '../../../booking/presentation/bloc/booking_state.dart';
+import '../../../booking/presentation/bloc/booking_event.dart';
+import '../../../ai_recommend/presentation/widgets/ai_recommend_fab.dart';
+import '../../../ai_recommend/presentation/widgets/ai_family_selection_sheet.dart';
+import '../../../ai_recommend/presentation/widgets/ai_analysis_loading.dart';
+import '../../../ai_recommend/presentation/widgets/ai_recommendation_result_sheet.dart';
+import '../../../../core/widgets/app_toast.dart';
 import 'package_detail_bottom_sheet.dart';
 
-class BookingStep1PackageSelection extends StatelessWidget {
+class BookingStep1PackageSelection extends StatefulWidget {
   final Function(int) onPackageSelected;
 
   const BookingStep1PackageSelection({
     super.key,
     required this.onPackageSelected,
   });
+
+  @override
+  State<BookingStep1PackageSelection> createState() => _BookingStep1PackageSelectionState();
+}
+
+class _BookingStep1PackageSelectionState extends State<BookingStep1PackageSelection> {
+  bool _isAiLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -45,24 +58,116 @@ class BookingStep1PackageSelection extends StatelessWidget {
           existingPackageBloc = context.read<PackageBloc>();
         } catch (_) {}
 
-        return DefaultTabController(
-          length: 2,
-          child: existingPackageBloc != null
-              ? BlocProvider.value(
-                  value: existingPackageBloc..add(const PackageLoadRequested()),
-                  child: _buildPackageContent(context, bookingState, selectedPackageId, scale),
-                )
-              : BlocProvider(
-                  create: (context) {
-                    final bloc = InjectionContainer.packageBloc;
-                    bloc.add(const PackageLoadRequested());
-                    return bloc;
-                  },
-                  child: _buildPackageContent(context, bookingState, selectedPackageId, scale),
-                ),
+        return Stack(
+          children: [
+            DefaultTabController(
+              length: 2,
+              child: existingPackageBloc != null
+                  ? BlocProvider.value(
+                      value: existingPackageBloc..add(const PackageLoadRequested()),
+                      child: _buildPackageContent(context, bookingState, selectedPackageId, scale),
+                    )
+                  : BlocProvider(
+                      create: (context) {
+                        final bloc = InjectionContainer.packageBloc;
+                        bloc.add(const PackageLoadRequested());
+                        return bloc;
+                      },
+                      child: _buildPackageContent(context, bookingState, selectedPackageId, scale),
+                    ),
+            ),
+            
+            // AI Recommendation FAB
+            AiRecommendFab(
+              onTap: () => _handleAiRecommend(context),
+            ),
+          ],
         );
       },
     );
+  }
+
+  void _handleAiRecommend(BuildContext context) async {
+    final bookingBloc = context.read<BookingBloc>();
+    
+    // Ensure family profiles are loaded
+    if (bookingBloc.familyProfiles == null || bookingBloc.familyProfiles!.isEmpty) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: AppLoadingIndicator(color: Colors.white)),
+      );
+      
+      try {
+        bookingBloc.add(const BookingLoadFamilyProfiles());
+        // Wait a bit for state update (simple approach for now)
+        await Future.delayed(const Duration(milliseconds: 800));
+        if (mounted) Navigator.pop(context);
+      } catch (e) {
+        if (mounted) {
+          Navigator.pop(context);
+          AppToast.showError(context, message: 'Không thể tải hồ sơ gia đình');
+        }
+        return;
+      }
+    }
+
+    final profiles = bookingBloc.familyProfiles ?? [];
+    if (profiles.isEmpty) {
+      AppToast.showError(context, message: 'Vui lòng thêm hồ sơ gia đình trước');
+      return;
+    }
+
+    if (!mounted) return;
+
+    // 1. Show selection sheet
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => AiFamilySelectionSheet(
+        familyProfiles: profiles,
+        onConfirm: (selectedIds) => _startAiAnalysis(context, selectedIds),
+      ),
+    );
+  }
+
+  void _startAiAnalysis(BuildContext context, List<int> selectedIds) async {
+    // 2. Show loading sheet (the one with 4 steps)
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => const AiAnalysisLoading(),
+    );
+
+    try {
+      // Call API
+      final recommendation = await InjectionContainer.aiRecommendRepository.recommendForFamily(selectedIds);
+      
+      if (!mounted) return;
+      Navigator.pop(context); // Dismiss loading sheet
+
+      // 3. Show result sheet
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (ctx) => AiRecommendationResultSheet(
+          recommendation: recommendation,
+          onSelectPackage: (packageId) {
+            widget.onPackageSelected(packageId);
+            AppToast.showSuccess(context, message: 'Đã chọn gói theo gợi ý từ AI');
+          },
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context); // Dismiss loading sheet
+      AppToast.showError(context, message: 'AI gặp sự cố khi phân tích. Vui lòng thử lại sau.');
+    }
   }
 
   Widget _buildPackageContent(
@@ -206,7 +311,7 @@ class BookingStep1PackageSelection extends StatelessWidget {
                         return SizedBox(
                           height: 220 * scale,
                           child: GestureDetector(
-                            onTap: isUnavailable ? null : () => onPackageSelected(package.id),
+                            onTap: isUnavailable ? null : () => widget.onPackageSelected(package.id),
                             onLongPress: () => PackageDetailBottomSheet.show(context, package: package),
                             child: AnimatedScale(
                               duration: const Duration(milliseconds: 180),
@@ -246,7 +351,7 @@ class BookingStep1PackageSelection extends StatelessWidget {
                                       child: PackageCard(
                                         package: package,
                                         isUnavailable: isUnavailable,
-                                        onTap: isUnavailable ? null : () => onPackageSelected(package.id),
+                                        onTap: isUnavailable ? null : () => widget.onPackageSelected(package.id),
                                       ),
                                     ),
                                     if (isSelected && !isUnavailable)
@@ -319,3 +424,4 @@ class BookingStep1PackageSelection extends StatelessWidget {
     );
   }
 }
+
