@@ -208,8 +208,8 @@ class _StaffHealthCareFlowScreenState extends State<StaffHealthCareFlowScreen> {
                             _buildGeneralObservationSection(scale),
                             
                             SizedBox(height: 24 * scale),
-                            _buildSectionHeader('Tình trạng bệnh lý', Icons.medical_information_rounded, scale),
-                            SizedBox(height: 16 * scale),
+                            _buildSectionHeader('Tình trạng & Yêu cầu', Icons.medical_information_rounded, scale),
+                            SizedBox(height: 8 * scale),
                             _buildConditionSection(scale),
                           ],
                         ),
@@ -536,9 +536,10 @@ class _StaffHealthCareFlowScreenState extends State<StaffHealthCareFlowScreen> {
           _buildModernTextField(
             controller: _conditionController,
             label: 'Tình trạng chung',
-            hint: 'Vd: Tỉnh táo, bú tốt...',
+            hint: 'Chưa có thông tin',
             icon: Icons.health_and_safety_outlined,
             scale: scale,
+            readOnly: true,
           ),
           SizedBox(height: 16 * scale),
           _buildModernTextField(
@@ -593,10 +594,12 @@ class _StaffHealthCareFlowScreenState extends State<StaffHealthCareFlowScreen> {
     required IconData icon,
     int maxLines = 1,
     required double scale,
+    bool readOnly = false,
   }) {
     return TextField(
       controller: controller,
       maxLines: maxLines,
+      readOnly: readOnly,
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
@@ -632,7 +635,7 @@ class _StaffHealthCareFlowScreenState extends State<StaffHealthCareFlowScreen> {
         ),
         child: Center(
           child: Text(
-            'Đang tải danh sách bệnh lý...',
+            'Đang tải danh sách...',
             style: AppTextStyles.arimo(color: AppColors.textSecondary),
           ),
         ),
@@ -646,13 +649,39 @@ class _StaffHealthCareFlowScreenState extends State<StaffHealthCareFlowScreen> {
       } else if (isMom) {
         return appliesTo == 'MOM' || appliesTo == 'BOTH';
       } else {
-        return appliesTo == 'BOTH'; // For other types like Head of Family
+        return appliesTo == 'BOTH';
       }
     }).toList();
 
-    return Wrap(
-      spacing: 10 * scale,
-      runSpacing: 10 * scale,
+    // Grouping logic
+    final Map<String, List<HealthConditionEntity>> categorized = {};
+    for (var condition in filtered) {
+      final cat = condition.category;
+      categorized.putIfAbsent(cat, () => []).add(condition);
+    }
+
+    final categoryLabels = {
+      'DELIVERY': 'Hình thức sinh',
+      'BABY_STATUS': 'Tình trạng của bé',
+      'CHRONIC': 'Bệnh lý mãn tính',
+      'ALLERGY': 'Dị ứng',
+      'PREFERENCE': 'Yêu cầu / Sở thích',
+      'OTHER': 'Khác',
+    };
+
+    final categoryIcons = {
+      'DELIVERY': Icons.pregnant_woman_rounded,
+      'BABY_STATUS': Icons.child_care_rounded,
+      'CHRONIC': Icons.medical_services_outlined,
+      'ALLERGY': Icons.science_outlined,
+      'PREFERENCE': Icons.favorite_border_rounded,
+      'OTHER': Icons.info_outline_rounded,
+    };
+
+    final order = ['DELIVERY', 'BABY_STATUS', 'CHRONIC', 'ALLERGY', 'PREFERENCE', 'OTHER'];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // "None" or "Normal" Chip
         InkWell(
@@ -691,46 +720,77 @@ class _StaffHealthCareFlowScreenState extends State<StaffHealthCareFlowScreen> {
           ),
         ),
         
-        ...filtered.map((condition) {
-          final isSelected = _selectedConditionIds.contains(condition.id);
-          return InkWell(
-            onTap: () {
-              setState(() {
-                if (isSelected) {
-                  _selectedConditionIds.remove(condition.id);
-                } else {
-                  _selectedConditionIds.add(condition.id);
-                }
-              });
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 10 * scale),
-              decoration: BoxDecoration(
-                color: isSelected ? AppColors.primary : Colors.white,
-                borderRadius: BorderRadius.circular(16 * scale),
-                border: Border.all(
-                  color: isSelected ? AppColors.primary : AppColors.primary.withValues(alpha: 0.2),
-                ),
-                boxShadow: isSelected
-                    ? [
-                        BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        )
-                      ]
-                    : [],
-              ),
-              child: Text(
-                condition.name,
-                style: AppTextStyles.arimo(
-                  fontSize: 13 * scale,
-                  fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
-                  color: isSelected ? Colors.white : AppColors.textPrimary,
+        ...order.map((catKey) {
+          if (!categorized.containsKey(catKey)) return const SizedBox.shrink();
+          
+          final conditions = categorized[catKey]!;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: EdgeInsets.only(top: 20 * scale, bottom: 10 * scale),
+                child: Row(
+                  children: [
+                    Icon(categoryIcons[catKey] ?? Icons.info_outline, size: 16 * scale, color: AppColors.primary),
+                    SizedBox(width: 8 * scale),
+                    Text(
+                      categoryLabels[catKey] ?? catKey,
+                      style: AppTextStyles.arimo(
+                        fontSize: 14 * scale,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
+              Wrap(
+                spacing: 10 * scale,
+                runSpacing: 10 * scale,
+                children: conditions.map((condition) {
+                  final isSelected = _selectedConditionIds.contains(condition.id);
+                  return InkWell(
+                    onTap: () {
+                      setState(() {
+                        if (isSelected) {
+                          _selectedConditionIds.remove(condition.id);
+                        } else {
+                          _selectedConditionIds.add(condition.id);
+                        }
+                      });
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 10 * scale),
+                      decoration: BoxDecoration(
+                        color: isSelected ? AppColors.primary : Colors.white,
+                        borderRadius: BorderRadius.circular(16 * scale),
+                        border: Border.all(
+                          color: isSelected ? AppColors.primary : AppColors.primary.withValues(alpha: 0.2),
+                        ),
+                        boxShadow: isSelected
+                            ? [
+                                BoxShadow(
+                                  color: AppColors.primary.withValues(alpha: 0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                )
+                              ]
+                            : [],
+                      ),
+                      child: Text(
+                        condition.name,
+                        style: AppTextStyles.arimo(
+                          fontSize: 13 * scale,
+                          fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+                          color: isSelected ? Colors.white : AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
           );
         }),
       ],
@@ -790,13 +850,43 @@ class _StaffHealthCareFlowScreenState extends State<StaffHealthCareFlowScreen> {
   }
 
   void _submitForm(BuildContext context) {
-    final weight = double.tryParse(_weightController.text);
-    final height = double.tryParse(_heightController.text);
-    final temp = double.tryParse(_tempController.text);
-    final gestationalAge = int.tryParse(_gestationalAgeController.text);
-    final birthWeight = int.tryParse(_birthWeightController.text.replaceAll(RegExp(r'[^0-9]'), ''));
+    // 1. Get raw values
+    final weightStr = _weightController.text.trim().replaceAll(',', '.');
+    final heightStr = _heightController.text.trim().replaceAll(',', '.');
+    final tempStr = _tempController.text.trim().replaceAll(',', '.');
+    final gestationalAgeStr = _gestationalAgeController.text.trim();
+    final birthWeightStr = _birthWeightController.text.trim();
 
-    // Validation Logic
+    // 2. Data Type Validation (Check if not empty but invalid)
+    if (weightStr.isNotEmpty && double.tryParse(weightStr) == null) {
+      AppToast.showError(context, message: 'Cân nặng phải là số (VD: 55.5)');
+      return;
+    }
+    if (heightStr.isNotEmpty && double.tryParse(heightStr) == null) {
+      AppToast.showError(context, message: 'Chiều cao phải là số (VD: 165)');
+      return;
+    }
+    if (tempStr.isNotEmpty && double.tryParse(tempStr) == null) {
+      AppToast.showError(context, message: 'Nhiệt độ phải là số (VD: 36.5)');
+      return;
+    }
+    if (gestationalAgeStr.isNotEmpty && int.tryParse(gestationalAgeStr) == null) {
+      AppToast.showError(context, message: 'Tuổi thai phải là số nguyên');
+      return;
+    }
+    if (birthWeightStr.isNotEmpty && int.tryParse(birthWeightStr) == null) {
+      AppToast.showError(context, message: 'Cân nặng lúc sinh phải là số nguyên (gram)');
+      return;
+    }
+
+    // 3. Parse values
+    final weight = double.tryParse(weightStr);
+    final height = double.tryParse(heightStr);
+    final temp = double.tryParse(tempStr);
+    final gestationalAge = int.tryParse(gestationalAgeStr);
+    final birthWeight = int.tryParse(birthWeightStr);
+
+    // 4. Logical Range Validation
     if (weight != null) {
       if (isBaby) {
         if (weight <= 0) {
