@@ -2,6 +2,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/repositories/package_request_repository.dart';
 import '../../../package/domain/entities/package_entity.dart';
 import '../../../package/domain/repositories/package_repository.dart';
+import '../../../care_plan/domain/repositories/care_plan_repository.dart';
+import '../../../care_plan/domain/entities/care_plan_entity.dart';
 import 'package_request_event.dart';
 import 'package_request_state.dart';
 
@@ -9,10 +11,12 @@ class PackageRequestBloc
     extends Bloc<PackageRequestEvent, PackageRequestState> {
   final PackageRequestRepository repository;
   final PackageRepository packageRepository;
+  final CarePlanRepository carePlanRepository;
 
   PackageRequestBloc({
     required this.repository,
     required this.packageRepository,
+    required this.carePlanRepository,
   }) : super(PackageRequestInitial()) {
     on<LoadPackageRequests>(_onLoadPackageRequests);
     on<LoadPackageRequestDetail>(_onLoadDetail);
@@ -56,6 +60,8 @@ class PackageRequestBloc
     emit(PackageRequestLoading());
     try {
       var request = await repository.getById(event.id);
+      PackageEntity? customPackage;
+      List<CarePlanEntity>? customCarePlans;
       
       // Try to load packages to map images
       try {
@@ -69,7 +75,20 @@ class PackageRequestBloc
         // Ignore image mapping error
       }
 
-      emit(PackageRequestDetailLoaded(request));
+      if (request.packageId != null) {
+        try {
+          customPackage = await packageRepository.getPackageById(request.packageId!);
+          customCarePlans = await carePlanRepository.getCarePlanDetailsByPackage(request.packageId!);
+        } catch (e) {
+          // ignore custom package errors
+        }
+      }
+
+      emit(PackageRequestDetailLoaded(
+        request,
+        customPackage: customPackage,
+        customCarePlans: customCarePlans,
+      ));
     } catch (e) {
       emit(PackageRequestError(e.toString()));
     }

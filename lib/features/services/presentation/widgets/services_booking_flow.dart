@@ -97,22 +97,6 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
 
     switch (_currentStep) {
       case 0:
-        if (state is! BookingPackagesLoaded &&
-            state is! BookingSummaryReady &&
-            !_packagesLoadRequested) {
-          _packagesLoadRequested = true;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (context.mounted) {
-              context.read<BookingBloc>().add(const BookingLoadPackages());
-            }
-          });
-        }
-        return BookingStep1PackageSelection(
-          onPackageSelected: (packageId) {
-            context.read<BookingBloc>().add(BookingSelectPackage(packageId));
-          },
-        );
-      case 1:
         if (state is! BookingFamilyProfilesLoaded && !_profilesLoadRequested) {
           _profilesLoadRequested = true;
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -133,10 +117,35 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
                 .add(BookingSelectFamilyProfiles(selectedIds));
           },
         );
+      case 1:
+        if (state is! BookingPackagesLoaded &&
+            state is! BookingSummaryReady &&
+            !_packagesLoadRequested) {
+          _packagesLoadRequested = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) {
+              context.read<BookingBloc>().add(const BookingLoadPackages());
+            }
+          });
+        }
+        return BookingStep1PackageSelection(
+          onPackageSelected: (packageId) {
+            context.read<BookingBloc>().add(BookingSelectPackage(packageId));
+          },
+        );
       case 2:
         return BookingStep3DateSelection(
           onDateSelected: (date) {
-            context.read<BookingBloc>().add(BookingSelectDate(date));
+            final bloc = context.read<BookingBloc>();
+            bloc.add(BookingSelectDate(date));
+            
+            // Trigger staff availability check immediately
+            final selectedPackage = bloc.selectedPackage;
+            if (selectedPackage != null) {
+              final durationDays = selectedPackage.durationDays ?? 0;
+              final endDate = date.add(Duration(days: durationDays));
+              bloc.add(BookingCheckStaffAvailability(from: date, to: endDate));
+            }
           },
         );
       case 3:
@@ -367,7 +376,7 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
       onPressed: _canProceed(state)
           ? () async {
               if (_currentStep < 4) {
-                if (_currentStep == 1) {
+                if (_currentStep == 0) {
                   // Check health records for selected IDs
                   showDialog(
                     context: this.context,
@@ -417,17 +426,65 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
                   }
                 }
 
+                if (_currentStep == 2) {
+                  // Check staff availability for selected range
+                  showDialog(
+                    context: this.context,
+                    barrierDismissible: false,
+                    builder: (_) => const Center(
+                      child: AppLoadingIndicator(color: AppColors.white),
+                    ),
+                  );
+
+                  try {
+                    final bookingBloc = this.context.read<BookingBloc>();
+                    final startDate = bookingBloc.selectedDate!;
+                    final selectedPackage = bookingBloc.selectedPackage!;
+                    final durationDays = selectedPackage.durationDays ?? 0;
+                    final endDate = startDate.add(Duration(days: durationDays));
+
+                    final availability = await InjectionContainer.bookingRepository.checkStaffAvailability(
+                      from: startDate,
+                      to: endDate,
+                    );
+
+                    if (mounted) {
+                      Navigator.of(this.context, rootNavigator: true).pop(); // dismiss loading
+                    }
+
+                    if (!availability.hasAvailableStaff) {
+                      if (mounted) {
+                        AppToast.showError(
+                          this.context, 
+                          message: 'Hiện tại trung tâm không còn nhân viên để phục vụ vào thời gian này. Vui lòng chọn ngày khác.',
+                          duration: const Duration(seconds: 4),
+                        );
+                      }
+                      return;
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      Navigator.of(this.context, rootNavigator: true).pop(); // dismiss loading
+                      AppToast.showError(this.context, message: 'Lỗi kiểm tra nhân sự. Vui lòng thử lại.');
+                    }
+                    return;
+                  }
+                }
+
                 setState(() {
                   _currentStep++;
-                  if (_currentStep == 1) {
+                  if (_currentStep == 0) {
                     _profilesLoadRequested = false;
+                  }
+                  if (_currentStep == 1) {
+                    _packagesLoadRequested = false;
                   }
                   if (_currentStep == 3) {
                     _roomsLoadRequested = false;
                   }
                 });
 
-                if (_currentStep == 1) {
+                if (_currentStep == 0) {
                   context
                       .read<BookingBloc>()
                       .add(
@@ -435,6 +492,10 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
                           accountId: widget.familyProfilesAccountId,
                         ),
                       );
+                }
+
+                if (_currentStep == 1) {
+                  context.read<BookingBloc>().add(const BookingLoadPackages());
                 }
 
                 if (_currentStep == 3) {
@@ -525,18 +586,21 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
 
     switch (_currentStep) {
       case 0:
-        return bookingBloc.selectedPackageId != null;
-      case 1:
         return hasMomAndBabySelected();
+      case 1:
+        return bookingBloc.selectedPackageId != null;
       case 2:
-        return bookingBloc.selectedDate != null;
+        return bookingBloc.selectedDate != null && 
+               bookingBloc.hasAvailableStaff == true;
       case 3:
-        return bookingBloc.selectedRoomId != null;
+        return bookingBloc.selectedRoomId != null && 
+               bookingBloc.hasAvailableStaff == true;
       case 4:
         return bookingBloc.selectedPackageId != null &&
             hasMomAndBabySelected() &&
             bookingBloc.selectedDate != null &&
-            bookingBloc.selectedRoomId != null;
+            bookingBloc.selectedRoomId != null &&
+            bookingBloc.hasAvailableStaff == true;
       default:
         return false;
     }

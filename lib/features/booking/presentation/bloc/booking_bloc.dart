@@ -15,6 +15,7 @@ import '../../../../../features/employee/room/domain/entities/room_entity.dart';
 import '../../../family_profile/domain/entities/family_profile_entity.dart';
 import '../../../family_profile/domain/usecases/get_family_profiles_usecase.dart';
 import '../../domain/usecases/get_booking_config_usecase.dart';
+import '../../domain/usecases/check_staff_availability_usecase.dart';
 import '../../domain/entities/booking_config_entity.dart';
 import 'booking_event.dart';
 import 'booking_state.dart';
@@ -35,6 +36,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   final GetRoomsByPackage getRoomsByPackage;
   final ConfirmCompletionUsecase confirmCompletionUsecase;
   final GetBookingConfigUsecase getBookingConfigUsecase;
+  final CheckStaffAvailabilityUsecase checkStaffAvailabilityUsecase;
 
   // Current selection state
   int? _selectedPackageId;
@@ -46,6 +48,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   List<RoomEntity>? _rooms;
   AccountModel? _selectedCustomer;
   BookingConfigEntity? _config;
+  bool? _hasAvailableStaff;
 
   // Read-only accessors for UI to restore selections when navigating between steps
   DateTime? get selectedDate => _selectedDate;
@@ -65,6 +68,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   List<RoomEntity>? get rooms => _rooms;
   AccountModel? get selectedCustomer => _selectedCustomer;
   BookingConfigEntity? get config => _config;
+  bool? get hasAvailableStaff => _hasAvailableStaff;
 
   BookingBloc({
     required this.createBookingUsecase,
@@ -80,6 +84,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     required this.getRoomsByPackage,
     required this.confirmCompletionUsecase,
     required this.getBookingConfigUsecase,
+    required this.checkStaffAvailabilityUsecase,
   }) : super(const BookingInitial()) {
     on<BookingLoadPackages>(_onLoadPackages);
     on<BookingSelectPackage>(_onSelectPackage);
@@ -99,6 +104,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     on<BookingSelectCustomer>(_onSelectCustomer);
     on<BookingConfirmCompletion>(_onConfirmCompletion);
     on<BookingLoadConfig>(_onLoadConfig);
+    on<BookingCheckStaffAvailability>(_onCheckStaffAvailability);
   }
 
   Future<void> _onLoadPackages(
@@ -290,6 +296,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     Emitter<BookingState> emit,
   ) async {
     _selectedDate = event.date;
+    _hasAvailableStaff = null; // Reset availability when date changes
     PackageEntity? package;
     if (_selectedPackageId != null && _packages != null) {
       try {
@@ -407,7 +414,32 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     emit(const BookingLoading());
     try {
       final booking = await getBookingByIdUsecase(event.id);
-      emit(BookingLoaded(booking));
+
+      // Attempt to fetch family profiles to augment booking data with avatars
+      try {
+        final profiles = await getFamilyProfilesUsecase();
+        final updatedTargetBookings = booking.targetBookings.map((target) {
+          final matchingProfiles =
+              profiles.where((p) => p.id == target.familyProfileId);
+          if (matchingProfiles.isNotEmpty) {
+            final profile = matchingProfiles.first;
+            // Only update if current target doesn't have an avatar but profile does
+            if ((target.avatarUrl == null || target.avatarUrl!.isEmpty) &&
+                profile.avatarUrl != null &&
+                profile.avatarUrl!.isNotEmpty) {
+              return target.copyWith(avatarUrl: profile.avatarUrl);
+            }
+          }
+          return target;
+        }).toList();
+
+        final updatedBooking =
+            booking.copyWith(targetBookings: updatedTargetBookings);
+        emit(BookingLoaded(updatedBooking));
+      } catch (_) {
+        // Fallback to original booking data if profile fetch fails
+        emit(BookingLoaded(booking));
+      }
     } catch (e) {
       emit(BookingError(e.toString()));
     }
@@ -512,6 +544,29 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       emit(BookingConfigLoaded(config));
     } catch (_) {
       // Nếu lỗi thì giữ giá trị mặc định (null) hoặc log
+    }
+  }
+
+  Future<void> _onCheckStaffAvailability(
+    BookingCheckStaffAvailability event,
+    Emitter<BookingState> emit,
+  ) async {
+    emit(const BookingCheckingStaffAvailability());
+    try {
+      final availability = await checkStaffAvailabilityUsecase(
+        from: event.from,
+        to: event.to,
+      );
+      _hasAvailableStaff = availability.hasAvailableStaff;
+      emit(BookingStaffAvailabilityChecked(
+        hasAvailableStaff: availability.hasAvailableStaff,
+        availableCount: availability.availableCount,
+        message: availability.hasAvailableStaff 
+            ? null 
+            : 'Hiện tại trung tâm không còn nhân viên để phục vụ vào thời gian này. Vui lòng chọn ngày khác.',
+      ));
+    } catch (e) {
+      emit(BookingError(e.toString()));
     }
   }
 }

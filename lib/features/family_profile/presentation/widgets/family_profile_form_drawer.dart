@@ -686,7 +686,10 @@ class _FamilyProfileFormDrawerState extends State<FamilyProfileFormDrawer> {
                             SizedBox(width: 8 * scale),
                             Flexible(
                               child: Text(
-                                type.name,
+                                type.name == 'Head of Family' ? 'Giám hộ'
+                                    : type.name == 'Mom' ? 'Mẹ'
+                                    : type.name == 'Baby' ? 'Bé'
+                                    : type.name,
                                 style: AppTextStyles.arimo(
                                   fontSize: 14 * scale,
                                   fontWeight: _selectedMemberTypeId == type.id

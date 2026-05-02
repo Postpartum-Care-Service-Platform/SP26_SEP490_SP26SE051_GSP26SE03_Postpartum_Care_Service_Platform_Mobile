@@ -2,6 +2,7 @@ import '../entities/booking_entity.dart';
 import '../entities/payment_link_entity.dart';
 import '../entities/payment_status_entity.dart';
 import '../entities/booking_config_entity.dart';
+import '../entities/staff_availability_entity.dart';
 
 /// Booking Repository Interface
 abstract class BookingRepository {
@@ -56,4 +57,10 @@ abstract class BookingRepository {
 
   /// Get booking configuration (surcharge, deposit %)
   Future<BookingConfigEntity> getBookingConfig();
+
+  /// Check if staff are available for a date range
+  Future<StaffAvailabilityEntity> checkStaffAvailability({
+    required DateTime from,
+    required DateTime to,
+  });
 }

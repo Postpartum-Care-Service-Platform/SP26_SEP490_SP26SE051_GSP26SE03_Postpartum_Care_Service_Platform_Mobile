@@ -3,7 +3,7 @@ import '../../data/models/create_health_record_request.dart';
 
 abstract class HealthRecordRepository {
   Future<List<HealthRecordEntity>> getHealthRecordsByFamilyProfile(int familyProfileId);
-  Future<List<HealthConditionEntity>> getHealthConditions();
+  Future<List<HealthConditionEntity>> getHealthConditions({int? categoryId, int? memberTypeId});
   Future<HealthRecordEntity> createHealthRecord(int familyProfileId, CreateHealthRecordRequest request);
   Future<HealthRecordEntity> getLatestHealthRecord(int familyProfileId);
   Future<HealthRecordEntity> getHealthRecordById(int id);

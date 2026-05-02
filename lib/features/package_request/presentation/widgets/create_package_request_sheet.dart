@@ -37,6 +37,7 @@ class _CreatePackageRequestSheetState extends State<CreatePackageRequestSheet> {
   List<FamilyProfileEntity> _familyProfiles = [];
   bool _isLoadingProfiles = true;
   final List<int> _selectedProfileIds = [];
+  final Map<int, bool> _hasHealthRecordMap = {};
 
   @override
   void initState() {
@@ -68,6 +69,18 @@ class _CreatePackageRequestSheetState extends State<CreatePackageRequestSheet> {
       final profiles =
           await InjectionContainer.familyProfileRepository
               .getMyFamilyProfiles();
+      
+      final Map<int, bool> healthRecordMap = {};
+      for (final profile in profiles) {
+        try {
+          final records = await InjectionContainer.healthRecordRepository
+              .getHealthRecordsByFamilyProfile(profile.id);
+          healthRecordMap[profile.id] = records.isNotEmpty;
+        } catch (_) {
+          healthRecordMap[profile.id] = false;
+        }
+      }
+
       if (mounted) {
         setState(() {
           // Chỉ hiển thị Mẹ và Bé
@@ -76,6 +89,7 @@ class _CreatePackageRequestSheetState extends State<CreatePackageRequestSheet> {
                   p.memberTypeName?.toLowerCase() == 'mom' ||
                   p.memberTypeName?.toLowerCase() == 'baby')
               .toList();
+          _hasHealthRecordMap.addAll(healthRecordMap);
           _isLoadingProfiles = false;
         });
       }
@@ -325,8 +339,18 @@ class _CreatePackageRequestSheetState extends State<CreatePackageRequestSheet> {
                   ..._familyProfiles.map((profile) {
                     final isSelected =
                         _selectedProfileIds.contains(profile.id);
+                    final hasHealthRecord = _hasHealthRecordMap[profile.id] ?? false;
+                    
                     return GestureDetector(
                       onTap: () {
+                        if (!hasHealthRecord) {
+                          AppToast.showError(
+                            context,
+                            message: 'Vui lòng cập nhật hồ sơ sức khỏe cho ${profile.fullName} trước khi chọn (Ấn giữ vào thẻ tại trang hồ sơ gia đình)',
+                            duration: const Duration(seconds: 4),
+                          );
+                          return;
+                        }
                         setState(() {
                           if (isSelected) {
                             _selectedProfileIds.remove(profile.id);
@@ -335,101 +359,121 @@ class _CreatePackageRequestSheetState extends State<CreatePackageRequestSheet> {
                           }
                         });
                       },
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        margin: EdgeInsets.only(bottom: 8 * scale),
-                        padding: EdgeInsets.all(12 * scale),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? AppColors.primary.withValues(alpha: 0.06)
-                              : AppColors.white,
-                          borderRadius:
-                              BorderRadius.circular(12 * scale),
-                          border: Border.all(
-                            color: isSelected
-                                ? AppColors.primary
-                                : AppColors.borderLight,
-                            width: isSelected ? 2 : 1,
+                      child: Opacity(
+                        opacity: !hasHealthRecord ? 0.6 : 1.0,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          margin: EdgeInsets.only(bottom: 8 * scale),
+                          padding: EdgeInsets.all(12 * scale),
+                          decoration: BoxDecoration(
+                            color: !hasHealthRecord
+                                ? AppColors.background
+                                : isSelected
+                                    ? AppColors.primary.withValues(alpha: 0.06)
+                                    : AppColors.white,
+                            borderRadius:
+                                BorderRadius.circular(12 * scale),
+                            border: Border.all(
+                              color: isSelected
+                                  ? AppColors.primary
+                                  : AppColors.borderLight,
+                              width: isSelected ? 2 : 1,
+                            ),
                           ),
-                        ),
-                        child: Row(
-                          children: [
-                            // Checkbox
-                            Container(
-                              width: 22 * scale,
-                              height: 22 * scale,
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? AppColors.primary
-                                    : Colors.transparent,
-                                shape: BoxShape.circle,
-                                border: Border.all(
+                          child: Row(
+                            children: [
+                              // Checkbox
+                              Container(
+                                width: 22 * scale,
+                                height: 22 * scale,
+                                decoration: BoxDecoration(
                                   color: isSelected
                                       ? AppColors.primary
-                                      : AppColors.textSecondary,
-                                  width: 2,
-                                ),
-                              ),
-                              child: isSelected
-                                  ? Icon(Icons.check,
-                                      size: 14 * scale,
-                                      color: AppColors.white)
-                                  : null,
-                            ),
-                            SizedBox(width: 12 * scale),
-                            // Avatar
-                            AvatarWidget(
-                              imageUrl: profile.avatarUrl,
-                              displayName: profile.fullName,
-                              size: 40,
-                              fallbackIcon: profile.memberTypeName?.toLowerCase() == 'mom'
-                                  ? Icons.pregnant_woman_rounded
-                                  : Icons.child_care_rounded,
-                            ),
-                            SizedBox(width: 12 * scale),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    profile.fullName,
-                                    style: AppTextStyles.arimo(
-                                      fontSize: 15 * scale,
-                                      fontWeight: isSelected
-                                          ? FontWeight.w600
-                                          : FontWeight.normal,
-                                      color: AppColors.textPrimary,
-                                    ),
+                                      : Colors.transparent,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? AppColors.primary
+                                        : AppColors.textSecondary,
+                                    width: 2,
                                   ),
-                                  SizedBox(height: 2 * scale),
-                                  Container(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 8 * scale,
-                                      vertical: 2 * scale,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: profile.memberTypeName?.toLowerCase() == 'mom'
-                                          ? AppColors.primary.withValues(alpha: 0.1)
-                                          : const Color(0xFF1565C0).withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(10 * scale),
-                                    ),
-                                    child: Text(
-                                      profile.memberTypeName?.toLowerCase() == 'mom'
-                                          ? 'Mẹ'
-                                          : 'Bé',
+                                ),
+                                child: isSelected
+                                    ? Icon(Icons.check,
+                                        size: 14 * scale,
+                                        color: AppColors.white)
+                                    : null,
+                              ),
+                              SizedBox(width: 12 * scale),
+                              // Avatar
+                              AvatarWidget(
+                                imageUrl: profile.avatarUrl,
+                                displayName: profile.fullName,
+                                size: 40,
+                                fallbackIcon: profile.memberTypeName?.toLowerCase() == 'mom'
+                                    ? Icons.pregnant_woman_rounded
+                                    : Icons.child_care_rounded,
+                              ),
+                              SizedBox(width: 12 * scale),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      profile.fullName,
                                       style: AppTextStyles.arimo(
-                                        fontSize: 11 * scale,
-                                        fontWeight: FontWeight.w600,
-                                        color: profile.memberTypeName?.toLowerCase() == 'mom'
-                                            ? AppColors.primary
-                                            : const Color(0xFF1565C0),
+                                        fontSize: 15 * scale,
+                                        fontWeight: isSelected
+                                            ? FontWeight.w600
+                                            : FontWeight.normal,
+                                        color: AppColors.textPrimary,
                                       ),
                                     ),
-                                  ),
-                                ],
+                                    SizedBox(height: 2 * scale),
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 8 * scale,
+                                            vertical: 2 * scale,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: profile.memberTypeName?.toLowerCase() == 'mom'
+                                                ? AppColors.primary.withValues(alpha: 0.1)
+                                                : const Color(0xFF1565C0).withValues(alpha: 0.1),
+                                            borderRadius: BorderRadius.circular(10 * scale),
+                                          ),
+                                          child: Text(
+                                            profile.memberTypeName?.toLowerCase() == 'mom'
+                                                ? 'Mẹ'
+                                                : 'Bé',
+                                            style: AppTextStyles.arimo(
+                                              fontSize: 11 * scale,
+                                              fontWeight: FontWeight.w600,
+                                              color: profile.memberTypeName?.toLowerCase() == 'mom'
+                                                  ? AppColors.primary
+                                                  : const Color(0xFF1565C0),
+                                            ),
+                                          ),
+                                        ),
+                                        if (!hasHealthRecord) ...[
+                                          SizedBox(width: 8 * scale),
+                                          Text(
+                                            '⚠️ Thiếu hồ sơ sức khỏe',
+                                            style: AppTextStyles.arimo(
+                                              fontSize: 11 * scale,
+                                              color: const Color(0xFFF44336),
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     );

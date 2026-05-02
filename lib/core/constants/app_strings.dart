@@ -424,8 +424,8 @@ class AppStrings {
 
   // Booking Screen
   static const String bookingTitle = 'Đặt gói dịch vụ';
-  static const String bookingStep1 = 'Gói';
-  static const String bookingStep2 = 'Thành viên';
+  static const String bookingStep1 = 'Thành viên';
+  static const String bookingStep2 = 'Gói';
   static const String bookingStep3 = 'Ngày';
   static const String bookingStep4 = 'Phòng';
   static const String bookingStep5 = 'Xác nhận';

@@ -74,6 +74,7 @@ import '../../features/wallet/data/datasources/wallet_remote_datasource.dart';
 import '../../features/wallet/data/datasources/wallet_remote_datasource.dart';
 import '../../core/apis/api_client.dart';
 import '../../features/employee/feedback/presentation/screens/staff_feedback_screen.dart';
+import '../../features/package_request/presentation/screens/package_request_list_screen.dart';
 import 'app_routes.dart';
 
 /// App Router - Centralized navigation management
@@ -197,6 +198,14 @@ class AppRouter {
 
       case AppRoutes.notifications:
         return MaterialPageRoute(builder: (_) => const NotificationScreen());
+
+      case AppRoutes.packageRequest:
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (_) => InjectionContainer.packageRequestBloc,
+            child: const PackageRequestListScreen(),
+          ),
+        );
 
       // Booking Routes
       case AppRoutes.bookingHistory:

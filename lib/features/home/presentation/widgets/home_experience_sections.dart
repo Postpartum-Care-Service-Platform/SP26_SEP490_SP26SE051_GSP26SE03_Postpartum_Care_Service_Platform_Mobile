@@ -43,8 +43,8 @@ class HomeWelcomeSection extends StatelessWidget {
                   width: tileWidth,
                   child: _QuickActionTile(
                     iconAsset: AppAssets.calendar,
-                    label: 'Lịch hẹn',
-                    onTap: () => _openQuickAction(context, AppRoutes.appointment),
+                    label: 'Cá nhân hóa',
+                    onTap: () => _openQuickAction(context, AppRoutes.packageRequest),
                   ),
                 ),
                 SizedBox(

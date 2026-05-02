@@ -181,3 +181,14 @@ class BookingConfirmCompletion extends BookingEvent {
 class BookingLoadConfig extends BookingEvent {
   const BookingLoadConfig();
 }
+
+/// Check center staff availability
+class BookingCheckStaffAvailability extends BookingEvent {
+  final DateTime from;
+  final DateTime to;
+
+  const BookingCheckStaffAvailability({required this.from, required this.to});
+
+  @override
+  List<Object?> get props => [from, to];
+}

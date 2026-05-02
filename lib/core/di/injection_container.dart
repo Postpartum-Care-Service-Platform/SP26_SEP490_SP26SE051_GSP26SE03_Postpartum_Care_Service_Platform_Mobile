@@ -111,6 +111,7 @@ import '../../features/booking/domain/usecases/check_payment_status_usecase.dart
 import '../../features/booking/domain/usecases/create_booking_for_customer_usecase.dart';
 import '../../features/booking/domain/usecases/confirm_completion_usecase.dart';
 import '../../features/booking/domain/usecases/get_booking_config_usecase.dart';
+import '../../features/booking/domain/usecases/check_staff_availability_usecase.dart';
 import '../../features/booking/presentation/bloc/booking_bloc.dart';
 import '../../features/contract/data/datasources/contract_remote_datasource.dart';
 import '../../features/contract/data/repositories/contract_repository_impl.dart';
@@ -197,6 +198,9 @@ import '../../features/health_record/presentation/bloc/activity_restriction_bloc
 import '../../features/package_request/data/repositories/package_request_repository_impl.dart';
 import '../../features/package_request/domain/repositories/package_request_repository.dart';
 import '../../features/package_request/presentation/bloc/package_request_bloc.dart';
+import '../../features/ai_recommend/data/datasources/ai_recommend_remote_datasource.dart';
+import '../../features/ai_recommend/data/repositories/ai_recommend_repository_impl.dart';
+import '../../features/ai_recommend/domain/repositories/ai_recommend_repository.dart';
 import '../apis/api_client.dart';
 
 /// Centralized dependency injection container
@@ -283,6 +287,13 @@ class InjectionContainer {
   // Package Request
   static PackageRequestRepository get packageRequestRepository =>
       PackageRequestRepositoryImpl(dio: ApiClient.dio);
+
+  // AI Recommendation
+  static AiRecommendRemoteDataSource get _aiRecommendRemoteDataSource =>
+      AiRecommendRemoteDataSourceImpl(dio: ApiClient.dio);
+
+  static AiRecommendRepository get aiRecommendRepository =>
+      AiRecommendRepositoryImpl(remoteDataSource: _aiRecommendRemoteDataSource);
 
   // ==================== Repositories ====================
 
@@ -522,6 +533,9 @@ class InjectionContainer {
   static GetBookingConfigUsecase get _getBookingConfigUsecase =>
       GetBookingConfigUsecase(bookingRepository);
 
+  static CheckStaffAvailabilityUsecase get _checkStaffAvailabilityUsecase =>
+      CheckStaffAvailabilityUsecase(repository: bookingRepository);
+
   static GetContractByBookingIdUsecase get _getContractByBookingIdUsecase =>
       GetContractByBookingIdUsecase(contractRepository);
   static ExportContractPdfUsecase get _exportContractPdfUsecase =>
@@ -643,6 +657,7 @@ class InjectionContainer {
   static PackageRequestBloc get packageRequestBloc => PackageRequestBloc(
     repository: packageRequestRepository,
     packageRepository: packageRepository,
+    carePlanRepository: carePlanRepository,
   );
 
   static NotificationBloc get notificationBloc => NotificationBloc(
@@ -727,6 +742,7 @@ class InjectionContainer {
         getRoomsByPackage: _getRoomsByPackage,
         confirmCompletionUsecase: _confirmCompletionUsecase,
         getBookingConfigUsecase: _getBookingConfigUsecase,
+        checkStaffAvailabilityUsecase: _checkStaffAvailabilityUsecase,
       );
 
   static ContractBloc get contractBloc => ContractBloc(

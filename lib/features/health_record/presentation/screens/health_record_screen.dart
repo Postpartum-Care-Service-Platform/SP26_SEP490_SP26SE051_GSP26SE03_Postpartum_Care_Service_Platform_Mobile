@@ -263,29 +263,31 @@ class _HealthRecordScreenState extends State<HealthRecordScreen> {
                   // Metrics Grid - Structured Layout
                   Column(
                     children: [
-                      if (widget.isBaby) ...[
-                        if (record.gestationalAgeWeeks != null || record.birthWeightGrams != null)
-                          Row(
-                            children: [
-                              if (record.gestationalAgeWeeks != null)
-                                Expanded(child: _buildMetricBox(scale, Icons.child_care_rounded, 'Tuần thai', '${record.gestationalAgeWeeks} tuần', Colors.blue)),
-                              if (record.gestationalAgeWeeks != null && record.birthWeightGrams != null) SizedBox(width: 12 * scale),
-                              if (record.birthWeightGrams != null)
-                                Expanded(child: _buildMetricBox(scale, Icons.scale_rounded, 'Lúc sinh', '${record.birthWeightGrams} g', Colors.blue)),
-                            ],
-                          ),
-                      ] else ...[
-                        if (record.weight != null || record.height != null)
-                          Row(
-                            children: [
-                              if (record.weight != null)
-                                Expanded(child: _buildMetricBox(scale, Icons.monitor_weight_outlined, 'Cân nặng', '${record.weight} kg', Colors.blue)),
-                              if (record.weight != null && record.height != null) SizedBox(width: 12 * scale),
-                              if (record.height != null)
-                                Expanded(child: _buildMetricBox(scale, Icons.height_rounded, 'Chiều cao', '${record.height} cm', Colors.blue)),
-                            ],
-                          ),
+                      // Birth Metrics (for babies only)
+                      if (widget.isBaby && (record.gestationalAgeWeeks != null || record.birthWeightGrams != null)) ...[
+                        Row(
+                          children: [
+                            if (record.gestationalAgeWeeks != null)
+                              Expanded(child: _buildMetricBox(scale, Icons.child_care_rounded, 'Tuần thai', '${record.gestationalAgeWeeks} tuần', Colors.blue)),
+                            if (record.gestationalAgeWeeks != null && record.birthWeightGrams != null) SizedBox(width: 12 * scale),
+                            if (record.birthWeightGrams != null)
+                              Expanded(child: _buildMetricBox(scale, Icons.scale_rounded, 'Lúc sinh', '${record.birthWeightGrams} g', Colors.blue)),
+                          ],
+                        ),
+                        SizedBox(height: 12 * scale),
                       ],
+
+                      // Current Growth Metrics (Weight & Height)
+                      if (record.weight != null || record.height != null)
+                        Row(
+                          children: [
+                            if (record.weight != null)
+                              Expanded(child: _buildMetricBox(scale, Icons.monitor_weight_outlined, 'Cân nặng', '${record.weight} kg', Colors.blue)),
+                            if (record.weight != null && record.height != null) SizedBox(width: 12 * scale),
+                            if (record.height != null)
+                              Expanded(child: _buildMetricBox(scale, Icons.height_rounded, 'Chiều cao', '${record.height} cm', Colors.blue)),
+                          ],
+                        ),
                       if (record.temperature != null) ...[
                         SizedBox(height: 12 * scale),
                         _buildMetricBox(scale, Icons.device_thermostat_rounded, 'Nhiệt độ cơ thể', '${record.temperature} °C', Colors.blue, isFullWidth: true),

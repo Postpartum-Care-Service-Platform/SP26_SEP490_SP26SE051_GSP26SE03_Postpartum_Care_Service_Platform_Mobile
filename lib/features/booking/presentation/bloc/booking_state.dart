@@ -204,3 +204,24 @@ class BookingError extends BookingState {
   @override
   List<Object?> get props => [message];
 }
+
+/// Checking staff availability
+class BookingCheckingStaffAvailability extends BookingState {
+  const BookingCheckingStaffAvailability();
+}
+
+/// Staff availability result
+class BookingStaffAvailabilityChecked extends BookingState {
+  final bool hasAvailableStaff;
+  final String? message;
+  final int availableCount;
+
+  const BookingStaffAvailabilityChecked({
+    required this.hasAvailableStaff,
+    required this.availableCount,
+    this.message,
+  });
+
+  @override
+  List<Object?> get props => [hasAvailableStaff, message, availableCount];
+}

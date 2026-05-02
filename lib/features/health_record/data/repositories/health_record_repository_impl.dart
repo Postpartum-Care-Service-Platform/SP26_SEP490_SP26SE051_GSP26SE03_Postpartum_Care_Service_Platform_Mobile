@@ -32,9 +32,15 @@ class HealthRecordRepositoryImpl implements HealthRecordRepository {
   }
 
   @override
-  Future<List<HealthConditionEntity>> getHealthConditions() async {
+  Future<List<HealthConditionEntity>> getHealthConditions({int? categoryId, int? memberTypeId}) async {
     try {
-      final response = await dio.get(ApiEndpoints.getHealthConditions);
+      final response = await dio.get(
+        ApiEndpoints.getHealthConditions,
+        queryParameters: {
+          if (categoryId != null) 'categoryId': categoryId,
+          if (memberTypeId != null) 'memberTypeId': memberTypeId,
+        },
+      );
       final List<dynamic> data = _extractData(response) as List<dynamic>;
       final models = data.map((json) => HealthConditionModel.fromJson(json as Map<String, dynamic>)).toList();
       return models.map((model) => model.toEntity()).toList();

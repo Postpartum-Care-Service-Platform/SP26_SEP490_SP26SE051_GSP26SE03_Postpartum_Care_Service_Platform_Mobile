@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/package_request_entity.dart';
+import '../../../package/domain/entities/package_entity.dart';
+import '../../../care_plan/domain/entities/care_plan_entity.dart';
 
 abstract class PackageRequestState extends Equatable {
   const PackageRequestState();
@@ -23,11 +25,17 @@ class PackageRequestsLoaded extends PackageRequestState {
 
 class PackageRequestDetailLoaded extends PackageRequestState {
   final PackageRequestEntity request;
+  final PackageEntity? customPackage;
+  final List<CarePlanEntity>? customCarePlans;
 
-  const PackageRequestDetailLoaded(this.request);
+  const PackageRequestDetailLoaded(
+    this.request, {
+    this.customPackage,
+    this.customCarePlans,
+  });
 
   @override
-  List<Object?> get props => [request];
+  List<Object?> get props => [request, customPackage, customCarePlans];
 }
 
 class PackageRequestCreated extends PackageRequestState {
