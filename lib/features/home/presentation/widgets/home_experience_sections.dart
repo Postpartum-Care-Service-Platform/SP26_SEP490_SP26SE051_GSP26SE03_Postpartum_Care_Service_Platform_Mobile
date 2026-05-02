@@ -15,6 +15,9 @@ import '../../../../core/routing/app_router.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
+import '../../../../core/widgets/app_network_image.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+
 
 /// 1) Welcome information section with intro text and small icons row.
 class HomeWelcomeSection extends StatelessWidget {
@@ -572,8 +575,9 @@ class _HomeTestimonialBannerState extends State<HomeTestimonialBanner> {
                         radius: 20 * scale,
                         backgroundColor: AppColors.primary,
                         backgroundImage: item.avatar.trim().isNotEmpty
-                            ? NetworkImage(item.avatar)
+                            ? CachedNetworkImageProvider(item.avatar)
                             : null,
+
                         child: item.avatar.trim().isEmpty
                             ? Text(
                                 initials,
@@ -761,8 +765,9 @@ class _HomeTestimonialBannerState extends State<HomeTestimonialBanner> {
                                     radius: 18 * scale,
                                     backgroundColor: AppColors.primary,
                                     backgroundImage: item.avatar.trim().isNotEmpty
-                                        ? NetworkImage(item.avatar)
+                                        ? CachedNetworkImageProvider(item.avatar)
                                         : null,
+
                                     child: item.avatar.trim().isEmpty
                                         ? Text(
                                             initials,
@@ -912,10 +917,11 @@ class _HomeLoveWallSectionState extends State<HomeLoveWallSection> {
                 maxScale: 4,
                 child: AspectRatio(
                   aspectRatio: 3 / 4,
-                  child: Image.network(
+                  child: AppNetworkImage(
                     imageUrl,
                     fit: BoxFit.contain,
                     errorBuilder: (context, error, stackTrace) {
+
                       return const Center(
                         child: Icon(Icons.broken_image, color: AppColors.white),
                       );
@@ -998,21 +1004,13 @@ class _HomeLoveWallSectionState extends State<HomeLoveWallSection> {
                             onTap: () => _showImageDetail(imageUrl),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(18 * scale),
-                              child: Image.network(
+                              child: AppNetworkImage(
                                 imageUrl,
                                 fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    color: AppColors.background,
-                                    child: const Center(
-                                      child: Icon(
-                                        Icons.broken_image,
-                                        color: AppColors.textSecondary,
-                                      ),
-                                    ),
-                                  );
-                                },
+                                width: 240 * scale, // Hint for Cloudinary
+                                height: 180 * scale,
                               ),
+
                             ),
                           ),
                         );

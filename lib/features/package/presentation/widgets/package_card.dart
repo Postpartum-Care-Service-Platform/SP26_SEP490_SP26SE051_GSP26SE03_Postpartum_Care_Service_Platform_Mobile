@@ -72,8 +72,10 @@ class PackageCard extends StatelessWidget {
                   AppNetworkImage(
                     package.imageUrl!,
                     fit: BoxFit.cover,
+                    width: 300 * scale, // Hint for Cloudinary (approx half screen)
                     errorBuilder: (_, __, ___) => _fallbackImage(scale),
                   )
+
                 else
                   _fallbackImage(scale),
                 Positioned.fill(

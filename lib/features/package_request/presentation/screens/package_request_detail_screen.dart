@@ -130,6 +130,8 @@ class _PackageRequestDetailScreenState
                               request.basePackageImageUrl!.isNotEmpty
                           ? AppNetworkImage(
                               request.basePackageImageUrl!,
+                              width: 40 * scale,
+                              height: 40 * scale,
                               fit: BoxFit.cover,
                             )
                           : Icon(Icons.inventory_2_outlined,
@@ -754,109 +756,116 @@ class _PackageRequestDetailScreenState
       );
     }
 
-    return Column(
-      children: dayActivities.asMap().entries.map((entry) {
-        final index = entry.key;
-        final activity = entry.value;
-        final isLast = index == dayActivities.length - 1;
+    return SizedBox(
+      height: 520 * scale, // Show approximately 3 activities
+      child: SingleChildScrollView(
+        child: Column(
+          children: dayActivities.asMap().entries.map((entry) {
+            final index = entry.key;
+            final activity = entry.value;
+            final isLast = index == dayActivities.length - 1;
 
-        return IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Timeline column
-              SizedBox(
-                width: 24 * scale,
-                child: Column(
-                  children: [
-                    // Dot
-                    Container(
-                      width: 12 * scale,
-                      height: 12 * scale,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppColors.primary,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.3),
-                            blurRadius: 4 * scale,
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Line
-                    if (!isLast)
-                      Expanded(
-                        child: Container(
-                          width: 2 * scale,
-                          color: AppColors.primary.withValues(alpha: 0.2),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              SizedBox(width: 12 * scale),
-              // Activity card
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(bottom: 16 * scale),
-                  child: Container(
-                    padding: EdgeInsets.all(12 * scale),
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.circular(12 * scale),
-                      border: Border.all(color: AppColors.borderLight),
-                    ),
+            return IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Timeline column
+                  SizedBox(
+                    width: 24 * scale,
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Time badge
+                        // Dot
                         Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 8 * scale,
-                            vertical: 4 * scale,
-                          ),
+                          width: 12 * scale,
+                          height: 12 * scale,
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(6 * scale),
+                            shape: BoxShape.circle,
+                            color: AppColors.primary,
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primary.withValues(alpha: 0.3),
+                                blurRadius: 4 * scale,
+                              ),
+                            ],
                           ),
-                          child: Text(
-                            '${activity.startTime} - ${activity.endTime}',
-                            style: AppTextStyles.arimo(
-                              fontSize: 12 * scale,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.primary,
+                        ),
+                        // Line
+                        if (!isLast)
+                          Expanded(
+                            child: Container(
+                              width: 2 * scale,
+                              color: AppColors.primary.withValues(alpha: 0.2),
                             ),
                           ),
-                        ),
-                        SizedBox(height: 8 * scale),
-                        Text(
-                          activity.activityName,
-                          style: AppTextStyles.arimo(
-                            fontSize: 15 * scale,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        if (activity.instruction != null && activity.instruction!.isNotEmpty) ...[
-                          SizedBox(height: 4 * scale),
-                          Text(
-                            activity.instruction!,
-                            style: AppTextStyles.arimo(
-                              fontSize: 13 * scale,
-                              color: AppColors.textSecondary,
-                            ).copyWith(height: 1.4),
-                          ),
-                        ],
                       ],
                     ),
                   ),
-                ),
+                  SizedBox(width: 12 * scale),
+                  // Activity card
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(bottom: 16 * scale),
+                      child: Container(
+                        padding: EdgeInsets.all(12 * scale),
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          borderRadius: BorderRadius.circular(12 * scale),
+                          border: Border.all(color: AppColors.borderLight),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Time badge
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 8 * scale,
+                                vertical: 4 * scale,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(6 * scale),
+                              ),
+                              child: Text(
+                                '${activity.startTime} - ${activity.endTime}',
+                                style: AppTextStyles.arimo(
+                                  fontSize: 12 * scale,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 8 * scale),
+                            Text(
+                              activity.activityName,
+                              style: AppTextStyles.arimo(
+                                fontSize: 15 * scale,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            if (activity.instruction != null &&
+                                activity.instruction!.isNotEmpty) ...[
+                              SizedBox(height: 4 * scale),
+                              Text(
+                                activity.instruction!,
+                                style: AppTextStyles.arimo(
+                                  fontSize: 13 * scale,
+                                  color: AppColors.textSecondary,
+                                ).copyWith(height: 1.4),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        );
-      }).toList(),
+            );
+          }).toList(),
+        ),
+      ),
     );
+
   }
 }
