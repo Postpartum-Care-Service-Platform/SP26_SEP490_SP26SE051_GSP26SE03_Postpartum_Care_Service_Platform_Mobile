@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_responsive.dart';
@@ -20,8 +21,45 @@ class AiRecommendationResultSheet extends StatefulWidget {
 }
 
 class _AiRecommendationResultSheetState
-    extends State<AiRecommendationResultSheet> {
+    extends State<AiRecommendationResultSheet> with TickerProviderStateMixin {
   int? _expandedIndex;
+  final Map<int, String> _typedNarratives = {};
+  final Map<int, bool> _isTyping = {};
+
+  @override
+  void initState() {
+    super.initState();
+    // Start typing for the first (top) package automatically
+    if (widget.recommendation.packages.isNotEmpty) {
+      _expandedIndex = 0;
+      _startTyping(0, widget.recommendation.packages[0].narrative);
+    }
+  }
+
+  void _startTyping(int index, String fullText) {
+    if (_isTyping[index] == true) return;
+    
+    _isTyping[index] = true;
+    _typedNarratives[index] = "";
+    
+    int charIndex = 0;
+    Timer.periodic(const Duration(milliseconds: 15), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      
+      if (charIndex < fullText.length) {
+        setState(() {
+          _typedNarratives[index] = fullText.substring(0, charIndex + 1);
+        });
+        charIndex++;
+      } else {
+        _isTyping[index] = false;
+        timer.cancel();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -162,6 +200,9 @@ class _AiRecommendationResultSheetState
               onTap: () {
                 setState(() {
                   _expandedIndex = isExpanded ? null : index;
+                  if (_expandedIndex != null && _typedNarratives[index] == null) {
+                    _startTyping(index, pkg.narrative);
+                  }
                 });
               },
               borderRadius: BorderRadius.vertical(
@@ -302,7 +343,7 @@ class _AiRecommendationResultSheetState
                           SizedBox(width: 10 * scale),
                           Expanded(
                             child: Text(
-                              pkg.narrative,
+                              _typedNarratives[index] ?? (isExpanded ? "" : pkg.narrative),
                               style: AppTextStyles.arimo(
                                 fontSize: 13.5 * scale,
                                 color: AppColors.textPrimary,

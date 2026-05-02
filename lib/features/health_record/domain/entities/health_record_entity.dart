@@ -6,7 +6,9 @@ class HealthConditionEntity extends Equatable {
   final String? code;
   final String? description;
   final String category;
-  final String appliesTo;
+  final String? appliesTo;
+  final int? memberTypeId;
+  final String? memberTypeName;
 
   const HealthConditionEntity({
     required this.id,
@@ -14,11 +16,22 @@ class HealthConditionEntity extends Equatable {
     this.code,
     this.description,
     required this.category,
-    required this.appliesTo,
+    this.appliesTo,
+    this.memberTypeId,
+    this.memberTypeName,
   });
 
   @override
-  List<Object?> get props => [id, name, code, description, category, appliesTo];
+  List<Object?> get props => [
+        id,
+        name,
+        code,
+        description,
+        category,
+        appliesTo,
+        memberTypeId,
+        memberTypeName,
+      ];
 }
 
 class HealthRecordEntity extends Equatable {

@@ -100,7 +100,7 @@ class _BookingStep1PackageSelectionState extends State<BookingStep1PackageSelect
       
       try {
         bookingBloc.add(const BookingLoadFamilyProfiles());
-        // Wait a bit for state update (simple approach for now)
+        // Wait a bit for state update
         await Future.delayed(const Duration(milliseconds: 800));
         if (mounted) Navigator.pop(context);
       } catch (e) {
@@ -112,15 +112,20 @@ class _BookingStep1PackageSelectionState extends State<BookingStep1PackageSelect
       }
     }
 
-    final profiles = bookingBloc.familyProfiles ?? [];
+    final allProfiles = bookingBloc.familyProfiles ?? [];
+    final selectedIdsInStep1 = bookingBloc.selectedFamilyProfileIds;
+    
+    // Filter to only include profiles selected in the previous step
+    final profiles = allProfiles.where((p) => selectedIdsInStep1.contains(p.id)).toList();
+
     if (profiles.isEmpty) {
-      AppToast.showError(context, message: 'Vui lòng thêm hồ sơ gia đình trước');
+      AppToast.showError(context, message: 'Vui lòng chọn thành viên ở bước trước');
       return;
     }
 
     if (!mounted) return;
 
-    // 1. Show selection sheet
+    // 1. Show selection sheet (now restricted to Step 1 selections)
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -144,8 +149,15 @@ class _BookingStep1PackageSelectionState extends State<BookingStep1PackageSelect
     );
 
     try {
-      // Call API
-      final recommendation = await InjectionContainer.aiRecommendRepository.recommendForFamily(selectedIds);
+      // Start a minimum timer to ensure the user sees the professional animation steps
+      final minWait = Future.delayed(const Duration(milliseconds: 3500));
+      
+      // Actually call the API
+      final apiCall = InjectionContainer.aiRecommendRepository.recommendForFamily(selectedIds);
+      
+      // Wait for both: the response and the minimum animation time
+      final results = await Future.wait([apiCall, minWait]);
+      final recommendation = results[0] as dynamic; // Cast to actual type if needed
       
       if (!mounted) return;
       Navigator.pop(context); // Dismiss loading sheet

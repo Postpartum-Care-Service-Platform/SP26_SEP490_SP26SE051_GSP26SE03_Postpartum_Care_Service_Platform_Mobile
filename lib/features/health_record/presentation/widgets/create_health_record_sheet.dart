@@ -57,12 +57,12 @@ class _CreateHealthRecordSheetState extends State<CreateHealthRecordSheet> {
 
   Future<void> _loadConditions() async {
     try {
-      final allConditions = await InjectionContainer.healthRecordRepository.getHealthConditions();
+      final allConditions = await InjectionContainer.healthRecordRepository.getHealthConditions(
+        memberTypeId: widget.isBaby ? 3 : 2,
+      );
       if (mounted) {
         setState(() {
-          _conditions = allConditions
-              .where((c) => c.appliesTo == 'BOTH' || c.appliesTo == (widget.isBaby ? 'BABY' : 'MOM'))
-              .toList();
+          _conditions = allConditions;
           _isLoadingConditions = false;
         });
       }
@@ -96,8 +96,8 @@ class _CreateHealthRecordSheetState extends State<CreateHealthRecordSheet> {
         recordDate: _recordDate.toIso8601String(),
         gestationalAgeWeeks: int.tryParse(_gestationalAgeController.text),
         birthWeightGrams: int.tryParse(_birthWeightController.text.replaceAll(RegExp(r'[^0-9]'), '')),
-        weight: widget.isBaby ? 0.0 : double.tryParse(_weightController.text.replaceAll(',', '.')),
-        height: widget.isBaby ? 0.0 : double.tryParse(_heightController.text.replaceAll(',', '.')),
+        weight: double.tryParse(_weightController.text.replaceAll(',', '.')),
+        height: double.tryParse(_heightController.text.replaceAll(',', '.')),
         temperature: double.tryParse(_temperatureController.text.replaceAll(',', '.')),
         generalCondition: _generalConditionController.text.isNotEmpty ? _generalConditionController.text : null,
         note: _noteController.text.isNotEmpty ? _noteController.text : null,
@@ -210,30 +210,28 @@ class _CreateHealthRecordSheetState extends State<CreateHealthRecordSheet> {
                   SizedBox(height: 16 * scale),
                 ],
 
-                if (!widget.isBaby) ...[
-                  Row(
-                    children: [
-                      Expanded(
-                        child: AppWidgets.textInput(
-                          controller: _weightController,
-                          label: 'Cân nặng (kg)',
-                          placeholder: 'VD: 50',
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppWidgets.textInput(
+                        controller: _weightController,
+                        label: 'Cân nặng (kg)',
+                        placeholder: 'VD: 50',
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       ),
-                      SizedBox(width: 12 * scale),
-                      Expanded(
-                        child: AppWidgets.textInput(
-                          controller: _heightController,
-                          label: 'Chiều cao (cm)',
-                          placeholder: 'VD: 160',
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        ),
+                    ),
+                    SizedBox(width: 12 * scale),
+                    Expanded(
+                      child: AppWidgets.textInput(
+                        controller: _heightController,
+                        label: 'Chiều cao (cm)',
+                        placeholder: 'VD: 160',
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       ),
-                    ],
-                  ),
-                  SizedBox(height: 16 * scale),
-                ],
+                    ),
+                  ],
+                ),
+                SizedBox(height: 16 * scale),
 
                 AppWidgets.textInput(
                   controller: _temperatureController,
@@ -251,6 +249,17 @@ class _CreateHealthRecordSheetState extends State<CreateHealthRecordSheet> {
                 SizedBox(height: 16 * scale),
 
                 // Conditions multi-select - Categorized & Redesigned
+                if (!_isLoadingConditions && _conditions.isNotEmpty) ...[
+                  Text(
+                    'Tình trạng sức khỏe & Bệnh lý',
+                    style: AppTextStyles.arimo(
+                      fontSize: 16 * scale,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  SizedBox(height: 8 * scale),
+                ],
                 if (_isLoadingConditions)
                   const Center(child: Padding(
                     padding: EdgeInsets.symmetric(vertical: 20),
@@ -295,7 +304,7 @@ class _CreateHealthRecordSheetState extends State<CreateHealthRecordSheet> {
   List<Widget> _buildCategorizedConditions(double scale) {
     final Map<String, List<HealthConditionEntity>> categorized = {};
     for (var condition in _conditions) {
-      final cat = condition.category ?? 'OTHER';
+      final cat = (condition.category ?? 'OTHER').toUpperCase().replaceAll(' ', '_');
       categorized.putIfAbsent(cat, () => []).add(condition);
     }
 

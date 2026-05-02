@@ -63,12 +63,10 @@ class _BookingStep3DateSelectionState extends State<BookingStep3DateSelection> {
           _selectedDate = state.startDate;
         }
 
-        // If still null (e.g., coming back from room step), restore from bloc
-        if (_selectedDate == null) {
-          final bloc = context.read<BookingBloc>();
-          _selectedDate = bloc.selectedDate;
-          selectedPackage ??= bloc.selectedPackage;
-        }
+        // Always ensure we have the selected package and date from bloc if not in state
+        final bloc = context.read<BookingBloc>();
+        selectedPackage ??= bloc.selectedPackage;
+        _selectedDate ??= bloc.selectedDate;
 
         // Calculate check-out date if we have both package and selected date
         final currentSelectedDate = _selectedDate;
@@ -107,6 +105,7 @@ class _BookingStep3DateSelectionState extends State<BookingStep3DateSelection> {
                   ),
                   child: _CustomCalendar(
                     selectedDate: _selectedDate,
+                    checkOutDate: checkOutDate,
                     firstDate: firstDate,
                     lastDate: lastDate,
                     onDateSelected: (date) {
@@ -124,6 +123,97 @@ class _BookingStep3DateSelectionState extends State<BookingStep3DateSelection> {
                     checkInDate: _selectedDate,
                     checkOutDate: checkOutDate,
                   ),
+                  SizedBox(height: 16 * scale),
+                  // Staff Availability Status
+                  BlocBuilder<BookingBloc, BookingState>(
+                    buildWhen: (previous, current) =>
+                        current is BookingCheckingStaffAvailability ||
+                        current is BookingStaffAvailabilityChecked ||
+                        current is BookingDateSelected,
+                    builder: (context, state) {
+                      if (state is BookingCheckingStaffAvailability) {
+                        return Center(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                width: 16 * scale,
+                                height: 16 * scale,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation(AppColors.primary),
+                                ),
+                              ),
+                              SizedBox(width: 8 * scale),
+                              Text(
+                                'Đang kiểm tra nhân sự...',
+                                style: AppTextStyles.arimo(
+                                  fontSize: 13 * scale,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      if (state is BookingStaffAvailabilityChecked) {
+                        if (state.hasAvailableStaff) {
+                          return Container(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 12 * scale, vertical: 8 * scale),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8 * scale),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.check_circle,
+                                    color: Colors.green, size: 18 * scale),
+                                SizedBox(width: 8 * scale),
+                                Text(
+                                  'Còn nhân viên phục vụ (${state.availableCount} người)',
+                                  style: AppTextStyles.arimo(
+                                    fontSize: 13 * scale,
+                                    color: Colors.green.shade700,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        } else {
+                          return Container(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 12 * scale, vertical: 8 * scale),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF44336).withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8 * scale),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.error_outline,
+                                    color: const Color(0xFFF44336), size: 18 * scale),
+                                SizedBox(width: 8 * scale),
+                                Expanded(
+                                  child: Text(
+                                    state.message ?? 'Không còn nhân viên phục vụ',
+                                    style: AppTextStyles.arimo(
+                                      fontSize: 13 * scale,
+                                      color: const Color(0xFFF44336),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                      }
+
+                      return const SizedBox();
+                    },
+                  ),
                 ],
                 // Spacing at the bottom
                 SizedBox(height: 16 * scale),
@@ -138,12 +228,14 @@ class _BookingStep3DateSelectionState extends State<BookingStep3DateSelection> {
 
 class _CustomCalendar extends StatefulWidget {
   final DateTime? selectedDate;
+  final DateTime? checkOutDate;
   final DateTime firstDate;
   final DateTime lastDate;
   final Function(DateTime) onDateSelected;
 
   const _CustomCalendar({
     required this.selectedDate,
+    this.checkOutDate,
     required this.firstDate,
     required this.lastDate,
     required this.onDateSelected,
@@ -236,6 +328,19 @@ class _CustomCalendarState extends State<_CustomCalendar> {
         date.day == widget.selectedDate!.day;
   }
 
+  bool _isCheckOut(DateTime date) {
+    if (widget.checkOutDate == null) return false;
+    return date.year == widget.checkOutDate!.year &&
+        date.month == widget.checkOutDate!.month &&
+        date.day == widget.checkOutDate!.day;
+  }
+
+  bool _isInRange(DateTime date) {
+    if (widget.selectedDate == null || widget.checkOutDate == null) return false;
+    return date.isAfter(widget.selectedDate!) &&
+        date.isBefore(widget.checkOutDate!);
+  }
+
   @override
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
@@ -322,8 +427,8 @@ class _CustomCalendarState extends State<_CustomCalendar> {
             padding: EdgeInsets.zero,
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 7,
-              mainAxisSpacing: 4 * scale,
-              crossAxisSpacing: 4 * scale,
+              mainAxisSpacing: 0,
+              crossAxisSpacing: 0,
               childAspectRatio: 1.0,
             ),
             itemCount: days.length,
@@ -337,6 +442,8 @@ class _CustomCalendarState extends State<_CustomCalendar> {
               final isDisabled = _isDateDisabled(date);
               final isToday = _isToday(date);
               final isSelected = _isSelected(date);
+              final isCheckOut = _isCheckOut(date);
+              final isInRange = _isInRange(date);
               
               return GestureDetector(
                 onTap: isDisabled
@@ -344,39 +451,63 @@ class _CustomCalendarState extends State<_CustomCalendar> {
                     : () {
                         widget.onDateSelected(date);
                       },
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? AppColors.primary
-                        : isToday
-                            ? AppColors.primary.withValues(alpha: 0.1)
-                            : Colors.transparent,
-                    shape: BoxShape.circle,
-                    border: isToday && !isSelected
-                        ? Border.all(
-                            color: AppColors.primary,
-                            width: 1,
-                          )
-                        : null,
-                  ),
-                  child: Center(
-                    child: Text(
-                      '${date.day}',
-                      style: AppTextStyles.arimo(
-                        fontSize: 14 * scale,
-                        fontWeight: isSelected || isToday
-                            ? FontWeight.bold
-                            : FontWeight.normal,
-                        color: isDisabled
-                            ? AppColors.textSecondary.withValues(alpha: 0.3)
-                            : isSelected
-                                ? AppColors.white
-                                : isToday
-                                    ? AppColors.primary
-                                    : AppColors.textPrimary,
+                child: Stack(
+                  children: [
+                    // Range Highlight Background
+                    if (isSelected || isCheckOut || isInRange)
+                      Positioned(
+                        top: 4 * scale,
+                        bottom: 4 * scale,
+                        left: 0,
+                        right: 0,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.horizontal(
+                              left: isSelected ? Radius.circular(20 * scale) : Radius.zero,
+                              right: isCheckOut ? Radius.circular(20 * scale) : Radius.zero,
+                            ),
+                          ),
+                        ),
+                      ),
+                    // Date Circle
+                    Center(
+                      child: Container(
+                        width: 36 * scale,
+                        height: 36 * scale,
+                        decoration: BoxDecoration(
+                          color: (isSelected || isCheckOut)
+                              ? AppColors.primary
+                              : Colors.transparent,
+                          shape: BoxShape.circle,
+                          border: isToday && !isSelected && !isCheckOut
+                              ? Border.all(
+                                  color: AppColors.primary,
+                                  width: 1,
+                                )
+                              : null,
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${date.day}',
+                            style: AppTextStyles.arimo(
+                              fontSize: 14 * scale,
+                              fontWeight: isSelected || isCheckOut || isToday
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              color: isDisabled
+                                  ? AppColors.textSecondary.withValues(alpha: 0.3)
+                                  : (isSelected || isCheckOut)
+                                      ? AppColors.white
+                                      : isToday
+                                          ? AppColors.primary
+                                          : AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
               );
             },

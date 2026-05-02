@@ -148,7 +148,11 @@ class ApiEndpoints {
   static String checkPaymentStatus(String orderCode) =>
       '/Transaction/check-status/$orderCode';
 
-  // System Setting endpoints
+  // ==========================================
+  // Employee - StaffSchedule endpoints
+  // ==========================================
+  static const String centerStaffAvailability =
+      '/StaffSchedule/center-staff-availability';
   static const String bookingConfig = '/SystemSetting/booking-config';
 
   // Contract endpoints

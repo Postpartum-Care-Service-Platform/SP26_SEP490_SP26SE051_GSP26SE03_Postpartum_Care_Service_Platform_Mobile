@@ -107,7 +107,7 @@ class _StaffHealthCareFlowScreenState extends State<StaffHealthCareFlowScreen> {
       create: (context) {
         final bloc = InjectionContainer.healthRecordBloc;
         bloc.add(GetLatestHealthRecord(widget.familyProfileId));
-        bloc.add(const GetHealthConditions());
+        bloc.add(GetHealthConditions(memberTypeId: isBaby ? 3 : 2));
         return bloc;
       },
       child: BlocConsumer<HealthRecordBloc, HealthRecordState>(
@@ -640,7 +640,7 @@ class _StaffHealthCareFlowScreenState extends State<StaffHealthCareFlowScreen> {
     }
 
     final filtered = _allConditions.where((condition) {
-      final appliesTo = condition.appliesTo.toUpperCase();
+      final appliesTo = (condition.appliesTo ?? '').toUpperCase();
       if (isBaby) {
         return appliesTo == 'BABY' || appliesTo == 'BOTH';
       } else if (isMom) {

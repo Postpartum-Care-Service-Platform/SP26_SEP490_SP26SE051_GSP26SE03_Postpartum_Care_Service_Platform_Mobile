@@ -5,6 +5,7 @@ import '../../../../../core/utils/app_responsive.dart';
 import '../../../../../core/utils/app_text_styles.dart';
 import '../../../domain/entities/customer_entity.dart';
 import '../../../domain/entities/target_booking_entity.dart';
+import '../../../../../core/widgets/avatar_widget.dart';
 import 'invoice_info_row.dart';
 
 class CustomerInfoCard extends StatelessWidget {
@@ -96,23 +97,13 @@ class CustomerInfoCard extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      CircleAvatar(
-                        radius: 18 * scale,
-                        backgroundColor: AppColors.borderLight,
-                        backgroundImage: (target.avatarUrl != null &&
-                                target.avatarUrl!.isNotEmpty)
-                            ? NetworkImage(target.avatarUrl!)
-                            : null,
-                        child: (target.avatarUrl == null ||
-                                target.avatarUrl!.isEmpty)
-                            ? Icon(
-                                target.memberTypeId == 3
-                                    ? Icons.child_care_rounded
-                                    : Icons.pregnant_woman_rounded,
-                                size: 18 * scale,
-                                color: AppColors.primary,
-                              )
-                            : null,
+                      AvatarWidget(
+                        size: 36 * scale,
+                        imageUrl: target.avatarUrl,
+                        displayName: target.fullName,
+                        fallbackIcon: target.memberTypeId == 3
+                            ? Icons.child_care_rounded
+                            : Icons.pregnant_woman_rounded,
                       ),
                       SizedBox(width: 8 * scale),
                       Expanded(

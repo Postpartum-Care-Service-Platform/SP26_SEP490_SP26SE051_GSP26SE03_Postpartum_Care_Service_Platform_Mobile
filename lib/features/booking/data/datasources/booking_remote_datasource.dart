@@ -5,6 +5,7 @@ import '../models/booking_model.dart';
 import '../models/payment_link_model.dart';
 import '../models/payment_status_model.dart';
 import '../models/booking_config_model.dart';
+import '../models/staff_availability_model.dart';
 
 /// Booking Remote Data Source Interface
 abstract class BookingRemoteDataSource {
@@ -61,6 +62,12 @@ abstract class BookingRemoteDataSource {
 
   /// Get booking configuration
   Future<BookingConfigModel> getBookingConfig();
+
+  /// Check if staff are available for a date range
+  Future<StaffAvailabilityModel> checkStaffAvailability({
+    required DateTime from,
+    required DateTime to,
+  });
 }
 
 /// Booking Remote Data Source Implementation
@@ -369,6 +376,25 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
     try {
       final response = await dio.get(ApiEndpoints.bookingConfig);
       return BookingConfigModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  @override
+  Future<StaffAvailabilityModel> checkStaffAvailability({
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    try {
+      final response = await dio.get(
+        ApiEndpoints.centerStaffAvailability,
+        queryParameters: {
+          'from': from.toIso8601String().split('T')[0],
+          'to': to.toIso8601String().split('T')[0],
+        },
+      );
+      return StaffAvailabilityModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw _handleError(e);
     }

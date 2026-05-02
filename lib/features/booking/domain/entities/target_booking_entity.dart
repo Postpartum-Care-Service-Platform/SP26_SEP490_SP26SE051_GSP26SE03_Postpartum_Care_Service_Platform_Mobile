@@ -18,6 +18,24 @@ class TargetBookingEntity extends Equatable {
     this.memberTypeId,
   });
 
+  TargetBookingEntity copyWith({
+    int? id,
+    int? familyProfileId,
+    String? fullName,
+    String? relationship,
+    String? avatarUrl,
+    int? memberTypeId,
+  }) {
+    return TargetBookingEntity(
+      id: id ?? this.id,
+      familyProfileId: familyProfileId ?? this.familyProfileId,
+      fullName: fullName ?? this.fullName,
+      relationship: relationship ?? this.relationship,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      memberTypeId: memberTypeId ?? this.memberTypeId,
+    );
+  }
+
   @override
   List<Object?> get props => [
         id,

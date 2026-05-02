@@ -18,13 +18,20 @@ class TargetBookingModel {
   });
 
   factory TargetBookingModel.fromJson(Map<String, dynamic> json) {
+    final familyProfile = json['familyProfile'] as Map<String, dynamic>?;
+
     return TargetBookingModel(
       id: (json['id'] as num?)?.toInt() ?? 0,
       familyProfileId: (json['familyProfileId'] as num?)?.toInt() ?? 0,
-      fullName: (json['fullName'] as String?) ?? '',
-      relationship: json['relationship'] as String?,
-      avatarUrl: json['avatarUrl'] as String?,
-      memberTypeId: (json['memberTypeId'] as num?)?.toInt(),
+      fullName: (json['fullName'] as String?) ??
+          (familyProfile?['fullName'] as String?) ??
+          '',
+      relationship: (json['relationship'] as String?) ??
+          (familyProfile?['relationship'] as String?),
+      avatarUrl: (json['avatarUrl'] as String?) ??
+          (familyProfile?['avatarUrl'] as String?),
+      memberTypeId: (json['memberTypeId'] as num?)?.toInt() ??
+          (familyProfile?['memberTypeId'] as num?)?.toInt(),
     );
   }
 

@@ -7,7 +7,9 @@ class HealthConditionModel extends Equatable {
   final String? code;
   final String? description;
   final String category;
-  final String appliesTo;
+  final String? appliesTo;
+  final int? memberTypeId;
+  final String? memberTypeName;
 
   const HealthConditionModel({
     required this.id,
@@ -15,7 +17,9 @@ class HealthConditionModel extends Equatable {
     this.code,
     this.description,
     required this.category,
-    required this.appliesTo,
+    this.appliesTo,
+    this.memberTypeId,
+    this.memberTypeName,
   });
 
   factory HealthConditionModel.fromJson(Map<String, dynamic> json) {
@@ -24,8 +28,11 @@ class HealthConditionModel extends Equatable {
       name: json['name'] as String,
       code: json['code'] as String?,
       description: json['description'] as String?,
-      category: json['category'] as String,
-      appliesTo: json['appliesTo'] as String,
+      category: json['category'] as String? ?? 'OTHER',
+      appliesTo: json['appliesTo'] as String? ??
+          (json['memberTypeName'] as String?)?.toUpperCase(),
+      memberTypeId: json['memberTypeId'] as int?,
+      memberTypeName: json['memberTypeName'] as String?,
     );
   }
 
@@ -37,11 +44,22 @@ class HealthConditionModel extends Equatable {
       description: description,
       category: category,
       appliesTo: appliesTo,
+      memberTypeId: memberTypeId,
+      memberTypeName: memberTypeName,
     );
   }
 
   @override
-  List<Object?> get props => [id, name, code, description, category, appliesTo];
+  List<Object?> get props => [
+        id,
+        name,
+        code,
+        description,
+        category,
+        appliesTo,
+        memberTypeId,
+        memberTypeName,
+      ];
 }
 
 class HealthRecordModel extends Equatable {
@@ -89,8 +107,8 @@ class HealthRecordModel extends Equatable {
       recordedBy: json['recordedBy'] as String?,
       recordedByName: json['recordedByName'] as String?,
       recordDate: DateTime.parse(json['recordDate'] as String),
-      gestationalAgeWeeks: json['gestationalAgeWeeks'] as int?,
-      birthWeightGrams: json['birthWeightGrams'] as int?,
+      gestationalAgeWeeks: (json['gestationalAgeWeeks'] as num?)?.toInt(),
+      birthWeightGrams: (json['birthWeightGrams'] as num?)?.toInt(),
       weight: (json['weight'] as num?)?.toDouble(),
       height: (json['height'] as num?)?.toDouble(),
       temperature: (json['temperature'] as num?)?.toDouble(),
@@ -99,7 +117,8 @@ class HealthRecordModel extends Equatable {
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
       conditions: (json['conditions'] as List<dynamic>?)
-              ?.map((e) => HealthConditionModel.fromJson(e as Map<String, dynamic>))
+              ?.map((e) =>
+                  HealthConditionModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
     );

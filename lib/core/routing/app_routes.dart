@@ -19,6 +19,7 @@ class AppRoutes {
   static const String services = '/services';
   static const String chat = '/chat';
   static const String profile = '/profile';
+  static const String packageRequest = '/package-request';
 
   // Profile Routes
   static const String accountDetails = '/account-details';

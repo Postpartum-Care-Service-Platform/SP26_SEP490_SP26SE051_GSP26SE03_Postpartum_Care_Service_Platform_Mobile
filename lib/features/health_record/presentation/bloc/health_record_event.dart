@@ -27,7 +27,13 @@ class GetLatestHealthRecord extends HealthRecordEvent {
 }
 
 class GetHealthConditions extends HealthRecordEvent {
-  const GetHealthConditions();
+  final int? categoryId;
+  final int? memberTypeId;
+
+  const GetHealthConditions({this.categoryId, this.memberTypeId});
+
+  @override
+  List<Object?> get props => [categoryId, memberTypeId];
 }
 
 class CreateHealthRecord extends HealthRecordEvent {

@@ -48,6 +48,48 @@ class BookingEntity extends Equatable {
     this.targetBookings = const [],
   });
 
+  BookingEntity copyWith({
+    int? id,
+    DateTime? startDate,
+    DateTime? endDate,
+    double? totalPrice,
+    double? discountAmount,
+    double? finalAmount,
+    double? paidAmount,
+    double? remainingAmount,
+    String? status,
+    DateTime? bookingDate,
+    DateTime? createdAt,
+    String? homeStaffId,
+    CustomerEntity? customer,
+    PackageInfoEntity? package,
+    RoomInfoEntity? room,
+    ContractEntity? contract,
+    List<TransactionEntity>? transactions,
+    List<TargetBookingEntity>? targetBookings,
+  }) {
+    return BookingEntity(
+      id: id ?? this.id,
+      startDate: startDate ?? this.startDate,
+      endDate: endDate ?? this.endDate,
+      totalPrice: totalPrice ?? this.totalPrice,
+      discountAmount: discountAmount ?? this.discountAmount,
+      finalAmount: finalAmount ?? this.finalAmount,
+      paidAmount: paidAmount ?? this.paidAmount,
+      remainingAmount: remainingAmount ?? this.remainingAmount,
+      status: status ?? this.status,
+      bookingDate: bookingDate ?? this.bookingDate,
+      createdAt: createdAt ?? this.createdAt,
+      homeStaffId: homeStaffId ?? this.homeStaffId,
+      customer: customer ?? this.customer,
+      package: package ?? this.package,
+      room: room ?? this.room,
+      contract: contract ?? this.contract,
+      transactions: transactions ?? this.transactions,
+      targetBookings: targetBookings ?? this.targetBookings,
+    );
+  }
+
   @override
   List<Object?> get props => [
         id,

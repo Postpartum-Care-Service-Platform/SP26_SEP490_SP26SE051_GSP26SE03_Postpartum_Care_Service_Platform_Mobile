@@ -24,24 +24,27 @@ class _AiAnalysisLoadingState extends State<AiAnalysisLoading>
     _AnalysisStep(
       icon: Icons.health_and_safety_rounded,
       text: 'Đang phân tích hồ sơ sức khoẻ...',
-      color: Color(0xFF4CAF50),
+      color: Color(0xFFFFB74D), // Light Orange
     ),
     _AnalysisStep(
       icon: Icons.compare_arrows_rounded,
       text: 'Đang so sánh các gói dịch vụ...',
-      color: Color(0xFF2196F3),
+      color: Color(0xFFFFA726), // Medium Orange
     ),
     _AnalysisStep(
       icon: Icons.psychology_rounded,
       text: 'AI đang đánh giá mức độ phù hợp...',
-      color: Color(0xFFFF9800),
+      color: Color(0xFFFF9800), // Primary Orange
     ),
     _AnalysisStep(
       icon: Icons.auto_awesome,
       text: 'Đang tổng hợp kết quả tư vấn...',
-      color: Color(0xFFE91E63),
+      color: Color(0xFFE65100), // Deep Orange
     ),
   ];
+
+  double _progress = 0.0;
+  Timer? _progressTimer;
 
   @override
   void initState() {
@@ -56,21 +59,40 @@ class _AiAnalysisLoadingState extends State<AiAnalysisLoading>
       duration: const Duration(milliseconds: 1200),
     )..repeat();
 
-    _timer = Timer.periodic(const Duration(milliseconds: 1800), (timer) {
-      if (_currentStep < _steps.length - 1) {
-        _fadeController.reverse().then((_) {
-          if (mounted) {
-            setState(() => _currentStep++);
-            _fadeController.forward();
-          }
-        });
+    // Progress timer: 45 seconds total
+    const totalDuration = Duration(seconds: 45);
+    const updateInterval = Duration(milliseconds: 100);
+    final totalTicks = totalDuration.inMilliseconds / updateInterval.inMilliseconds;
+    
+    _progressTimer = Timer.periodic(updateInterval, (timer) {
+      if (!mounted) return;
+      setState(() {
+        _progress += 1.0 / totalTicks;
+        if (_progress > 1.0) _progress = 1.0;
+        
+        // Calculate step based on progress
+        int newStep = (_progress * _steps.length).floor();
+        if (newStep >= _steps.length) newStep = _steps.length - 1;
+        
+        if (newStep != _currentStep) {
+          _fadeController.reverse().then((_) {
+            if (mounted) {
+              setState(() => _currentStep = newStep);
+              _fadeController.forward();
+            }
+          });
+        }
+      });
+      
+      if (_progress >= 1.0) {
+        timer.cancel();
       }
     });
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _progressTimer?.cancel();
     _fadeController.dispose();
     _dotController.dispose();
     super.dispose();
@@ -81,25 +103,27 @@ class _AiAnalysisLoadingState extends State<AiAnalysisLoading>
     final scale = AppResponsive.scaleFactor(context);
     final step = _steps[_currentStep];
 
-    return Container(
-      padding: EdgeInsets.fromLTRB(24 * scale, 16 * scale, 24 * scale, 24 * scale),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28 * scale)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Drag handle
-          Container(
-            width: 40 * scale,
-            height: 4 * scale,
-            margin: EdgeInsets.only(bottom: 32 * scale),
-            decoration: BoxDecoration(
-              color: AppColors.borderLight,
-              borderRadius: BorderRadius.circular(2 * scale),
+    return PopScope(
+      canPop: false, // Prevent closing by back button during analysis
+      child: Container(
+        padding: EdgeInsets.fromLTRB(24 * scale, 16 * scale, 24 * scale, 24 * scale),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28 * scale)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Drag handle - but non-functional since enableDrag is false
+            Container(
+              width: 40 * scale,
+              height: 4 * scale,
+              margin: EdgeInsets.only(bottom: 32 * scale),
+              decoration: BoxDecoration(
+                color: AppColors.borderLight.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(2 * scale),
+              ),
             ),
-          ),
 
           // AI Brain animation
           _buildBrainAnimation(scale),
@@ -148,16 +172,45 @@ class _AiAnalysisLoadingState extends State<AiAnalysisLoading>
               return AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
                 margin: EdgeInsets.symmetric(horizontal: 4 * scale),
-                width: isCurrent ? 28 * scale : 8 * scale,
-                height: 8 * scale,
+                width: isCurrent ? 24 * scale : 6 * scale,
+                height: 6 * scale,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(4 * scale),
                   color: isActive
                       ? _steps[i].color
-                      : AppColors.borderLight,
+                      : AppColors.borderLight.withValues(alpha: 0.5),
                 ),
               );
             }),
+          ),
+
+          SizedBox(height: 24 * scale),
+
+          // Linear progress bar for overall 45s progress
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 32 * scale),
+            child: Column(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10 * scale),
+                  child: LinearProgressIndicator(
+                    value: _progress,
+                    minHeight: 6 * scale,
+                    backgroundColor: AppColors.borderLight.withValues(alpha: 0.3),
+                    valueColor: AlwaysStoppedAnimation(AppColors.primary),
+                  ),
+                ),
+                SizedBox(height: 8 * scale),
+                Text(
+                  '${(_progress * 100).toInt()}%',
+                  style: AppTextStyles.arimo(
+                    fontSize: 11 * scale,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary.withValues(alpha: 0.8),
+                  ),
+                ),
+              ],
+            ),
           ),
 
           SizedBox(height: 24 * scale),
@@ -174,8 +227,9 @@ class _AiAnalysisLoadingState extends State<AiAnalysisLoading>
           SizedBox(height: MediaQuery.of(context).viewPadding.bottom + 8 * scale),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildBrainAnimation(double scale) {
     return AnimatedBuilder(

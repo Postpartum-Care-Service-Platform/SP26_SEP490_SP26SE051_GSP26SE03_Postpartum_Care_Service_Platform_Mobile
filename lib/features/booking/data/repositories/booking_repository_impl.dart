@@ -2,6 +2,7 @@ import '../../domain/entities/booking_entity.dart';
 import '../../domain/entities/payment_link_entity.dart';
 import '../../domain/entities/payment_status_entity.dart';
 import '../../domain/entities/booking_config_entity.dart';
+import '../../domain/entities/staff_availability_entity.dart';
 import '../../domain/repositories/booking_repository.dart';
 import '../datasources/booking_remote_datasource.dart';
 
@@ -155,6 +156,19 @@ class BookingRepositoryImpl implements BookingRepository {
   Future<BookingConfigEntity> getBookingConfig() async {
     try {
       return await remoteDataSource.getBookingConfig();
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
+
+  @override
+  Future<StaffAvailabilityEntity> checkStaffAvailability({
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    try {
+      final model = await remoteDataSource.checkStaffAvailability(from: from, to: to);
+      return model.toEntity();
     } catch (e) {
       throw Exception(e.toString());
     }
