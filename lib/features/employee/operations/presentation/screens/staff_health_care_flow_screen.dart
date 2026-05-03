@@ -642,21 +642,13 @@ class _StaffHealthCareFlowScreenState extends State<StaffHealthCareFlowScreen> {
       );
     }
 
-    final filtered = _allConditions.where((condition) {
-      final appliesTo = (condition.appliesTo ?? '').toUpperCase();
-      if (isBaby) {
-        return appliesTo == 'BABY' || appliesTo == 'BOTH';
-      } else if (isMom) {
-        return appliesTo == 'MOM' || appliesTo == 'BOTH';
-      } else {
-        return appliesTo == 'BOTH';
-      }
-    }).toList();
+    // Use all conditions since Bloc already filters by memberTypeId
+    final filtered = _allConditions;
 
-    // Grouping logic
+    // Grouping logic (Case-insensitive)
     final Map<String, List<HealthConditionEntity>> categorized = {};
     for (var condition in filtered) {
-      final cat = condition.category;
+      final cat = condition.category.toUpperCase();
       categorized.putIfAbsent(cat, () => []).add(condition);
     }
 

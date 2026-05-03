@@ -18,10 +18,18 @@ class HealthRecordRepositoryImpl implements HealthRecordRepository {
   }
 
   @override
-  Future<List<HealthRecordEntity>> getHealthRecordsByFamilyProfile(int familyProfileId) async {
+  Future<List<HealthRecordEntity>> getHealthRecordsByFamilyProfile(
+    int familyProfileId, {
+    DateTime? fromDate,
+    DateTime? toDate,
+  }) async {
     try {
       final response = await dio.get(
         ApiEndpoints.getHealthRecordsByFamilyProfile(familyProfileId),
+        queryParameters: {
+          if (fromDate != null) 'fromDate': fromDate.toIso8601String().split('T')[0],
+          if (toDate != null) 'toDate': toDate.toIso8601String().split('T')[0],
+        },
       );
       final List<dynamic> data = _extractData(response) as List<dynamic>;
       final models = data.map((json) => HealthRecordModel.fromJson(json as Map<String, dynamic>)).toList();

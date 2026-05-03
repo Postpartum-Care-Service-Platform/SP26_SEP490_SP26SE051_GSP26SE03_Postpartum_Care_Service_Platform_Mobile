@@ -17,7 +17,11 @@ class HealthRecordBloc extends Bloc<HealthRecordEvent, HealthRecordState> {
   Future<void> _onGetHealthRecords(GetHealthRecords event, Emitter<HealthRecordState> emit) async {
     emit(HealthRecordLoading());
     try {
-      final records = await repository.getHealthRecordsByFamilyProfile(event.familyProfileId);
+      final records = await repository.getHealthRecordsByFamilyProfile(
+        event.familyProfileId,
+        fromDate: event.fromDate,
+        toDate: event.toDate,
+      );
       emit(HealthRecordLoaded(records));
     } catch (e) {
       emit(HealthRecordError(e.toString()));

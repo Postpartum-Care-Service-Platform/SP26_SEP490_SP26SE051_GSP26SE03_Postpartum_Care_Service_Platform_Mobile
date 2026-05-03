@@ -10,11 +10,13 @@ abstract class HealthRecordEvent extends Equatable {
 
 class GetHealthRecords extends HealthRecordEvent {
   final int familyProfileId;
+  final DateTime? fromDate;
+  final DateTime? toDate;
 
-  const GetHealthRecords(this.familyProfileId);
+  const GetHealthRecords(this.familyProfileId, {this.fromDate, this.toDate});
 
   @override
-  List<Object?> get props => [familyProfileId];
+  List<Object?> get props => [familyProfileId, fromDate, toDate];
 }
 
 class GetLatestHealthRecord extends HealthRecordEvent {

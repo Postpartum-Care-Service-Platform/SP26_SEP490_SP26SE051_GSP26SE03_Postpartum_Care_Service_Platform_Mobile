@@ -4,6 +4,7 @@ import '../../../../../../../core/constants/app_colors.dart';
 import '../../../../../../../core/utils/app_text_styles.dart';
 import '../../../../../family_profile/domain/entities/family_profile_entity.dart';
 import '../../../../operations/presentation/screens/staff_health_care_flow_screen.dart';
+import '../../../../operations/presentation/screens/staff_health_record_history_screen.dart';
 
 class CustomerProfileFamilyTab extends StatelessWidget {
   final Future<List<FamilyProfileEntity>> future;
@@ -302,34 +303,72 @@ class _FamilyMemberItem extends StatelessWidget {
                             SizedBox(height: 12 * scale),
                             if (!(member.memberTypeName?.toLowerCase().contains('head of family') ?? false) && 
                                 !(member.memberTypeName?.toLowerCase().contains('chủ hộ') ?? false))
-                              SizedBox(
-                                width: double.infinity,
-                                child: OutlinedButton.icon(
-                                  onPressed: () {
-                                    StaffHealthCareFlowScreen.showAsBottomSheet(
-                                      context,
-                                      familyProfileId: member.id,
-                                      familyMemberName: member.fullName,
-                                      memberType: member.memberTypeName,
-                                    );
-                                  },
-                                  icon: Icon(Icons.medical_services_outlined, size: 16 * scale),
-                                  label: Text(
-                                    'Ghi nhận sức khỏe',
-                                    style: AppTextStyles.arimo(
-                                      fontSize: 12 * scale,
-                                      fontWeight: FontWeight.w700,
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => StaffHealthRecordHistoryScreen(
+                                              familyProfileId: member.id,
+                                              familyMemberName: member.fullName,
+                                              memberType: member.memberTypeName,
+                                              avatarUrl: member.avatarUrl,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      icon: Icon(Icons.history_edu_rounded, size: 14 * scale, color: Colors.white),
+                                      label: Text(
+                                        'Lịch sử',
+                                        style: AppTextStyles.arimo(
+                                          fontSize: 11 * scale,
+                                          fontWeight: FontWeight.w800,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        padding: EdgeInsets.symmetric(vertical: 8 * scale),
+                                        backgroundColor: Colors.orange[700],
+                                        elevation: 0,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10 * scale),
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                  style: OutlinedButton.styleFrom(
-                                    padding: EdgeInsets.symmetric(vertical: 8 * scale),
-                                    side: const BorderSide(color: AppColors.primary),
-                                    foregroundColor: AppColors.primary,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10 * scale),
+                                  SizedBox(width: 8 * scale),
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      onPressed: () {
+                                        StaffHealthCareFlowScreen.showAsBottomSheet(
+                                          context,
+                                          familyProfileId: member.id,
+                                          familyMemberName: member.fullName,
+                                          memberType: member.memberTypeName,
+                                        );
+                                      },
+                                      icon: Icon(Icons.add_task_rounded, size: 14 * scale),
+                                      label: Text(
+                                        'Ghi nhận',
+                                        style: AppTextStyles.arimo(
+                                          fontSize: 11 * scale,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      style: OutlinedButton.styleFrom(
+                                        padding: EdgeInsets.symmetric(vertical: 8 * scale),
+                                        side: const BorderSide(color: AppColors.primary),
+                                        foregroundColor: AppColors.primary,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10 * scale),
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
+                                ],
                               ),
                           ],
                         ),
