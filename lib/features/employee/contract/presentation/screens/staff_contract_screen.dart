@@ -1060,37 +1060,46 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
           required String hint,
           String? helper,
           Widget? suffix,
+          IconData? prefixIcon,
         }) {
           return InputDecoration(
             labelText: label,
             hintText: hint,
             helperText: helper,
+            prefixIcon: prefixIcon != null
+                ? Icon(prefixIcon, size: 20 * scale, color: AppColors.primary)
+                : null,
             suffixIcon: suffix,
             alignLabelWithHint: true,
             filled: true,
             fillColor: const Color(0xFFF8FAFC),
+            labelStyle: AppTextStyles.arimo(
+              fontSize: 14 * scale,
+              color: AppColors.textSecondary,
+            ),
+            hintStyle: AppTextStyles.arimo(
+              fontSize: 14 * scale,
+              color: AppColors.textSecondary.withValues(alpha: 0.5),
+            ),
             contentPadding: EdgeInsets.symmetric(
-              horizontal: 14 * scale,
-              vertical: 14 * scale,
+              horizontal: 16 * scale,
+              vertical: 16 * scale,
             ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12 * scale),
-              borderSide: BorderSide(
-                color: AppColors.borderLight,
-              ),
+              borderRadius: BorderRadius.circular(16 * scale),
+              borderSide: BorderSide(color: AppColors.borderLight, width: 1),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12 * scale),
-              borderSide: BorderSide(
-                color: AppColors.borderLight,
-              ),
+              borderRadius: BorderRadius.circular(16 * scale),
+              borderSide: BorderSide(color: AppColors.borderLight, width: 1),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12 * scale),
-              borderSide: BorderSide(
-                color: AppColors.primary,
-                width: 1.5,
-              ),
+              borderRadius: BorderRadius.circular(16 * scale),
+              borderSide: BorderSide(color: AppColors.primary, width: 1.5),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16 * scale),
+              borderSide: const BorderSide(color: Colors.red, width: 1),
             ),
           );
         }
@@ -1139,19 +1148,34 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
 
               Widget sectionTitle(String text, IconData icon) {
                 return Padding(
-                  padding: EdgeInsets.only(bottom: 10 * scale, top: 2 * scale),
-                  child: Row(
+                  padding: EdgeInsets.only(bottom: 12 * scale, top: 16 * scale),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(icon, size: 17 * scale, color: AppColors.primary),
-                      SizedBox(width: 6 * scale),
-                      Text(
-                        text,
-                        style: AppTextStyles.arimo(
-                          fontSize: 14 * scale,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
+                      Row(
+                        children: [
+                          Container(
+                            padding: EdgeInsets.all(6 * scale),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8 * scale),
+                            ),
+                            child: Icon(icon, size: 16 * scale, color: AppColors.primary),
+                          ),
+                          SizedBox(width: 10 * scale),
+                          Text(
+                            text,
+                            style: AppTextStyles.arimo(
+                              fontSize: 15 * scale,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textPrimary,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ],
                       ),
+                      SizedBox(height: 8 * scale),
+                      Divider(height: 1, color: AppColors.borderLight.withValues(alpha: 0.5)),
                     ],
                   ),
                 );
@@ -1163,13 +1187,25 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                 required ValueChanged<DateTime> onChanged,
               }) {
                 return InkWell(
-                  borderRadius: BorderRadius.circular(12 * scale),
+                  borderRadius: BorderRadius.circular(16 * scale),
                   onTap: () async {
                     final picked = await showDatePicker(
                       context: context,
                       initialDate: value ?? DateTime.now(),
                       firstDate: DateTime(2020),
                       lastDate: DateTime(2100),
+                      builder: (context, child) {
+                        return Theme(
+                          data: Theme.of(context).copyWith(
+                            colorScheme: const ColorScheme.light(
+                              primary: AppColors.primary,
+                              onPrimary: Colors.white,
+                              onSurface: AppColors.textPrimary,
+                            ),
+                          ),
+                          child: child!,
+                        );
+                      },
                     );
                     if (picked != null) {
                       setModalState(() => onChanged(picked));
@@ -1177,22 +1213,36 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                   },
                   child: Container(
                     padding: EdgeInsets.symmetric(
-                      horizontal: 14 * scale,
-                      vertical: 12 * scale,
+                      horizontal: 16 * scale,
+                      vertical: 14 * scale,
                     ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(12 * scale),
+                      borderRadius: BorderRadius.circular(16 * scale),
                       border: Border.all(color: AppColors.borderLight),
                     ),
                     child: Row(
                       children: [
-                        Icon(
-                          Icons.calendar_today_rounded,
-                          size: 16 * scale,
-                          color: AppColors.textSecondary,
+                        Container(
+                          padding: EdgeInsets.all(8 * scale),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10 * scale),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.03),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            Icons.calendar_month_rounded,
+                            size: 18 * scale,
+                            color: AppColors.primary,
+                          ),
                         ),
-                        SizedBox(width: 8 * scale),
+                        SizedBox(width: 14 * scale),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1200,16 +1250,17 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                               Text(
                                 label,
                                 style: AppTextStyles.arimo(
-                                  fontSize: 11 * scale,
+                                  fontSize: 12 * scale,
                                   color: AppColors.textSecondary,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
-                              SizedBox(height: 3 * scale),
+                              SizedBox(height: 4 * scale),
                               Text(
                                 value != null ? _formatDate(value) : 'Chọn ngày',
                                 style: AppTextStyles.arimo(
-                                  fontSize: 13 * scale,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14 * scale,
+                                  fontWeight: FontWeight.w700,
                                   color: AppColors.textPrimary,
                                 ),
                               ),
@@ -1217,9 +1268,9 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                           ),
                         ),
                         Icon(
-                          Icons.chevron_right_rounded,
-                          color: AppColors.textSecondary,
-                          size: 18 * scale,
+                          Icons.arrow_forward_ios_rounded,
+                          color: AppColors.textSecondary.withValues(alpha: 0.5),
+                          size: 14 * scale,
                         ),
                       ],
                     ),
@@ -1234,8 +1285,8 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                 final customerPhone = customerPhoneController.text.trim();
                 final customerAddress = customerAddressController.text.trim();
                 final totalPrice = parseMoney(totalController.text);
-                final discountAmount = parseMoney(discountController.text);
-                final finalAmount = parseMoney(finalController.text);
+                final discountAmount = 0.0;
+                final finalAmount = double.tryParse(totalController.text.trim()) ?? 0.0;
 
                 if (customerName != currentCustomerName) changedItems.add('Tên khách hàng');
                 if (customerPhone != currentCustomerPhone) changedItems.add('Số điện thoại');
@@ -1250,9 +1301,7 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                 if (checkoutDate != originalCheckoutDate) {
                   changedItems.add('Check-out');
                 }
-                if (totalPrice != originalTotalPrice) changedItems.add('Tổng tiền');
-                if (discountAmount != originalDiscountAmount) changedItems.add('Giảm giá');
-                if (finalAmount != originalFinalAmount) changedItems.add('Thành tiền');
+
 
                 if (changedItems.isEmpty) {
                   AppToast.showError(
@@ -1266,32 +1315,144 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                 final confirmed = await showDialog<bool>(
                   context: this.context,
                   builder: (dialogCtx) {
-                    return AlertDialog(
-                      title: const Text('Xác nhận cập nhật'),
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Bạn sắp ghi đè các thông tin:'),
-                          const SizedBox(height: 8),
-                          ...changedItems.map(
-                            (item) => Padding(
-                              padding: const EdgeInsets.only(bottom: 4),
-                              child: Text('• $item'),
-                            ),
-                          ),
-                        ],
+                    final dScale = AppResponsive.scaleFactor(dialogCtx);
+                    return Dialog(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24 * dScale),
                       ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(dialogCtx).pop(false),
-                          child: const Text('Hủy'),
+                      child: Padding(
+                        padding: EdgeInsets.all(24 * dScale),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: EdgeInsets.all(16 * dScale),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.tips_and_updates_rounded,
+                                color: AppColors.primary,
+                                size: 32 * dScale,
+                              ),
+                            ),
+                            SizedBox(height: 20 * dScale),
+                            Text(
+                              'Xác nhận cập nhật',
+                              style: AppTextStyles.arimo(
+                                fontSize: 18 * dScale,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            SizedBox(height: 12 * dScale),
+                            Text(
+                              'Bạn vừa thay đổi các thông tin sau. Bạn có chắc chắn muốn lưu các thay đổi này không?',
+                              textAlign: TextAlign.center,
+                              style: AppTextStyles.arimo(
+                                fontSize: 14 * dScale,
+                                color: AppColors.textSecondary,
+                                height: 1.5,
+                              ),
+                            ),
+                            SizedBox(height: 20 * dScale),
+                            Container(
+                              width: double.infinity,
+                              padding: EdgeInsets.all(16 * dScale),
+                              decoration: BoxDecoration(
+                                color: AppColors.background,
+                                borderRadius: BorderRadius.circular(16 * dScale),
+                                border: Border.all(color: AppColors.borderLight),
+                              ),
+                              child: Wrap(
+                                spacing: 8 * dScale,
+                                runSpacing: 8 * dScale,
+                                children: changedItems.map((item) {
+                                  return Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 12 * dScale,
+                                      vertical: 6 * dScale,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(20 * dScale),
+                                      border: Border.all(
+                                        color: AppColors.primary.withValues(alpha: 0.2),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.check_circle_rounded,
+                                          size: 14 * dScale,
+                                          color: AppColors.primary,
+                                        ),
+                                        SizedBox(width: 6 * dScale),
+                                        Text(
+                                          item,
+                                          style: AppTextStyles.arimo(
+                                            fontSize: 12 * dScale,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.textPrimary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                            SizedBox(height: 24 * dScale),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextButton(
+                                    onPressed: () => Navigator.of(dialogCtx).pop(false),
+                                    style: TextButton.styleFrom(
+                                      padding: EdgeInsets.symmetric(vertical: 14 * dScale),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12 * dScale),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      'Hủy',
+                                      style: AppTextStyles.arimo(
+                                        fontSize: 14 * dScale,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 12 * dScale),
+                                Expanded(
+                                  child: ElevatedButton(
+                                    onPressed: () => Navigator.of(dialogCtx).pop(true),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.primary,
+                                      foregroundColor: Colors.white,
+                                      padding: EdgeInsets.symmetric(vertical: 14 * dScale),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12 * dScale),
+                                      ),
+                                      elevation: 0,
+                                    ),
+                                    child: Text(
+                                      'Xác nhận lưu',
+                                      style: AppTextStyles.arimo(
+                                        fontSize: 14 * dScale,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
-                        ElevatedButton(
-                          onPressed: () => Navigator.of(dialogCtx).pop(true),
-                          child: const Text('Xác nhận lưu'),
-                        ),
-                      ],
+                      ),
                     );
                   },
                 );
@@ -1356,16 +1517,27 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                         ),
                       ),
                     ),
-                    Text(
-                      'Chỉnh sửa nội dung hợp đồng',
-                      style: AppTextStyles.arimo(
-                        fontSize: 17 * scale,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Sửa hợp đồng',
+                          style: AppTextStyles.arimo(
+                            fontSize: 18 * scale,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.of(ctx).pop(),
+                          icon: const Icon(Icons.close_rounded),
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ],
                     ),
-                    SizedBox(height: 6 * scale),
+                    SizedBox(height: 4 * scale),
                     Text(
-                      'Lưu ý: Chỉ điền các thông tin cần thay đổi, các ô để trống sẽ giữ nguyên nội dung cũ.',
+                      'Cập nhật thông tin chi tiết cho hợp đồng #${contract.contractCode}',
                       style: AppTextStyles.arimo(
                         fontSize: 12 * scale,
                         color: AppColors.textSecondary,
@@ -1379,23 +1551,26 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                       decoration: buildFieldDecoration(
                         label: 'Tên khách hàng',
                         hint: 'Nhập tên khách hàng',
+                        prefixIcon: Icons.person_outline_rounded,
                       ),
                     ),
-                    SizedBox(height: 10 * scale),
+                    SizedBox(height: 12 * scale),
                     TextField(
                       controller: customerPhoneController,
                       keyboardType: TextInputType.phone,
                       decoration: buildFieldDecoration(
                         label: 'Số điện thoại',
                         hint: 'Nhập số điện thoại',
+                        prefixIcon: Icons.phone_android_rounded,
                       ),
                     ),
-                    SizedBox(height: 10 * scale),
+                    SizedBox(height: 12 * scale),
                     TextField(
                       controller: customerAddressController,
                       decoration: buildFieldDecoration(
                         label: 'Địa chỉ',
                         hint: 'Nhập địa chỉ khách hàng',
+                        prefixIcon: Icons.location_on_outlined,
                       ),
                     ),
 
@@ -1406,19 +1581,19 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                       value: effectiveFrom,
                       onChanged: (v) => effectiveFrom = v,
                     ),
-                    SizedBox(height: 8 * scale),
+                    SizedBox(height: 12 * scale),
                     datePickerTile(
                       label: 'Hiệu lực đến',
                       value: effectiveTo,
                       onChanged: (v) => effectiveTo = v,
                     ),
-                    SizedBox(height: 8 * scale),
+                    SizedBox(height: 12 * scale),
                     datePickerTile(
                       label: 'Check-in',
                       value: checkinDate,
                       onChanged: (v) => checkinDate = v,
                     ),
-                    SizedBox(height: 8 * scale),
+                    SizedBox(height: 12 * scale),
                     datePickerTile(
                       label: 'Check-out',
                       value: checkoutDate,
@@ -1427,95 +1602,123 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
 
                     SizedBox(height: 14 * scale),
                     sectionTitle('Chi phí', Icons.payments_outlined),
-                    TextField(
-                      controller: totalController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
+                    Container(
+                      padding: EdgeInsets.all(16 * scale),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20 * scale),
+                        border: Border.all(color: AppColors.borderLight),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.02),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
-                      onChanged: (_) {
-                        recomputeFinalAmount();
-                        setModalState(() {});
-                      },
-                      decoration: buildFieldDecoration(
-                        label: 'Tổng tiền',
-                        hint: 'Nhập số tiền (để trống nếu giữ nguyên)',
-                        suffix: Padding(
-                          padding: EdgeInsets.only(right: 10 * scale),
-                          child: Center(
-                            widthFactor: 1,
-                            child: Text(
-                              'VNĐ',
-                              style: AppTextStyles.arimo(
-                                fontSize: 11 * scale,
-                                color: AppColors.textSecondary,
-                                fontWeight: FontWeight.w600,
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.payments_rounded,
+                                    size: 18 * scale,
+                                    color: AppColors.primary,
+                                  ),
+                                  SizedBox(width: 10 * scale),
+                                  Text(
+                                    'Tổng dịch vụ',
+                                    style: AppTextStyles.arimo(
+                                      fontSize: 14 * scale,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Text(
+                                '${totalController.text} VNĐ',
+                                style: AppTextStyles.arimo(
+                                  fontSize: 14 * scale,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 16 * scale),
+                          // Dashed Line Divider
+                          Row(
+                            children: List.generate(
+                              30,
+                              (index) => Expanded(
+                                child: Container(
+                                  color: index % 2 == 0 ? AppColors.borderLight : Colors.transparent,
+                                  height: 1,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 10 * scale),
-                    TextField(
-                      controller: discountController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      onChanged: (_) {
-                        recomputeFinalAmount();
-                        setModalState(() {});
-                      },
-                      decoration: buildFieldDecoration(
-                        label: 'Giảm giá',
-                        hint: 'Nhập số tiền giảm (để trống nếu giữ nguyên)',
-                        suffix: Padding(
-                          padding: EdgeInsets.only(right: 10 * scale),
-                          child: Center(
-                            widthFactor: 1,
-                            child: Text(
-                              'VNĐ',
-                              style: AppTextStyles.arimo(
-                                fontSize: 11 * scale,
-                                color: AppColors.textSecondary,
-                                fontWeight: FontWeight.w600,
+                          SizedBox(height: 16 * scale),
+                          // Invoice Footer
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'THÀNH TIỀN',
+                                    style: AppTextStyles.arimo(
+                                      fontSize: 12 * scale,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.textSecondary,
+                                      letterSpacing: 1,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Dựa trên tổng giá dịch vụ',
+                                    style: AppTextStyles.arimo(
+                                      fontSize: 10 * scale,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 10 * scale),
-                    TextField(
-                      controller: finalController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      onChanged: (_) {
-                        finalAmountManualOverride =
-                            finalController.text.trim().isNotEmpty;
-                        setModalState(() {});
-                      },
-                      decoration: buildFieldDecoration(
-                        label: 'Thành tiền',
-                        hint:
-                            'Tự động tính từ Tổng tiền - Giảm giá (có thể sửa tay)',
-                        helper: finalAmountManualOverride
-                            ? 'Đang dùng giá trị nhập tay'
-                            : 'Đang tự động tính',
-                        suffix: Padding(
-                          padding: EdgeInsets.only(right: 10 * scale),
-                          child: Center(
-                            widthFactor: 1,
-                            child: Text(
-                              'VNĐ',
-                              style: AppTextStyles.arimo(
-                                fontSize: 11 * scale,
-                                color: AppColors.textSecondary,
-                                fontWeight: FontWeight.w600,
+                              Container(
+                                padding: EdgeInsets.symmetric(horizontal: 14 * scale, vertical: 8 * scale),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(12 * scale),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      totalController.text.isNotEmpty ? totalController.text : '0',
+                                      style: AppTextStyles.arimo(
+                                        fontSize: 20 * scale,
+                                        fontWeight: FontWeight.w900,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                    SizedBox(width: 4 * scale),
+                                    Text(
+                                      'đ',
+                                      style: AppTextStyles.arimo(
+                                        fontSize: 14 * scale,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
+                            ],
                           ),
-                        ),
+                        ],
                       ),
                     ),
 
@@ -1531,8 +1734,9 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12 * scale),
                           ),
+                          elevation: 0,
                         ),
-                        icon: Icon(Icons.save_rounded, size: 18 * scale),
+                        icon: Icon(Icons.check_circle_outline_rounded, size: 18 * scale),
                         label: Text(
                           'Lưu thay đổi',
                           style: AppTextStyles.arimo(
@@ -1850,7 +2054,7 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                 ),
                 SizedBox(height: 20 * scale),
                 // 1. Gửi khách — Chỉ hiển thị khi Draft
-                if (contract.status.toLowerCase() == 'draft' && !hasSignedFile) ...[
+                if (contract.status.toLowerCase() == 'draft') ...[
                   _ActionButton(
                     icon: Icons.send_rounded,
                     label: _isSending ? 'Đang gửi...' : 'Gửi khách',
@@ -1920,8 +2124,8 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                 ],
 
                 // Additional Action: Chỉnh sửa
-                // Chỉ hiện nút chỉnh sửa khi hợp đồng ở trạng thái draft
-                if (contract.status.toLowerCase() == 'draft') ...[
+                // Chỉ hiện nút chỉnh sửa khi hợp đồng ở trạng thái draft hoặc sent
+                if (['draft', 'sent'].contains(contract.status.toLowerCase())) ...[
                   _ActionButton(
                     icon: Icons.edit_note_rounded,
                     label: 'Chỉnh sửa',
