@@ -7,6 +7,7 @@ import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../bloc/wallet_cubit.dart';
 import '../bloc/wallet_state.dart';
+import '../../data/models/wallet_transaction_model.dart';
 
 class EmployeeWalletScreen extends StatefulWidget {
   const EmployeeWalletScreen({super.key});
@@ -271,8 +272,12 @@ class _EmployeeWalletScreenState extends State<EmployeeWalletScreen> {
     );
   }
 
-  Widget _buildTransactionItem(double scale, dynamic tx) {
-    final isReceived = (tx.amount ?? 0) >= 0;
+  Widget _buildTransactionItem(double scale, WalletTransactionModel tx) {
+    final type = (tx.type ?? '').toLowerCase();
+    final description = (tx.description ?? '').toLowerCase();
+    final isWithdraw = type.contains('withdraw') || description.contains('rút tiền') || description.contains('withdraw');
+    
+    final isReceived = tx.amount >= 0 && !isWithdraw;
     final currencyFormatter = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
 
     return Container(
@@ -312,7 +317,9 @@ class _EmployeeWalletScreenState extends State<EmployeeWalletScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  tx.packageName ?? tx.description ?? tx.type ?? 'Giao dịch',
+                  isWithdraw 
+                    ? 'Rút tiền' 
+                    : (tx.packageName ?? tx.description ?? tx.type ?? 'Giao dịch'),
                   style: AppTextStyles.arimo(
                     fontSize: 15 * scale,
                     fontWeight: FontWeight.w800,
@@ -321,10 +328,12 @@ class _EmployeeWalletScreenState extends State<EmployeeWalletScreen> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                if (tx.packageName != null && tx.description != null) ...[
+                if (isWithdraw || (tx.packageName != null && tx.description != null)) ...[
                   SizedBox(height: 2 * scale),
                   Text(
-                    tx.description!,
+                    isWithdraw 
+                      ? (tx.description ?? 'Yêu cầu rút tiền')
+                      : tx.description!,
                     style: AppTextStyles.arimo(
                       fontSize: 12 * scale,
                       color: const Color(0xFF64748B),
@@ -352,11 +361,11 @@ class _EmployeeWalletScreenState extends State<EmployeeWalletScreen> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '${isReceived ? '+' : ''}${currencyFormatter.format(tx.amount)}',
+                '${isReceived ? '+' : '-'}${currencyFormatter.format(tx.amount.abs())}',
                 style: AppTextStyles.arimo(
                   fontSize: 16 * scale,
                   fontWeight: FontWeight.w800,
-                  color: isReceived ? const Color(0xFF15803D) : const Color(0xFF0F172A),
+                  color: isReceived ? const Color(0xFF15803D) : const Color(0xFFB91C1C),
                 ),
               ),
               if (tx.status != null) ...[

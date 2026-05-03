@@ -13,6 +13,14 @@ abstract class RefundRequestRemoteDataSource {
     required String reason,
   });
 
+  Future<List<RefundRequestModel>> createHomeStaffWithdrawRequest({
+    required int requestedAmount,
+    required String bankName,
+    required String accountNumber,
+    required String accountHolder,
+    required String reason,
+  });
+
   Future<List<RefundRequestModel>> getMyRefundRequests();
 }
 
@@ -70,8 +78,56 @@ class RefundRequestRemoteDataSourceImpl
         }
       }
       throw Exception(message);
+    }
+  }
+
+  @override
+  Future<List<RefundRequestModel>> createHomeStaffWithdrawRequest({
+    required int requestedAmount,
+    required String bankName,
+    required String accountNumber,
+    required String accountHolder,
+    required String reason,
+  }) async {
+    try {
+      final response = await dio.post(
+        ApiEndpoints.createRefundRequestByHomeStaff,
+        data: {
+          'requestedAmount': requestedAmount,
+          'bankName': bankName,
+          'accountNumber': accountNumber,
+          'accountHolder': accountHolder,
+          'reason': reason,
+        },
+      );
+
+      final data = response.data;
+
+      if (data is List) {
+        return data
+            .map((e) => RefundRequestModel.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+
+      if (data is Map<String, dynamic>) {
+        return [RefundRequestModel.fromJson(data)];
+      }
+
+      return [];
+    } on DioException catch (e) {
+      final errorData = e.response?.data;
+      String message = 'Không thể tạo yêu cầu rút tiền';
+
+      if (errorData is Map<String, dynamic>) {
+        final error =
+            errorData['error'] ?? errorData['message'] ?? errorData['title'];
+        if (error != null) {
+          message = error.toString();
+        }
+      }
+      throw Exception(message);
     } catch (e) {
-      throw Exception('Không thể tạo yêu cầu hoàn tiền: $e');
+      throw Exception('Không thể tạo yêu cầu rút tiền: $e');
     }
   }
 

@@ -4,7 +4,7 @@ import '../../domain/entities/refund_request_entity.dart';
 class RefundRequestModel extends RefundRequestEntity {
   const RefundRequestModel({
     required super.id,
-    required super.bookingId,
+    super.bookingId,
     super.customerId,
     super.requestedAmount,
     super.approvedAmount,
@@ -31,7 +31,7 @@ class RefundRequestModel extends RefundRequestEntity {
 
     return RefundRequestModel(
       id: json['id'] as int,
-      bookingId: json['bookingId'] as int,
+      bookingId: json['bookingId'] as int?,
       customerId: json['customerId'] as String?,
       requestedAmount: requestedAmount,
       approvedAmount: approvedAmount,
