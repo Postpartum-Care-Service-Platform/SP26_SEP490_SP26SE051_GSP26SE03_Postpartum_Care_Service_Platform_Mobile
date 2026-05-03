@@ -13,7 +13,6 @@ import '../../../../../features/employee/appointment/presentation/bloc/appointme
 import '../../../../../features/employee/appointment/presentation/bloc/appointment/appointment_event.dart';
 import '../../../../../features/employee/appointment/presentation/bloc/appointment/appointment_state.dart';
 import '../../../../../features/employee/shell/presentation/widgets/employee_header_bar.dart';
-import '../../../../employee/operations/presentation/screens/staff_health_care_flow_screen.dart';
 
 /// Tasks Screen with BLoC integration
 /// Shows today's appointments as tasks
@@ -23,8 +22,9 @@ class TasksScreenNew extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => InjectionContainer.employeeAppointmentBloc
-        ..add(const LoadMyAssignedAppointments()),
+      create: (context) =>
+          InjectionContainer.employeeAppointmentBloc
+            ..add(const LoadMyAssignedAppointments()),
       child: const _TasksScreenContent(),
     );
   }
@@ -47,17 +47,21 @@ class _TasksScreenContent extends StatelessWidget {
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () async {
-                  context.read<AppointmentBloc>().add(const LoadMyAssignedAppointments());
+                  context.read<AppointmentBloc>().add(
+                    const LoadMyAssignedAppointments(),
+                  );
                 },
                 child: BlocConsumer<AppointmentBloc, AppointmentState>(
                   listenWhen: (previous, current) {
-                    return current is AppointmentError || current is AppointmentActionSuccess;
+                    return current is AppointmentError ||
+                        current is AppointmentActionSuccess;
                   },
                   buildWhen: (previous, current) {
                     if (current is AppointmentActionSuccess) {
                       return false;
                     }
-                    if (current is AppointmentLoading && previous is AppointmentLoaded) {
+                    if (current is AppointmentLoading &&
+                        previous is AppointmentLoaded) {
                       return false;
                     }
                     return true;
@@ -81,19 +85,17 @@ class _TasksScreenContent extends StatelessWidget {
                   },
                   builder: (context, state) {
                     if (state is AppointmentLoading) {
-                      return const Center(
-                        child: CircularProgressIndicator(),
-                      );
+                      return const Center(child: CircularProgressIndicator());
                     }
 
                     if (state is AppointmentLoaded) {
                       // Filter only today's appointments
                       final todayTasks = _filterTodayTasks(state.appointments);
-                      
+
                       if (todayTasks.isEmpty) {
                         return _EmptyState();
                       }
-                      
+
                       return _TasksContent(tasks: todayTasks);
                     }
 
@@ -117,7 +119,9 @@ class _TasksScreenContent extends StatelessWidget {
   }
 
   /// Filter appointments for today only
-  List<AppointmentEntity> _filterTodayTasks(List<AppointmentEntity> appointments) {
+  List<AppointmentEntity> _filterTodayTasks(
+    List<AppointmentEntity> appointments,
+  ) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final tomorrow = today.add(const Duration(days: 1));
@@ -128,12 +132,13 @@ class _TasksScreenContent extends StatelessWidget {
         appointment.appointmentDate.month,
         appointment.appointmentDate.day,
       );
-      
+
       // Only include appointments for today
-      return appointmentDate.isAfter(today.subtract(const Duration(seconds: 1))) &&
-             appointmentDate.isBefore(tomorrow);
-    }).toList()
-      ..sort((a, b) => a.appointmentDate.compareTo(b.appointmentDate));
+      return appointmentDate.isAfter(
+            today.subtract(const Duration(seconds: 1)),
+          ) &&
+          appointmentDate.isBefore(tomorrow);
+    }).toList()..sort((a, b) => a.appointmentDate.compareTo(b.appointmentDate));
   }
 }
 
@@ -148,12 +153,19 @@ class _TasksContent extends StatelessWidget {
     final padding = AppResponsive.pagePadding(context);
 
     // Calculate statistics
-    final completed = tasks.where((t) => t.status == AppointmentStatus.completed).length;
-    final inProgress = tasks.where((t) => 
-      t.status == AppointmentStatus.scheduled || 
-      t.status == AppointmentStatus.rescheduled
-    ).length;
-    final pending = tasks.where((t) => t.status == AppointmentStatus.pending).length;
+    final completed = tasks
+        .where((t) => t.status == AppointmentStatus.completed)
+        .length;
+    final inProgress = tasks
+        .where(
+          (t) =>
+              t.status == AppointmentStatus.scheduled ||
+              t.status == AppointmentStatus.rescheduled,
+        )
+        .length;
+    final pending = tasks
+        .where((t) => t.status == AppointmentStatus.pending)
+        .length;
 
     return SingleChildScrollView(
       padding: padding,
@@ -184,7 +196,7 @@ class _HeaderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final now = DateTime.now();
     final dateFormat = DateFormat('EEEE, dd/MM/yyyy', 'vi');
-    
+
     return Container(
       decoration: BoxDecoration(
         color: AppColors.white,
@@ -334,7 +346,7 @@ class _TaskList extends StatelessWidget {
       builder: (context, state) {
         if (state is AppointmentLoaded) {
           final todayTasks = _filterTodayTasks(state.appointments);
-          
+
           return Column(
             children: [
               for (final task in todayTasks) ...[
@@ -349,7 +361,9 @@ class _TaskList extends StatelessWidget {
     );
   }
 
-  List<AppointmentEntity> _filterTodayTasks(List<AppointmentEntity> appointments) {
+  List<AppointmentEntity> _filterTodayTasks(
+    List<AppointmentEntity> appointments,
+  ) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final tomorrow = today.add(const Duration(days: 1));
@@ -360,11 +374,12 @@ class _TaskList extends StatelessWidget {
         appointment.appointmentDate.month,
         appointment.appointmentDate.day,
       );
-      
-      return appointmentDate.isAfter(today.subtract(const Duration(seconds: 1))) &&
-             appointmentDate.isBefore(tomorrow);
-    }).toList()
-      ..sort((a, b) => a.appointmentDate.compareTo(b.appointmentDate));
+
+      return appointmentDate.isAfter(
+            today.subtract(const Duration(seconds: 1)),
+          ) &&
+          appointmentDate.isBefore(tomorrow);
+    }).toList()..sort((a, b) => a.appointmentDate.compareTo(b.appointmentDate));
   }
 }
 
@@ -395,7 +410,10 @@ class _TaskCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(_getStatusIcon(task.status), style: const TextStyle(fontSize: 20)),
+              Text(
+                _getStatusIcon(task.status),
+                style: const TextStyle(fontSize: 20),
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -491,14 +509,18 @@ class _TaskCard extends StatelessWidget {
                       icon: Icons.medical_services_outlined,
                       color: Colors.orange,
                       onTap: () {
-                        // We need the familyProfileId. 
+                        // We need the familyProfileId.
                         // Assuming the customer has family profiles, we might need to fetch them or if it's already in the task.
-                        // For now, let's assume we can navigate to a selection screen if multiple, 
+                        // For now, let's assume we can navigate to a selection screen if multiple,
                         // but usually an appointment is for one specific person.
                         // If AppointmentEntity doesn't have familyProfileId, we might need to fetch it.
                         // I'll show a toast for now or navigate if I can find the ID.
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Vui lòng vào Hồ sơ gia đình để ghi nhận sức khỏe chi tiết')),
+                          const SnackBar(
+                            content: Text(
+                              'Vui lòng vào Hồ sơ gia đình để ghi nhận sức khỏe chi tiết',
+                            ),
+                          ),
                         );
                       },
                     ),
@@ -547,7 +569,7 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final config = _getConfig(status);
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -713,7 +735,9 @@ class _ErrorState extends StatelessWidget {
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: () {
-              context.read<AppointmentBloc>().add(const LoadMyAssignedAppointments());
+              context.read<AppointmentBloc>().add(
+                const LoadMyAssignedAppointments(),
+              );
             },
             child: const Text('Thử lại'),
           ),

@@ -5,7 +5,6 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'core/di/injection_container.dart';
 import 'features/notification/presentation/bloc/notification_bloc.dart';
-import 'features/notification/presentation/bloc/notification_event.dart';
 import 'core/constants/app_colors.dart';
 import 'core/config/app_config.dart';
 import 'core/utils/bad_cert_http_override.dart';

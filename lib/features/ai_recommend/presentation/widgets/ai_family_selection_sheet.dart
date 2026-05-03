@@ -3,10 +3,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/avatar_widget.dart';
-import '../../../../core/widgets/app_loading.dart';
-import '../../../../core/widgets/app_toast.dart';
 import '../../../family_profile/domain/entities/family_profile_entity.dart';
-import '../../../../core/di/injection_container.dart';
 
 class AiFamilySelectionSheet extends StatefulWidget {
   final List<FamilyProfileEntity> familyProfiles;
@@ -74,7 +71,12 @@ class _AiFamilySelectionSheetState extends State<AiFamilySelectionSheet> {
         .toList();
 
     return Container(
-      padding: EdgeInsets.fromLTRB(20 * scale, 8 * scale, 20 * scale, 20 * scale),
+      padding: EdgeInsets.fromLTRB(
+        20 * scale,
+        8 * scale,
+        20 * scale,
+        20 * scale,
+      ),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28 * scale)),
@@ -153,7 +155,11 @@ class _AiFamilySelectionSheetState extends State<AiFamilySelectionSheet> {
             ),
             child: Row(
               children: [
-                Icon(Icons.lightbulb_outline_rounded, color: AppColors.primary, size: 20 * scale),
+                Icon(
+                  Icons.lightbulb_outline_rounded,
+                  color: AppColors.primary,
+                  size: 20 * scale,
+                ),
                 SizedBox(width: 10 * scale),
                 Expanded(
                   child: Text(
@@ -257,12 +263,18 @@ class _AiFamilySelectionSheetState extends State<AiFamilySelectionSheet> {
                             shape: BoxShape.circle,
                             color: isSelected ? color : Colors.transparent,
                             border: Border.all(
-                              color: isSelected ? color : AppColors.textSecondary,
+                              color: isSelected
+                                  ? color
+                                  : AppColors.textSecondary,
                               width: 2,
                             ),
                           ),
                           child: isSelected
-                              ? Icon(Icons.check, size: 16 * scale, color: Colors.white)
+                              ? Icon(
+                                  Icons.check,
+                                  size: 16 * scale,
+                                  color: Colors.white,
+                                )
                               : null,
                         ),
                       ],

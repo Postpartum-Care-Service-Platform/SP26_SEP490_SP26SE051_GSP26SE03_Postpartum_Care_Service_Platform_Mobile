@@ -990,12 +990,12 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
 
     final booking = _fullBooking ?? widget.booking;
 
-    final nameFromContract = contract.customer?.username?.trim() ?? '';
-    final nameFromBooking = booking?.customer?.username?.trim() ?? _bookingCustomer?.username?.trim() ?? '';
+    final nameFromContract = contract.customer?.username.trim() ?? '';
+    final nameFromBooking = booking?.customer?.username.trim() ?? _bookingCustomer?.username.trim() ?? '';
     final currentCustomerName = nameFromContract.isNotEmpty ? nameFromContract : nameFromBooking;
         
     final phoneFromContract = contract.customer?.phone?.trim() ?? '';
-    final phoneFromBooking = booking?.customer?.phone?.trim() ?? _bookingCustomer?.phone?.trim() ?? '';
+    final phoneFromBooking = booking?.customer?.phone.trim() ?? _bookingCustomer?.phone.trim() ?? '';
     final currentCustomerPhone = phoneFromContract.isNotEmpty ? phoneFromContract : phoneFromBooking;
 
     // Address fallback (if any)

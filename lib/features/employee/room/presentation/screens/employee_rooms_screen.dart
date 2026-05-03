@@ -7,27 +7,16 @@ import '../../../../../core/di/injection_container.dart';
 import '../../../../../core/utils/app_responsive.dart';
 import '../../../../../core/utils/app_text_styles.dart';
 import '../../../../../core/widgets/app_loading.dart';
-import '../../../../../core/widgets/app_widgets.dart';
 import '../../../../../features/employee/room/domain/entities/room_entity.dart';
-import '../../../../../features/employee/room/domain/entities/room_status.dart';
 import '../../../../../features/employee/room/presentation/bloc/room/room_bloc.dart';
 import '../../../../../features/employee/room/presentation/bloc/room/room_event.dart';
 import '../../../../../features/employee/room/presentation/bloc/room/room_state.dart';
 import '../../../../../features/employee/shell/presentation/widgets/employee_scaffold.dart';
 
 /// Booking filter options for rooms.
-enum BookingFilter {
-  all,
-  occupied,
-  upcoming,
-  empty,
-}
+enum BookingFilter { all, occupied, upcoming, empty }
 
-enum BookingState {
-  occupied,
-  upcoming,
-  empty,
-}
+enum BookingState { occupied, upcoming, empty }
 
 DateTime _normalizeDate(DateTime value) {
   return DateTime(value.year, value.month, value.day);
@@ -112,7 +101,9 @@ class _EmployeeRoomsViewState extends State<_EmployeeRoomsView> {
       body: BlocBuilder<RoomBloc, RoomState>(
         builder: (context, state) {
           if (state is RoomLoading || state is RoomInitial) {
-            return const Center(child: AppLoadingIndicator(color: AppColors.primary));
+            return const Center(
+              child: AppLoadingIndicator(color: AppColors.primary),
+            );
           }
 
           if (state is RoomError) {
@@ -149,7 +140,8 @@ class _EmployeeRoomsViewState extends State<_EmployeeRoomsView> {
                   _FloorTabBar(floors: floors, scale: scale),
                   _BookingFilterBar(
                     selectedFilter: _selectedFilter,
-                    onSelected: (filter) => setState(() => _selectedFilter = filter),
+                    onSelected: (filter) =>
+                        setState(() => _selectedFilter = filter),
                     scale: scale,
                   ),
                   Expanded(
@@ -161,20 +153,30 @@ class _EmployeeRoomsViewState extends State<_EmployeeRoomsView> {
                           return room.floor == floor.value;
                         }).toList();
 
-                        final filteredRooms = _applyBookingFilter(floorRooms, _selectedFilter);
+                        final filteredRooms = _applyBookingFilter(
+                          floorRooms,
+                          _selectedFilter,
+                        );
 
                         if (filteredRooms.isEmpty) {
                           return _buildNoResultsState(scale);
                         }
 
                         return GridView.builder(
-                          padding: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 8 * scale),
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: AppResponsive.isTablet(context) ? 3 : 2,
-                            childAspectRatio: 1.15, // More compact aspect ratio
-                            crossAxisSpacing: 10 * scale,
-                            mainAxisSpacing: 10 * scale,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 16 * scale,
+                            vertical: 8 * scale,
                           ),
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: AppResponsive.isTablet(context)
+                                    ? 3
+                                    : 2,
+                                childAspectRatio:
+                                    1.15, // More compact aspect ratio
+                                crossAxisSpacing: 10 * scale,
+                                mainAxisSpacing: 10 * scale,
+                              ),
                           itemCount: filteredRooms.length,
                           itemBuilder: (context, index) => _RoomCard(
                             room: filteredRooms[index],
@@ -197,7 +199,10 @@ class _EmployeeRoomsViewState extends State<_EmployeeRoomsView> {
 
   Widget _buildSearchBar(double scale) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 8 * scale),
+      padding: EdgeInsets.symmetric(
+        horizontal: 16 * scale,
+        vertical: 8 * scale,
+      ),
       child: Container(
         height: 48 * scale,
         decoration: BoxDecoration(
@@ -210,18 +215,31 @@ class _EmployeeRoomsViewState extends State<_EmployeeRoomsView> {
               offset: const Offset(0, 4),
             ),
           ],
-          border: Border.all(color: AppColors.borderLight.withValues(alpha: 0.1)),
+          border: Border.all(
+            color: AppColors.borderLight.withValues(alpha: 0.1),
+          ),
         ),
         child: TextField(
           controller: _searchController,
           onChanged: (value) => setState(() => _searchQuery = value),
           decoration: InputDecoration(
             hintText: 'Tìm kiếm tên phòng hoặc loại phòng...',
-            hintStyle: AppTextStyles.arimo(fontSize: 14 * scale, color: AppColors.third),
-            prefixIcon: Icon(Icons.search_rounded, color: AppColors.primary, size: 22 * scale),
+            hintStyle: AppTextStyles.arimo(
+              fontSize: 14 * scale,
+              color: AppColors.third,
+            ),
+            prefixIcon: Icon(
+              Icons.search_rounded,
+              color: AppColors.primary,
+              size: 22 * scale,
+            ),
             suffixIcon: _searchQuery.isNotEmpty
                 ? IconButton(
-                    icon: Icon(Icons.clear_rounded, color: AppColors.third, size: 20 * scale),
+                    icon: Icon(
+                      Icons.clear_rounded,
+                      color: AppColors.third,
+                      size: 20 * scale,
+                    ),
                     onPressed: () {
                       _searchController.clear();
                       setState(() => _searchQuery = '');
@@ -243,26 +261,42 @@ class _EmployeeRoomsViewState extends State<_EmployeeRoomsView> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline_rounded, size: 56 * scale, color: AppColors.red),
+            Icon(
+              Icons.error_outline_rounded,
+              size: 56 * scale,
+              color: AppColors.red,
+            ),
             SizedBox(height: 16 * scale),
             Text(
               'Đã xảy ra lỗi khi tải dữ liệu',
-              style: AppTextStyles.tinos(fontSize: 18 * scale, fontWeight: FontWeight.w700),
+              style: AppTextStyles.tinos(
+                fontSize: 18 * scale,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             SizedBox(height: 8 * scale),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: AppTextStyles.arimo(fontSize: 14 * scale, color: AppColors.textSecondary),
+              style: AppTextStyles.arimo(
+                fontSize: 14 * scale,
+                color: AppColors.textSecondary,
+              ),
             ),
             SizedBox(height: 24 * scale),
             ElevatedButton(
-              onPressed: () => context.read<RoomBloc>().add(const LoadAllRooms()),
+              onPressed: () =>
+                  context.read<RoomBloc>().add(const LoadAllRooms()),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(horizontal: 24 * scale, vertical: 12 * scale),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12 * scale)),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 24 * scale,
+                  vertical: 12 * scale,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12 * scale),
+                ),
               ),
               child: const Text('Thử lại'),
             ),
@@ -277,7 +311,11 @@ class _EmployeeRoomsViewState extends State<_EmployeeRoomsView> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.meeting_room_outlined, size: 72 * scale, color: AppColors.third),
+          Icon(
+            Icons.meeting_room_outlined,
+            size: 72 * scale,
+            color: AppColors.third,
+          ),
           SizedBox(height: 16 * scale),
           Text(
             'Chưa có dữ liệu phòng',
@@ -297,11 +335,18 @@ class _EmployeeRoomsViewState extends State<_EmployeeRoomsView> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.search_off_rounded, size: 56 * scale, color: AppColors.third),
+          Icon(
+            Icons.search_off_rounded,
+            size: 56 * scale,
+            color: AppColors.third,
+          ),
           SizedBox(height: 12 * scale),
           Text(
             'Không tìm thấy phòng phù hợp',
-            style: AppTextStyles.arimo(fontSize: 14 * scale, color: AppColors.textSecondary),
+            style: AppTextStyles.arimo(
+              fontSize: 14 * scale,
+              color: AppColors.textSecondary,
+            ),
           ),
         ],
       ),
@@ -342,17 +387,30 @@ class _EmployeeRoomsViewState extends State<_EmployeeRoomsView> {
     return results;
   }
 
-  List<RoomEntity> _applyBookingFilter(List<RoomEntity> rooms, BookingFilter filter) {
+  List<RoomEntity> _applyBookingFilter(
+    List<RoomEntity> rooms,
+    BookingFilter filter,
+  ) {
     final now = DateTime.now();
     switch (filter) {
       case BookingFilter.all:
         return rooms;
       case BookingFilter.occupied:
-        return rooms.where((room) => _getBookingState(room, now) == BookingState.occupied).toList();
+        return rooms
+            .where(
+              (room) => _getBookingState(room, now) == BookingState.occupied,
+            )
+            .toList();
       case BookingFilter.upcoming:
-        return rooms.where((room) => _getBookingState(room, now) == BookingState.upcoming).toList();
+        return rooms
+            .where(
+              (room) => _getBookingState(room, now) == BookingState.upcoming,
+            )
+            .toList();
       case BookingFilter.empty:
-        return rooms.where((room) => _getBookingState(room, now) == BookingState.empty).toList();
+        return rooms
+            .where((room) => _getBookingState(room, now) == BookingState.empty)
+            .toList();
     }
   }
 }
@@ -409,7 +467,10 @@ class _FloorTabBar extends StatelessWidget {
         ),
         labelColor: Colors.white,
         unselectedLabelColor: AppColors.textSecondary,
-        labelStyle: AppTextStyles.arimo(fontSize: 14 * scale, fontWeight: FontWeight.w700),
+        labelStyle: AppTextStyles.arimo(
+          fontSize: 14 * scale,
+          fontWeight: FontWeight.w700,
+        ),
         indicatorSize: TabBarIndicatorSize.tab,
         dividerColor: Colors.transparent,
         padding: EdgeInsets.zero,
@@ -435,7 +496,10 @@ class _BookingFilterBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 12 * scale),
+      padding: EdgeInsets.symmetric(
+        horizontal: 16 * scale,
+        vertical: 12 * scale,
+      ),
       child: Row(
         children: [
           _FilterChip(
@@ -497,21 +561,28 @@ class _FilterChip extends StatelessWidget {
       borderRadius: BorderRadius.circular(12 * scale),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 8 * scale),
+        padding: EdgeInsets.symmetric(
+          horizontal: 16 * scale,
+          vertical: 8 * scale,
+        ),
         decoration: BoxDecoration(
           color: isSelected ? displayColor : Colors.white,
           borderRadius: BorderRadius.circular(12 * scale),
           border: Border.all(
-            color: isSelected ? displayColor : AppColors.borderLight.withValues(alpha: 0.1),
+            color: isSelected
+                ? displayColor
+                : AppColors.borderLight.withValues(alpha: 0.1),
             width: 1.5,
           ),
-          boxShadow: isSelected ? [
-            BoxShadow(
-              color: displayColor.withValues(alpha: 0.2),
-              blurRadius: 8 * scale,
-              offset: const Offset(0, 4),
-            )
-          ] : [],
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: displayColor.withValues(alpha: 0.2),
+                    blurRadius: 8 * scale,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : [],
         ),
         child: Text(
           label,
@@ -541,7 +612,8 @@ class _RoomCard extends StatelessWidget {
     String? dateInfo;
     if (state == BookingState.occupied && room.bookingEndDate != null) {
       dateInfo = DateFormat('dd/MM').format(room.bookingEndDate!);
-    } else if (state == BookingState.upcoming && room.bookingStartDate != null) {
+    } else if (state == BookingState.upcoming &&
+        room.bookingStartDate != null) {
       dateInfo = DateFormat('dd/MM').format(room.bookingStartDate!);
     }
 
@@ -583,7 +655,10 @@ class _RoomCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8 * scale, vertical: 4 * scale),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 8 * scale,
+                        vertical: 4 * scale,
+                      ),
                       decoration: BoxDecoration(
                         color: statusColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8 * scale),
@@ -591,10 +666,14 @@ class _RoomCard extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(_getStatusIcon(state), size: 12 * scale, color: statusColor),
+                          Icon(
+                            _getStatusIcon(state),
+                            size: 12 * scale,
+                            color: statusColor,
+                          ),
                           SizedBox(width: 4 * scale),
                           Text(
-                            'T${room.floor ?? '?' }',
+                            'T${room.floor ?? '?'}',
                             style: AppTextStyles.arimo(
                               fontSize: 10 * scale,
                               fontWeight: FontWeight.w800,
@@ -606,11 +685,16 @@ class _RoomCard extends StatelessWidget {
                     ),
                     if (dateInfo != null)
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 6 * scale, vertical: 2 * scale),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 6 * scale,
+                          vertical: 2 * scale,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.background,
                           borderRadius: BorderRadius.circular(6 * scale),
-                          border: Border.all(color: AppColors.borderLight.withValues(alpha: 0.1)),
+                          border: Border.all(
+                            color: AppColors.borderLight.withValues(alpha: 0.1),
+                          ),
                         ),
                         child: Text(
                           dateInfo,
@@ -637,7 +721,11 @@ class _RoomCard extends StatelessWidget {
                 SizedBox(height: 2 * scale),
                 Row(
                   children: [
-                    Icon(Icons.category_outlined, size: 10 * scale, color: AppColors.third),
+                    Icon(
+                      Icons.category_outlined,
+                      size: 10 * scale,
+                      color: AppColors.third,
+                    ),
                     SizedBox(width: 4 * scale),
                     Expanded(
                       child: Text(
@@ -700,25 +788,34 @@ class _RoomCard extends StatelessWidget {
 
   Color _getStatusColor(BookingState state) {
     switch (state) {
-      case BookingState.occupied: return const Color(0xFFEF4444);
-      case BookingState.upcoming: return const Color(0xFF3B82F6);
-      case BookingState.empty: return const Color(0xFF10B981);
+      case BookingState.occupied:
+        return const Color(0xFFEF4444);
+      case BookingState.upcoming:
+        return const Color(0xFF3B82F6);
+      case BookingState.empty:
+        return const Color(0xFF10B981);
     }
   }
 
   String _getStatusText(BookingState state) {
     switch (state) {
-      case BookingState.occupied: return 'ĐANG CÓ KHÁCH';
-      case BookingState.upcoming: return 'ĐÃ ĐƯỢC ĐẶT';
-      case BookingState.empty: return 'ĐANG TRỐNG';
+      case BookingState.occupied:
+        return 'ĐANG CÓ KHÁCH';
+      case BookingState.upcoming:
+        return 'ĐÃ ĐƯỢC ĐẶT';
+      case BookingState.empty:
+        return 'ĐANG TRỐNG';
     }
   }
 
   IconData _getStatusIcon(BookingState state) {
     switch (state) {
-      case BookingState.occupied: return Icons.person_rounded;
-      case BookingState.upcoming: return Icons.event_available_rounded;
-      case BookingState.empty: return Icons.no_meeting_room_rounded;
+      case BookingState.occupied:
+        return Icons.person_rounded;
+      case BookingState.upcoming:
+        return Icons.event_available_rounded;
+      case BookingState.empty:
+        return Icons.no_meeting_room_rounded;
     }
   }
 }

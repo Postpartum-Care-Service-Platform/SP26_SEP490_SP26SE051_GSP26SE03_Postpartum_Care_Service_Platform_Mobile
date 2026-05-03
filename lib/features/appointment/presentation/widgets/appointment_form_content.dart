@@ -128,9 +128,8 @@ class AppointmentFormContentState extends State<AppointmentFormContent> {
       // Automatically show time picker after selecting date
       if (mounted) {
         await Future.delayed(const Duration(milliseconds: 300));
-        if (mounted) {
-          await _selectTime(context);
-        }
+        if (!context.mounted) return;
+        await _selectTime(context);
       }
     }
   }

@@ -278,12 +278,10 @@ class _EmployeeMealPlanScreenState extends State<EmployeeMealPlanScreen> {
         }
         return _profileDs.getMenuRecordsByCustomer(customerId);
       case _MenuFilterMode.all:
-      default:
         return _profileDs.getMenuRecordsByCustomer(customerId);
     }
   }
 
-  String _fmtDateOnly(DateTime date) => date.toIso8601String().split('T').first;
 
   Widget _buildMenuRecordsSection(BuildContext context) {
     if (_selectedCustomerId == null) return const SizedBox.shrink();
@@ -554,15 +552,13 @@ class _EmployeeMealPlanScreenState extends State<EmployeeMealPlanScreen> {
 
     try {
       final menu = await _profileDs.getMenuById(menuId);
-      if (mounted) {
-        Navigator.pop(context); // hide loader
-        _showMenuDetailsDialog(context, menu);
-      }
+      if (!context.mounted) return;
+      Navigator.pop(context); // hide loader
+      _showMenuDetailsDialog(context, menu);
     } catch (e) {
-      if (mounted) {
-        Navigator.pop(context); // hide loader
-        AppToast.showError(context, message: 'Không thể tải chi tiết thực đơn: $e');
-      }
+      if (!context.mounted) return;
+      Navigator.pop(context); // hide loader
+      AppToast.showError(context, message: 'Không thể tải chi tiết thực đơn: $e');
     }
   }
 

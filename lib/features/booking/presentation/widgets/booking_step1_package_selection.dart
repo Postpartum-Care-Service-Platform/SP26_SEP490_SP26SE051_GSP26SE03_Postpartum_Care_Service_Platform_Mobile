@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../package/domain/entities/package_entity.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
@@ -11,7 +12,6 @@ import '../../../package/presentation/bloc/package_event.dart';
 import '../../../package/presentation/bloc/package_state.dart';
 import '../../../package/presentation/widgets/package_card.dart';
 import '../../../../core/di/injection_container.dart';
-import '../../../package_request/presentation/bloc/package_request_bloc.dart';
 import '../../../package_request/presentation/widgets/create_package_request_sheet.dart';
 import '../../../booking/presentation/bloc/booking_bloc.dart';
 import '../../../booking/presentation/bloc/booking_state.dart';
@@ -24,7 +24,7 @@ import '../../../../core/widgets/app_toast.dart';
 import 'package_detail_bottom_sheet.dart';
 
 class BookingStep1PackageSelection extends StatefulWidget {
-  final Function(int) onPackageSelected;
+  final Function(PackageEntity) onPackageSelected;
 
   const BookingStep1PackageSelection({
     super.key,
@@ -32,12 +32,12 @@ class BookingStep1PackageSelection extends StatefulWidget {
   });
 
   @override
-  State<BookingStep1PackageSelection> createState() => _BookingStep1PackageSelectionState();
+  State<BookingStep1PackageSelection> createState() =>
+      _BookingStep1PackageSelectionState();
 }
 
-class _BookingStep1PackageSelectionState extends State<BookingStep1PackageSelection> {
-  bool _isAiLoading = false;
-
+class _BookingStep1PackageSelectionState
+    extends State<BookingStep1PackageSelection> {
   @override
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
@@ -52,7 +52,7 @@ class _BookingStep1PackageSelectionState extends State<BookingStep1PackageSelect
         } else {
           selectedPackageId = context.read<BookingBloc>().selectedPackageId;
         }
-        
+
         PackageBloc? existingPackageBloc;
         try {
           existingPackageBloc = context.read<PackageBloc>();
@@ -64,8 +64,14 @@ class _BookingStep1PackageSelectionState extends State<BookingStep1PackageSelect
               length: 2,
               child: existingPackageBloc != null
                   ? BlocProvider.value(
-                      value: existingPackageBloc..add(const PackageLoadRequested()),
-                      child: _buildPackageContent(context, bookingState, selectedPackageId, scale),
+                      value: existingPackageBloc
+                        ..add(const PackageLoadRequested()),
+                      child: _buildPackageContent(
+                        context,
+                        bookingState,
+                        selectedPackageId,
+                        scale,
+                      ),
                     )
                   : BlocProvider(
                       create: (context) {
@@ -73,14 +79,17 @@ class _BookingStep1PackageSelectionState extends State<BookingStep1PackageSelect
                         bloc.add(const PackageLoadRequested());
                         return bloc;
                       },
-                      child: _buildPackageContent(context, bookingState, selectedPackageId, scale),
+                      child: _buildPackageContent(
+                        context,
+                        bookingState,
+                        selectedPackageId,
+                        scale,
+                      ),
                     ),
             ),
-            
+
             // AI Recommendation FAB
-            AiRecommendFab(
-              onTap: () => _handleAiRecommend(context),
-            ),
+            AiRecommendFab(onTap: () => _handleAiRecommend(context)),
           ],
         );
       },
@@ -89,37 +98,44 @@ class _BookingStep1PackageSelectionState extends State<BookingStep1PackageSelect
 
   void _handleAiRecommend(BuildContext context) async {
     final bookingBloc = context.read<BookingBloc>();
-    
+
     // Ensure family profiles are loaded
-    if (bookingBloc.familyProfiles == null || bookingBloc.familyProfiles!.isEmpty) {
+    if (bookingBloc.familyProfiles == null ||
+        bookingBloc.familyProfiles!.isEmpty) {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (_) => const Center(child: AppLoadingIndicator(color: Colors.white)),
+        builder: (_) =>
+            const Center(child: AppLoadingIndicator(color: Colors.white)),
       );
-      
+
       try {
         bookingBloc.add(const BookingLoadFamilyProfiles());
         // Wait a bit for state update
         await Future.delayed(const Duration(milliseconds: 800));
-        if (mounted) Navigator.pop(context);
+        if (!context.mounted) return;
+        Navigator.pop(context);
       } catch (e) {
-        if (mounted) {
-          Navigator.pop(context);
-          AppToast.showError(context, message: 'Không thể tải hồ sơ gia đình');
-        }
+        if (!context.mounted) return;
+        Navigator.pop(context);
+        AppToast.showError(context, message: 'Không thể tải hồ sơ gia đình');
         return;
       }
     }
 
     final allProfiles = bookingBloc.familyProfiles ?? [];
     final selectedIdsInStep1 = bookingBloc.selectedFamilyProfileIds;
-    
+
     // Filter to only include profiles selected in the previous step
-    final profiles = allProfiles.where((p) => selectedIdsInStep1.contains(p.id)).toList();
+    final profiles = allProfiles
+        .where((p) => selectedIdsInStep1.contains(p.id))
+        .toList();
 
     if (profiles.isEmpty) {
-      AppToast.showError(context, message: 'Vui lòng chọn thành viên ở bước trước');
+      AppToast.showError(
+        context,
+        message: 'Vui lòng chọn thành viên ở bước trước',
+      );
       return;
     }
 
@@ -151,15 +167,17 @@ class _BookingStep1PackageSelectionState extends State<BookingStep1PackageSelect
     try {
       // Start a minimum timer to ensure the user sees the professional animation steps
       final minWait = Future.delayed(const Duration(milliseconds: 3500));
-      
+
       // Actually call the API
-      final apiCall = InjectionContainer.aiRecommendRepository.recommendForFamily(selectedIds);
-      
+      final apiCall = InjectionContainer.aiRecommendRepository
+          .recommendForFamily(selectedIds);
+
       // Wait for both: the response and the minimum animation time
       final results = await Future.wait([apiCall, minWait]);
-      final recommendation = results[0] as dynamic; // Cast to actual type if needed
-      
-      if (!mounted) return;
+      final recommendation =
+          results[0] as dynamic; // Cast to actual type if needed
+
+      if (!context.mounted) return;
       Navigator.pop(context); // Dismiss loading sheet
 
       // 3. Show result sheet
@@ -170,15 +188,32 @@ class _BookingStep1PackageSelectionState extends State<BookingStep1PackageSelect
         builder: (ctx) => AiRecommendationResultSheet(
           recommendation: recommendation,
           onSelectPackage: (packageId) {
-            widget.onPackageSelected(packageId);
-            AppToast.showSuccess(context, message: 'Đã chọn gói theo gợi ý từ AI');
+            final packageState = context.read<PackageBloc>().state;
+            if (packageState is PackageLoaded) {
+              try {
+                final package = packageState.allPackages.firstWhere(
+                  (p) => p.id == packageId,
+                );
+                widget.onPackageSelected(package);
+                if (!context.mounted) return;
+                AppToast.showSuccess(
+                  context,
+                  message: 'Đã chọn gói theo gợi ý từ AI',
+                );
+              } catch (_) {
+                // Should not happen if data is consistent
+              }
+            }
           },
         ),
       );
     } catch (e) {
-      if (!mounted) return;
+      if (!context.mounted) return;
       Navigator.pop(context); // Dismiss loading sheet
-      AppToast.showError(context, message: 'AI gặp sự cố khi phân tích. Vui lòng thử lại sau.');
+      AppToast.showError(
+        context,
+        message: 'AI gặp sự cố khi phân tích. Vui lòng thử lại sau.',
+      );
     }
   }
 
@@ -199,11 +234,18 @@ class _BookingStep1PackageSelectionState extends State<BookingStep1PackageSelect
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.error_outline, size: 48 * scale, color: AppColors.red),
+                Icon(
+                  Icons.error_outline,
+                  size: 48 * scale,
+                  color: AppColors.red,
+                ),
                 SizedBox(height: 16 * scale),
                 Text(
                   packageState.message,
-                  style: AppTextStyles.arimo(fontSize: 14 * scale, color: AppColors.textSecondary),
+                  style: AppTextStyles.arimo(
+                    fontSize: 14 * scale,
+                    color: AppColors.textSecondary,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -216,7 +258,10 @@ class _BookingStep1PackageSelectionState extends State<BookingStep1PackageSelect
             children: [
               // Tab Selector
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 8 * scale),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 16 * scale,
+                  vertical: 8 * scale,
+                ),
                 child: Container(
                   height: 46 * scale,
                   padding: EdgeInsets.all(4 * scale),
@@ -227,7 +272,11 @@ class _BookingStep1PackageSelectionState extends State<BookingStep1PackageSelect
                   child: TabBar(
                     onTap: (index) {
                       context.read<PackageBloc>().add(
-                        PackageFilterChanged(index == 0 ? PackageFilter.center : PackageFilter.personalized),
+                        PackageFilterChanged(
+                          index == 0
+                              ? PackageFilter.center
+                              : PackageFilter.personalized,
+                        ),
                       );
                     },
                     indicator: BoxDecoration(
@@ -243,8 +292,14 @@ class _BookingStep1PackageSelectionState extends State<BookingStep1PackageSelect
                     ),
                     labelColor: AppColors.primary,
                     unselectedLabelColor: AppColors.textSecondary,
-                    labelStyle: AppTextStyles.arimo(fontSize: 14 * scale, fontWeight: FontWeight.bold),
-                    unselectedLabelStyle: AppTextStyles.arimo(fontSize: 14 * scale, fontWeight: FontWeight.w500),
+                    labelStyle: AppTextStyles.arimo(
+                      fontSize: 14 * scale,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    unselectedLabelStyle: AppTextStyles.arimo(
+                      fontSize: 14 * scale,
+                      fontWeight: FontWeight.w500,
+                    ),
                     indicatorSize: TabBarIndicatorSize.tab,
                     dividerColor: Colors.transparent,
                     tabs: const [
@@ -257,7 +312,12 @@ class _BookingStep1PackageSelectionState extends State<BookingStep1PackageSelect
 
               // Hint
               Padding(
-                padding: EdgeInsets.fromLTRB(16 * scale, 4 * scale, 16 * scale, 0),
+                padding: EdgeInsets.fromLTRB(
+                  16 * scale,
+                  4 * scale,
+                  16 * scale,
+                  0,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
@@ -277,29 +337,42 @@ class _BookingStep1PackageSelectionState extends State<BookingStep1PackageSelect
                   ],
                 ),
               ),
-              
+
               Expanded(
                 child: Builder(
                   builder: (context) {
                     final packages = packageState.filteredPackages;
-                    
+
                     if (packages.isEmpty) {
                       return Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.inbox_outlined, size: 64 * scale, color: AppColors.textSecondary),
+                            Icon(
+                              Icons.inbox_outlined,
+                              size: 64 * scale,
+                              color: AppColors.textSecondary,
+                            ),
                             SizedBox(height: 16 * scale),
                             Text(
                               'Không có gói dịch vụ nào trong mục này',
-                              style: AppTextStyles.arimo(fontSize: 16 * scale, color: AppColors.textSecondary),
+                              style: AppTextStyles.arimo(
+                                fontSize: 16 * scale,
+                                color: AppColors.textSecondary,
+                              ),
                             ),
                             SizedBox(height: 24 * scale),
                             Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 40 * scale),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 40 * scale,
+                              ),
                               child: AppWidgets.primaryButton(
                                 text: 'Tạo yêu cầu cá nhân hoá',
-                                icon: Icon(Icons.add_rounded, color: AppColors.white, size: 20 * scale),
+                                icon: Icon(
+                                  Icons.add_rounded,
+                                  color: AppColors.white,
+                                  size: 20 * scale,
+                                ),
                                 onPressed: () {
                                   _showCreateCustomPackageSheet(context);
                                 },
@@ -317,33 +390,47 @@ class _BookingStep1PackageSelectionState extends State<BookingStep1PackageSelect
                       itemBuilder: (context, index) {
                         final package = packages[index];
                         final isSelected = selectedPackageId == package.id;
-                        final isUnavailable = (package.availableRooms ?? 0) <= 0 ||
+                        final isUnavailable =
+                            (package.availableRooms ?? 0) <= 0 ||
                             package.hasRoomAvailabilityWarning;
 
                         return SizedBox(
                           height: 220 * scale,
                           child: GestureDetector(
-                            onTap: isUnavailable ? null : () => widget.onPackageSelected(package.id),
-                            onLongPress: () => PackageDetailBottomSheet.show(context, package: package),
+                            onTap: isUnavailable
+                                ? null
+                                : () => widget.onPackageSelected(package),
+                            onLongPress: () => PackageDetailBottomSheet.show(
+                              context,
+                              package: package,
+                            ),
                             child: AnimatedScale(
                               duration: const Duration(milliseconds: 180),
                               curve: Curves.easeOut,
                               scale: isSelected && !isUnavailable ? 1.01 : 1.0,
                               child: Container(
                                 decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(16 * scale),
+                                  borderRadius: BorderRadius.circular(
+                                    16 * scale,
+                                  ),
                                   border: Border.all(
                                     color: isUnavailable
-                                        ? AppColors.textSecondary.withValues(alpha: 0.35)
+                                        ? AppColors.textSecondary.withValues(
+                                            alpha: 0.35,
+                                          )
                                         : isSelected
-                                            ? AppColors.primary
-                                            : AppColors.borderLight,
-                                    width: isSelected && !isUnavailable ? 2.2 : 1,
+                                        ? AppColors.primary
+                                        : AppColors.borderLight,
+                                    width: isSelected && !isUnavailable
+                                        ? 2.2
+                                        : 1,
                                   ),
                                   boxShadow: isSelected && !isUnavailable
                                       ? [
                                           BoxShadow(
-                                            color: AppColors.primary.withValues(alpha: 0.28),
+                                            color: AppColors.primary.withValues(
+                                              alpha: 0.28,
+                                            ),
                                             blurRadius: 12 * scale,
                                             spreadRadius: 1 * scale,
                                             offset: Offset(0, 4 * scale),
@@ -351,7 +438,11 @@ class _BookingStep1PackageSelectionState extends State<BookingStep1PackageSelect
                                         ]
                                       : [
                                           BoxShadow(
-                                            color: Colors.black.withValues(alpha: isUnavailable ? 0.02 : 0.05),
+                                            color: Colors.black.withValues(
+                                              alpha: isUnavailable
+                                                  ? 0.02
+                                                  : 0.05,
+                                            ),
                                             blurRadius: 4 * scale,
                                             offset: Offset(0, 2 * scale),
                                           ),
@@ -363,7 +454,11 @@ class _BookingStep1PackageSelectionState extends State<BookingStep1PackageSelect
                                       child: PackageCard(
                                         package: package,
                                         isUnavailable: isUnavailable,
-                                        onTap: isUnavailable ? null : () => widget.onPackageSelected(package.id),
+                                        onTap: isUnavailable
+                                            ? null
+                                            : () => widget.onPackageSelected(
+                                                package,
+                                              ),
                                       ),
                                     ),
                                     if (isSelected && !isUnavailable)
@@ -371,13 +466,20 @@ class _BookingStep1PackageSelectionState extends State<BookingStep1PackageSelect
                                         right: 10 * scale,
                                         bottom: 10 * scale,
                                         child: Container(
-                                          padding: EdgeInsets.symmetric(horizontal: 10 * scale, vertical: 5 * scale),
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 10 * scale,
+                                            vertical: 5 * scale,
+                                          ),
                                           decoration: BoxDecoration(
                                             color: AppColors.primary,
-                                            borderRadius: BorderRadius.circular(16 * scale),
+                                            borderRadius: BorderRadius.circular(
+                                              16 * scale,
+                                            ),
                                             boxShadow: [
                                               BoxShadow(
-                                                color: Colors.black.withValues(alpha: 0.2),
+                                                color: Colors.black.withValues(
+                                                  alpha: 0.2,
+                                                ),
                                                 blurRadius: 6 * scale,
                                                 offset: Offset(0, 2 * scale),
                                               ),
@@ -386,7 +488,11 @@ class _BookingStep1PackageSelectionState extends State<BookingStep1PackageSelect
                                           child: Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              Icon(Icons.check_circle, size: 13 * scale, color: AppColors.white),
+                                              Icon(
+                                                Icons.check_circle,
+                                                size: 13 * scale,
+                                                color: AppColors.white,
+                                              ),
                                               SizedBox(width: 5 * scale),
                                               Text(
                                                 AppStrings.bookingSelecting,
@@ -436,4 +542,3 @@ class _BookingStep1PackageSelectionState extends State<BookingStep1PackageSelect
     );
   }
 }
-

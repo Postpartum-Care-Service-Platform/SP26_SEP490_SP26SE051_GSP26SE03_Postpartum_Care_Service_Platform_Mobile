@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../../package/domain/entities/package_entity.dart';
 
 /// Booking Events
 abstract class BookingEvent extends Equatable {
@@ -20,11 +21,12 @@ class BookingLoadPackages extends BookingEvent {
 /// Select package
 class BookingSelectPackage extends BookingEvent {
   final int packageId;
+  final PackageEntity? package;
 
-  const BookingSelectPackage(this.packageId);
+  const BookingSelectPackage(this.packageId, {this.package});
 
   @override
-  List<Object?> get props => [packageId];
+  List<Object?> get props => [packageId, package];
 }
 
 /// Load family profiles for selection

@@ -115,9 +115,11 @@ class _LoginScreenState extends State<LoginScreen> {
                             try {
                               final GoogleSignInAccount? account =
                                   await _googleSignIn.signIn();
+                              if (!context.mounted) return;
                               if (account != null) {
                                 final GoogleSignInAuthentication auth =
                                     await account.authentication;
+                                if (!context.mounted) return;
                                 final String? idToken = auth.idToken;
                                 if (idToken != null) {
                                   context.read<AuthBloc>().add(
@@ -131,6 +133,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 }
                               }
                             } catch (e) {
+                              if (!context.mounted) return;
                               AppToast.showError(
                                 context,
                                 message:

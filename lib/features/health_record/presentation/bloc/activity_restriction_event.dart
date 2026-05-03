@@ -1,5 +1,4 @@
 import 'package:equatable/equatable.dart';
-import '../../domain/entities/activity_restriction_entity.dart';
 
 abstract class ActivityRestrictionEvent extends Equatable {
   const ActivityRestrictionEvent();

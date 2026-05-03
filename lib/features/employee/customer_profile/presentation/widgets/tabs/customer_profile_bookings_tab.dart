@@ -136,9 +136,6 @@ class CustomerProfileBookingsTab extends StatelessWidget {
 
             final statusColor = _getStatusColor(status);
             final statusIcon = _getStatusIcon(status);
-            final isComplete = status.toLowerCase().contains('complete') ||
-                status.toLowerCase().contains('done');
-
             return Container(
               margin: EdgeInsets.only(bottom: 4 * scale),
               decoration: BoxDecoration(

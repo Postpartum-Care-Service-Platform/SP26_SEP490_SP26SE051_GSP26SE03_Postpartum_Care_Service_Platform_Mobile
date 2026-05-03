@@ -15,7 +15,6 @@ class AiAnalysisLoading extends StatefulWidget {
 class _AiAnalysisLoadingState extends State<AiAnalysisLoading>
     with TickerProviderStateMixin {
   int _currentStep = 0;
-  Timer? _timer;
 
   late AnimationController _fadeController;
   late AnimationController _dotController;
@@ -62,18 +61,19 @@ class _AiAnalysisLoadingState extends State<AiAnalysisLoading>
     // Progress timer: 45 seconds total
     const totalDuration = Duration(seconds: 45);
     const updateInterval = Duration(milliseconds: 100);
-    final totalTicks = totalDuration.inMilliseconds / updateInterval.inMilliseconds;
-    
+    final totalTicks =
+        totalDuration.inMilliseconds / updateInterval.inMilliseconds;
+
     _progressTimer = Timer.periodic(updateInterval, (timer) {
       if (!mounted) return;
       setState(() {
         _progress += 1.0 / totalTicks;
         if (_progress > 1.0) _progress = 1.0;
-        
+
         // Calculate step based on progress
         int newStep = (_progress * _steps.length).floor();
         if (newStep >= _steps.length) newStep = _steps.length - 1;
-        
+
         if (newStep != _currentStep) {
           _fadeController.reverse().then((_) {
             if (mounted) {
@@ -83,7 +83,7 @@ class _AiAnalysisLoadingState extends State<AiAnalysisLoading>
           });
         }
       });
-      
+
       if (_progress >= 1.0) {
         timer.cancel();
       }
@@ -106,7 +106,12 @@ class _AiAnalysisLoadingState extends State<AiAnalysisLoading>
     return PopScope(
       canPop: false, // Prevent closing by back button during analysis
       child: Container(
-        padding: EdgeInsets.fromLTRB(24 * scale, 16 * scale, 24 * scale, 24 * scale),
+        padding: EdgeInsets.fromLTRB(
+          24 * scale,
+          16 * scale,
+          24 * scale,
+          24 * scale,
+        ),
         decoration: BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(28 * scale)),
@@ -125,111 +130,111 @@ class _AiAnalysisLoadingState extends State<AiAnalysisLoading>
               ),
             ),
 
-          // AI Brain animation
-          _buildBrainAnimation(scale),
+            // AI Brain animation
+            _buildBrainAnimation(scale),
 
-          SizedBox(height: 32 * scale),
+            SizedBox(height: 32 * scale),
 
-          // Current step with fade animation
-          FadeTransition(
-            opacity: _fadeController,
-            child: Column(
-              children: [
-                Container(
-                  padding: EdgeInsets.all(14 * scale),
+            // Current step with fade animation
+            FadeTransition(
+              opacity: _fadeController,
+              child: Column(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(14 * scale),
+                    decoration: BoxDecoration(
+                      color: step.color.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(step.icon, color: step.color, size: 28 * scale),
+                  ),
+                  SizedBox(height: 16 * scale),
+                  Text(
+                    step.text,
+                    style: AppTextStyles.arimo(
+                      fontSize: 15 * scale,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+
+            SizedBox(height: 28 * scale),
+
+            // Step progress indicators
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(_steps.length, (i) {
+                final isActive = i <= _currentStep;
+                final isCurrent = i == _currentStep;
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  margin: EdgeInsets.symmetric(horizontal: 4 * scale),
+                  width: isCurrent ? 24 * scale : 6 * scale,
+                  height: 6 * scale,
                   decoration: BoxDecoration(
-                    color: step.color.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
+                    borderRadius: BorderRadius.circular(4 * scale),
+                    color: isActive
+                        ? _steps[i].color
+                        : AppColors.borderLight.withValues(alpha: 0.5),
                   ),
-                  child: Icon(
-                    step.icon,
-                    color: step.color,
-                    size: 28 * scale,
-                  ),
-                ),
-                SizedBox(height: 16 * scale),
-                Text(
-                  step.text,
-                  style: AppTextStyles.arimo(
-                    fontSize: 15 * scale,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
+                );
+              }),
             ),
-          ),
 
-          SizedBox(height: 28 * scale),
+            SizedBox(height: 24 * scale),
 
-          // Step progress indicators
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(_steps.length, (i) {
-              final isActive = i <= _currentStep;
-              final isCurrent = i == _currentStep;
-              return AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                margin: EdgeInsets.symmetric(horizontal: 4 * scale),
-                width: isCurrent ? 24 * scale : 6 * scale,
-                height: 6 * scale,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(4 * scale),
-                  color: isActive
-                      ? _steps[i].color
-                      : AppColors.borderLight.withValues(alpha: 0.5),
-                ),
-              );
-            }),
-          ),
-
-          SizedBox(height: 24 * scale),
-
-          // Linear progress bar for overall 45s progress
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 32 * scale),
-            child: Column(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10 * scale),
-                  child: LinearProgressIndicator(
-                    value: _progress,
-                    minHeight: 6 * scale,
-                    backgroundColor: AppColors.borderLight.withValues(alpha: 0.3),
-                    valueColor: AlwaysStoppedAnimation(AppColors.primary),
+            // Linear progress bar for overall 45s progress
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 32 * scale),
+              child: Column(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10 * scale),
+                    child: LinearProgressIndicator(
+                      value: _progress,
+                      minHeight: 6 * scale,
+                      backgroundColor: AppColors.borderLight.withValues(
+                        alpha: 0.3,
+                      ),
+                      valueColor: AlwaysStoppedAnimation(AppColors.primary),
+                    ),
                   ),
-                ),
-                SizedBox(height: 8 * scale),
-                Text(
-                  '${(_progress * 100).toInt()}%',
-                  style: AppTextStyles.arimo(
-                    fontSize: 11 * scale,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary.withValues(alpha: 0.8),
+                  SizedBox(height: 8 * scale),
+                  Text(
+                    '${(_progress * 100).toInt()}%',
+                    style: AppTextStyles.arimo(
+                      fontSize: 11 * scale,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary.withValues(alpha: 0.8),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
 
-          SizedBox(height: 24 * scale),
+            SizedBox(height: 24 * scale),
 
-          // Subtitle
-          Text(
-            'Vui lòng chờ trong giây lát...',
-            style: AppTextStyles.arimo(
-              fontSize: 12.5 * scale,
-              color: AppColors.textSecondary,
+            // Subtitle
+            Text(
+              'Vui lòng chờ trong giây lát...',
+              style: AppTextStyles.arimo(
+                fontSize: 12.5 * scale,
+                color: AppColors.textSecondary,
+              ),
             ),
-          ),
 
-          SizedBox(height: MediaQuery.of(context).viewPadding.bottom + 8 * scale),
-        ],
+            SizedBox(
+              height: MediaQuery.of(context).viewPadding.bottom + 8 * scale,
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildBrainAnimation(double scale) {
     return AnimatedBuilder(
@@ -267,10 +272,7 @@ class _AiAnalysisLoadingState extends State<AiAnalysisLoading>
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [
-                      const Color(0xFFFF8C00),
-                      const Color(0xFFE85D04),
-                    ],
+                    colors: [const Color(0xFFFF8C00), const Color(0xFFE85D04)],
                   ),
                   boxShadow: [
                     BoxShadow(

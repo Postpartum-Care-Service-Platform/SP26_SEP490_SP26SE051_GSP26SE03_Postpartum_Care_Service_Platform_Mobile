@@ -110,13 +110,17 @@ class _StaffTransactionListScreenState
     var filtered = items;
 
     // Filter PlatformCommission for centerstaff
-    final roleName = (_cachedRoleName ?? _getRoleFromBloc() ?? '').trim().toLowerCase();
-    
+    final roleName = (_cachedRoleName ?? _getRoleFromBloc() ?? '')
+        .trim()
+        .toLowerCase();
+
     // Logic: If it's Center Staff or generic Staff role, hide PlatformCommission.
     // Home Staff usually has explicit "home" in their role name.
     if (roleName.contains('center') || roleName == 'staff') {
       filtered = filtered
-          .where((t) => (t.type ?? '').toLowerCase().trim() != 'platformcommission')
+          .where(
+            (t) => (t.type ?? '').toLowerCase().trim() != 'platformcommission',
+          )
           .toList();
     }
 
@@ -252,7 +256,11 @@ class _StaffTransactionListScreenState
         actions: [
           IconButton(
             onPressed: _refresh,
-            icon: Icon(Icons.refresh_rounded, color: AppColors.primary, size: 24 * scale),
+            icon: Icon(
+              Icons.refresh_rounded,
+              color: AppColors.primary,
+              size: 24 * scale,
+            ),
           ),
         ],
       ),
@@ -280,7 +288,11 @@ class _StaffTransactionListScreenState
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.error_outline, size: 48 * scale, color: Colors.red.withOpacity(0.5)),
+                            Icon(
+                              Icons.error_outline,
+                              size: 48 * scale,
+                              color: Colors.red.withValues(alpha: 0.5),
+                            ),
                             SizedBox(height: 16 * scale),
                             Text(
                               'Lỗi tải danh sách: ${snapshot.error}',
@@ -306,7 +318,13 @@ class _StaffTransactionListScreenState
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.receipt_long_outlined, size: 64 * scale, color: AppColors.textSecondary.withOpacity(0.2)),
+                            Icon(
+                              Icons.receipt_long_outlined,
+                              size: 64 * scale,
+                              color: AppColors.textSecondary.withValues(
+                                alpha: 0.2,
+                              ),
+                            ),
                             SizedBox(height: 16 * scale),
                             Text(
                               'Không tìm thấy giao dịch nào',
@@ -334,7 +352,12 @@ class _StaffTransactionListScreenState
                     onRefresh: _refresh,
                     color: AppColors.primary,
                     child: ListView.separated(
-                      padding: EdgeInsets.fromLTRB(16 * scale, 8 * scale, 16 * scale, 100 * scale),
+                      padding: EdgeInsets.fromLTRB(
+                        16 * scale,
+                        8 * scale,
+                        16 * scale,
+                        100 * scale,
+                      ),
                       itemCount: items.length,
                       separatorBuilder: (_, __) => SizedBox(height: 12 * scale),
                       itemBuilder: (context, index) {
@@ -358,7 +381,10 @@ class _StaffTransactionListScreenState
 
   Widget _buildHeader(double scale) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 8 * scale),
+      padding: EdgeInsets.symmetric(
+        horizontal: 16 * scale,
+        vertical: 8 * scale,
+      ),
       child: Row(
         children: [
           Expanded(
@@ -368,7 +394,7 @@ class _StaffTransactionListScreenState
                 borderRadius: BorderRadius.circular(12 * scale),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withValues(alpha: 0.04),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -381,9 +407,13 @@ class _StaffTransactionListScreenState
                   hintText: 'Tìm theo tên, mã giao dịch...',
                   hintStyle: AppTextStyles.arimo(
                     fontSize: 14 * scale,
-                    color: AppColors.textSecondary.withOpacity(0.5),
+                    color: AppColors.textSecondary.withValues(alpha: 0.5),
                   ),
-                  prefixIcon: Icon(Icons.search_rounded, color: AppColors.primary, size: 20 * scale),
+                  prefixIcon: Icon(
+                    Icons.search_rounded,
+                    color: AppColors.primary,
+                    size: 20 * scale,
+                  ),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
                           icon: Icon(Icons.close_rounded, size: 18 * scale),
@@ -410,10 +440,14 @@ class _StaffTransactionListScreenState
                 icon: Container(
                   padding: EdgeInsets.all(8 * scale),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: AppColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10 * scale),
                   ),
-                  child: Icon(Icons.tune_rounded, color: AppColors.primary, size: 20 * scale),
+                  child: Icon(
+                    Icons.tune_rounded,
+                    color: AppColors.primary,
+                    size: 20 * scale,
+                  ),
                 ),
               ),
               if (_getActiveFilterCount() > 0)
@@ -426,10 +460,17 @@ class _StaffTransactionListScreenState
                       color: Colors.red,
                       shape: BoxShape.circle,
                     ),
-                    constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+                    constraints: const BoxConstraints(
+                      minWidth: 14,
+                      minHeight: 14,
+                    ),
                     child: Text(
                       '${_getActiveFilterCount()}',
-                      style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -454,7 +495,10 @@ class _StaffTransactionListScreenState
       children: [
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          padding: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 8 * scale),
+          padding: EdgeInsets.symmetric(
+            horizontal: 16 * scale,
+            vertical: 8 * scale,
+          ),
           child: Row(
             children: statuses.map((status) {
               final isSelected = _statusFilter == status['key'];
@@ -466,18 +510,22 @@ class _StaffTransactionListScreenState
                   onSelected: (val) {
                     setState(() => _statusFilter = status['key']!);
                   },
-                  selectedColor: AppColors.primary.withOpacity(0.2),
+                  selectedColor: AppColors.primary.withValues(alpha: 0.2),
                   checkmarkColor: AppColors.primary,
                   labelStyle: AppTextStyles.arimo(
                     fontSize: 12 * scale,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                    color: isSelected
+                        ? AppColors.primary
+                        : AppColors.textSecondary,
                   ),
                   backgroundColor: AppColors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20 * scale),
                     side: BorderSide(
-                      color: isSelected ? AppColors.primary : Colors.grey.withOpacity(0.2),
+                      color: isSelected
+                          ? AppColors.primary
+                          : Colors.grey.withValues(alpha: 0.2),
                     ),
                   ),
                 ),
@@ -497,10 +545,17 @@ class _StaffTransactionListScreenState
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) {
           return Container(
-            padding: EdgeInsets.fromLTRB(20 * scale, 20 * scale, 20 * scale, 40 * scale),
+            padding: EdgeInsets.fromLTRB(
+              20 * scale,
+              20 * scale,
+              20 * scale,
+              40 * scale,
+            ),
             decoration: BoxDecoration(
               color: AppColors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24 * scale)),
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(24 * scale),
+              ),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -526,16 +581,14 @@ class _StaffTransactionListScreenState
                   ],
                 ),
                 SizedBox(height: 20 * scale),
-                Text('Loại giao dịch', style: AppTextStyles.arimo(fontWeight: FontWeight.w600)),
+                Text(
+                  'Loại giao dịch',
+                  style: AppTextStyles.arimo(fontWeight: FontWeight.w600),
+                ),
                 SizedBox(height: 12 * scale),
                 Wrap(
                   spacing: 8 * scale,
-                  children: [
-                    'all',
-                    'deposit',
-                    'remaining',
-                    'full'
-                  ].map((type) {
+                  children: ['all', 'deposit', 'remaining', 'full'].map((type) {
                     final isSelected = _typeFilter == type;
                     return ChoiceChip(
                       label: Text(_typeLabel(type == 'all' ? null : type)),
@@ -548,7 +601,10 @@ class _StaffTransactionListScreenState
                   }).toList(),
                 ),
                 SizedBox(height: 20 * scale),
-                Text('Khoảng thời gian', style: AppTextStyles.arimo(fontWeight: FontWeight.w600)),
+                Text(
+                  'Khoảng thời gian',
+                  style: AppTextStyles.arimo(fontWeight: FontWeight.w600),
+                ),
                 SizedBox(height: 12 * scale),
                 Row(
                   children: [
@@ -592,25 +648,32 @@ class _StaffTransactionListScreenState
                   ],
                 ),
                 SizedBox(height: 20 * scale),
-                Text('Phương thức thanh toán', style: AppTextStyles.arimo(fontWeight: FontWeight.w600)),
+                Text(
+                  'Phương thức thanh toán',
+                  style: AppTextStyles.arimo(fontWeight: FontWeight.w600),
+                ),
                 SizedBox(height: 12 * scale),
                 Wrap(
                   spacing: 8 * scale,
-                  children: [
-                    {'val': null, 'label': 'Tất cả'},
-                    {'val': 'PayOS', 'label': 'PayOS'},
-                    {'val': 'Offline', 'label': 'Tiền mặt'},
-                  ].map((method) {
-                    final isSelected = _paymentMethodFilter == method['val'];
-                    return ChoiceChip(
-                      label: Text(method['label'] as String),
-                      selected: isSelected,
-                      onSelected: (val) {
-                        setModalState(() => _paymentMethodFilter = method['val']);
-                        setState(() {});
-                      },
-                    );
-                  }).toList(),
+                  children:
+                      [
+                        {'val': null, 'label': 'Tất cả'},
+                        {'val': 'PayOS', 'label': 'PayOS'},
+                        {'val': 'Offline', 'label': 'Tiền mặt'},
+                      ].map((method) {
+                        final isSelected =
+                            _paymentMethodFilter == method['val'];
+                        return ChoiceChip(
+                          label: Text(method['label'] as String),
+                          selected: isSelected,
+                          onSelected: (val) {
+                            setModalState(
+                              () => _paymentMethodFilter = method['val'],
+                            );
+                            setState(() {});
+                          },
+                        );
+                      }).toList(),
                 ),
                 SizedBox(height: 32 * scale),
                 SizedBox(
@@ -620,11 +683,16 @@ class _StaffTransactionListScreenState
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       padding: EdgeInsets.symmetric(vertical: 14 * scale),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12 * scale)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12 * scale),
+                      ),
                     ),
                     child: Text(
                       'Áp dụng',
-                      style: AppTextStyles.arimo(color: Colors.white, fontWeight: FontWeight.w700),
+                      style: AppTextStyles.arimo(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ),
@@ -658,18 +726,26 @@ class _DateTile extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.all(12 * scale),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.withOpacity(0.3)),
+          border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
           borderRadius: BorderRadius.circular(8 * scale),
         ),
         child: Row(
           children: [
-            Icon(Icons.calendar_month_rounded, size: 16 * scale, color: AppColors.primary),
+            Icon(
+              Icons.calendar_month_rounded,
+              size: 16 * scale,
+              color: AppColors.primary,
+            ),
             SizedBox(width: 8 * scale),
             Text(
-              date == null ? label : '${date!.day}/${date!.month}/${date!.year}',
+              date == null
+                  ? label
+                  : '${date!.day}/${date!.month}/${date!.year}',
               style: AppTextStyles.arimo(
                 fontSize: 12 * scale,
-                color: date == null ? AppColors.textSecondary : AppColors.textPrimary,
+                color: date == null
+                    ? AppColors.textSecondary
+                    : AppColors.textPrimary,
               ),
             ),
           ],
@@ -724,7 +800,7 @@ class _TransactionItem extends StatelessWidget {
         borderRadius: BorderRadius.circular(16 * scale),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -737,9 +813,12 @@ class _TransactionItem extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 10 * scale, vertical: 4 * scale),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 10 * scale,
+                  vertical: 4 * scale,
+                ),
                 decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.1),
+                  color: statusColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20 * scale),
                 ),
                 child: Text(
@@ -755,7 +834,7 @@ class _TransactionItem extends StatelessWidget {
                 '#${transaction.id.substring(0, 8)}',
                 style: AppTextStyles.arimo(
                   fontSize: 11 * scale,
-                  color: AppColors.textSecondary.withOpacity(0.6),
+                  color: AppColors.textSecondary.withValues(alpha: 0.6),
                 ),
               ),
             ],
@@ -780,15 +859,19 @@ class _TransactionItem extends StatelessWidget {
             ),
           ],
           SizedBox(height: 12 * scale),
-            Row(
+          Row(
             children: [
-              Icon(Icons.access_time_rounded, size: 14 * scale, color: AppColors.textSecondary.withOpacity(0.6)),
+              Icon(
+                Icons.access_time_rounded,
+                size: 14 * scale,
+                color: AppColors.textSecondary.withValues(alpha: 0.6),
+              ),
               SizedBox(width: 6 * scale),
               Text(
                 dateLabel,
                 style: AppTextStyles.arimo(
                   fontSize: 12 * scale,
-                  color: AppColors.textSecondary.withOpacity(0.8),
+                  color: AppColors.textSecondary.withValues(alpha: 0.8),
                 ),
               ),
             ],
@@ -843,12 +926,13 @@ class _TransactionItem extends StatelessWidget {
               ),
             ],
           ),
-          if (transaction.note != null && transaction.note!.trim().isNotEmpty) ...[
+          if (transaction.note != null &&
+              transaction.note!.trim().isNotEmpty) ...[
             SizedBox(height: 12 * scale),
             Container(
               padding: EdgeInsets.all(10 * scale),
               decoration: BoxDecoration(
-                color: Colors.grey.withOpacity(0.05),
+                color: Colors.grey.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(8 * scale),
               ),
               child: Text(

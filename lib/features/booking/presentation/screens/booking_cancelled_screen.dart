@@ -5,8 +5,6 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_widgets.dart';
-import '../../../../core/widgets/app_scaffold.dart';
-import '../../../../core/widgets/app_bottom_navigation_bar.dart';
 import '../../../../core/routing/app_routes.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
@@ -16,10 +14,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 class BookingCancelledScreen extends StatelessWidget {
   final String? message;
 
-  const BookingCancelledScreen({
-    super.key,
-    this.message,
-  });
+  const BookingCancelledScreen({super.key, this.message});
 
   @override
   Widget build(BuildContext context) {
@@ -81,17 +76,20 @@ class BookingCancelledScreen extends StatelessWidget {
                     memberType = authState.user?.memberType?.toLowerCase();
                   } else if (authState is AuthCurrentAccountLoaded) {
                     role = authState.account.roleName.toLowerCase();
-                    memberType = authState.account.memberType?.toLowerCase() ??
+                    memberType =
+                        authState.account.memberType?.toLowerCase() ??
                         authState.account.ownerProfile?.memberTypeName
                             ?.toLowerCase();
                   } else if (authState is AuthGetAccountByIdSuccess) {
                     role = authState.account.roleName.toLowerCase();
-                    memberType = authState.account.memberType?.toLowerCase() ??
+                    memberType =
+                        authState.account.memberType?.toLowerCase() ??
                         authState.account.ownerProfile?.memberTypeName
                             ?.toLowerCase();
                   }
 
-                  final isEmployee = role == 'staff' ||
+                  final isEmployee =
+                      role == 'staff' ||
                       role == 'manager' ||
                       role == 'admin' ||
                       role == 'homestaff' ||
@@ -105,10 +103,7 @@ class BookingCancelledScreen extends StatelessWidget {
                       AppRoutes.employeePortal,
                     );
                   } else {
-                    AppRouter.pushAndRemoveUntil(
-                      context,
-                      AppRoutes.home,
-                    );
+                    AppRouter.pushAndRemoveUntil(context, AppRoutes.home);
                   }
                 },
               ),
@@ -119,4 +114,3 @@ class BookingCancelledScreen extends StatelessWidget {
     );
   }
 }
-

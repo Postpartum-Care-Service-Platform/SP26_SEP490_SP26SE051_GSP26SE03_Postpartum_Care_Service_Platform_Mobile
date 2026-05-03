@@ -16,7 +16,6 @@ import '../../../../core/services/current_account_cache_service.dart';
 import '../bloc/menu_bloc.dart';
 import '../bloc/menu_event.dart';
 import '../bloc/menu_state.dart';
-import 'create_custom_menu_screen.dart';
 import '../widgets/menu_calendar_picker.dart';
 import '../widgets/menu_selection_drawer.dart';
 import '../widgets/menu_list_drawer.dart';
@@ -39,7 +38,8 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
   DateTime? _minMenuDate;
   DateTime? _maxMenuDate;
   // Unsaved selections (user is currently selecting, not yet saved)
-  final Map<int, MenuEntity> _unsavedSelections = {}; // menuTypeId -> MenuEntity
+  final Map<int, MenuEntity> _unsavedSelections =
+      {}; // menuTypeId -> MenuEntity
   // Track deletion state
   int? _deletingCount;
   bool _isBulkSaving = false;
@@ -54,7 +54,8 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
     _loadMenuDateRange();
   }
 
-  DateTime _normalizeDate(DateTime date) => DateTime(date.year, date.month, date.day);
+  DateTime _normalizeDate(DateTime date) =>
+      DateTime(date.year, date.month, date.day);
 
   Future<void> _loadMenuDateRange() async {
     final currentAccount = await CurrentAccountCacheService.getCurrentAccount();
@@ -159,12 +160,9 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
   void _showDeleteMenuDialog(BuildContext context, MenuLoaded state) {
     final scale = AppResponsive.scaleFactor(context);
     final savedRecords = _getSavedRecordsForDate(state);
-    
+
     if (savedRecords.isEmpty) {
-      AppToast.showWarning(
-        context,
-        message: AppStrings.menuNoMenuToDelete,
-      );
+      AppToast.showWarning(context, message: AppStrings.menuNoMenuToDelete);
       return;
     }
 
@@ -204,7 +202,10 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
 
                 // Header
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20 * scale, vertical: 16 * scale),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 20 * scale,
+                    vertical: 16 * scale,
+                  ),
                   child: Row(
                     children: [
                       Expanded(
@@ -243,7 +244,7 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
                       MenuTypeEntity? menuType;
                       try {
                         menuType = state.menuTypes.firstWhere(
-                          (t) => t.id == menu!.menuTypeId,
+                          (t) => t.id == menu.menuTypeId,
                         );
                       } catch (e) {
                         // Menu type not found, skip this record
@@ -286,7 +287,9 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
                             ),
                           ),
                           subtitle: Text(
-                            record.name.isNotEmpty ? record.name : menu.menuName,
+                            record.name.isNotEmpty
+                                ? record.name
+                                : menu.menuName,
                             style: AppTextStyles.arimo(
                               fontSize: 14 * scale,
                               color: AppColors.textSecondary,
@@ -336,7 +339,9 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
                               ? null
                               : () {
                                   Navigator.of(context).pop();
-                                  _handleDeleteSavedRecords(selectedRecordIds.toList());
+                                  _handleDeleteSavedRecords(
+                                    selectedRecordIds.toList(),
+                                  );
                                 },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.red,
@@ -349,7 +354,10 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
                           child: Text(
                             selectedRecordIds.isEmpty
                                 ? AppStrings.menuSelectMeal
-                                : AppStrings.menuDeleteCount.replaceAll('{count}', '${selectedRecordIds.length}'),
+                                : AppStrings.menuDeleteCount.replaceAll(
+                                    '{count}',
+                                    '${selectedRecordIds.length}',
+                                  ),
                             style: AppTextStyles.arimo(
                               fontSize: 16 * scale,
                               fontWeight: FontWeight.w600,
@@ -411,7 +419,8 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
 
           try {
             final existingMenu = _getMenuFromState(state, record.menuId);
-            return existingMenu != null && existingMenu.menuTypeId == selectedMenu.menuTypeId;
+            return existingMenu != null &&
+                existingMenu.menuTypeId == selectedMenu.menuTypeId;
           } catch (_) {
             return false;
           }
@@ -423,27 +432,28 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
       if (existingRecord != null) {
         // No-op update: cùng menu thì bỏ qua
         if (existingRecord.menuId != selectedMenu.id) {
-          updateRequests.add(UpdateMenuRecordRequest(
-            id: existingRecord.id,
+          updateRequests.add(
+            UpdateMenuRecordRequest(
+              id: existingRecord.id,
+              menuId: selectedMenu.id,
+              name: selectedMenu.menuName,
+              date: _selectedDate,
+            ),
+          );
+        }
+      } else {
+        createRequests.add(
+          CreateMenuRecordRequest(
             menuId: selectedMenu.id,
             name: selectedMenu.menuName,
             date: _selectedDate,
-          ));
-        }
-      } else {
-        createRequests.add(CreateMenuRecordRequest(
-          menuId: selectedMenu.id,
-          name: selectedMenu.menuName,
-          date: _selectedDate,
-        ));
+          ),
+        );
       }
     }
 
     if (createRequests.isEmpty && updateRequests.isEmpty) {
-      AppToast.showWarning(
-        context,
-        message: 'Không có thay đổi để lưu',
-      );
+      AppToast.showWarning(context, message: 'Không có thay đổi để lưu');
       setState(() {
         _unsavedSelections.clear();
       });
@@ -464,18 +474,15 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
     });
 
     // Show success message
-    AppToast.showSuccess(
-      context,
-      message: AppStrings.menuSaveSuccess,
-    );
+    AppToast.showSuccess(context, message: AppStrings.menuSaveSuccess);
   }
 
-  Future<void> _openBulkCreateMenuSheet(BuildContext context, MenuLoaded state) async {
+  Future<void> _openBulkCreateMenuSheet(
+    BuildContext context,
+    MenuLoaded state,
+  ) async {
     if (_minMenuDate == null || _maxMenuDate == null) {
-      AppToast.showWarning(
-        context,
-        message: AppStrings.menuWaitingCheckIn,
-      );
+      AppToast.showWarning(context, message: AppStrings.menuWaitingCheckIn);
       return;
     }
 
@@ -487,7 +494,9 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
 
     DateTime activeDate = selectedDates.contains(_normalizeDate(_selectedDate))
         ? _normalizeDate(_selectedDate)
-        : (allAllowedDates.isNotEmpty ? _normalizeDate(allAllowedDates.first) : _normalizeDate(_selectedDate));
+        : (allAllowedDates.isNotEmpty
+              ? _normalizeDate(allAllowedDates.first)
+              : _normalizeDate(_selectedDate));
 
     for (final record in state.myMenuRecords) {
       if (!record.isActive) continue;
@@ -497,13 +506,19 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
       final menu = _getMenuFromState(state, record.menuId);
 
       if (menu == null) continue;
-      final daySelections = selectionsByDate.putIfAbsent(recordDate, () => <int, MenuEntity>{});
+      final daySelections = selectionsByDate.putIfAbsent(
+        recordDate,
+        () => <int, MenuEntity>{},
+      );
       daySelections[menu.menuTypeId] = menu;
     }
 
     Map<int, MenuEntity> getSelectionsForDate(DateTime date) {
       final normalized = _normalizeDate(date);
-      return selectionsByDate.putIfAbsent(normalized, () => <int, MenuEntity>{});
+      return selectionsByDate.putIfAbsent(
+        normalized,
+        () => <int, MenuEntity>{},
+      );
     }
 
     Future<void> openMenuListDrawerForType(
@@ -558,12 +573,16 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
 
               String inferMealSlot(String text) {
                 final lower = text.toLowerCase();
-                if (lower.contains('phụ') && lower.contains('sáng')) return 'snack_morning';
-                if (lower.contains('phụ') && lower.contains('chiều')) return 'snack_afternoon';
-                if (lower.contains('phụ') && lower.contains('tối')) return 'snack_night';
+                if (lower.contains('phụ') && lower.contains('sáng'))
+                  return 'snack_morning';
+                if (lower.contains('phụ') && lower.contains('chiều'))
+                  return 'snack_afternoon';
+                if (lower.contains('phụ') && lower.contains('tối'))
+                  return 'snack_night';
                 if (lower.contains('sáng')) return 'morning';
                 if (lower.contains('trưa')) return 'lunch';
-                if (lower.contains('chiều') || lower.contains('tối')) return 'dinner';
+                if (lower.contains('chiều') || lower.contains('tối'))
+                  return 'dinner';
                 return 'unknown';
               }
 
@@ -574,7 +593,9 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
 
               String inferMenuTypeNameByMenu(MenuEntity menu) {
                 try {
-                  return state.menuTypes.firstWhere((t) => t.id == menu.menuTypeId).name;
+                  return state.menuTypes
+                      .firstWhere((t) => t.id == menu.menuTypeId)
+                      .name;
                 } catch (_) {
                   return menu.menuName;
                 }
@@ -583,7 +604,9 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
               // Lập chỉ mục record hiện có theo (ngày + slot bữa) để tránh bị lọt sang POST
               final existingByDateAndSlot = <String, MenuRecordEntity>{};
               if (kDebugMode) {
-                debugPrint('[MENU_BULK] selectedDates=${selectedDates.map(dateKey).toList()}');
+                debugPrint(
+                  '[MENU_BULK] selectedDates=${selectedDates.map(dateKey).toList()}',
+                );
               }
               for (final record in state.myMenuRecords) {
                 if (!record.isActive) continue;
@@ -616,7 +639,9 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
                 for (final menu in daySelections.values) {
                   requestDates.add(normalizedDate);
 
-                  final selectedMealSlot = inferMealSlot(inferMenuTypeNameByMenu(menu));
+                  final selectedMealSlot = inferMealSlot(
+                    inferMenuTypeNameByMenu(menu),
+                  );
                   final key = '${dateKey(normalizedDate)}|$selectedMealSlot';
                   final existingRecord = selectedMealSlot == 'unknown'
                       ? null
@@ -625,11 +650,13 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
                   if (existingRecord != null) {
                     // No-op update: cùng menuId thì bỏ qua
                     if (existingRecord.menuId != menu.id) {
-                      saveRequests.add(SaveMenuRecordRequest(
-                        menuId: menu.id,
-                        name: menu.menuName,
-                        date: normalizedDate,
-                      ));
+                      saveRequests.add(
+                        SaveMenuRecordRequest(
+                          menuId: menu.id,
+                          name: menu.menuName,
+                          date: normalizedDate,
+                        ),
+                      );
                       if (kDebugMode) {
                         debugPrint(
                           '[MENU_BULK][PLAN] SAVE_AS_UPDATE key=$key recordId=${existingRecord.id} oldMenuId=${existingRecord.menuId} newMenuId=${menu.id} newName=${menu.menuName}',
@@ -643,11 +670,13 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
                       }
                     }
                   } else {
-                    saveRequests.add(SaveMenuRecordRequest(
-                      menuId: menu.id,
-                      name: menu.menuName,
-                      date: normalizedDate,
-                    ));
+                    saveRequests.add(
+                      SaveMenuRecordRequest(
+                        menuId: menu.id,
+                        name: menu.menuName,
+                        date: normalizedDate,
+                      ),
+                    );
                     if (kDebugMode) {
                       debugPrint(
                         '[MENU_BULK][PLAN] SAVE_AS_CREATE key=$key menuId=${menu.id} name=${menu.menuName}',
@@ -684,11 +713,11 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
 
               // Send event
               this.context.read<MenuBloc>().add(
-                    MenuRecordsSaveRequested(
-                      requests: saveRequests,
-                      existingRecords: state.myMenuRecords,
-                    ),
-                  );
+                MenuRecordsSaveRequested(
+                  requests: saveRequests,
+                  existingRecords: state.myMenuRecords,
+                ),
+              );
             }
 
             final sortedSelectedDates = selectedDates.toList()..sort();
@@ -718,7 +747,10 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
                     ),
                   ),
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20 * scale, vertical: 10 * scale),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 20 * scale,
+                      vertical: 10 * scale,
+                    ),
                     child: Row(
                       children: [
                         Expanded(
@@ -744,7 +776,12 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
                   ),
                   Flexible(
                     child: SingleChildScrollView(
-                      padding: EdgeInsets.fromLTRB(20 * scale, 0, 20 * scale, 20 * scale),
+                      padding: EdgeInsets.fromLTRB(
+                        20 * scale,
+                        0,
+                        20 * scale,
+                        20 * scale,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -771,19 +808,27 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
                                   SizedBox(height: 8 * scale),
                                   Builder(
                                     builder: (context) {
-                                      final firstDate = sortedSelectedDates.first;
+                                      final firstDate =
+                                          sortedSelectedDates.first;
                                       final lastDate = sortedSelectedDates.last;
 
                                       // Monday-based calendar grid (T2 ... CN)
-                                      final leadingEmpty = firstDate.weekday - DateTime.monday;
-                                      final totalDays = lastDate.difference(firstDate).inDays + 1;
+                                      final leadingEmpty =
+                                          firstDate.weekday - DateTime.monday;
+                                      final totalDays =
+                                          lastDate
+                                              .difference(firstDate)
+                                              .inDays +
+                                          1;
 
                                       final calendarCells = <DateTime?>[];
                                       for (int i = 0; i < leadingEmpty; i++) {
                                         calendarCells.add(null);
                                       }
                                       for (int i = 0; i < totalDays; i++) {
-                                        calendarCells.add(firstDate.add(Duration(days: i)));
+                                        calendarCells.add(
+                                          firstDate.add(Duration(days: i)),
+                                        );
                                       }
                                       while (calendarCells.length % 7 != 0) {
                                         calendarCells.add(null);
@@ -806,39 +851,77 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
                                         children: [
                                           Row(
                                             children: [
-                                              Expanded(child: weekdayLabel(AppStrings.weekDayMonday)),
-                                              Expanded(child: weekdayLabel(AppStrings.weekDayTuesday)),
-                                              Expanded(child: weekdayLabel(AppStrings.weekDayWednesday)),
-                                              Expanded(child: weekdayLabel(AppStrings.weekDayThursday)),
-                                              Expanded(child: weekdayLabel(AppStrings.weekDayFriday)),
-                                              Expanded(child: weekdayLabel(AppStrings.weekDaySaturday)),
-                                              Expanded(child: weekdayLabel(AppStrings.weekDaySunday)),
+                                              Expanded(
+                                                child: weekdayLabel(
+                                                  AppStrings.weekDayMonday,
+                                                ),
+                                              ),
+                                              Expanded(
+                                                child: weekdayLabel(
+                                                  AppStrings.weekDayTuesday,
+                                                ),
+                                              ),
+                                              Expanded(
+                                                child: weekdayLabel(
+                                                  AppStrings.weekDayWednesday,
+                                                ),
+                                              ),
+                                              Expanded(
+                                                child: weekdayLabel(
+                                                  AppStrings.weekDayThursday,
+                                                ),
+                                              ),
+                                              Expanded(
+                                                child: weekdayLabel(
+                                                  AppStrings.weekDayFriday,
+                                                ),
+                                              ),
+                                              Expanded(
+                                                child: weekdayLabel(
+                                                  AppStrings.weekDaySaturday,
+                                                ),
+                                              ),
+                                              Expanded(
+                                                child: weekdayLabel(
+                                                  AppStrings.weekDaySunday,
+                                                ),
+                                              ),
                                             ],
                                           ),
                                           SizedBox(height: 6 * scale),
                                           GridView.builder(
                                             shrinkWrap: true,
-                                            physics: const NeverScrollableScrollPhysics(),
+                                            physics:
+                                                const NeverScrollableScrollPhysics(),
                                             itemCount: calendarCells.length,
-                                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                              crossAxisCount: 7,
-                                              childAspectRatio: 1,
-                                              crossAxisSpacing: 6,
-                                              mainAxisSpacing: 6,
-                                            ),
+                                            gridDelegate:
+                                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                                  crossAxisCount: 7,
+                                                  childAspectRatio: 1,
+                                                  crossAxisSpacing: 6,
+                                                  mainAxisSpacing: 6,
+                                                ),
                                             itemBuilder: (context, index) {
                                               final date = calendarCells[index];
                                               if (date == null) {
                                                 return const SizedBox.shrink();
                                               }
 
-                                              final normalizedDate = _normalizeDate(date);
-                                              final isActive = normalizedDate == _normalizeDate(activeDate);
+                                              final normalizedDate =
+                                                  _normalizeDate(date);
+                                              final isActive =
+                                                  normalizedDate ==
+                                                  _normalizeDate(activeDate);
                                               final hasMenuSelected =
-                                                  (selectionsByDate[normalizedDate]?.isNotEmpty ?? false);
+                                                  (selectionsByDate[normalizedDate]
+                                                      ?.isNotEmpty ??
+                                                  false);
 
                                               return InkWell(
-                                                borderRadius: BorderRadius.circular(10 * scale),
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                      10 * scale,
+                                                    ),
                                                 onTap: () {
                                                   setModalState(() {
                                                     activeDate = normalizedDate;
@@ -849,15 +932,22 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
                                                     color: isActive
                                                         ? AppColors.primary
                                                         : hasMenuSelected
-                                                            ? AppColors.verified.withValues(alpha: 0.12)
-                                                            : AppColors.white,
-                                                    borderRadius: BorderRadius.circular(10 * scale),
+                                                        ? AppColors.verified
+                                                              .withValues(
+                                                                alpha: 0.12,
+                                                              )
+                                                        : AppColors.white,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          10 * scale,
+                                                        ),
                                                     border: Border.all(
                                                       color: isActive
                                                           ? AppColors.primary
                                                           : hasMenuSelected
-                                                              ? AppColors.verified
-                                                              : AppColors.borderLight,
+                                                          ? AppColors.verified
+                                                          : AppColors
+                                                                .borderLight,
                                                     ),
                                                   ),
                                                   child: Stack(
@@ -866,11 +956,15 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
                                                         child: Text(
                                                           '${date.day}',
                                                           style: AppTextStyles.arimo(
-                                                            fontSize: 13 * scale,
-                                                            fontWeight: FontWeight.w700,
+                                                            fontSize:
+                                                                13 * scale,
+                                                            fontWeight:
+                                                                FontWeight.w700,
                                                             color: isActive
-                                                                ? AppColors.white
-                                                                : AppColors.textPrimary,
+                                                                ? AppColors
+                                                                      .white
+                                                                : AppColors
+                                                                      .textPrimary,
                                                           ),
                                                         ),
                                                       ),
@@ -882,8 +976,10 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
                                                             Icons.check_circle,
                                                             size: 12 * scale,
                                                             color: isActive
-                                                                ? AppColors.white
-                                                                : AppColors.verified,
+                                                                ? AppColors
+                                                                      .white
+                                                                : AppColors
+                                                                      .verified,
                                                           ),
                                                         ),
                                                     ],
@@ -911,7 +1007,8 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
                           ),
                           SizedBox(height: 10 * scale),
                           ...sortedMenuTypes.map((menuType) {
-                            final currentSelection = activeSelections[menuType.id];
+                            final currentSelection =
+                                activeSelections[menuType.id];
                             final hasSelection = currentSelection != null;
                             return Container(
                               margin: EdgeInsets.only(bottom: 10 * scale),
@@ -931,15 +1028,21 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
                                   height: 34 * scale,
                                   decoration: BoxDecoration(
                                     color: hasSelection
-                                        ? AppColors.verified.withValues(alpha: 0.15)
+                                        ? AppColors.verified.withValues(
+                                            alpha: 0.15,
+                                          )
                                         : AppColors.background,
-                                    borderRadius: BorderRadius.circular(8 * scale),
+                                    borderRadius: BorderRadius.circular(
+                                      8 * scale,
+                                    ),
                                   ),
                                   child: Center(
                                     child: _getMenuTypeIcon(
                                       menuType.name,
                                       18 * scale,
-                                      hasSelection ? AppColors.verified : AppColors.textSecondary,
+                                      hasSelection
+                                          ? AppColors.verified
+                                          : AppColors.textSecondary,
                                     ),
                                   ),
                                 ),
@@ -967,18 +1070,26 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
                                       GestureDetector(
                                         onTap: () {
                                           setModalState(() {
-                                            final daySelections = selectionsByDate[activeDate];
+                                            final daySelections =
+                                                selectionsByDate[activeDate];
                                             daySelections?.remove(menuType.id);
-                                            if (daySelections != null && daySelections.isEmpty) {
-                                              selectionsByDate.remove(activeDate);
+                                            if (daySelections != null &&
+                                                daySelections.isEmpty) {
+                                              selectionsByDate.remove(
+                                                activeDate,
+                                              );
                                             }
                                           });
                                         },
                                         child: Container(
-                                          margin: EdgeInsets.only(right: 6 * scale),
+                                          margin: EdgeInsets.only(
+                                            right: 6 * scale,
+                                          ),
                                           padding: EdgeInsets.all(2 * scale),
                                           decoration: BoxDecoration(
-                                            color: AppColors.red.withValues(alpha: 0.12),
+                                            color: AppColors.red.withValues(
+                                              alpha: 0.12,
+                                            ),
                                             shape: BoxShape.circle,
                                           ),
                                           child: Icon(
@@ -990,7 +1101,9 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
                                       ),
                                     if (hasSelection)
                                       Padding(
-                                        padding: EdgeInsets.only(right: 6 * scale),
+                                        padding: EdgeInsets.only(
+                                          right: 6 * scale,
+                                        ),
                                         child: Icon(
                                           Icons.check_circle,
                                           color: AppColors.verified,
@@ -1005,7 +1118,10 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
                                   ],
                                 ),
                                 onTap: () async {
-                                  await openMenuListDrawerForType(context, menuType);
+                                  await openMenuListDrawerForType(
+                                    context,
+                                    menuType,
+                                  );
                                   setModalState(() {});
                                 },
                               ),
@@ -1119,7 +1235,12 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
               topRight: Radius.circular(20 * scale),
             ),
           ),
-          padding: EdgeInsets.fromLTRB(20 * scale, 12 * scale, 20 * scale, 24 * scale),
+          padding: EdgeInsets.fromLTRB(
+            20 * scale,
+            12 * scale,
+            20 * scale,
+            24 * scale,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -1134,7 +1255,11 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
               ),
               AppWidgets.primaryButton(
                 text: 'Từng ngày',
-                icon: Icon(Icons.today, size: 20 * scale, color: AppColors.white),
+                icon: Icon(
+                  Icons.today,
+                  size: 20 * scale,
+                  color: AppColors.white,
+                ),
                 onPressed: () {
                   Navigator.of(sheetContext).pop();
                   _openMenuSelectionDrawer(context, state);
@@ -1144,7 +1269,11 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
               SizedBox(height: 10 * scale),
               AppWidgets.secondaryButton(
                 text: 'Nhiều ngày',
-                icon: Icon(Icons.calendar_month, size: 20 * scale, color: AppColors.textPrimary),
+                icon: Icon(
+                  Icons.calendar_month,
+                  size: 20 * scale,
+                  color: AppColors.textPrimary,
+                ),
                 onPressed: () {
                   Navigator.of(sheetContext).pop();
                   _openBulkCreateMenuSheet(context, state);
@@ -1164,8 +1293,10 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
 
     return BlocBuilder<MenuBloc, MenuState>(
       builder: (context, state) {
-        final savedRecords = state is MenuLoaded ? _getSavedRecordsForDate(state) : <MenuRecordEntity>[];
-        
+        final savedRecords = state is MenuLoaded
+            ? _getSavedRecordsForDate(state)
+            : <MenuRecordEntity>[];
+
         return Scaffold(
           backgroundColor: AppColors.background,
           appBar: AppAppBar(
@@ -1193,206 +1324,225 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
                   ]
                 : null,
           ),
-      body: BlocConsumer<MenuBloc, MenuState>(
-        listener: (context, state) {
-          if (state is MenuError) {
-            // Hide loading on error
-            AppLoading.hide(context);
-            // Clear deletion tracking
-            if (_deletingCount != null) {
-              setState(() {
-                _deletingCount = null;
-              });
-            }
-            AppToast.showError(context, message: state.message);
-          } else if (state is MenuLoaded && _deletingCount != null) {
-            // Hide loading after successful deletion and reload
-            AppLoading.hide(context);
-            // Show success message
-            final count = _deletingCount!;
-            setState(() {
-              _deletingCount = null;
-            });
-            AppToast.showSuccess(
-              context,
-              message: AppStrings.menuDeletedCount.replaceAll('{count}', '$count'),
-            );
-          } else if (state is MenuLoaded && _isBulkSaving) {
-            AppLoading.hide(context);
-            final count = _bulkSaveCount ?? 0;
-            setState(() {
-              _isBulkSaving = false;
-              _bulkSaveCount = null;
-            });
-            AppToast.showSuccess(
-              context,
-              message: AppStrings.menuBulkSaveSuccess.replaceAll('{count}', '$count'),
-            );
-          }
-        },
-        builder: (context, state) {
-          if (state is MenuLoading) {
-            return Center(
-              child: AppLoadingIndicator(
-                color: AppColors.primary,
-              ),
-            );
-          }
-
-          if (state is MenuError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 64 * scale,
-                    color: AppColors.textSecondary,
+          body: BlocConsumer<MenuBloc, MenuState>(
+            listener: (context, state) {
+              if (state is MenuError) {
+                // Hide loading on error
+                AppLoading.hide(context);
+                // Clear deletion tracking
+                if (_deletingCount != null) {
+                  setState(() {
+                    _deletingCount = null;
+                  });
+                }
+                AppToast.showError(context, message: state.message);
+              } else if (state is MenuLoaded && _deletingCount != null) {
+                // Hide loading after successful deletion and reload
+                AppLoading.hide(context);
+                // Show success message
+                final count = _deletingCount!;
+                setState(() {
+                  _deletingCount = null;
+                });
+                AppToast.showSuccess(
+                  context,
+                  message: AppStrings.menuDeletedCount.replaceAll(
+                    '{count}',
+                    '$count',
                   ),
-                  SizedBox(height: 16 * scale),
-                  Text(
-                    state.message,
-                    style: TextStyle(
-                      fontSize: 16 * scale,
-                      color: AppColors.textSecondary,
+                );
+              } else if (state is MenuLoaded && _isBulkSaving) {
+                AppLoading.hide(context);
+                final count = _bulkSaveCount ?? 0;
+                setState(() {
+                  _isBulkSaving = false;
+                  _bulkSaveCount = null;
+                });
+                AppToast.showSuccess(
+                  context,
+                  message: AppStrings.menuBulkSaveSuccess.replaceAll(
+                    '{count}',
+                    '$count',
+                  ),
+                );
+              }
+            },
+            builder: (context, state) {
+              if (state is MenuLoading) {
+                return Center(
+                  child: AppLoadingIndicator(color: AppColors.primary),
+                );
+              }
+
+              if (state is MenuError) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        size: 64 * scale,
+                        color: AppColors.textSecondary,
+                      ),
+                      SizedBox(height: 16 * scale),
+                      Text(
+                        state.message,
+                        style: TextStyle(
+                          fontSize: 16 * scale,
+                          color: AppColors.textSecondary,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 24 * scale),
+                      AppWidgets.primaryButton(
+                        text: AppStrings.retry,
+                        onPressed: () {
+                          context.read<MenuBloc>().add(
+                            const MenuLoadRequested(),
+                          );
+                        },
+                        width: 200,
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              if (state is MenuLoaded) {
+                final datesWithMenus = _getDatesWithMenus(state.myMenuRecords);
+                final savedRecords = _getSavedRecordsForDate(state);
+
+                return Column(
+                  children: [
+                    // Calendar picker
+                    Padding(
+                      padding: EdgeInsets.only(top: 16 * scale),
+                      child: MenuCalendarPicker(
+                        selectedDate: _selectedDate,
+                        onDateSelected: _handleDateSelected,
+                        datesWithMenus: datesWithMenus,
+                        minDate: _minMenuDate,
+                        maxDate: _maxMenuDate,
+                      ),
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: 24 * scale),
-                  AppWidgets.primaryButton(
-                    text: AppStrings.retry,
-                    onPressed: () {
-                      context.read<MenuBloc>().add(const MenuLoadRequested());
-                    },
-                    width: 200,
-                  ),
-                ],
-              ),
-            );
-          }
 
-          if (state is MenuLoaded) {
-            final datesWithMenus = _getDatesWithMenus(state.myMenuRecords);
-            final savedRecords = _getSavedRecordsForDate(state);
+                    SizedBox(height: 20 * scale),
 
-            return Column(
-              children: [
-                // Calendar picker
-                Padding(
-                  padding: EdgeInsets.only(top: 16 * scale),
-                  child: MenuCalendarPicker(
-                    selectedDate: _selectedDate,
-                    onDateSelected: _handleDateSelected,
-                    datesWithMenus: datesWithMenus,
-                    minDate: _minMenuDate,
-                    maxDate: _maxMenuDate,
-                  ),
-                ),
-
-                SizedBox(height: 20 * scale),
-
-                // Content
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Saved menu records (from server)
-                        SavedMenuRecordsCard(
-                          date: _selectedDate,
-                          savedRecords: savedRecords,
-                          allMenus: state.menus,
-                          customizedMenus: state.customizedMenus,
-                          menuTypes: state.menuTypes,
-                        ),
-
-                        // Unsaved menu selections (user is currently selecting)
-                        UnsavedMenuSelectionsCard(
-                          date: _selectedDate,
-                          unsavedSelections: _unsavedSelections,
-                          menuTypes: state.menuTypes,
-                          onRemove: _handleRemoveUnsavedSelection,
-                        ),
-
-                        // Empty state if no saved records and no unsaved selections
-                        if (savedRecords.isEmpty && _unsavedSelections.isEmpty)
-                          Container(
-                            margin: EdgeInsets.symmetric(horizontal: 20 * scale, vertical: 8 * scale),
-                            padding: EdgeInsets.all(20 * scale),
-                            decoration: BoxDecoration(
-                              color: AppColors.background,
-                              borderRadius: BorderRadius.circular(16 * scale),
-                              border: Border.all(
-                                color: AppColors.borderLight,
-                                width: 1,
-                              ),
+                    // Content
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Saved menu records (from server)
+                            SavedMenuRecordsCard(
+                              date: _selectedDate,
+                              savedRecords: savedRecords,
+                              allMenus: state.menus,
+                              customizedMenus: state.customizedMenus,
+                              menuTypes: state.menuTypes,
                             ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.info_outline,
-                                  color: AppColors.textSecondary,
-                                  size: 20 * scale,
+
+                            // Unsaved menu selections (user is currently selecting)
+                            UnsavedMenuSelectionsCard(
+                              date: _selectedDate,
+                              unsavedSelections: _unsavedSelections,
+                              menuTypes: state.menuTypes,
+                              onRemove: _handleRemoveUnsavedSelection,
+                            ),
+
+                            // Empty state if no saved records and no unsaved selections
+                            if (savedRecords.isEmpty &&
+                                _unsavedSelections.isEmpty)
+                              Container(
+                                margin: EdgeInsets.symmetric(
+                                  horizontal: 20 * scale,
+                                  vertical: 8 * scale,
                                 ),
-                                SizedBox(width: 12 * scale),
-                                Expanded(
-                                  child: Text(
-                                    AppStrings.menuNotSelectedForDate.replaceAll('{date}', _formatDate(_selectedDate)),
-                                    style: AppTextStyles.arimo(
-                                      fontSize: 14 * scale,
-                                      color: AppColors.textSecondary,
-                                    ),
+                                padding: EdgeInsets.all(20 * scale),
+                                decoration: BoxDecoration(
+                                  color: AppColors.background,
+                                  borderRadius: BorderRadius.circular(
+                                    16 * scale,
+                                  ),
+                                  border: Border.all(
+                                    color: AppColors.borderLight,
+                                    width: 1,
                                   ),
                                 ),
-                              ],
-                            ),
-                          ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.info_outline,
+                                      color: AppColors.textSecondary,
+                                      size: 20 * scale,
+                                    ),
+                                    SizedBox(width: 12 * scale),
+                                    Expanded(
+                                      child: Text(
+                                        AppStrings.menuNotSelectedForDate
+                                            .replaceAll(
+                                              '{date}',
+                                              _formatDate(_selectedDate),
+                                            ),
+                                        style: AppTextStyles.arimo(
+                                          fontSize: 14 * scale,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
 
-                        SizedBox(height: 18 * scale),
-                      ],
+                            SizedBox(height: 18 * scale),
+                          ],
+                        ),
+                      ),
                     ),
+                  ],
+                );
+              }
+
+              return const SizedBox.shrink();
+            },
+          ),
+          floatingActionButton: BlocBuilder<MenuBloc, MenuState>(
+            builder: (context, state) {
+              if (state is! MenuLoaded) {
+                return const SizedBox.shrink();
+              }
+
+              // Show "Lưu menu" FAB if there are unsaved selections
+              if (_unsavedSelections.isNotEmpty) {
+                return AppWidgets.primaryFabExtended(
+                  context: context,
+                  text: AppStrings.menuSaveCount.replaceAll(
+                    '{count}',
+                    '${_unsavedSelections.length}',
+                  ),
+                  icon: Icons.save,
+                  onPressed: _handleSaveMenus,
+                );
+              }
+
+              // Show create options FAB when no unsaved selections
+              final scale = AppResponsive.scaleFactor(context);
+              return AppWidgets.primaryFabIcon(
+                context: context,
+                iconWidget: SvgPicture.asset(
+                  AppAssets.menuThird,
+                  width: 36 * scale,
+                  height: 36 * scale,
+                  colorFilter: const ColorFilter.mode(
+                    AppColors.white,
+                    BlendMode.srcIn,
                   ),
                 ),
-              ],
-            );
-          }
-
-          return const SizedBox.shrink();
-        },
-      ),
-      floatingActionButton: BlocBuilder<MenuBloc, MenuState>(
-        builder: (context, state) {
-          if (state is! MenuLoaded) {
-            return const SizedBox.shrink();
-          }
-
-          // Show "Lưu menu" FAB if there are unsaved selections
-          if (_unsavedSelections.isNotEmpty) {
-            return AppWidgets.primaryFabExtended(
-              context: context,
-              text: AppStrings.menuSaveCount.replaceAll('{count}', '${_unsavedSelections.length}'),
-              icon: Icons.save,
-              onPressed: _handleSaveMenus,
-            );
-          }
-
-          // Show create options FAB when no unsaved selections
-          final scale = AppResponsive.scaleFactor(context);
-          return AppWidgets.primaryFabIcon(
-            context: context,
-            iconWidget: SvgPicture.asset(
-              AppAssets.menuThird,
-              width: 36 * scale,
-              height: 36 * scale,
-              colorFilter: const ColorFilter.mode(
-                AppColors.white,
-                BlendMode.srcIn,
-              ),
-            ),
-            onPressed: () => _openCreateMenuFabOptions(context, state),
-          );
-        },
-      ),
+                onPressed: () => _openCreateMenuFabOptions(context, state),
+              );
+            },
+          ),
         );
       },
     );
@@ -1403,7 +1553,7 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
     // Build saved selections map (menuTypeId -> MenuEntity)
     final savedSelections = <int, MenuEntity>{};
     final savedRecords = _getSavedRecordsForDate(state);
-    
+
     for (final record in savedRecords) {
       final menu = _getMenuFromState(state, record.menuId);
       if (menu != null) {

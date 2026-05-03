@@ -253,288 +253,316 @@ class _BookingStep2FamilyProfileSelectionState
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: EdgeInsets.all(16 * scale),
-          children: [
-            Container(
-              margin: EdgeInsets.only(bottom: 14 * scale),
-              padding: EdgeInsets.all(14 * scale),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.06),
-                borderRadius: BorderRadius.circular(12 * scale),
-                border: Border.all(
-                  color: AppColors.primary.withValues(alpha: 0.18),
+            children: [
+              Container(
+                margin: EdgeInsets.only(bottom: 14 * scale),
+                padding: EdgeInsets.all(14 * scale),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(12 * scale),
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.18),
+                  ),
                 ),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    Icons.info_outline_rounded,
-                    size: 18 * scale,
-                    color: AppColors.primary,
-                  ),
-                  SizedBox(width: 10 * scale),
-                  Expanded(
-                    child: Text(
-                      'Chọn Mẹ và Em bé sẽ được chăm sóc trong gói dịch vụ. '
-                      'Thông tin này giúp trung tâm chuẩn bị lịch trình phù hợp nhất.',
-                      style: AppTextStyles.arimo(
-                        fontSize: 12.5 * scale,
-                        color: AppColors.textSecondary,
-                      ).copyWith(height: 1.45),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.info_outline_rounded,
+                      size: 18 * scale,
+                      color: AppColors.primary,
                     ),
-                  ),
-                ],
-              ),
-            ),
-
-            if (filteredProfiles.isEmpty)
-              Center(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20 * scale),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.family_restroom_rounded,
-                        size: 56 * scale,
-                        color: AppColors.textSecondary.withValues(alpha: 0.5),
-                      ),
-                      SizedBox(height: 16 * scale),
-                      Text(
-                        'Chưa có hồ sơ Mẹ hoặc Em bé',
+                    SizedBox(width: 10 * scale),
+                    Expanded(
+                      child: Text(
+                        'Chọn Mẹ và Em bé sẽ được chăm sóc trong gói dịch vụ. '
+                        'Thông tin này giúp trung tâm chuẩn bị lịch trình phù hợp nhất.',
                         style: AppTextStyles.arimo(
-                          fontSize: 15 * scale,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      SizedBox(height: 8 * scale),
-                      Text(
-                        'Bạn có thể tạo trực tiếp bằng nút + ở bên dưới danh sách.',
-                        style: AppTextStyles.arimo(
-                          fontSize: 13 * scale,
+                          fontSize: 12.5 * scale,
                           color: AppColors.textSecondary,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ...List.generate(filteredProfiles.length, (index) {
-              final profile = filteredProfiles[index];
-              final isSelected = selectedIds.contains(profile.id);
-              return Padding(
-                key: ValueKey(profile.id),
-                padding: EdgeInsets.only(
-                  bottom: index < filteredProfiles.length - 1 ? 10 * scale : 0,
-                ),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(14 * scale),
-                  onTap: () {
-                    final hasRecord = _hasRecords[profile.id];
-                    if (hasRecord == false) {
-                      AppToast.showError(context, message: 'Vui lòng cập nhật hồ sơ y tế cho ${profile.fullName} trước khi chọn');
-                      return;
-                    }
-                    if (hasRecord == null) {
-                      AppToast.showInfo(context, message: 'Đang kiểm tra hồ sơ y tế...');
-                      return;
-                    }
-
-                    final next = [...selectedIds];
-                    if (isSelected) {
-                      next.remove(profile.id);
-                    } else {
-                      // Rule: Only 1 Mom (memberTypeId == 2) can be selected
-                      if (profile.memberTypeId == 2) {
-                        final existingMom = filteredProfiles.firstWhere(
-                          (p) => p.memberTypeId == 2 && selectedIds.contains(p.id),
-                          orElse: () => profile, // Fallback if none found
-                        );
-                        if (existingMom.id != profile.id && selectedIds.contains(existingMom.id)) {
-                          next.remove(existingMom.id);
-                        }
-                      }
-                      next.add(profile.id);
-                    }
-                    widget.onSelectionChanged(next);
-                  },
-                  onLongPress: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => BlocProvider(
-                          create: (_) => InjectionContainer.healthRecordBloc,
-                          child: HealthRecordScreen(
-                            familyProfileId: profile.id,
-                            isBaby: profile.memberTypeId == 3,
-                            memberName: profile.fullName,
-                            avatarUrl: profile.avatarUrl,
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                  child: Container(
-                    padding: EdgeInsets.all(14 * scale),
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.circular(14 * scale),
-                      border: Border.all(
-                        color: isSelected
-                            ? AppColors.primary
-                            : AppColors.borderLight,
-                        width: isSelected ? 2 : 1,
+                        ).copyWith(height: 1.45),
                       ),
                     ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
+                  ],
+                ),
+              ),
+
+              if (filteredProfiles.isEmpty)
+                Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20 * scale),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        CircleAvatar(
-                          radius: 22 * scale,
-                          backgroundColor: AppColors.borderLight,
-                          backgroundImage:
-                              (profile.avatarUrl != null &&
-                                  profile.avatarUrl!.isNotEmpty)
-                              ? NetworkImage(profile.avatarUrl!)
-                              : null,
-                          child:
-                              (profile.avatarUrl == null ||
-                                  profile.avatarUrl!.isEmpty)
-                              ? Icon(
-                                  profile.memberTypeId == 3
-                                      ? Icons.child_care_rounded
-                                      : Icons.pregnant_woman_rounded,
-                                  color: AppColors.primary,
-                                  size: 22 * scale,
-                                )
-                              : null,
+                        Icon(
+                          Icons.family_restroom_rounded,
+                          size: 56 * scale,
+                          color: AppColors.textSecondary.withValues(alpha: 0.5),
                         ),
-                        SizedBox(width: 12 * scale),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                profile.fullName,
-                                style: AppTextStyles.arimo(
-                                  fontSize: 15 * scale,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                              SizedBox(height: 4 * scale),
-                              Text(
-                                '${AppStrings.memberType}: ${_getMemberTypeLabel(profile)}',
-                                style: AppTextStyles.arimo(
-                                  fontSize: 12 * scale,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                              SizedBox(height: 2 * scale),
-                              Text(
-                                '${AppStrings.gender}: ${_getGenderLabel(profile.gender)}',
-                                style: AppTextStyles.arimo(
-                                  fontSize: 12 * scale,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                              SizedBox(height: 6 * scale),
-                              _HealthRecordInfo(
-                                familyProfileId: profile.id, 
-                                scale: scale,
-                                onRecordStatusKnown: (hasRecord) {
-                                  if (_hasRecords[profile.id] != hasRecord) {
-                                    setState(() {
-                                      _hasRecords[profile.id] = hasRecord;
-                                    });
-                                  }
-                                  // If auto-selected by Bloc but lacks a record, unselect it immediately
-                                  if (!hasRecord && selectedIds.contains(profile.id)) {
-                                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                                      final next = [...selectedIds]..remove(profile.id);
-                                      widget.onSelectionChanged(next);
-                                    });
-                                  }
-                                },
-                              ),
-                            ],
+                        SizedBox(height: 16 * scale),
+                        Text(
+                          'Chưa có hồ sơ Mẹ hoặc Em bé',
+                          style: AppTextStyles.arimo(
+                            fontSize: 15 * scale,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
                           ),
                         ),
-                        Checkbox(
-                          value: isSelected,
-                          onChanged: (_) {
-                            final hasRecord = _hasRecords[profile.id];
-                            if (hasRecord == false) {
-                              AppToast.showError(context, message: 'Vui lòng cập nhật hồ sơ y tế cho ${profile.fullName} trước khi chọn');
-                              return;
-                            }
-                            if (hasRecord == null) {
-                              AppToast.showInfo(context, message: 'Đang kiểm tra hồ sơ y tế...');
-                              return;
-                            }
-
-                            final next = [...selectedIds];
-                            if (isSelected) {
-                              next.remove(profile.id);
-                            } else {
-                              // Rule: Only 1 Mom (memberTypeId == 2)
-                              if (profile.memberTypeId == 2) {
-                                final existingMom = filteredProfiles.firstWhere(
-                                  (p) => p.memberTypeId == 2 && selectedIds.contains(p.id),
-                                  orElse: () => profile,
-                                );
-                                if (existingMom.id != profile.id && selectedIds.contains(existingMom.id)) {
-                                  next.remove(existingMom.id);
-                                }
-                              }
-                              next.add(profile.id);
-                            }
-                            widget.onSelectionChanged(next);
-                          },
-                          activeColor: AppColors.primary,
-                          fillColor: WidgetStateProperty.resolveWith((states) {
-                            if (_hasRecords[profile.id] == false) {
-                              return AppColors.borderLight;
-                            }
-                            if (states.contains(WidgetState.selected)) {
-                              return AppColors.primary;
-                            }
-                            return null;
-                          }),
+                        SizedBox(height: 8 * scale),
+                        Text(
+                          'Bạn có thể tạo trực tiếp bằng nút + ở bên dưới danh sách.',
+                          style: AppTextStyles.arimo(
+                            fontSize: 13 * scale,
+                            color: AppColors.textSecondary,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
                       ],
                     ),
                   ),
                 ),
-              );
-            }),
-            SizedBox(height: 12 * scale),
-            Align(
-              alignment: Alignment.center,
-              child: SizedBox(
-                width: 42 * scale,
-                height: 42 * scale,
-                child: Material(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(21 * scale),
+              ...List.generate(filteredProfiles.length, (index) {
+                final profile = filteredProfiles[index];
+                final isSelected = selectedIds.contains(profile.id);
+                return Padding(
+                  key: ValueKey(profile.id),
+                  padding: EdgeInsets.only(
+                    bottom: index < filteredProfiles.length - 1
+                        ? 10 * scale
+                        : 0,
+                  ),
                   child: InkWell(
+                    borderRadius: BorderRadius.circular(14 * scale),
+                    onTap: () {
+                      final hasRecord = _hasRecords[profile.id];
+                      if (hasRecord == false) {
+                        AppToast.showError(
+                          context,
+                          message:
+                              'Vui lòng cập nhật hồ sơ y tế cho ${profile.fullName} trước khi chọn',
+                        );
+                        return;
+                      }
+                      if (hasRecord == null) {
+                        AppToast.showInfo(
+                          context,
+                          message: 'Đang kiểm tra hồ sơ y tế...',
+                        );
+                        return;
+                      }
+
+                      final next = [...selectedIds];
+                      if (isSelected) {
+                        next.remove(profile.id);
+                      } else {
+                        // Rule: Only 1 Mom (memberTypeId == 2) can be selected
+                        if (profile.memberTypeId == 2) {
+                          final existingMom = filteredProfiles.firstWhere(
+                            (p) =>
+                                p.memberTypeId == 2 &&
+                                selectedIds.contains(p.id),
+                            orElse: () => profile, // Fallback if none found
+                          );
+                          if (existingMom.id != profile.id &&
+                              selectedIds.contains(existingMom.id)) {
+                            next.remove(existingMom.id);
+                          }
+                        }
+                        next.add(profile.id);
+                      }
+                      widget.onSelectionChanged(next);
+                    },
+                    onLongPress: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => BlocProvider(
+                            create: (_) => InjectionContainer.healthRecordBloc,
+                            child: HealthRecordScreen(
+                              familyProfileId: profile.id,
+                              isBaby: profile.memberTypeId == 3,
+                              memberName: profile.fullName,
+                              avatarUrl: profile.avatarUrl,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: EdgeInsets.all(14 * scale),
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        borderRadius: BorderRadius.circular(14 * scale),
+                        border: Border.all(
+                          color: isSelected
+                              ? AppColors.primary
+                              : AppColors.borderLight,
+                          width: isSelected ? 2 : 1,
+                        ),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          CircleAvatar(
+                            radius: 22 * scale,
+                            backgroundColor: AppColors.borderLight,
+                            backgroundImage:
+                                (profile.avatarUrl != null &&
+                                    profile.avatarUrl!.isNotEmpty)
+                                ? NetworkImage(profile.avatarUrl!)
+                                : null,
+                            child:
+                                (profile.avatarUrl == null ||
+                                    profile.avatarUrl!.isEmpty)
+                                ? Icon(
+                                    profile.memberTypeId == 3
+                                        ? Icons.child_care_rounded
+                                        : Icons.pregnant_woman_rounded,
+                                    color: AppColors.primary,
+                                    size: 22 * scale,
+                                  )
+                                : null,
+                          ),
+                          SizedBox(width: 12 * scale),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  profile.fullName,
+                                  style: AppTextStyles.arimo(
+                                    fontSize: 15 * scale,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                SizedBox(height: 4 * scale),
+                                Text(
+                                  '${AppStrings.memberType}: ${_getMemberTypeLabel(profile)}',
+                                  style: AppTextStyles.arimo(
+                                    fontSize: 12 * scale,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                                SizedBox(height: 2 * scale),
+                                Text(
+                                  '${AppStrings.gender}: ${_getGenderLabel(profile.gender)}',
+                                  style: AppTextStyles.arimo(
+                                    fontSize: 12 * scale,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                                SizedBox(height: 6 * scale),
+                                _HealthRecordInfo(
+                                  familyProfileId: profile.id,
+                                  scale: scale,
+                                  onRecordStatusKnown: (hasRecord) {
+                                    if (_hasRecords[profile.id] != hasRecord) {
+                                      setState(() {
+                                        _hasRecords[profile.id] = hasRecord;
+                                      });
+                                    }
+                                    // If auto-selected by Bloc but lacks a record, unselect it immediately
+                                    if (!hasRecord &&
+                                        selectedIds.contains(profile.id)) {
+                                      WidgetsBinding.instance
+                                          .addPostFrameCallback((_) {
+                                            final next = [...selectedIds]
+                                              ..remove(profile.id);
+                                            widget.onSelectionChanged(next);
+                                          });
+                                    }
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                          Checkbox(
+                            value: isSelected,
+                            onChanged: (_) {
+                              final hasRecord = _hasRecords[profile.id];
+                              if (hasRecord == false) {
+                                AppToast.showError(
+                                  context,
+                                  message:
+                                      'Vui lòng cập nhật hồ sơ y tế cho ${profile.fullName} trước khi chọn',
+                                );
+                                return;
+                              }
+                              if (hasRecord == null) {
+                                AppToast.showInfo(
+                                  context,
+                                  message: 'Đang kiểm tra hồ sơ y tế...',
+                                );
+                                return;
+                              }
+
+                              final next = [...selectedIds];
+                              if (isSelected) {
+                                next.remove(profile.id);
+                              } else {
+                                // Rule: Only 1 Mom (memberTypeId == 2)
+                                if (profile.memberTypeId == 2) {
+                                  final existingMom = filteredProfiles
+                                      .firstWhere(
+                                        (p) =>
+                                            p.memberTypeId == 2 &&
+                                            selectedIds.contains(p.id),
+                                        orElse: () => profile,
+                                      );
+                                  if (existingMom.id != profile.id &&
+                                      selectedIds.contains(existingMom.id)) {
+                                    next.remove(existingMom.id);
+                                  }
+                                }
+                                next.add(profile.id);
+                              }
+                              widget.onSelectionChanged(next);
+                            },
+                            activeColor: AppColors.primary,
+                            fillColor: WidgetStateProperty.resolveWith((
+                              states,
+                            ) {
+                              if (_hasRecords[profile.id] == false) {
+                                return AppColors.borderLight;
+                              }
+                              if (states.contains(WidgetState.selected)) {
+                                return AppColors.primary;
+                              }
+                              return null;
+                            }),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }),
+              SizedBox(height: 12 * scale),
+              Align(
+                alignment: Alignment.center,
+                child: SizedBox(
+                  width: 42 * scale,
+                  height: 42 * scale,
+                  child: Material(
+                    color: AppColors.primary,
                     borderRadius: BorderRadius.circular(21 * scale),
-                    onTap: _isSubmitting
-                        ? null
-                        : () => _openCreateMemberForm(selectedIds),
-                    child: Icon(
-                      Icons.add_rounded,
-                      size: 24 * scale,
-                      color: AppColors.white,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(21 * scale),
+                      onTap: _isSubmitting
+                          ? null
+                          : () => _openCreateMemberForm(selectedIds),
+                      child: Icon(
+                        Icons.add_rounded,
+                        size: 24 * scale,
+                        color: AppColors.white,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
           ),
         );
       },
@@ -548,7 +576,6 @@ class _HealthRecordInfo extends StatefulWidget {
   final void Function(bool hasRecord) onRecordStatusKnown;
 
   const _HealthRecordInfo({
-    super.key,
     required this.familyProfileId,
     required this.scale,
     required this.onRecordStatusKnown,
@@ -569,13 +596,14 @@ class _HealthRecordInfoState extends State<_HealthRecordInfo> {
 
   void _fetchData() {
     _future = InjectionContainer.healthRecordRepository
-        .getHealthRecordsByFamilyProfile(widget.familyProfileId).then((records) {
-      final hasRecord = records.isNotEmpty;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) widget.onRecordStatusKnown(hasRecord);
-      });
-      return records;
-    });
+        .getHealthRecordsByFamilyProfile(widget.familyProfileId)
+        .then((records) {
+          final hasRecord = records.isNotEmpty;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) widget.onRecordStatusKnown(hasRecord);
+          });
+          return records;
+        });
   }
 
   @override

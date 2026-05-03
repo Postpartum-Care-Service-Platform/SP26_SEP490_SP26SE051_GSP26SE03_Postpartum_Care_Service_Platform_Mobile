@@ -42,7 +42,6 @@ class _AiRecommendFabState extends State<AiRecommendFab>
   @override
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
-    final size = MediaQuery.of(context).size;
     final fabSize = 56.0 * scale;
 
     return LayoutBuilder(
@@ -117,7 +116,9 @@ class _AiRecommendFabState extends State<AiRecommendFab>
                           offset: Offset(0, 4 * scale),
                         ),
                         BoxShadow(
-                          color: const Color(0xFFFF8C00).withValues(alpha: 0.15),
+                          color: const Color(
+                            0xFFFF8C00,
+                          ).withValues(alpha: 0.15),
                           blurRadius: 16 * scale,
                           spreadRadius: 0,
                         ),
@@ -159,5 +160,3 @@ class _AiRecommendFabState extends State<AiRecommendFab>
     );
   }
 }
-
-

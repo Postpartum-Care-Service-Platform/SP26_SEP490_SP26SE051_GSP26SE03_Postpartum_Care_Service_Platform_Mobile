@@ -1,7 +1,5 @@
-/// App Enums - Centralized enums for the application
-/// Helps avoid hardcoded strings and provides type safety
-
-/// Booking status types
+/// App Enums - Centralized enums for the application.
+/// Helps avoid hardcoded strings and provides type safety.
 enum BookingStatus {
   draft,
   confirmed,

@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import '../../../../core/apis/api_client.dart';
 import '../../../../core/apis/api_endpoints.dart';
 import '../../../../core/constants/app_strings.dart';
@@ -400,7 +399,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
             final retryErrorMessage = _parseErrorMessage(retryResponseData);
             throw Exception(retryErrorMessage);
           }
-          throw Exception('Kết nối tới máy chủ chậm. Vui lòng thử lại sau ít phút.');
+          throw Exception(
+            'Kết nối tới máy chủ chậm. Vui lòng thử lại sau ít phút.',
+          );
         }
       }
 

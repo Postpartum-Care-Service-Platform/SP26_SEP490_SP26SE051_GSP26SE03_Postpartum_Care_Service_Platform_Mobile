@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/widgets/app_widgets.dart';
 import '../../../../core/widgets/app_toast.dart';
 import '../../data/models/create_health_record_request.dart';
 import '../../domain/entities/health_record_entity.dart';
-import '../../domain/repositories/health_record_repository.dart';
 import '../bloc/health_record_bloc.dart';
 import '../bloc/health_record_event.dart';
 import '../bloc/health_record_state.dart';
@@ -304,7 +302,7 @@ class _CreateHealthRecordSheetState extends State<CreateHealthRecordSheet> {
   List<Widget> _buildCategorizedConditions(double scale) {
     final Map<String, List<HealthConditionEntity>> categorized = {};
     for (var condition in _conditions) {
-      final cat = (condition.category ?? 'OTHER').toUpperCase().replaceAll(' ', '_');
+      final cat = condition.category.toUpperCase().replaceAll(' ', '_');
       categorized.putIfAbsent(cat, () => []).add(condition);
     }
 

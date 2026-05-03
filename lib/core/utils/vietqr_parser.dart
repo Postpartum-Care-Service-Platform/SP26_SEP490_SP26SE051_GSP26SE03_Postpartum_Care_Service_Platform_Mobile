@@ -1,4 +1,3 @@
-
 /// A utility class for parsing VietQR (EMVCo) strings.
 class VietQrParser {
   VietQrParser._();
@@ -43,7 +42,9 @@ class VietQrParser {
     return result;
   }
 
-  static Map<String, String>? getRecipientInfo(Map<String, dynamic> parsedData) {
+  static Map<String, String>? getRecipientInfo(
+    Map<String, dynamic> parsedData,
+  ) {
     final merchantInfo = parsedData['38'];
     if (merchantInfo is Map<String, dynamic>) {
       final paymentNetwork = merchantInfo['01'];

@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/entities/booking_entity.dart';
-import '../../domain/entities/booking_config_entity.dart';
 import '../../domain/entities/payment_link_entity.dart';
 import '../../domain/entities/payment_status_entity.dart';
 import '../../../package/domain/entities/package_entity.dart';
@@ -30,10 +29,7 @@ class BookingPackagesLoaded extends BookingState {
   final List<PackageEntity> packages;
   final int? selectedPackageId;
 
-  const BookingPackagesLoaded({
-    required this.packages,
-    this.selectedPackageId,
-  });
+  const BookingPackagesLoaded({required this.packages, this.selectedPackageId});
 
   @override
   List<Object?> get props => [packages, selectedPackageId];
@@ -69,10 +65,7 @@ class BookingRoomsLoaded extends BookingState {
   final List<RoomEntity> rooms;
   final int? selectedRoomId;
 
-  const BookingRoomsLoaded({
-    required this.rooms,
-    this.selectedRoomId,
-  });
+  const BookingRoomsLoaded({required this.rooms, this.selectedRoomId});
 
   @override
   List<Object?> get props => [rooms, selectedRoomId];
@@ -98,13 +91,13 @@ class BookingSummaryReady extends BookingState {
 
   @override
   List<Object?> get props => [
-        packageId,
-        roomId,
-        startDate,
-        familyProfileIds,
-        package,
-        room,
-      ];
+    packageId,
+    roomId,
+    startDate,
+    familyProfileIds,
+    package,
+    room,
+  ];
 }
 
 /// Booking created successfully
@@ -162,10 +155,7 @@ class BookingCancelled extends BookingState {
   final int bookingId;
   final String message;
 
-  const BookingCancelled({
-    required this.bookingId,
-    required this.message,
-  });
+  const BookingCancelled({required this.bookingId, required this.message});
 
   @override
   List<Object?> get props => [bookingId, message];
@@ -187,7 +177,8 @@ class BookingConfirmCompletionSuccess extends BookingState {
 
 /// Booking configuration loaded
 class BookingConfigLoaded extends BookingState {
-  final dynamic config; // Using dynamic to avoid import issues if needed, but BookingConfigEntity is preferred
+  final dynamic
+  config; // Using dynamic to avoid import issues if needed, but BookingConfigEntity is preferred
 
   const BookingConfigLoaded(this.config);
 

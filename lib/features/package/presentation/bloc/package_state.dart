@@ -34,7 +34,7 @@ class PackageLoaded extends PackageState {
      this.currentFilter = PackageFilter.center,
    });
 
-  List<PackageEntity> get allPackages => [...centerPackages, ...homePackages];
+  List<PackageEntity> get allPackages => [...centerPackages, ...homePackages, ...personalizedPackages];
   
   List<PackageEntity> get filteredPackages {
     switch (currentFilter) {

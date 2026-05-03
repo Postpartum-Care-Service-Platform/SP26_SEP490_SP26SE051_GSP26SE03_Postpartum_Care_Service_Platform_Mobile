@@ -12,46 +12,56 @@ class FeedbackCard extends StatelessWidget {
   final FeedbackEntity feedback;
   final FeedbackTypeEntity? feedbackType;
 
-  const FeedbackCard({
-    super.key,
-    required this.feedback,
-    this.feedbackType,
-  });
+  const FeedbackCard({super.key, required this.feedback, this.feedbackType});
 
   Widget _buildSmartHeader(double scale) {
     IconData? icon;
     String? targetText;
 
-    if (feedback.feedbackTypeId == 3 && (feedback.familyScheduleInfo != null || feedback.familyScheduleId != null)) {
+    if (feedback.feedbackTypeId == 3 &&
+        (feedback.familyScheduleInfo != null ||
+            feedback.familyScheduleId != null)) {
       icon = Icons.design_services_rounded;
       final info = feedback.familyScheduleInfo;
       if (info != null) {
         final timeParts = <String>[];
-        if (info.workDate != null && info.workDate!.isNotEmpty) timeParts.add(info.workDate!);
-        if (info.startTime != null && info.endTime != null) timeParts.add('${info.startTime} - ${info.endTime}');
+        if (info.workDate != null && info.workDate!.isNotEmpty)
+          timeParts.add(info.workDate!);
+        if (info.startTime != null && info.endTime != null)
+          timeParts.add('${info.startTime} - ${info.endTime}');
         final timeStr = timeParts.join(' ');
-        targetText = '${info.activity ?? ""}${timeStr.isNotEmpty ? ' ($timeStr)' : ''}';
+        targetText =
+            '${info.activity ?? ""}${timeStr.isNotEmpty ? ' ($timeStr)' : ''}';
       } else {
         targetText = feedback.familyScheduleId?.toString();
       }
-    } else if (feedback.feedbackTypeId == 4 && (feedback.staffInfo != null || feedback.staffName != null)) {
+    } else if (feedback.feedbackTypeId == 4 &&
+        (feedback.staffInfo != null || feedback.staffName != null)) {
       icon = Icons.support_agent_rounded;
       final info = feedback.staffInfo;
       if (info != null) {
-        final extra = (info.phone?.isNotEmpty == true) ? info.phone : info.email;
-        targetText = '${info.fullName ?? ""}${extra != null && extra.isNotEmpty ? ' ($extra)' : ''}';
+        final extra = (info.phone?.isNotEmpty == true)
+            ? info.phone
+            : info.email;
+        targetText =
+            '${info.fullName ?? ""}${extra != null && extra.isNotEmpty ? ' ($extra)' : ''}';
       } else {
         targetText = feedback.staffName;
       }
-    } else if (feedback.feedbackTypeId == 5 && (feedback.amenityTicketInfo != null || feedback.amenityServiceName != null)) {
+    } else if (feedback.feedbackTypeId == 5 &&
+        (feedback.amenityTicketInfo != null ||
+            feedback.amenityServiceName != null)) {
       icon = Icons.spa_rounded;
       final info = feedback.amenityTicketInfo;
       if (info != null) {
         final timeParts = <String>[];
-        if (info.date != null && info.date!.isNotEmpty) timeParts.add(info.date!);
-        if (info.startTime != null && info.endTime != null) timeParts.add('${info.startTime} - ${info.endTime}');
+        if (info.date != null && info.date!.isNotEmpty)
+          timeParts.add(info.date!);
+        if (info.startTime != null && info.endTime != null)
+          timeParts.add('${info.startTime} - ${info.endTime}');
         final timeStr = timeParts.join(' ');
-        targetText = '${info.amenityServiceName ?? ""}${timeStr.isNotEmpty ? ' ($timeStr)' : ''}';
+        targetText =
+            '${info.amenityServiceName ?? ""}${timeStr.isNotEmpty ? ' ($timeStr)' : ''}';
       } else {
         targetText = feedback.amenityServiceName;
       }
@@ -67,7 +77,7 @@ class FeedbackCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-               // Neat category badge
+              // Neat category badge
               Container(
                 padding: EdgeInsets.symmetric(
                   horizontal: 10 * scale,
@@ -110,12 +120,16 @@ class FeedbackCard extends StatelessWidget {
                   children: [
                     Padding(
                       padding: EdgeInsets.only(top: 2 * scale),
-                      child: Icon(Icons.subdirectory_arrow_right_rounded, size: 14 * scale, color: AppColors.primary.withValues(alpha: 0.6)),
+                      child: Icon(
+                        Icons.subdirectory_arrow_right_rounded,
+                        size: 14 * scale,
+                        color: AppColors.primary.withValues(alpha: 0.6),
+                      ),
                     ),
                     SizedBox(width: 6 * scale),
                     Expanded(
                       child: Text(
-                        targetText!,
+                        targetText,
                         style: AppTextStyles.arimo(
                           fontSize: 13 * scale,
                           fontWeight: FontWeight.w600,
@@ -327,21 +341,23 @@ class FeedbackCard extends StatelessWidget {
                                 child: CircularProgressIndicator(
                                   color: AppColors.primary,
                                   strokeWidth: 2,
-                                  value: loadingProgress.expectedTotalBytes != null
+                                  value:
+                                      loadingProgress.expectedTotalBytes != null
                                       ? loadingProgress.cumulativeBytesLoaded /
-                                          loadingProgress.expectedTotalBytes!
+                                            loadingProgress.expectedTotalBytes!
                                       : null,
                                 ),
                               ),
                             );
                           },
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            color: AppColors.background,
-                            child: Icon(
-                              Icons.error_outline,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
+                                color: AppColors.background,
+                                child: Icon(
+                                  Icons.error_outline,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
                         ),
                       ),
                     ),

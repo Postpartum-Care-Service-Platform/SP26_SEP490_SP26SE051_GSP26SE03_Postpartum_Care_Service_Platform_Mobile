@@ -10,7 +10,6 @@ import '../../../../../core/utils/app_responsive.dart';
 import '../../../../../features/chat/presentation/bloc/chat_bloc.dart';
 import '../../../../../features/chat/presentation/bloc/chat_event.dart';
 import '../../../../../features/chat/presentation/bloc/chat_state.dart';
-import '../../../../../features/employee/shell/presentation/widgets/employee_scaffold.dart';
 import '../../domain/entities/support_request.dart';
 
 class EmployeeSupportRequestScreen extends StatefulWidget {

@@ -15,10 +15,7 @@ import '../../../../../core/utils/vietqr_parser.dart';
 class QRCodeSection extends StatefulWidget {
   final PaymentLinkEntity paymentLink;
 
-  const QRCodeSection({
-    super.key,
-    required this.paymentLink,
-  });
+  const QRCodeSection({super.key, required this.paymentLink});
 
   @override
   State<QRCodeSection> createState() => _QRCodeSectionState();
@@ -39,7 +36,7 @@ class _QRCodeSectionState extends State<QRCodeSection> {
     try {
       final appUseCase = InjectionContainer.getVietQrDeeplinkApps;
       final bankUseCase = InjectionContainer.getVietQrBanks;
-      
+
       final results = await Future.wait([
         appUseCase.execute(),
         bankUseCase.execute(),
@@ -47,8 +44,8 @@ class _QRCodeSectionState extends State<QRCodeSection> {
 
       if (mounted) {
         setState(() {
-          _bankApps = results[0] as List<VietQrBank>;
-          _allBanks = results[1] as List<VietQrBank>;
+          _bankApps = results[0];
+          _allBanks = results[1];
           _isLoadingApps = false;
         });
       }
@@ -63,13 +60,13 @@ class _QRCodeSectionState extends State<QRCodeSection> {
 
   Future<void> _openBankApp(VietQrBank app) async {
     final qrData = widget.paymentLink.qrCode;
-    
+
     // 1. Parse QR data to get account and bank info for the requested parameters
     final parsed = VietQrParser.parse(qrData);
     final recipient = VietQrParser.getRecipientInfo(parsed);
     final account = recipient?['account'] ?? '';
     final bin = recipient?['bin'] ?? '';
-    
+
     // Look up short code (e.g. mb, vcb) from BIN (970422, 970436)
     String bankShortCode = bin; // Fallback to BIN if not found
     if (_allBanks != null) {
@@ -82,21 +79,22 @@ class _QRCodeSectionState extends State<QRCodeSection> {
     final name = VietQrParser.getBeneficiaryName(parsed) ?? 'VO MINH TIEN';
     final amount = widget.paymentLink.amount.toInt();
     final description = widget.paymentLink.orderCode;
-    
+
     // Use a standard HTTPS URL for the return path to ensure compatibility with all bank apps
     final returnUrl = 'https://payos.vn';
-    
+
     // 2. Construct the Smart URL Bridge with exactly 6 parameters
     // Fully encode the 'ba' parameter (especially the @ symbol) for standard compliance
     final encodedBa = Uri.encodeComponent('$account@$bankShortCode');
-    
-    final smartUrl = 'https://dl.vietqr.io/pay?app=${app.appId}' 
-                    '&ba=$encodedBa'
-                    '&am=$amount'
-                    '&tn=${Uri.encodeComponent(description)}'
-                    '&bn=${Uri.encodeComponent(name)}'
-                    '&url=${Uri.encodeComponent(returnUrl)}';
-    
+
+    final smartUrl =
+        'https://dl.vietqr.io/pay?app=${app.appId}'
+        '&ba=$encodedBa'
+        '&am=$amount'
+        '&tn=${Uri.encodeComponent(description)}'
+        '&bn=${Uri.encodeComponent(name)}'
+        '&url=${Uri.encodeComponent(returnUrl)}';
+
     final uri = Uri.parse(smartUrl);
 
     // Debug logging
@@ -134,7 +132,9 @@ class _QRCodeSectionState extends State<QRCodeSection> {
             height: MediaQuery.of(context).size.height * 0.7,
             decoration: BoxDecoration(
               color: AppColors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24 * scale)),
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(24 * scale),
+              ),
             ),
             child: Column(
               children: [
@@ -172,69 +172,79 @@ class _QRCodeSectionState extends State<QRCodeSection> {
                   child: _isLoadingApps
                       ? const Center(child: CircularProgressIndicator())
                       : (_bankApps == null || _bankApps!.isEmpty)
-                          ? Center(child: Text(AppStrings.paymentNoBankApps))
-                          : GridView.builder(
-                              padding: EdgeInsets.all(20 * scale),
-                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      ? Center(child: Text(AppStrings.paymentNoBankApps))
+                      : GridView.builder(
+                          padding: EdgeInsets.all(20 * scale),
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 3,
                                 mainAxisSpacing: 20 * scale,
                                 crossAxisSpacing: 16 * scale,
                                 childAspectRatio: 0.8,
                               ),
-                              itemCount: _bankApps!.length,
-                              itemBuilder: (context, index) {
-                                final app = _bankApps![index];
-                                return InkWell(
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                    _openBankApp(app);
-                                  },
-                                  borderRadius: BorderRadius.circular(12 * scale),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Container(
-                                        width: 60 * scale,
-                                        height: 60 * scale,
-                                        padding: EdgeInsets.all(8 * scale),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.circular(16 * scale),
-                                          border: Border.all(color: AppColors.borderLight),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black.withValues(alpha: 0.05),
-                                              blurRadius: 5,
-                                              offset: const Offset(0, 2),
-                                            ),
-                                          ],
-                                        ),
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(8 * scale),
-                                          child: Image.network(
-                                            app.logo,
-                                            fit: BoxFit.contain,
-                                            errorBuilder: (_, __, ___) => const Icon(Icons.account_balance),
-                                          ),
-                                        ),
-                                      ),
-                                      SizedBox(height: 10 * scale),
-                                      Text(
-                                        app.displayName,
-                                        textAlign: TextAlign.center,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: AppTextStyles.arimo(
-                                          fontSize: 12 * scale,
-                                          fontWeight: FontWeight.w500,
-                                          color: AppColors.textPrimary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
+                          itemCount: _bankApps!.length,
+                          itemBuilder: (context, index) {
+                            final app = _bankApps![index];
+                            return InkWell(
+                              onTap: () {
+                                Navigator.pop(context);
+                                _openBankApp(app);
                               },
-                            ),
+                              borderRadius: BorderRadius.circular(12 * scale),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    width: 60 * scale,
+                                    height: 60 * scale,
+                                    padding: EdgeInsets.all(8 * scale),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(
+                                        16 * scale,
+                                      ),
+                                      border: Border.all(
+                                        color: AppColors.borderLight,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(
+                                            alpha: 0.05,
+                                          ),
+                                          blurRadius: 5,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(
+                                        8 * scale,
+                                      ),
+                                      child: Image.network(
+                                        app.logo,
+                                        fit: BoxFit.contain,
+                                        errorBuilder: (_, __, ___) =>
+                                            const Icon(Icons.account_balance),
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(height: 10 * scale),
+                                  Text(
+                                    app.displayName,
+                                    textAlign: TextAlign.center,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: AppTextStyles.arimo(
+                                      fontSize: 12 * scale,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
                 ),
               ],
             ),
@@ -296,16 +306,10 @@ class _QRCodeSectionState extends State<QRCodeSection> {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  AppColors.white,
-                  AppColors.background,
-                ],
+                colors: [AppColors.white, AppColors.background],
               ),
               borderRadius: BorderRadius.circular(16 * scale),
-              border: Border.all(
-                color: AppColors.borderLight,
-                width: 1.5,
-              ),
+              border: Border.all(color: AppColors.borderLight, width: 1.5),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.03),
@@ -361,7 +365,10 @@ class _QRCodeSectionState extends State<QRCodeSection> {
           ),
           SizedBox(height: 16 * scale),
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 10 * scale),
+            padding: EdgeInsets.symmetric(
+              horizontal: 16 * scale,
+              vertical: 10 * scale,
+            ),
             decoration: BoxDecoration(
               color: AppColors.primary.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(10 * scale),
@@ -442,4 +449,3 @@ class _QRCodeSectionState extends State<QRCodeSection> {
     );
   }
 }
-

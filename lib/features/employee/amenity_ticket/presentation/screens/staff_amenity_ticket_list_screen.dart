@@ -132,7 +132,7 @@ class _StaffAmenityTicketListScreenState
       backgroundColor: Colors.transparent,
       builder: (bottomSheetContext) {
         return StatefulBuilder(
-          builder: (context, setBottomSheetState) {
+          builder: (builderContext, setBottomSheetState) {
             
             Future<void> searchCustomerByPhone(String phone) async {
               if (phone.trim().isEmpty) return;

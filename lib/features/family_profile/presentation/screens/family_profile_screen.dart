@@ -20,7 +20,6 @@ import '../bloc/family_profile_bloc.dart';
 import '../widgets/family_member_card.dart';
 import '../widgets/family_profile_form_drawer.dart';
 import '../../../health_record/presentation/screens/health_record_screen.dart';
-import '../../../health_record/presentation/bloc/health_record_bloc.dart';
 import '../../../../core/di/injection_container.dart';
 
 class FamilyProfileScreen extends StatefulWidget {
@@ -40,7 +39,7 @@ class _FamilyProfileScreenState extends State<FamilyProfileScreen> {
   void _showAddMemberDrawer() {
     final bloc = context.read<FamilyProfileBloc>();
     final memberTypes = bloc.state.memberTypes;
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -48,24 +47,25 @@ class _FamilyProfileScreenState extends State<FamilyProfileScreen> {
       builder: (context) => FamilyProfileFormDrawer(
         member: null,
         memberTypes: memberTypes,
-        onSave: ({
-          required String fullName,
-          int? memberTypeId,
-          DateTime? dateOfBirth,
-          String? gender,
-          String? address,
-          String? phoneNumber,
-          File? avatar,
-        }) => _handleSave(
-          null,
-          fullName: fullName,
-          memberTypeId: memberTypeId,
-          dateOfBirth: dateOfBirth,
-          gender: gender,
-          address: address,
-          phoneNumber: phoneNumber,
-          avatar: avatar,
-        ),
+        onSave:
+            ({
+              required String fullName,
+              int? memberTypeId,
+              DateTime? dateOfBirth,
+              String? gender,
+              String? address,
+              String? phoneNumber,
+              File? avatar,
+            }) => _handleSave(
+              null,
+              fullName: fullName,
+              memberTypeId: memberTypeId,
+              dateOfBirth: dateOfBirth,
+              gender: gender,
+              address: address,
+              phoneNumber: phoneNumber,
+              avatar: avatar,
+            ),
       ),
     );
   }
@@ -73,7 +73,7 @@ class _FamilyProfileScreenState extends State<FamilyProfileScreen> {
   void _showEditMemberDrawer(FamilyProfileEntity member) {
     final bloc = context.read<FamilyProfileBloc>();
     final memberTypes = bloc.state.memberTypes;
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -81,24 +81,25 @@ class _FamilyProfileScreenState extends State<FamilyProfileScreen> {
       builder: (context) => FamilyProfileFormDrawer(
         member: member,
         memberTypes: memberTypes,
-        onSave: ({
-          required String fullName,
-          int? memberTypeId,
-          DateTime? dateOfBirth,
-          String? gender,
-          String? address,
-          String? phoneNumber,
-          File? avatar,
-        }) => _handleSave(
-          member.id,
-          fullName: fullName,
-          memberTypeId: memberTypeId,
-          dateOfBirth: dateOfBirth,
-          gender: gender,
-          address: address,
-          phoneNumber: phoneNumber,
-          avatar: avatar,
-        ),
+        onSave:
+            ({
+              required String fullName,
+              int? memberTypeId,
+              DateTime? dateOfBirth,
+              String? gender,
+              String? address,
+              String? phoneNumber,
+              File? avatar,
+            }) => _handleSave(
+              member.id,
+              fullName: fullName,
+              memberTypeId: memberTypeId,
+              dateOfBirth: dateOfBirth,
+              gender: gender,
+              address: address,
+              phoneNumber: phoneNumber,
+              avatar: avatar,
+            ),
       ),
     );
   }
@@ -127,7 +128,9 @@ class _FamilyProfileScreenState extends State<FamilyProfileScreen> {
           avatar: avatar,
         );
 
-        await context.read<FamilyProfileBloc>().createFamilyProfileUsecase(request);
+        await context.read<FamilyProfileBloc>().createFamilyProfileUsecase(
+          request,
+        );
 
         if (mounted) {
           AppLoading.hide(context);
@@ -138,7 +141,10 @@ class _FamilyProfileScreenState extends State<FamilyProfileScreen> {
       } catch (e) {
         if (mounted) {
           AppLoading.hide(context);
-          AppToast.showError(context, message: '${AppStrings.updateFailed}: $e');
+          AppToast.showError(
+            context,
+            message: '${AppStrings.updateFailed}: $e',
+          );
         }
       }
       return;
@@ -181,6 +187,7 @@ class _FamilyProfileScreenState extends State<FamilyProfileScreen> {
         // Dispatch event to AuthBloc to refresh current account
         // This will update UI in HomeScreen and ProfileScreen automatically
         try {
+          if (!mounted) return;
           final authBloc = BlocProvider.of<AuthBloc>(context, listen: false);
           authBloc.add(const AuthLoadCurrentAccount());
         } catch (e) {
@@ -205,12 +212,14 @@ class _FamilyProfileScreenState extends State<FamilyProfileScreen> {
   }
 
   void _showDeleteConfirmDialog(FamilyProfileEntity member) {
-    final bloc = this.context.read<FamilyProfileBloc>();
+    final bloc = context.read<FamilyProfileBloc>();
     showDialog(
-      context: this.context,
+      context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text(AppStrings.confirmDelete),
-        content: Text(AppStrings.confirmDeleteMessage.replaceAll('{name}', member.fullName)),
+        content: Text(
+          AppStrings.confirmDeleteMessage.replaceAll('{name}', member.fullName),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
@@ -219,21 +228,19 @@ class _FamilyProfileScreenState extends State<FamilyProfileScreen> {
           TextButton(
             onPressed: () async {
               Navigator.of(dialogContext).pop();
-              AppLoading.show(this.context, message: AppStrings.processing);
+              AppLoading.show(context, message: AppStrings.processing);
               try {
-                await bloc
-                    .getFamilyProfilesUsecase
-                    .repository
+                await bloc.getFamilyProfilesUsecase.repository
                     .deleteFamilyProfile(member.id);
                 if (mounted) {
-                  AppLoading.hide(this.context);
-                  AppToast.showSuccess(this.context, message: 'Xóa thành công');
+                  AppLoading.hide(context);
+                  AppToast.showSuccess(context, message: 'Xóa thành công');
                   bloc.add(const FamilyProfileRefreshed());
                 }
               } catch (e) {
                 if (mounted) {
-                  AppLoading.hide(this.context);
-                  AppToast.showError(this.context, message: 'Xóa thất bại: $e');
+                  AppLoading.hide(context);
+                  AppToast.showError(context, message: 'Xóa thất bại: $e');
                 }
               }
             },
@@ -263,13 +270,11 @@ class _FamilyProfileScreenState extends State<FamilyProfileScreen> {
           ),
           body: state.isLoading
               ? const Center(
-                  child: AppLoadingIndicator(
-                    color: AppColors.primary,
-                  ),
+                  child: AppLoadingIndicator(color: AppColors.primary),
                 )
               : state.members.isEmpty
-                  ? _buildEmptyState(scale)
-                  : _buildMembersList(scale, state.members, state.memberTypes),
+              ? _buildEmptyState(scale)
+              : _buildMembersList(scale, state.members, state.memberTypes),
           floatingActionButton: AppWidgets.primaryFabExtendedIconOnly(
             context: context,
             icon: Icons.add_rounded,
@@ -326,7 +331,8 @@ class _FamilyProfileScreenState extends State<FamilyProfileScreen> {
   void _showMemberOptions(FamilyProfileEntity member, String? typeName) {
     final scale = AppResponsive.scaleFactor(context);
     final height = MediaQuery.of(context).size.height;
-    final isMomOrBaby = typeName?.toLowerCase() == 'mom' || typeName?.toLowerCase() == 'baby';
+    final isMomOrBaby =
+        typeName?.toLowerCase() == 'mom' || typeName?.toLowerCase() == 'baby';
 
     if (!isMomOrBaby) {
       _showEditMemberDrawer(member);
@@ -338,9 +344,7 @@ class _FamilyProfileScreenState extends State<FamilyProfileScreen> {
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (context) => Container(
-        constraints: BoxConstraints(
-          maxHeight: height * 0.9,
-        ),
+        constraints: BoxConstraints(maxHeight: height * 0.9),
         padding: EdgeInsets.all(24 * scale),
         decoration: BoxDecoration(
           color: AppColors.white,
@@ -354,9 +358,17 @@ class _FamilyProfileScreenState extends State<FamilyProfileScreen> {
               children: [
                 CircleAvatar(
                   radius: 24 * scale,
-                  backgroundImage: member.avatarUrl != null ? NetworkImage(member.avatarUrl!) : null,
+                  backgroundImage: member.avatarUrl != null
+                      ? NetworkImage(member.avatarUrl!)
+                      : null,
                   backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                  child: member.avatarUrl == null ? Icon(Icons.person_rounded, color: AppColors.primary, size: 24 * scale) : null,
+                  child: member.avatarUrl == null
+                      ? Icon(
+                          Icons.person_rounded,
+                          color: AppColors.primary,
+                          size: 24 * scale,
+                        )
+                      : null,
                 ),
                 SizedBox(width: 16 * scale),
                 Expanded(
@@ -365,11 +377,18 @@ class _FamilyProfileScreenState extends State<FamilyProfileScreen> {
                     children: [
                       Text(
                         member.fullName,
-                        style: AppTextStyles.tinos(fontSize: 20 * scale, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                        style: AppTextStyles.tinos(
+                          fontSize: 20 * scale,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
                       ),
                       Text(
                         _translateMemberType(typeName ?? ''),
-                        style: AppTextStyles.arimo(fontSize: 14 * scale, color: AppColors.textSecondary),
+                        style: AppTextStyles.arimo(
+                          fontSize: 14 * scale,
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     ],
                   ),
@@ -444,10 +463,16 @@ class _FamilyProfileScreenState extends State<FamilyProfileScreen> {
             Container(
               padding: EdgeInsets.all(10 * scale),
               decoration: BoxDecoration(
-                color: (color ?? AppColors.textSecondary).withValues(alpha: 0.1),
+                color: (color ?? AppColors.textSecondary).withValues(
+                  alpha: 0.1,
+                ),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: color ?? AppColors.textSecondary, size: 24 * scale),
+              child: Icon(
+                icon,
+                color: color ?? AppColors.textSecondary,
+                size: 24 * scale,
+              ),
             ),
             SizedBox(width: 16 * scale),
             Expanded(
@@ -456,16 +481,27 @@ class _FamilyProfileScreenState extends State<FamilyProfileScreen> {
                 children: [
                   Text(
                     title,
-                    style: AppTextStyles.arimo(fontSize: 16 * scale, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                    style: AppTextStyles.arimo(
+                      fontSize: 16 * scale,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                   Text(
                     subtitle,
-                    style: AppTextStyles.arimo(fontSize: 13 * scale, color: AppColors.textSecondary),
+                    style: AppTextStyles.arimo(
+                      fontSize: 13 * scale,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ],
               ),
             ),
-            Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary, size: 20 * scale),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.textSecondary,
+              size: 20 * scale,
+            ),
           ],
         ),
       ),
@@ -497,9 +533,7 @@ class _FamilyProfileScreenState extends State<FamilyProfileScreen> {
         return a.fullName.compareTo(b.fullName);
       });
 
-    final typeNameById = {
-      for (final t in memberTypes) t.id: t.name,
-    };
+    final typeNameById = {for (final t in memberTypes) t.id: t.name};
 
     return RefreshIndicator(
       onRefresh: () async {

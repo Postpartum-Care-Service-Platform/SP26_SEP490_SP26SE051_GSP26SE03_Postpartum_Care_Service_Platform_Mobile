@@ -13,7 +13,6 @@ import '../bloc/package_request_event.dart';
 import '../bloc/package_request_state.dart';
 import '../../../../core/widgets/app_network_image.dart';
 import '../../../../core/widgets/avatar_widget.dart';
-import '../../../package/domain/entities/package_entity.dart';
 import '../../../care_plan/domain/entities/care_plan_entity.dart';
 
 class PackageRequestDetailScreen extends StatefulWidget {
@@ -33,9 +32,9 @@ class _PackageRequestDetailScreenState
   @override
   void initState() {
     super.initState();
-    context
-        .read<PackageRequestBloc>()
-        .add(LoadPackageRequestDetail(widget.requestId));
+    context.read<PackageRequestBloc>().add(
+      LoadPackageRequestDetail(widget.requestId),
+    );
   }
 
   @override
@@ -76,14 +75,17 @@ class _PackageRequestDetailScreenState
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.error_outline,
-                      size: 64 * scale, color: AppColors.textSecondary),
+                  Icon(
+                    Icons.error_outline,
+                    size: 64 * scale,
+                    color: AppColors.textSecondary,
+                  ),
                   SizedBox(height: 16 * scale),
                   AppWidgets.primaryButton(
                     text: 'Thử lại',
-                    onPressed: () => context
-                        .read<PackageRequestBloc>()
-                        .add(LoadPackageRequestDetail(widget.requestId)),
+                    onPressed: () => context.read<PackageRequestBloc>().add(
+                      LoadPackageRequestDetail(widget.requestId),
+                    ),
                   ),
                 ],
               ),
@@ -126,7 +128,8 @@ class _PackageRequestDetailScreenState
                         borderRadius: BorderRadius.circular(8 * scale),
                       ),
                       clipBehavior: Clip.antiAlias,
-                      child: request.basePackageImageUrl != null &&
+                      child:
+                          request.basePackageImageUrl != null &&
                               request.basePackageImageUrl!.isNotEmpty
                           ? AppNetworkImage(
                               request.basePackageImageUrl!,
@@ -134,8 +137,11 @@ class _PackageRequestDetailScreenState
                               height: 40 * scale,
                               fit: BoxFit.cover,
                             )
-                          : Icon(Icons.inventory_2_outlined,
-                              color: AppColors.primary, size: 20 * scale),
+                          : Icon(
+                              Icons.inventory_2_outlined,
+                              color: AppColors.primary,
+                              size: 20 * scale,
+                            ),
                     ),
                     SizedBox(width: 12 * scale),
                     Expanded(
@@ -155,7 +161,9 @@ class _PackageRequestDetailScreenState
                             Text(
                               'Gói đã soạn: ${request.packageName}',
                               style: AppTextStyles.arimo(
-                                  fontSize: 13 * scale, color: AppColors.primary),
+                                fontSize: 13 * scale,
+                                color: AppColors.primary,
+                              ),
                             ),
                           ],
                         ],
@@ -163,7 +171,7 @@ class _PackageRequestDetailScreenState
                     ),
                   ],
                 ),
-                
+
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 12 * scale),
                   child: Divider(color: AppColors.borderLight, height: 1),
@@ -178,11 +186,17 @@ class _PackageRequestDetailScreenState
                   children: [
                     Expanded(
                       child: _buildDetailRow(
-                          scale, 'Ngày bắt đầu', request.requestedStartDate),
+                        scale,
+                        'Ngày bắt đầu',
+                        request.requestedStartDate,
+                      ),
                     ),
                     Expanded(
                       child: _buildDetailRow(
-                          scale, 'Số ngày', '${request.totalDays} ngày'),
+                        scale,
+                        'Số ngày',
+                        '${request.totalDays} ngày',
+                      ),
                     ),
                   ],
                 ),
@@ -206,12 +220,19 @@ class _PackageRequestDetailScreenState
                   runSpacing: 8 * scale,
                   children: request.familyProfiles.map((p) {
                     return Container(
-                      padding: EdgeInsets.symmetric(horizontal: 10 * scale, vertical: 6 * scale),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10 * scale,
+                        vertical: 6 * scale,
+                      ),
                       decoration: BoxDecoration(
-                        color: _getMemberColor(p.memberType).withValues(alpha: 0.1),
+                        color: _getMemberColor(
+                          p.memberType,
+                        ).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20 * scale),
                         border: Border.all(
-                          color: _getMemberColor(p.memberType).withValues(alpha: 0.3),
+                          color: _getMemberColor(
+                            p.memberType,
+                          ).withValues(alpha: 0.3),
                         ),
                       ),
                       child: Row(
@@ -251,7 +272,8 @@ class _PackageRequestDetailScreenState
           SizedBox(height: 12 * scale),
 
           // Lịch trình nghỉ dưỡng
-          if (state.customCarePlans != null && state.customCarePlans!.isNotEmpty) ...[
+          if (state.customCarePlans != null &&
+              state.customCarePlans!.isNotEmpty) ...[
             _buildSection(
               scale,
               title: 'Lịch trình nghỉ dưỡng',
@@ -288,8 +310,9 @@ class _PackageRequestDetailScreenState
               child: Text(
                 request.rejectReason!,
                 style: AppTextStyles.arimo(
-                    fontSize: 14 * scale,
-                    color: const Color(0xFFC62828)),
+                  fontSize: 14 * scale,
+                  color: const Color(0xFFC62828),
+                ),
               ),
             ),
             SizedBox(height: 12 * scale),
@@ -304,8 +327,9 @@ class _PackageRequestDetailScreenState
               child: Text(
                 request.customerFeedback!,
                 style: AppTextStyles.arimo(
-                    fontSize: 14 * scale,
-                    color: AppColors.textPrimary),
+                  fontSize: 14 * scale,
+                  color: AppColors.textPrimary,
+                ),
               ),
             ),
             SizedBox(height: 12 * scale),
@@ -346,8 +370,11 @@ class _PackageRequestDetailScreenState
               color: Colors.white.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
-            child: Icon(statusInfo['icon'] as IconData,
-                color: Colors.white, size: 28 * scale),
+            child: Icon(
+              statusInfo['icon'] as IconData,
+              color: Colors.white,
+              size: 28 * scale,
+            ),
           ),
           SizedBox(width: 16 * scale),
           Expanded(
@@ -470,7 +497,9 @@ class _PackageRequestDetailScreenState
         Text(
           label,
           style: AppTextStyles.arimo(
-              fontSize: 12 * scale, color: AppColors.textSecondary),
+            fontSize: 12 * scale,
+            color: AppColors.textSecondary,
+          ),
         ),
         SizedBox(height: 2 * scale),
         Text(
@@ -502,22 +531,26 @@ class _PackageRequestDetailScreenState
           text: 'Chấp nhận gói dịch vụ',
           onPressed: () => _confirmAction(
             'Bạn có chắc muốn chấp nhận gói dịch vụ này?',
-            () => context
-                .read<PackageRequestBloc>()
-                .add(ApprovePackageRequest(request.id)),
+            () => context.read<PackageRequestBloc>().add(
+              ApprovePackageRequest(request.id),
+            ),
           ),
         ),
         SizedBox(height: 10 * scale),
         OutlinedButton.icon(
           onPressed: () => _showRevisionDialog(request.id),
-          icon: Icon(Icons.edit_note_rounded,
-              size: 20 * scale, color: const Color(0xFF1565C0)),
+          icon: Icon(
+            Icons.edit_note_rounded,
+            size: 20 * scale,
+            color: const Color(0xFF1565C0),
+          ),
           label: Text(
             'Yêu cầu chỉnh sửa',
             style: AppTextStyles.arimo(
-                fontSize: 15 * scale,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF1565C0)),
+              fontSize: 15 * scale,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF1565C0),
+            ),
           ),
           style: OutlinedButton.styleFrom(
             padding: EdgeInsets.symmetric(vertical: 14 * scale),
@@ -531,18 +564,22 @@ class _PackageRequestDetailScreenState
         OutlinedButton.icon(
           onPressed: () => _confirmAction(
             'Bạn có chắc muốn từ chối gói dịch vụ này?',
-            () => context
-                .read<PackageRequestBloc>()
-                .add(RejectPackageRequest(request.id)),
+            () => context.read<PackageRequestBloc>().add(
+              RejectPackageRequest(request.id),
+            ),
           ),
-          icon: Icon(Icons.close_rounded,
-              size: 20 * scale, color: const Color(0xFFC62828)),
+          icon: Icon(
+            Icons.close_rounded,
+            size: 20 * scale,
+            color: const Color(0xFFC62828),
+          ),
           label: Text(
             'Từ chối',
             style: AppTextStyles.arimo(
-                fontSize: 15 * scale,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFFC62828)),
+              fontSize: 15 * scale,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFFC62828),
+            ),
           ),
           style: OutlinedButton.styleFrom(
             padding: EdgeInsets.symmetric(vertical: 14 * scale),
@@ -573,8 +610,7 @@ class _PackageRequestDetailScreenState
               Navigator.pop(ctx);
               onConfirm();
             },
-            child: Text('Xác nhận',
-                style: TextStyle(color: AppColors.primary)),
+            child: Text('Xác nhận', style: TextStyle(color: AppColors.primary)),
           ),
         ],
       ),
@@ -592,9 +628,10 @@ class _PackageRequestDetailScreenState
         title: Text(
           'Yêu cầu chỉnh sửa',
           style: AppTextStyles.tinos(
-              fontSize: 18 * scale,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary),
+            fontSize: 18 * scale,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
         ),
         content: TextField(
           controller: controller,
@@ -602,10 +639,10 @@ class _PackageRequestDetailScreenState
           decoration: InputDecoration(
             hintText: 'Nhập phản hồi của bạn...',
             hintStyle: AppTextStyles.arimo(
-                fontSize: 14 * scale, color: AppColors.textSecondary),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              fontSize: 14 * scale,
+              color: AppColors.textSecondary,
             ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: AppColors.primary, width: 2),
@@ -622,13 +659,14 @@ class _PackageRequestDetailScreenState
               if (controller.text.trim().isNotEmpty) {
                 Navigator.pop(ctx);
                 context.read<PackageRequestBloc>().add(
-                      RequestRevisionPackageRequest(
-                          requestId, controller.text.trim()),
-                    );
+                  RequestRevisionPackageRequest(
+                    requestId,
+                    controller.text.trim(),
+                  ),
+                );
               }
             },
-            child: Text('Gửi',
-                style: TextStyle(color: AppColors.primary)),
+            child: Text('Gửi', style: TextStyle(color: AppColors.primary)),
           ),
         ],
       ),
@@ -676,7 +714,8 @@ class _PackageRequestDetailScreenState
 
     // ensure _currentDayNo is valid
     bool updateState = false;
-    if (_availableDays.length != days.length || !_availableDays.every((d) => days.contains(d))) {
+    if (_availableDays.length != days.length ||
+        !_availableDays.every((d) => days.contains(d))) {
       _availableDays = days;
       if (_currentDayNo == 0 || !days.contains(_currentDayNo)) {
         _currentDayNo = days.first;
@@ -737,12 +776,13 @@ class _PackageRequestDetailScreenState
   }
 
   Widget _buildActivityTimeline(double scale, List<CarePlanEntity> carePlans) {
-    final dayActivities = carePlans.where((cp) => cp.dayNo == _currentDayNo).toList()
-      ..sort((a, b) {
-        final byOrder = a.sortOrder.compareTo(b.sortOrder);
-        if (byOrder != 0) return byOrder;
-        return a.startTime.compareTo(b.startTime);
-      });
+    final dayActivities =
+        carePlans.where((cp) => cp.dayNo == _currentDayNo).toList()
+          ..sort((a, b) {
+            final byOrder = a.sortOrder.compareTo(b.sortOrder);
+            if (byOrder != 0) return byOrder;
+            return a.startTime.compareTo(b.startTime);
+          });
 
     if (dayActivities.isEmpty) {
       return Center(
@@ -866,6 +906,5 @@ class _PackageRequestDetailScreenState
         ),
       ),
     );
-
   }
 }

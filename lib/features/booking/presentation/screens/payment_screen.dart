@@ -113,7 +113,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) {
+      onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
         _handleBackPressed();
       },

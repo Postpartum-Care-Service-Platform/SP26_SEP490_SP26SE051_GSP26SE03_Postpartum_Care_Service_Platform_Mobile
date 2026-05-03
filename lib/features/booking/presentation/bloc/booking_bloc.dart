@@ -125,10 +125,24 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
           ? await getMyCustomPackagesUsecase()
           : await getPackagesUsecase();
       
-      _packages = packages;
+      final updatedPackages = List<PackageEntity>.from(packages);
+      
+      // Preserve the selected package if it's missing from the new list
+      if (_selectedPackageId != null) {
+        try {
+          final currentSelected = _packages?.firstWhere((p) => p.id == _selectedPackageId);
+          if (currentSelected != null && !updatedPackages.any((p) => p.id == _selectedPackageId)) {
+            updatedPackages.add(currentSelected);
+          }
+        } catch (_) {
+          // No current package to preserve
+        }
+      }
+
+      _packages = updatedPackages;
       emit(
         BookingPackagesLoaded(
-          packages: packages,
+          packages: updatedPackages,
           selectedPackageId: _selectedPackageId,
         ),
       );
@@ -144,6 +158,14 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
     _selectedPackageId = event.packageId;
     _selectedRoomId = null;
     _rooms = null;
+
+    // If a package object is provided, add it to our list if not already there
+    if (event.package != null) {
+      _packages ??= [];
+      if (!_packages!.any((p) => p.id == event.packageId)) {
+        _packages = List.from(_packages!)..add(event.package!);
+      }
+    }
 
     // Luôn emit BookingPackagesLoaded khi chọn/đổi gói
     if (_packages != null) {

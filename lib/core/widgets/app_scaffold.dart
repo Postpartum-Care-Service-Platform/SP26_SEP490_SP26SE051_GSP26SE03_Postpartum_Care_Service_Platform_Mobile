@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/di/injection_container.dart';
 import '../../features/auth/presentation/bloc/auth_event.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
@@ -23,10 +22,7 @@ class ToggleBottomNavNotification extends Notification {
 class AppScaffold extends StatefulWidget {
   final AppBottomTab? initialTab;
 
-  const AppScaffold({
-    super.key,
-    this.initialTab,
-  });
+  const AppScaffold({super.key, this.initialTab});
 
   @override
   State<AppScaffold> createState() => _AppScaffoldState();
@@ -61,10 +57,10 @@ class _AppScaffoldState extends State<AppScaffold> {
   @override
   void initState() {
     super.initState();
-    
+
     // Trigger initial account load
     context.read<AuthBloc>().add(const AuthLoadCurrentAccount());
-    
+
     // Trigger initial notification load for badges
     context.read<NotificationBloc>().add(const NotificationLoadRequested());
 
@@ -108,24 +104,24 @@ class _AppScaffoldState extends State<AppScaffold> {
       child: Scaffold(
         backgroundColor: AppColors.background,
         body: PageView(
-        controller: _pageController,
-        onPageChanged: (index) {
-          if (index < 0 || index >= _customerTabs.length) return;
-          final newTab = _customerTabs[index];
-          setState(() {
-            _currentTab = newTab;
-          });
-        },
-        children: _screens,
+          controller: _pageController,
+          onPageChanged: (index) {
+            if (index < 0 || index >= _customerTabs.length) return;
+            final newTab = _customerTabs[index];
+            setState(() {
+              _currentTab = newTab;
+            });
+          },
+          children: _screens,
+        ),
+        bottomNavigationBar: _showBottomNav
+            ? AppBottomNavigationBar(
+                currentTab: _currentTab,
+                onTabSelected: (tab) => _onTabSelected(tab, context),
+              )
+            : null,
+        endDrawer: const NotificationDrawer(),
       ),
-      bottomNavigationBar: _showBottomNav
-          ? AppBottomNavigationBar(
-              currentTab: _currentTab,
-              onTabSelected: (tab) => _onTabSelected(tab, context),
-            )
-          : null,
-      endDrawer: const NotificationDrawer(),
-    ),);
+    );
   }
 }
-

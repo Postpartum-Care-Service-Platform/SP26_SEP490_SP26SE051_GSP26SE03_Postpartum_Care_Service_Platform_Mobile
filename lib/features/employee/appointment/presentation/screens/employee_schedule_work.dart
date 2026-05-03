@@ -17,7 +17,6 @@ import '../../../../../features/booking/data/datasources/booking_remote_datasour
 import '../../../../../features/booking/data/models/booking_model.dart';
 import '../../../../../features/chat/data/datasources/chat_remote_datasource.dart';
 import '../../../../../features/contract/data/datasources/contract_remote_datasource.dart';
-import '../../../../../features/notification/data/datasources/notification_remote_datasource.dart';
 import '../../data/datasources/appointment_employee_remote_datasource.dart';
 import '../../../../../features/employee/account/presentation/screens/employee_profile_screen.dart';
 import '../../../../../features/employee/shell/presentation/widgets/employee_quick_menu.dart';
@@ -32,6 +31,7 @@ import '../../../../../features/wallet/data/datasources/wallet_remote_datasource
 import '../../../../../features/wallet/presentation/bloc/wallet_cubit.dart';
 import '../../../../../features/wallet/presentation/bloc/wallet_state.dart';
 import '../../../../../core/widgets/app_bottom_navigation_bar.dart';
+
 /// Employee Dashboard Screen - Trang chính sau khi staff đăng nhập
 /// Hiển thị tổng quan thống kê, quick menu và danh sách appointment gần nhất
 class EmployeeScheduleScreenNew extends StatelessWidget {
@@ -60,68 +60,68 @@ class _EmployeeScheduleContent extends StatelessWidget {
     return EmployeeScaffold(
       body: Column(
         children: [
-            const EmployeeHeaderBar(
-              title: 'Portal Nhân viên',
-              subtitle: 'Quản lý công việc',
-            ),
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: () async {
-                  // Reload appointments
-                  context.read<AppointmentBloc>().add(
-                    const LoadMyAssignedAppointments(),
-                  );
-                  // Reload current account silently
-                  context.read<AuthBloc>().add(const AuthLoadCurrentAccount());
+          const EmployeeHeaderBar(
+            title: 'Portal Nhân viên',
+            subtitle: 'Quản lý công việc',
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                // Reload appointments
+                context.read<AppointmentBloc>().add(
+                  const LoadMyAssignedAppointments(),
+                );
+                // Reload current account silently
+                context.read<AuthBloc>().add(const AuthLoadCurrentAccount());
+              },
+              child: BlocConsumer<AppointmentBloc, AppointmentState>(
+                listener: (context, state) {
+                  if (state is AppointmentError) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(state.message),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  } else if (state is AppointmentActionSuccess) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(state.message),
+                        backgroundColor: AppColors.primary,
+                      ),
+                    );
+                  }
                 },
-                child: BlocConsumer<AppointmentBloc, AppointmentState>(
-                  listener: (context, state) {
-                    if (state is AppointmentError) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(state.message),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    } else if (state is AppointmentActionSuccess) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(state.message),
-                          backgroundColor: AppColors.primary,
-                        ),
-                      );
-                    }
-                  },
-                  builder: (context, state) {
-                    if (state is AppointmentLoading) {
-                      return const _AppointmentsLoadingSkeleton();
-                    }
+                builder: (context, state) {
+                  if (state is AppointmentLoading) {
+                    return const _AppointmentsLoadingSkeleton();
+                  }
 
-                    if (state is AppointmentLoaded) {
-                      return _LoadedContent(
-                        appointments: state.appointments,
-                        onBottomTabSelected: onBottomTabSelected,
-                      );
-                    }
+                  if (state is AppointmentLoaded) {
+                    return _LoadedContent(
+                      appointments: state.appointments,
+                      onBottomTabSelected: onBottomTabSelected,
+                    );
+                  }
 
-                    if (state is AppointmentEmpty) {
-                      return _LoadedContent(
-                        appointments: const [],
-                        onBottomTabSelected: onBottomTabSelected,
-                      );
-                    }
+                  if (state is AppointmentEmpty) {
+                    return _LoadedContent(
+                      appointments: const [],
+                      onBottomTabSelected: onBottomTabSelected,
+                    );
+                  }
 
-                    if (state is AppointmentError) {
-                      return _ErrorState(message: state.message);
-                    }
+                  if (state is AppointmentError) {
+                    return _ErrorState(message: state.message);
+                  }
 
-                    return const SizedBox();
-                  },
-                ),
+                  return const SizedBox();
+                },
               ),
             ),
-          ],
-        ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -274,12 +274,12 @@ class _LoadedContentState extends State<_LoadedContent> {
         // Đếm các booking đang cần xử lý (chưa hoàn thành/hủy)
         myWorkBookingsCount = myBookings.where((b) {
           final s = b.status.toLowerCase();
-          return s == 'pending' || 
-                 s == 'confirmed' || 
-                 s == 'inprogress' || 
-                 s == 'in_progress' || 
-                 s == 'checked_in' || 
-                 s == 'active';
+          return s == 'pending' ||
+              s == 'confirmed' ||
+              s == 'inprogress' ||
+              s == 'in_progress' ||
+              s == 'checked_in' ||
+              s == 'active';
         }).length;
       } catch (e) {
         debugPrint('Dashboard: Error loading my bookings count: $e');
@@ -554,7 +554,9 @@ class _HeaderCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20 * scale),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF6366F1).withValues(alpha: 0.2),
+                            color: const Color(
+                              0xFF6366F1,
+                            ).withValues(alpha: 0.2),
                             blurRadius: 12 * scale,
                             offset: Offset(0, 4 * scale),
                           ),
@@ -563,7 +565,10 @@ class _HeaderCard extends StatelessWidget {
                       child: avatarUrl != null && avatarUrl.isNotEmpty
                           ? ClipRRect(
                               borderRadius: BorderRadius.circular(20 * scale),
-                              child: Image.network(avatarUrl, fit: BoxFit.cover),
+                              child: Image.network(
+                                avatarUrl,
+                                fit: BoxFit.cover,
+                              ),
                             )
                           : Icon(
                               Icons.person_rounded,
@@ -601,7 +606,9 @@ class _HeaderCard extends StatelessWidget {
                               vertical: 2 * scale,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+                              color: const Color(
+                                0xFF8B5CF6,
+                              ).withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8 * scale),
                             ),
                             child: Text(
@@ -620,7 +627,10 @@ class _HeaderCard extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 20 * scale, vertical: 12 * scale),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 20 * scale,
+                  vertical: 12 * scale,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.background.withValues(alpha: 0.5),
                   border: Border(
@@ -647,7 +657,10 @@ class _HeaderCard extends StatelessWidget {
                     ),
                     const Spacer(),
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 10 * scale, vertical: 4 * scale),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10 * scale,
+                        vertical: 4 * scale,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20 * scale),
@@ -734,7 +747,6 @@ class _SectionTitle extends StatelessWidget {
 
 // _StatsGrid was removed because it was no longer used in the dashboard layout.
 
-
 class _DashboardSummary {
   final int mySupportRequests;
   final int pendingSupportRequests;
@@ -753,12 +765,12 @@ class _DashboardSummary {
   });
 
   const _DashboardSummary.empty()
-      : mySupportRequests = 0,
-        pendingSupportRequests = 0,
-        unscheduledContracts = 0,
-        todaysBookings = 0,
-        pendingAppointments = 0,
-        myWorkBookings = 0;
+    : mySupportRequests = 0,
+      pendingSupportRequests = 0,
+      unscheduledContracts = 0,
+      todaysBookings = 0,
+      pendingAppointments = 0,
+      myWorkBookings = 0;
 
   bool get isAllZero =>
       mySupportRequests == 0 &&
@@ -808,7 +820,9 @@ class _DashboardSummaryRow extends StatelessWidget {
         // Sau khi load xong, nếu tất cả đều 0 thì ẩn
         if (!isLoading && summary != null) {
           final summaryAllZero = summary.isAllZero;
-          final isReallyAllZero = summaryAllZero && (isHomeStaff ? pendingAppointmentsCount == 0 : true);
+          final isReallyAllZero =
+              summaryAllZero &&
+              (isHomeStaff ? pendingAppointmentsCount == 0 : true);
           if (isReallyAllZero) {
             return const SizedBox.shrink();
           }
@@ -1013,7 +1027,6 @@ class _DashboardMiniCard extends StatelessWidget {
 }
 
 // _StatCard was removed because it was only used by the now-deleted _StatsGrid.
-
 
 // Removed: _SectionTitle, _AppointmentCard, _CompletedAppointmentCard, _StatusBadge, _InfoRow, _ActionButton moved to EmployeeAppointmentListScreen
 
@@ -1229,7 +1242,7 @@ class _BookingPaginationControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (totalPages <= 1) return const SizedBox.shrink();
-    
+
     final scale = AppResponsive.scaleFactor(context);
     const accentOrange = Color(0xFFF59E0B);
 
@@ -1262,13 +1275,21 @@ class _BookingPaginationControls extends StatelessWidget {
                   List<Widget> items = [];
                   int start = (currentPage - 1).clamp(0, totalPages - 1);
                   int end = (start + 2).clamp(0, totalPages - 1);
-                  
+
                   if (end == totalPages - 1 && totalPages >= 3) {
                     start = (end - 2).clamp(0, totalPages - 1);
                   }
 
                   if (start > 0) {
-                    items.add(Text('...', style: TextStyle(color: accentOrange, fontSize: 11 * scale)));
+                    items.add(
+                      Text(
+                        '...',
+                        style: TextStyle(
+                          color: accentOrange,
+                          fontSize: 11 * scale,
+                        ),
+                      ),
+                    );
                   }
 
                   for (int i = start; i <= end; i++) {
@@ -1285,7 +1306,9 @@ class _BookingPaginationControls extends StatelessWidget {
                             color: isSelected ? accentOrange : Colors.white,
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: isSelected ? accentOrange : accentOrange.withValues(alpha: 0.3),
+                              color: isSelected
+                                  ? accentOrange
+                                  : accentOrange.withValues(alpha: 0.3),
                             ),
                           ),
                           alignment: Alignment.center,
@@ -1293,7 +1316,9 @@ class _BookingPaginationControls extends StatelessWidget {
                             '${index + 1}',
                             style: AppTextStyles.arimo(
                               fontSize: 11 * scale,
-                              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                              fontWeight: isSelected
+                                  ? FontWeight.w800
+                                  : FontWeight.w600,
                               color: isSelected ? Colors.white : accentOrange,
                             ),
                           ),
@@ -1303,9 +1328,17 @@ class _BookingPaginationControls extends StatelessWidget {
                   }
 
                   if (end < totalPages - 1) {
-                    items.add(Text('...', style: TextStyle(color: accentOrange, fontSize: 11 * scale)));
+                    items.add(
+                      Text(
+                        '...',
+                        style: TextStyle(
+                          color: accentOrange,
+                          fontSize: 11 * scale,
+                        ),
+                      ),
+                    );
                   }
-                  
+
                   return items;
                 }(),
               ],
@@ -1436,7 +1469,9 @@ class _BookingCard extends StatelessWidget {
       if (packageName.contains(roomTypeName)) return packageName;
       return '$roomTypeName \u2022 $packageName';
     }
-    return packageName.isNotEmpty ? packageName : (roomTypeName.isNotEmpty ? roomTypeName : 'Gói dịch vụ');
+    return packageName.isNotEmpty
+        ? packageName
+        : (roomTypeName.isNotEmpty ? roomTypeName : 'Gói dịch vụ');
   }
 
   String _formatCurrency(double value) {
@@ -1466,8 +1501,8 @@ class _BookingCard extends StatelessWidget {
           color: isCancelled ? const Color(0xFFF9FAFB) : AppColors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isCancelled 
-                ? AppColors.borderLight 
+            color: isCancelled
+                ? AppColors.borderLight
                 : statusColor.withValues(alpha: 0.2),
             width: 1.2,
           ),
@@ -1487,7 +1522,10 @@ class _BookingCard extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10 * scale, vertical: 4 * scale),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10 * scale,
+                    vertical: 4 * scale,
+                  ),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
@@ -1536,7 +1574,9 @@ class _BookingCard extends StatelessWidget {
               style: AppTextStyles.arimo(
                 fontSize: 16 * scale,
                 fontWeight: FontWeight.w800,
-                color: isCancelled ? AppColors.textSecondary : AppColors.textPrimary,
+                color: isCancelled
+                    ? AppColors.textSecondary
+                    : AppColors.textPrimary,
                 height: 1.3,
               ),
             ),
@@ -1545,7 +1585,11 @@ class _BookingCard extends StatelessWidget {
             // Customer Info Row
             Row(
               children: [
-                Icon(Icons.person_outline, size: 14 * scale, color: AppColors.textSecondary),
+                Icon(
+                  Icons.person_outline,
+                  size: 14 * scale,
+                  color: AppColors.textSecondary,
+                ),
                 SizedBox(width: 8 * scale),
                 Expanded(
                   child: Text(
@@ -1559,7 +1603,11 @@ class _BookingCard extends StatelessWidget {
                 ),
                 if (customerPhone != null && customerPhone.isNotEmpty) ...[
                   SizedBox(width: 12 * scale),
-                  Icon(Icons.phone_outlined, size: 14 * scale, color: AppColors.textSecondary),
+                  Icon(
+                    Icons.phone_outlined,
+                    size: 14 * scale,
+                    color: AppColors.textSecondary,
+                  ),
                   SizedBox(width: 4 * scale),
                   Text(
                     customerPhone,
@@ -1571,41 +1619,57 @@ class _BookingCard extends StatelessWidget {
                 ],
               ],
             ),
-            
+
             SizedBox(height: 12 * scale),
-            
+
             // Payment Status Section
             Container(
               width: double.infinity,
               padding: EdgeInsets.all(10 * scale),
               decoration: BoxDecoration(
-                color: isCancelled 
-                    ? Colors.transparent 
-                    : (isCompleted ? const Color(0xFFF0FDF4) : const Color(0xFFFFFBEB)),
+                color: isCancelled
+                    ? Colors.transparent
+                    : (isCompleted
+                          ? const Color(0xFFF0FDF4)
+                          : const Color(0xFFFFFBEB)),
                 borderRadius: BorderRadius.circular(12 * scale),
                 border: Border.all(
-                  color: isCancelled 
-                      ? AppColors.borderLight 
-                      : (isCompleted ? const Color(0xFFBBF7D0) : const Color(0xFFFEF3C7)),
+                  color: isCancelled
+                      ? AppColors.borderLight
+                      : (isCompleted
+                            ? const Color(0xFFBBF7D0)
+                            : const Color(0xFFFEF3C7)),
                 ),
               ),
               child: Row(
                 children: [
                   Icon(
-                    isCompleted ? Icons.check_circle_outline : Icons.payments_outlined,
+                    isCompleted
+                        ? Icons.check_circle_outline
+                        : Icons.payments_outlined,
                     size: 16 * scale,
-                    color: isCancelled ? AppColors.textSecondary : (isCompleted ? const Color(0xFF10B981) : const Color(0xFFD97706)),
+                    color: isCancelled
+                        ? AppColors.textSecondary
+                        : (isCompleted
+                              ? const Color(0xFF10B981)
+                              : const Color(0xFFD97706)),
                   ),
                   SizedBox(width: 8 * scale),
                   Expanded(
                     child: Text(
-                      isCancelled 
-                          ? 'Đã xử lý hủy đơn' 
-                          : (booking.remainingAmount <= 0 ? 'Đã thanh toán đủ' : 'Còn thiếu: ${_formatCurrency(booking.remainingAmount)}'),
+                      isCancelled
+                          ? 'Đã xử lý hủy đơn'
+                          : (booking.remainingAmount <= 0
+                                ? 'Đã thanh toán đủ'
+                                : 'Còn thiếu: ${_formatCurrency(booking.remainingAmount)}'),
                       style: AppTextStyles.arimo(
                         fontSize: 11 * scale,
                         fontWeight: FontWeight.w700,
-                        color: isCancelled ? AppColors.textSecondary : (isCompleted ? const Color(0xFF059669) : const Color(0xFFD97706)),
+                        color: isCancelled
+                            ? AppColors.textSecondary
+                            : (isCompleted
+                                  ? const Color(0xFF059669)
+                                  : const Color(0xFFD97706)),
                       ),
                     ),
                   ),
@@ -1614,14 +1678,14 @@ class _BookingCard extends StatelessWidget {
             ),
 
             SizedBox(height: 16 * scale),
-            
+
             // Footer Divider
             Container(
               height: 1,
               width: double.infinity,
               color: AppColors.borderLight.withValues(alpha: 0.5),
             ),
-            
+
             SizedBox(height: 12 * scale),
 
             // Dates and Total
@@ -1630,7 +1694,11 @@ class _BookingCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.date_range_outlined, size: 14 * scale, color: AppColors.textSecondary),
+                    Icon(
+                      Icons.date_range_outlined,
+                      size: 14 * scale,
+                      color: AppColors.textSecondary,
+                    ),
                     SizedBox(width: 6 * scale),
                     Text(
                       '${dateFormat.format(booking.startDate)} - ${dateFormat.format(booking.endDate)}',
@@ -1646,9 +1714,11 @@ class _BookingCard extends StatelessWidget {
                   style: AppTextStyles.arimo(
                     fontSize: 15 * scale,
                     fontWeight: FontWeight.w900,
-                    color: isCancelled 
-                        ? AppColors.textSecondary.withValues(alpha: 0.5) 
-                        : (isCompleted ? const Color(0xFF10B981) : const Color(0xFFF97316)),
+                    color: isCancelled
+                        ? AppColors.textSecondary.withValues(alpha: 0.5)
+                        : (isCompleted
+                              ? const Color(0xFF10B981)
+                              : const Color(0xFFF97316)),
                     decoration: isCancelled ? TextDecoration.lineThrough : null,
                   ),
                 ),

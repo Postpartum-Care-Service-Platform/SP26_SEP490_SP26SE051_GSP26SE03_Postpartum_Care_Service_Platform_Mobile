@@ -188,7 +188,8 @@ class _EmployeeCustomerFamilyProfilesScreenState
     List<MenuModel> availableMenus = [];
     try {
       availableMenus = await _profileDs.getAllMenus();
-      if (mounted) Navigator.pop(context); // hide loader
+      if (!mounted) return;
+      Navigator.pop(context); // hide loader
     } catch (e) {
       if (mounted) {
         Navigator.pop(context);

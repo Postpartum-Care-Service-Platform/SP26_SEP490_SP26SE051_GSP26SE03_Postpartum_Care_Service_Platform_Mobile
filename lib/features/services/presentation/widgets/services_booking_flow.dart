@@ -129,8 +129,8 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
           });
         }
         return BookingStep1PackageSelection(
-          onPackageSelected: (packageId) {
-            context.read<BookingBloc>().add(BookingSelectPackage(packageId));
+          onPackageSelected: (package) {
+            context.read<BookingBloc>().add(BookingSelectPackage(package.id, package: package));
           },
         );
       case 2:
@@ -379,7 +379,7 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
                 if (_currentStep == 0) {
                   // Check health records for selected IDs
                   showDialog(
-                    context: this.context,
+                    context: context,
                     barrierDismissible: false,
                     builder: (_) => const Center(
                       child: AppLoadingIndicator(color: AppColors.white),
@@ -390,7 +390,7 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
                   String? missingName;
 
                   try {
-                    final bookingBloc = this.context.read<BookingBloc>();
+                    final bookingBloc = context.read<BookingBloc>();
                     final selectedIds = bookingBloc.selectedFamilyProfileIds;
                     final profiles = bookingBloc.familyProfiles ?? [];
                     
@@ -403,25 +403,21 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
                       }
                     }
                   } catch (e) {
-                    if (mounted) {
-                      Navigator.of(this.context, rootNavigator: true).pop(); // dismiss loading
-                      AppToast.showError(this.context, message: 'Lỗi kiểm tra hồ sơ sức khỏe. Vui lòng thử lại.');
-                    }
+                    if (!context.mounted) return;
+                    Navigator.of(context, rootNavigator: true).pop(); // dismiss loading
+                    AppToast.showError(context, message: 'Lỗi kiểm tra hồ sơ sức khỏe. Vui lòng thử lại.');
                     return;
                   }
 
-                  if (mounted) {
-                    Navigator.of(this.context, rootNavigator: true).pop(); // dismiss loading
-                  }
+                  if (!context.mounted) return;
+                  Navigator.of(context, rootNavigator: true).pop(); // dismiss loading
 
                   if (!allHaveRecords) {
-                    if (mounted) {
-                      AppToast.showError(
-                        this.context, 
-                        message: 'Vui lòng cập nhật hồ sơ sức khỏe cho $missingName trước khi tiếp tục (Ấn giữ vào thẻ thành viên)',
-                        duration: const Duration(seconds: 4),
-                      );
-                    }
+                    AppToast.showError(
+                      context, 
+                      message: 'Vui lòng cập nhật hồ sơ sức khỏe cho $missingName trước khi tiếp tục (Ấn giữ vào thẻ thành viên)',
+                      duration: const Duration(seconds: 4),
+                    );
                     return;
                   }
                 }
@@ -429,7 +425,7 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
                 if (_currentStep == 2) {
                   // Check staff availability for selected range
                   showDialog(
-                    context: this.context,
+                    context: context,
                     barrierDismissible: false,
                     builder: (_) => const Center(
                       child: AppLoadingIndicator(color: AppColors.white),
@@ -437,7 +433,7 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
                   );
 
                   try {
-                    final bookingBloc = this.context.read<BookingBloc>();
+                    final bookingBloc = context.read<BookingBloc>();
                     final startDate = bookingBloc.selectedDate!;
                     final selectedPackage = bookingBloc.selectedPackage!;
                     final durationDays = selectedPackage.durationDays ?? 0;
@@ -448,28 +444,26 @@ class _ServicesBookingFlowState extends State<ServicesBookingFlow> {
                       to: endDate,
                     );
 
-                    if (mounted) {
-                      Navigator.of(this.context, rootNavigator: true).pop(); // dismiss loading
-                    }
+                    if (!context.mounted) return;
+                    Navigator.of(context, rootNavigator: true).pop(); // dismiss loading
 
                     if (!availability.hasAvailableStaff) {
-                      if (mounted) {
-                        AppToast.showError(
-                          this.context, 
-                          message: 'Hiện tại trung tâm không còn nhân viên để phục vụ vào thời gian này. Vui lòng chọn ngày khác.',
-                          duration: const Duration(seconds: 4),
-                        );
-                      }
+                      AppToast.showError(
+                        context, 
+                        message: 'Hiện tại trung tâm không còn nhân viên để phục vụ vào thời gian này. Vui lòng chọn ngày khác.',
+                        duration: const Duration(seconds: 4),
+                      );
                       return;
                     }
                   } catch (e) {
-                    if (mounted) {
-                      Navigator.of(this.context, rootNavigator: true).pop(); // dismiss loading
-                      AppToast.showError(this.context, message: 'Lỗi kiểm tra nhân sự. Vui lòng thử lại.');
-                    }
+                    if (!context.mounted) return;
+                    Navigator.of(context, rootNavigator: true).pop(); // dismiss loading
+                    AppToast.showError(context, message: 'Lỗi kiểm tra nhân sự. Vui lòng thử lại.');
                     return;
                   }
                 }
+
+                if (!context.mounted) return;
 
                 setState(() {
                   _currentStep++;

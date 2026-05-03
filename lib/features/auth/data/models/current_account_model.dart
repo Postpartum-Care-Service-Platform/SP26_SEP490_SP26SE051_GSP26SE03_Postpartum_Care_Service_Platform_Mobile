@@ -1,5 +1,4 @@
 import 'package:equatable/equatable.dart';
-import 'package:flutter/foundation.dart';
 import '../../../../core/constants/app_enums.dart';
 import '../../domain/entities/user_entity.dart';
 
@@ -44,7 +43,11 @@ class OwnerProfileModel extends Equatable {
   /// Get list of certificate URLs if they are comma-separated
   List<String> get certificateList {
     if (certificate == null || certificate!.isEmpty) return [];
-    return certificate!.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+    return certificate!
+        .split(',')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
   }
 
   factory OwnerProfileModel.fromJson(Map<String, dynamic> json) =>
@@ -71,23 +74,23 @@ class OwnerProfileModel extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        memberTypeId,
-        memberTypeName,
-        accountId,
-        fullName,
-        dateOfBirth,
-        gender,
-        address,
-        phoneNumber,
-        avatarUrl,
-        createdAt,
-        updatedAt,
-        isDeleted,
-        isOwner,
-        certificate,
-        experience,
-      ];
+    id,
+    memberTypeId,
+    memberTypeName,
+    accountId,
+    fullName,
+    dateOfBirth,
+    gender,
+    address,
+    phoneNumber,
+    avatarUrl,
+    createdAt,
+    updatedAt,
+    isDeleted,
+    isOwner,
+    certificate,
+    experience,
+  ];
 }
 
 /// Transaction info for the current package (nowPackage.nowTransactionResponses)
@@ -117,19 +120,14 @@ class NowTransactionResponseModel extends Equatable {
   }
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-        'transactionId': transactionId,
-        'amount': amount,
-        'type': type,
-        'transactionStatus': transactionStatus,
-      };
+    'transactionId': transactionId,
+    'amount': amount,
+    'type': type,
+    'transactionStatus': transactionStatus,
+  };
 
   @override
-  List<Object?> get props => [
-        transactionId,
-        amount,
-        type,
-        transactionStatus,
-      ];
+  List<Object?> get props => [transactionId, amount, type, transactionStatus];
 }
 
 /// Information about the customer's current/active package (nowPackage)
@@ -153,10 +151,10 @@ class ServiceDateModel extends Equatable {
   }
 
   Map<String, dynamic> toJson() => {
-        'date': date.toIso8601String().split('T')[0],
-        'startTime': startTime,
-        'endTime': endTime,
-      };
+    'date': date.toIso8601String().split('T')[0],
+    'startTime': startTime,
+    'endTime': endTime,
+  };
 
   @override
   List<Object?> get props => [date, startTime, endTime];
@@ -214,12 +212,13 @@ class NowPackageModel extends Equatable {
 
   String get normalizedBookingStatus => bookingStatus.trim().toLowerCase();
 
-  BookingStatus get bookingStatusEnum => BookingStatus.fromString(bookingStatus);
+  BookingStatus get bookingStatusEnum =>
+      BookingStatus.fromString(bookingStatus);
   ServiceLocationType get typeEnum => ServiceLocationType.fromString(type);
-  ContractStatus get contractStatusEnum => ContractStatus.fromString(contractStatus);
+  ContractStatus get contractStatusEnum =>
+      ContractStatus.fromString(contractStatus);
 
-  bool get isInProgressStatus =>
-      bookingStatusEnum == BookingStatus.inProgress;
+  bool get isInProgressStatus => bookingStatusEnum == BookingStatus.inProgress;
 
   bool get isPendingCustomerConfirm =>
       bookingStatusEnum == BookingStatus.pendingCustomerConfirm;
@@ -233,14 +232,12 @@ class NowPackageModel extends Equatable {
     final rawPaidAmount = json['paidAmount'];
     final paidAmount = rawPaidAmount is num ? rawPaidAmount.toDouble() : 0.0;
     final rawRemainingAmount = json['remainingAmount'];
-    final remainingAmount =
-        rawRemainingAmount is num ? rawRemainingAmount.toDouble() : 0.0;
-    final serviceDates = (json['serviceDates'] as List<dynamic>?)
-            ?.map(
-              (e) => ServiceDateModel.fromJson(
-                e as Map<String, dynamic>,
-              ),
-            )
+    final remainingAmount = rawRemainingAmount is num
+        ? rawRemainingAmount.toDouble()
+        : 0.0;
+    final serviceDates =
+        (json['serviceDates'] as List<dynamic>?)
+            ?.map((e) => ServiceDateModel.fromJson(e as Map<String, dynamic>))
             .toList() ??
         const <ServiceDateModel>[];
 
@@ -253,13 +250,15 @@ class NowPackageModel extends Equatable {
       remainingAmount: remainingAmount,
       packageId: json['packageId'] as int? ?? 0,
       packageName: json['packageName'] as String? ?? '',
-      checkinDate: (json['checkinDate'] != null
+      checkinDate:
+          (json['checkinDate'] != null
               ? DateTime.tryParse(json['checkinDate'] as String)
               : null) ??
           (json['startDate'] != null
               ? DateTime.tryParse(json['startDate'] as String)
               : null),
-      checkoutDate: (json['checkoutDate'] != null
+      checkoutDate:
+          (json['checkoutDate'] != null
               ? DateTime.tryParse(json['checkoutDate'] as String)
               : null) ??
           (json['endDate'] != null
@@ -273,7 +272,8 @@ class NowPackageModel extends Equatable {
       contractId: json['contractId'] as int?,
       contractCode: json['contractCode'] as String?,
       contractStatus: json['contractStatus'] as String? ?? '',
-      nowTransactionResponses: (json['nowTransactionResponses'] as List<dynamic>?)
+      nowTransactionResponses:
+          (json['nowTransactionResponses'] as List<dynamic>?)
               ?.map(
                 (e) => NowTransactionResponseModel.fromJson(
                   e as Map<String, dynamic>,
@@ -285,50 +285,51 @@ class NowPackageModel extends Equatable {
   }
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-        'serviceIsActive': serviceIsActive,
-        'type': type,
-        'bookingId': bookingId,
-        'bookingStatus': bookingStatus,
-        'paidAmount': paidAmount,
-        'remainingAmount': remainingAmount,
-        'packageId': packageId,
-        'packageName': packageName,
-        'checkinDate': checkinDate?.toIso8601String(),
-        'checkoutDate': checkoutDate?.toIso8601String(),
-        'serviceDates': serviceDates.map((e) => e.toJson()).toList(),
-        'roomTypeId': roomTypeId,
-        'roomTypeName': roomTypeName,
-        'roomName': roomName,
-        'floor': floor,
-        'contractId': contractId,
-        'contractCode': contractCode,
-        'contractStatus': contractStatus,
-        'nowTransactionResponses':
-            nowTransactionResponses.map((e) => e.toJson()).toList(),
-      };
+    'serviceIsActive': serviceIsActive,
+    'type': type,
+    'bookingId': bookingId,
+    'bookingStatus': bookingStatus,
+    'paidAmount': paidAmount,
+    'remainingAmount': remainingAmount,
+    'packageId': packageId,
+    'packageName': packageName,
+    'checkinDate': checkinDate?.toIso8601String(),
+    'checkoutDate': checkoutDate?.toIso8601String(),
+    'serviceDates': serviceDates.map((e) => e.toJson()).toList(),
+    'roomTypeId': roomTypeId,
+    'roomTypeName': roomTypeName,
+    'roomName': roomName,
+    'floor': floor,
+    'contractId': contractId,
+    'contractCode': contractCode,
+    'contractStatus': contractStatus,
+    'nowTransactionResponses': nowTransactionResponses
+        .map((e) => e.toJson())
+        .toList(),
+  };
 
   @override
   List<Object?> get props => [
-        serviceIsActive,
-        type,
-        bookingId,
-        bookingStatus,
-        paidAmount,
-        remainingAmount,
-        packageId,
-        packageName,
-        checkinDate,
-        checkoutDate,
-        serviceDates,
-        roomTypeId,
-        roomTypeName,
-        roomName,
-        floor,
-        contractId,
-        contractCode,
-        contractStatus,
-        nowTransactionResponses,
-      ];
+    serviceIsActive,
+    type,
+    bookingId,
+    bookingStatus,
+    paidAmount,
+    remainingAmount,
+    packageId,
+    packageName,
+    checkinDate,
+    checkoutDate,
+    serviceDates,
+    roomTypeId,
+    roomTypeName,
+    roomName,
+    floor,
+    contractId,
+    contractCode,
+    contractStatus,
+    nowTransactionResponses,
+  ];
 }
 
 /// Current account model from GetCurrentAccount API
@@ -377,7 +378,11 @@ class CurrentAccountModel extends Equatable {
   /// Get list of certificate URLs
   List<String> get certificateList {
     if (certificate == null || certificate!.isEmpty) return [];
-    return certificate!.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+    return certificate!
+        .split(',')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
   }
 
   factory CurrentAccountModel.fromJson(Map<String, dynamic> json) {
@@ -401,82 +406,81 @@ class CurrentAccountModel extends Equatable {
       avatarUrl: json['avatarUrl'] as String?,
       ownerProfile: ownerProfile,
       nowPackage: json['nowPackage'] != null
-          ? NowPackageModel.fromJson(
-              json['nowPackage'] as Map<String, dynamic>,
-            )
+          ? NowPackageModel.fromJson(json['nowPackage'] as Map<String, dynamic>)
           : null,
       memberType: json['memberType'] as String?,
-      certificate: (json['certificate'] as String?) ?? ownerProfile?.certificate,
+      certificate:
+          (json['certificate'] as String?) ?? ownerProfile?.certificate,
       experience: (json['experience'] as int?) ?? ownerProfile?.experience,
       level: json['level'] as int?,
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'roleId': roleId,
-        'email': email,
-        'phone': phone,
-        'username': username,
-        'isActive': isActive,
-        'createdAt': createdAt.toIso8601String(),
-        'updatedAt': updatedAt.toIso8601String(),
-        'roleName': roleName,
-        'isEmailVerified': isEmailVerified,
-        'avatarUrl': avatarUrl,
-        'ownerProfile': ownerProfile != null
-            ? {
-                'id': ownerProfile!.id,
-                'memberTypeId': ownerProfile!.memberTypeId,
-                'memberTypeName': ownerProfile!.memberTypeName,
-                'accountId': ownerProfile!.accountId,
-                'fullName': ownerProfile!.fullName,
-                'dateOfBirth': ownerProfile!.dateOfBirth?.toIso8601String(),
-                'gender': ownerProfile!.gender,
-                'address': ownerProfile!.address,
-                'phoneNumber': ownerProfile!.phoneNumber,
-                'avatarUrl': ownerProfile!.avatarUrl,
-                'createdAt': ownerProfile!.createdAt.toIso8601String(),
-                'updatedAt': ownerProfile!.updatedAt.toIso8601String(),
-                'isDeleted': ownerProfile!.isDeleted,
-                'isOwner': ownerProfile!.isOwner,
-                'certificate': ownerProfile!.certificate,
-                'experience': ownerProfile!.experience,
-              }
-            : null,
-        'nowPackage': nowPackage?.toJson(),
-        'memberType': memberType,
-        'certificate': certificate,
-        'experience': experience,
-        'level': level,
-      };
+    'id': id,
+    'roleId': roleId,
+    'email': email,
+    'phone': phone,
+    'username': username,
+    'isActive': isActive,
+    'createdAt': createdAt.toIso8601String(),
+    'updatedAt': updatedAt.toIso8601String(),
+    'roleName': roleName,
+    'isEmailVerified': isEmailVerified,
+    'avatarUrl': avatarUrl,
+    'ownerProfile': ownerProfile != null
+        ? {
+            'id': ownerProfile!.id,
+            'memberTypeId': ownerProfile!.memberTypeId,
+            'memberTypeName': ownerProfile!.memberTypeName,
+            'accountId': ownerProfile!.accountId,
+            'fullName': ownerProfile!.fullName,
+            'dateOfBirth': ownerProfile!.dateOfBirth?.toIso8601String(),
+            'gender': ownerProfile!.gender,
+            'address': ownerProfile!.address,
+            'phoneNumber': ownerProfile!.phoneNumber,
+            'avatarUrl': ownerProfile!.avatarUrl,
+            'createdAt': ownerProfile!.createdAt.toIso8601String(),
+            'updatedAt': ownerProfile!.updatedAt.toIso8601String(),
+            'isDeleted': ownerProfile!.isDeleted,
+            'isOwner': ownerProfile!.isOwner,
+            'certificate': ownerProfile!.certificate,
+            'experience': ownerProfile!.experience,
+          }
+        : null,
+    'nowPackage': nowPackage?.toJson(),
+    'memberType': memberType,
+    'certificate': certificate,
+    'experience': experience,
+    'level': level,
+  };
 
   UserEntity toEntity() => UserEntity(
-        id: id,
-        email: email,
-        username: username,
-        role: roleName,
-        memberType: memberType ?? ownerProfile?.memberTypeName,
-      );
+    id: id,
+    email: email,
+    username: username,
+    role: roleName,
+    memberType: memberType ?? ownerProfile?.memberTypeName,
+  );
 
   @override
   List<Object?> get props => [
-        id,
-        roleId,
-        email,
-        phone,
-        username,
-        isActive,
-        createdAt,
-        updatedAt,
-        roleName,
-        isEmailVerified,
-        avatarUrl,
-        ownerProfile,
-        nowPackage,
-        memberType,
-        certificate,
-        experience,
-        level,
-      ];
+    id,
+    roleId,
+    email,
+    phone,
+    username,
+    isActive,
+    createdAt,
+    updatedAt,
+    roleName,
+    isEmailVerified,
+    avatarUrl,
+    ownerProfile,
+    nowPackage,
+    memberType,
+    certificate,
+    experience,
+    level,
+  ];
 }
