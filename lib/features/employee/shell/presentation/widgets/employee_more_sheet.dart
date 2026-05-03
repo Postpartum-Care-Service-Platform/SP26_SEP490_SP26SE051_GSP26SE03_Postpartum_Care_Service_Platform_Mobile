@@ -11,6 +11,7 @@ import '../../../../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../../../../features/auth/presentation/bloc/auth_state.dart';
 import '../../../../../features/employee/account/presentation/screens/employee_profile_screen.dart';
 import '../../../../../features/employee/shell/presentation/widgets/employee_quick_menu.dart';
+import '../../../../services/presentation/widgets/create_home_staff_withdraw_sheet.dart';
 
 class EmployeeMoreSheet {
   EmployeeMoreSheet._();
@@ -259,6 +260,9 @@ class EmployeeMoreSheet {
       case EmployeeQuickMenuExtraAction.feedbacks:
         AppRouter.push(context, AppRoutes.staffFeedbackList);
         break;
+      case EmployeeQuickMenuExtraAction.withdrawRequest:
+        CreateHomeStaffWithdrawSheet.show(context);
+        break;
     }
   }
 
@@ -300,6 +304,7 @@ List<_MenuGroup> _buildGroupedItems(List<EmployeeQuickMenuItem> items) {
       case EmployeeQuickMenuExtraAction.contracts:
       case EmployeeQuickMenuExtraAction.wallet:
       case EmployeeQuickMenuExtraAction.staffProfile:
+      case EmployeeQuickMenuExtraAction.withdrawRequest:
         group2.add(item);
         break;
       case null:

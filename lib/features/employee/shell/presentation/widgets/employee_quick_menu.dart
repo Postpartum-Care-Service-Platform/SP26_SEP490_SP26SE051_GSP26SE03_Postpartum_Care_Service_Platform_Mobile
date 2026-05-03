@@ -29,6 +29,7 @@ enum EmployeeQuickMenuExtraAction {
   supportRequests,
   wallet,
   feedbacks,
+  withdrawRequest,
 }
 
 /// Model định nghĩa 1 item trong menu nhanh
@@ -369,6 +370,7 @@ List<_QuickMenuGroup> _buildQuickMenuGroups(List<EmployeeQuickMenuItem> items) {
       case EmployeeQuickMenuExtraAction.contracts:
       case EmployeeQuickMenuExtraAction.wallet:
       case EmployeeQuickMenuExtraAction.staffProfile:
+      case EmployeeQuickMenuExtraAction.withdrawRequest:
         group2.add(item);
         break;
       case null:

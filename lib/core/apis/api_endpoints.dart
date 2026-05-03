@@ -393,6 +393,10 @@ class ApiEndpoints {
   /// Get my refund requests
   static const String myRefundRequests = '/RefundRequest/my-requests';
 
+  /// Create a refund request for home staff (withdraw)
+  static const String createRefundRequestByHomeStaff =
+      '/RefundRequest/create-by-home-staff';
+
   // ==========================================
   // Wallet endpoints
   // ==========================================

@@ -11,6 +11,15 @@ abstract class RefundRequestRepository {
     required String reason,
   });
 
+  /// Create a refund request for home staff (withdraw)
+  Future<List<RefundRequestEntity>> createHomeStaffWithdrawRequest({
+    required int requestedAmount,
+    required String bankName,
+    required String accountNumber,
+    required String accountHolder,
+    required String reason,
+  });
+
   /// Get my refund requests
   Future<List<RefundRequestEntity>> getMyRefundRequests();
 }

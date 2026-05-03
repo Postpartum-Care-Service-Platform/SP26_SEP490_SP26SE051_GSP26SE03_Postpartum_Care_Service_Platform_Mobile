@@ -177,6 +177,7 @@ import '../../features/services/data/datasources/refund_request_remote_datasourc
 import '../../features/services/data/repositories/refund_request_repository_impl.dart';
 import '../../features/services/domain/repositories/refund_request_repository.dart';
 import '../../features/services/domain/usecases/create_refund_request_usecase.dart';
+import '../../features/services/domain/usecases/create_home_staff_withdraw_request_usecase.dart';
 import '../../features/services/domain/usecases/get_my_refund_requests_usecase.dart';
 import '../../features/services/presentation/bloc/refund_request/refund_request_bloc.dart';
 import '../../features/services/data/datasources/vietqr_remote_datasource.dart';
@@ -201,6 +202,7 @@ import '../../features/package_request/presentation/bloc/package_request_bloc.da
 import '../../features/ai_recommend/data/datasources/ai_recommend_remote_datasource.dart';
 import '../../features/ai_recommend/data/repositories/ai_recommend_repository_impl.dart';
 import '../../features/ai_recommend/domain/repositories/ai_recommend_repository.dart';
+import '../../features/wallet/data/datasources/wallet_remote_datasource.dart';
 import '../apis/api_client.dart';
 
 /// Centralized dependency injection container
@@ -276,6 +278,9 @@ class InjectionContainer {
 
   static StaffFeedbackRemoteDataSource get _staffFeedbackRemoteDataSource =>
       StaffFeedbackRemoteDataSourceImpl(dio: ApiClient.dio);
+
+  static WalletRemoteDataSource get walletRemoteDataSource =>
+      WalletRemoteDataSourceImpl(dio: ApiClient.dio);
 
   // Health Record
   static HealthRecordRepository get healthRecordRepository =>
@@ -609,6 +614,9 @@ class InjectionContainer {
 
   static CreateRefundRequestUsecase get _createRefundRequestUsecase =>
       CreateRefundRequestUsecase(refundRequestRepository);
+  static CreateHomeStaffWithdrawRequestUseCase
+      get _createHomeStaffWithdrawRequestUseCase =>
+          CreateHomeStaffWithdrawRequestUseCase(repository: refundRequestRepository);
   static GetMyRefundRequestsUsecase get _getMyRefundRequestsUsecase =>
       GetMyRefundRequestsUsecase(refundRequestRepository);
 
@@ -796,9 +804,11 @@ class InjectionContainer {
   );
 
   static RefundRequestBloc get refundRequestBloc => RefundRequestBloc(
-    createRefundRequestUsecase: _createRefundRequestUsecase,
-    getMyRefundRequestsUsecase: _getMyRefundRequestsUsecase,
-  );
+        createRefundRequestUsecase: _createRefundRequestUsecase,
+        createHomeStaffWithdrawRequestUseCase:
+            _createHomeStaffWithdrawRequestUseCase,
+        getMyRefundRequestsUsecase: _getMyRefundRequestsUsecase,
+      );
 
   static StaffFeedbackBloc get staffFeedbackBloc => StaffFeedbackBloc(
     getMyFeedbacksForStaffUseCase: _getMyFeedbacksForStaffUseCase,

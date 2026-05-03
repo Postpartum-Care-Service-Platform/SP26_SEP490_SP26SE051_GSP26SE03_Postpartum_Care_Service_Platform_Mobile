@@ -3,7 +3,7 @@ import 'package:equatable/equatable.dart';
 /// Refund Request entity - domain layer
 class RefundRequestEntity extends Equatable {
   final int id;
-  final int bookingId;
+  final int? bookingId;
   final String? customerId;
   final double? requestedAmount;
   final double? approvedAmount;
@@ -20,7 +20,7 @@ class RefundRequestEntity extends Equatable {
 
   const RefundRequestEntity({
     required this.id,
-    required this.bookingId,
+    this.bookingId,
     this.customerId,
     this.requestedAmount,
     this.approvedAmount,

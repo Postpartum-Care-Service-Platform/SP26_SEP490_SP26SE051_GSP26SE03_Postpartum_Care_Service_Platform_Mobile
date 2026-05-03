@@ -31,6 +31,7 @@ import '../../../../../features/wallet/data/datasources/wallet_remote_datasource
 import '../../../../../features/wallet/presentation/bloc/wallet_cubit.dart';
 import '../../../../../features/wallet/presentation/bloc/wallet_state.dart';
 import '../../../../../core/widgets/app_bottom_navigation_bar.dart';
+import '../../../../services/presentation/widgets/create_home_staff_withdraw_sheet.dart';
 
 /// Employee Dashboard Screen - Trang chính sau khi staff đăng nhập
 /// Hiển thị tổng quan thống kê, quick menu và danh sách appointment gần nhất
@@ -467,6 +468,9 @@ class _LoadedContentState extends State<_LoadedContent> {
                       break;
                     case EmployeeQuickMenuExtraAction.feedbacks:
                       AppRouter.push(context, AppRoutes.staffFeedbackList);
+                      break;
+                    case EmployeeQuickMenuExtraAction.withdrawRequest:
+                      CreateHomeStaffWithdrawSheet.show(context);
                       break;
                   }
                 },
@@ -1938,27 +1942,72 @@ class _HomeStaffWalletSectionState extends State<_HomeStaffWalletSection> {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 16),
-                            if (isLoading)
-                              _buildSkeletonLoader()
-                            else
-                              Text(
-                                formattedBalance,
-                                style: AppTextStyles.arimo(
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                  letterSpacing: -0.5,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (isLoading)
+                                      _buildSkeletonLoader()
+                                    else
+                                      Text(
+                                        formattedBalance,
+                                        style: AppTextStyles.arimo(
+                                          fontSize: 32,
+                                          fontWeight: FontWeight.w800,
+                                          color: Colors.white,
+                                          letterSpacing: -0.5,
+                                        ),
+                                      ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Cập nhật lúc: ${DateFormat('HH:mm').format(DateTime.now())}',
+                                      style: AppTextStyles.arimo(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w400,
+                                        color: Colors.white70,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Cập nhật lúc: ${DateFormat('HH:mm').format(DateTime.now())}',
-                              style: AppTextStyles.arimo(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w400,
-                                color: Colors.white70,
-                              ),
+                                Material(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: InkWell(
+                                    onTap: () {
+                                      CreateHomeStaffWithdrawSheet.show(context);
+                                    },
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 10,
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(
+                                            Icons.account_balance_rounded,
+                                            color: Colors.white,
+                                            size: 16,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            'Rút tiền',
+                                            style: AppTextStyles.arimo(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w700,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
