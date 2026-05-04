@@ -140,7 +140,7 @@ class _StaffHealthRecordHistoryScreenState extends State<StaffHealthRecordHistor
             ),
             Expanded(
               child: Text(
-                'Tệp hồ sơ bệnh án',
+                'Tệp hồ sơ sức khoẻ',
                 textAlign: TextAlign.center,
                 style: AppTextStyles.arimo(
                   fontSize: 18 * scale,
