@@ -819,16 +819,6 @@ class _DashboardSummaryRow extends StatelessWidget {
         final isLoading = snapshot.connectionState == ConnectionState.waiting;
         final summary = snapshot.data;
 
-        // Sau khi load xong, nếu tất cả đều 0 thì ẩn
-        if (!isLoading && summary != null) {
-          final summaryAllZero = summary.isAllZero;
-          final isReallyAllZero =
-              summaryAllZero &&
-              (isHomeStaff ? pendingAppointmentsCount == 0 : true);
-          if (isReallyAllZero) {
-            return const SizedBox.shrink();
-          }
-        }
 
         if (isHomeStaff) {
           return Row(

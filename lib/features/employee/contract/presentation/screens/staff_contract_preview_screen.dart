@@ -30,30 +30,28 @@ final Map<String, Map<String, String>> _htmlStyleMap = {
     'color': '#1a1a1a',
   },
   'p': {
-    'margin-top': '8px',
-    'margin-bottom': '8px',
-    'line-height': '1.6',
-    'text-align': 'justify',
+    'margin-top': '4px',
+    'margin-bottom': '4px',
+    'line-height': '1.5',
   },
   'table': {
     'width': '100%',
     'min-width': '100%',
     'border-collapse': 'collapse',
-    'margin-top': '16px',
-    'margin-bottom': '16px',
+    'margin-top': '12px',
+    'margin-bottom': '12px',
     'background-color': '#ffffff',
     'table-layout': 'fixed',
-    'display': 'table',
   },
   'th': {
-    'padding': '10px 8px',
+    'padding': '8px 6px',
     'border': '1px solid #d1d5db',
     'background-color': '#f3f4f6',
     'font-weight': '600',
     'text-align': 'left',
   },
   'td': {
-    'padding': '10px 8px',
+    'padding': '8px 6px',
     'border': '1px solid #e5e7eb',
     'vertical-align': 'top',
   },
@@ -91,7 +89,7 @@ class _StaffContractPreviewScreenState extends State<StaffContractPreviewScreen>
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppAppBar(
-        title: 'Xem trước hợp đồng',
+        title: 'Hợp đồng',
         centerTitle: true,
         actions: [
           IconButton(onPressed: _refresh, icon: const Icon(Icons.refresh_rounded)),
@@ -196,26 +194,55 @@ class _ContractContentView extends StatelessWidget {
         textStyle: AppTextStyles.arimo(fontSize: 14 * scale, color: AppColors.textPrimary, height: 1.5),
         customStylesBuilder: (element) {
           final tag = element.localName?.toLowerCase();
-          final styles = _htmlStyleMap[tag];
-          if (styles != null) return styles;
+          final text = element.text.toUpperCase();
           
+          // Detect signature text in ANY tag to force centering and disable justify
+          // We use a permissive regex to catch variations in spacing/&nbsp;
+          if (RegExp(r'ĐẠI\s*DIỆN\s*BÊN|KÝ,\s*GHI\s*RÕ\s*HỌ\s*TÊN').hasMatch(text)) {
+            return {
+              'text-align': 'center', 
+              'width': '100%',
+              'display': 'block',
+              'margin': '4px 0',
+              'font-weight': text.contains('ĐẠI DIỆN') ? 'bold' : 'normal',
+              'font-style': text.contains('KÝ, GHI') ? 'italic' : 'normal',
+            };
+          }
+
+          // Force signature cells to center
+          if (tag == 'td' && element.parent?.localName == 'tr') {
+            final table = element.parent?.parent?.parent; // td -> tr -> tbody/thead -> table
+            if (table?.localName == 'table' && table?.className.contains('no-border') == true) {
+              return {'text-align': 'center', 'border': 'none !important', 'padding': '0'};
+            }
+          }
+
+          final styles = _htmlStyleMap[tag];
+          Map<String, String> mergedStyles = styles != null ? Map.from(styles) : {};
+          
+          if (tag == 'p' || tag == 'div') {
+            // Apply justification to normal paragraphs only if NOT a signature
+            mergedStyles['text-align'] = 'justify';
+          }
+
           if (tag == 'table') {
             return {
               'width': '100%',
               'min-width': '100%',
               'table-layout': 'fixed',
-              'display': 'table',
-              'margin-left': '0',
-              'margin-right': '0',
+              'border-collapse': 'collapse',
+              'margin-bottom': '16px',
             };
           }
-          // Force labels to have consistent width across all tables (approx 35%)
+
+          // Label columns in data tables
           if (tag == 'td' && element.parent?.localName == 'tr' && element == element.parent?.children.first) {
              if (!element.className.contains('no-border')) {
-               return {'width': '35%', 'font-weight': '600', 'background-color': '#f9fafb'};
+               return {'width': '35%', 'font-weight': '600', 'background-color': '#f9fafb', 'border': '1px solid #e5e7eb'};
              }
           }
-          return null;
+          
+          return mergedStyles.isEmpty ? null : mergedStyles;
         },
       ),
     );
@@ -224,59 +251,73 @@ class _ContractContentView extends StatelessWidget {
   String _processHtml(String html) {
     String processed = html;
 
-    // 1. Force all tables to be 100% width by injecting style directly into the tag
-    // This overrides any backend-defined width attributes
+    // 1. Clean up potential extra whitespace or invisible characters
+    processed = processed.replaceAll(RegExp(r'[\u200B-\u200D\uFEFF]'), '');
+
+    // 2. Force all tables to be 100% width and standardized
     processed = processed.replaceAll(
       '<table',
-      '<table style="width: 100% !important; min-width: 100% !important; table-layout: fixed; border-collapse: collapse; margin-bottom: 16px;" width="100%"',
+      '<table style="width: 100% !important; border-collapse: collapse; margin-bottom: 16px;" width="100%"',
     );
 
-    // 2. Standardize column widths for all data tables (35% for labels, 65% for values)
-    // We target the first <td> in each <tr> that doesn't belong to a 'no-border' table
+    // 3. Process data table rows for consistent label/value look
+    // This targets the first <td> in standard tables
     processed = processed.replaceAllMapped(
       RegExp(r'<tr[^>]*>\s*<td([^>]*)>(.*?)</td>', dotAll: true),
       (match) {
         final attrs = match.group(1) ?? '';
         final content = match.group(2) ?? '';
-        // If it's the first column of a standard table, force its width
-        if (!attrs.contains('no-border') && !content.contains('ĐẠI DIỆN')) {
-          return '<tr style="width: 100%;"><td style="width: 35%; font-weight: 600; background-color: #f9fafb; border: 1px solid #e5e7eb; padding: 10px 8px;" $attrs>$content</td>';
+        
+        // Skip signature markers or rows that already have specific styling
+        if (!attrs.contains('no-border') && 
+            !content.contains('ĐẠI DIỆN') && 
+            !content.contains('Ký, ghi rõ họ tên')) {
+          return '<tr style="width: 100%;"><td style="width: 35%; font-weight: 600; background-color: #f9fafb; border: 1px solid #e5e7eb; padding: 8px 6px;" $attrs>$content</td>';
         }
         return match.group(0)!;
       },
     );
 
-    // 3. Process the signature section for perfect balance
-    if (processed.contains('ĐẠI DIỆN BÊN A') || processed.contains('ĐẠI DIỆN BÊN B')) {
+    // 4. Robust Signature Section Replacement
+    // Using a extremely permissive approach to find the signature area
+    if (processed.contains('ĐẠI DIỆN BÊN') || processed.contains('ĐẠI\u00A0DIỆN\u00A0BÊN')) {
       try {
-        int startIdx = processed.indexOf('ĐẠI DIỆN BÊN A');
-        int lastSignIdx = processed.lastIndexOf('(Ký, ghi rõ họ tên)');
+        // Find the start and end of the signature block
+        final startMatch = RegExp(r'ĐẠI[\s\u00A0]*DIỆN[\s\u00A0]*BÊN[\s\u00A0]*A', caseSensitive: false).firstMatch(processed);
+        final endMatch = RegExp(r'\(Ký,[\s\u00A0]*ghi[\s\u00A0]*rõ[\s\u00A0]*họ[\s\u00A0]*tên\)', caseSensitive: false).allMatches(processed);
         
-        if (startIdx != -1 && lastSignIdx != -1 && lastSignIdx > startIdx) {
-          int endIdx = processed.indexOf('</', lastSignIdx);
-          if (endIdx != -1) {
-            endIdx = processed.indexOf('>', endIdx) + 1;
-          } else {
-            endIdx = lastSignIdx + '(Ký, ghi rõ họ tên)'.length;
-          }
+        if (startMatch != null && endMatch.isNotEmpty) {
+          int startIdx = startMatch.start;
+          int lastSignIdx = endMatch.last.end;
+          
+          if (lastSignIdx > startIdx) {
+            // Find enclosing block tags to replace the whole mess
+            int openTagIdx = processed.lastIndexOf('<p', startIdx);
+            if (openTagIdx == -1 || (startIdx - openTagIdx) > 100) openTagIdx = startIdx;
+            
+            int closeTagIdx = processed.indexOf('</p>', lastSignIdx);
+            if (closeTagIdx == -1 || (closeTagIdx - lastSignIdx) > 100) closeTagIdx = lastSignIdx;
+            else closeTagIdx += 4;
 
-          final originalBlock = processed.substring(startIdx, endIdx);
-          const signInstruction = '(Ký, ghi rõ họ tên)';
-          const tableHtml = '''
-          <table class="no-border" style="width:100% !important; margin-top:40px; margin-bottom:40px; table-layout: fixed; border: none !important;">
-            <tr style="border: none !important;">
-              <td style="width:50%; border:none !important; text-align:center; vertical-align:top; padding: 0;">
-                <p style="font-weight:bold; margin-bottom:4px;">ĐẠI DIỆN BÊN A</p>
-                <p style="font-style:italic; font-size:12px; color:#666;">$signInstruction</p>
-              </td>
-              <td style="width:50%; border:none !important; text-align:center; vertical-align:top; padding: 0;">
-                <p style="font-weight:bold; margin-bottom:4px;">ĐẠI DIỆN BÊN B</p>
-                <p style="font-style:italic; font-size:12px; color:#666;">$signInstruction</p>
-              </td>
-            </tr>
-          </table>
-          ''';
-          processed = processed.replaceFirst(originalBlock, tableHtml);
+            final originalBlock = processed.substring(openTagIdx, closeTagIdx);
+            const signInstruction = '(Ký, ghi rõ họ tên)';
+            const tableHtml = '''
+            <br/>
+            <table class="no-border" style="width:100% !important; margin-top:32px; margin-bottom:60px; table-layout: fixed; border: none !important;">
+              <tr style="border: none !important;">
+                <td style="width:50%; border:none !important; text-align:center !important; vertical-align:top; padding: 0;">
+                  <p style="font-weight:bold; margin-bottom:4px; text-align:center !important;">ĐẠI DIỆN BÊN A</p>
+                  <p style="font-style:italic; font-size:12px; color:#666; text-align:center !important;">$signInstruction</p>
+                </td>
+                <td style="width:50%; border:none !important; text-align:center !important; vertical-align:top; padding: 0;">
+                  <p style="font-weight:bold; margin-bottom:4px; text-align:center !important;">ĐẠI DIỆN BÊN B</p>
+                  <p style="font-style:italic; font-size:12px; color:#666; text-align:center !important;">$signInstruction</p>
+                </td>
+              </tr>
+            </table>
+            ''';
+            processed = processed.replaceFirst(originalBlock, tableHtml);
+          }
         }
       } catch (e) {
         debugPrint('Error processing signature HTML: $e');

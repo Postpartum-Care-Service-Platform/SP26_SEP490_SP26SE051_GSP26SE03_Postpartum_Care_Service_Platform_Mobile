@@ -585,7 +585,7 @@ class _EmployeeAssignedFamiliesScreenState
   }
 
   Widget _buildDateRangeIndicator(double scale) {
-    final df = DateFormat('dd/MM/yyyy');
+    final df = DateFormat('dd/MM/yyyy', 'vi');
     return Container(
       padding: EdgeInsets.all(12 * scale),
       decoration: BoxDecoration(
@@ -750,7 +750,7 @@ class _FocusFamilyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
     final now = DateTime.now();
-    final todayStr = DateFormat('dd/MM').format(now);
+    final todayStr = DateFormat('dd/MM', 'vi').format(now);
 
     final todayActivities = customer.activities
         .where(
@@ -910,7 +910,7 @@ class _FocusFamilyCard extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          DateFormat('HH:mm').format(displayActivity.startAt!),
+                          DateFormat('HH:mm', 'vi').format(displayActivity.startAt!),
                           style: AppTextStyles.arimo(
                             fontSize: 14 * scale,
                             fontWeight: FontWeight.w800,
@@ -1226,7 +1226,7 @@ class _ActivitiesVerticalList extends StatelessWidget {
                       borderRadius: BorderRadius.circular(4 * scale),
                     ),
                     child: Text(
-                      DateFormat('EEEE, dd/MM').format(day.date),
+                      DateFormat('EEEE, dd/MM', 'vi').format(day.date),
                       style: AppTextStyles.arimo(
                         fontSize: 12 * scale,
                         fontWeight: FontWeight.bold,
@@ -1275,7 +1275,7 @@ class _ActivityItem extends StatelessWidget {
     final statusColor = _getStatusColor(activity.status);
     final isDone = activity.status.toLowerCase().contains('done');
     final startTime = activity.startAt != null
-        ? DateFormat('HH:mm').format(activity.startAt!)
+        ? DateFormat('HH:mm', 'vi').format(activity.startAt!)
         : '--:--';
 
     final isScheduled = activity.status.toLowerCase() == 'scheduled';
@@ -1736,7 +1736,7 @@ class _ActivityItem extends StatelessWidget {
                         ),
                         SizedBox(width: 8 * scale),
                         Text(
-                          'Xác nhận lúc: ${DateFormat('HH:mm - dd/MM/yyyy').format(activity.checkedAt!.toLocal())}',
+                          'Xác nhận lúc: ${DateFormat('HH:mm - dd/MM/yyyy', 'vi').format(activity.checkedAt!.toLocal())}',
                           style: AppTextStyles.arimo(
                             fontSize: 14 * scale,
                             color: AppColors.textPrimary,
@@ -1895,7 +1895,7 @@ class _ActivityItem extends StatelessWidget {
 
   String _formatTimeRange(DateTime? start, DateTime? end) {
     if (start == null || end == null) return '--:--';
-    final fmt = DateFormat('HH:mm');
+    final fmt = DateFormat('HH:mm', 'vi');
     return '${fmt.format(start)} - ${fmt.format(end)}';
   }
 

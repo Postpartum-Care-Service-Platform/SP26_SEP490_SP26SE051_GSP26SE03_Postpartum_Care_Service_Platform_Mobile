@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../utils/app_text_styles.dart';
@@ -45,6 +46,8 @@ class AvatarWidget extends StatelessWidget {
     final scaledSize = size * scale;
     final scaledBorderWidth = borderWidth * scale;
 
+    final bool isLocalFile = imageUrl != null && imageUrl!.startsWith('file:///');
+
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -72,29 +75,38 @@ class AvatarWidget extends StatelessWidget {
           ),
           child: ClipOval(
             child: imageUrl != null && imageUrl!.isNotEmpty
-                ? CachedNetworkImage(
-                    imageUrl: CloudinaryUtils.getOptimizedUrl(
-                      imageUrl!,
-                      width: scaledSize.toInt(),
-                      height: scaledSize.toInt(),
-                    ),
-                    width: scaledSize,
-                    height: scaledSize,
-                    memCacheWidth: scaledSize.toInt() * 2, // 2x for high resolution screens
-                    memCacheHeight: scaledSize.toInt() * 2,
-                    fit: BoxFit.cover,
-                    errorWidget: (context, url, error) {
-                      return _buildInitialsWidget(displayName, scaledSize, scale);
-                    },
-                    placeholder: (context, url) {
-                      return Center(
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.primary.withValues(alpha: 0.5),
+                ? (isLocalFile
+                    ? Image.file(
+                        File(Uri.parse(imageUrl!).toFilePath()),
+                        width: scaledSize,
+                        height: scaledSize,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            _buildInitialsWidget(displayName, scaledSize, scale),
+                      )
+                    : CachedNetworkImage(
+                        imageUrl: CloudinaryUtils.getOptimizedUrl(
+                          imageUrl!,
+                          width: scaledSize.toInt(),
+                          height: scaledSize.toInt(),
                         ),
-                      );
-                    },
-                  )
+                        width: scaledSize,
+                        height: scaledSize,
+                        memCacheWidth: scaledSize.toInt() * 2,
+                        memCacheHeight: scaledSize.toInt() * 2,
+                        fit: BoxFit.cover,
+                        errorWidget: (context, url, error) {
+                          return _buildInitialsWidget(displayName, scaledSize, scale);
+                        },
+                        placeholder: (context, url) {
+                          return Center(
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.primary.withValues(alpha: 0.5),
+                            ),
+                          );
+                        },
+                      ))
                 : _buildInitialsWidget(displayName, scaledSize, scale),
           ),
         ),
