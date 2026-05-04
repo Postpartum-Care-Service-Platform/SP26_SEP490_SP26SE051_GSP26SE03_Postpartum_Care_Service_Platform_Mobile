@@ -1188,14 +1188,12 @@ class _ActionIconButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final Color color;
-  final bool isOutlined;
 
   const _ActionIconButton({
     required this.onTap,
     required this.icon,
     required this.label,
     required this.color,
-    this.isOutlined = false,
   });
 
   @override
@@ -1208,21 +1206,20 @@ class _ActionIconButton extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: isOutlined ? Colors.transparent : color,
+            color: color,
             borderRadius: BorderRadius.circular(12),
-            border: isOutlined ? Border.all(color: color, width: 1.5) : null,
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 16, color: isOutlined ? color : AppColors.white),
+              Icon(icon, size: 16, color: AppColors.white),
               const SizedBox(width: 6),
               Text(
                 label,
                 style: AppTextStyles.arimo(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: isOutlined ? color : AppColors.white,
+                  color: AppColors.white,
                 ),
               ),
             ],

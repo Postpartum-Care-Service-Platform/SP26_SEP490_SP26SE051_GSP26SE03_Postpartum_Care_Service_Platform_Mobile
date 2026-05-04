@@ -25,10 +25,12 @@ class FeedbackCard extends StatelessWidget {
       final info = feedback.familyScheduleInfo;
       if (info != null) {
         final timeParts = <String>[];
-        if (info.workDate != null && info.workDate!.isNotEmpty)
+        if (info.workDate != null && info.workDate!.isNotEmpty) {
           timeParts.add(info.workDate!);
-        if (info.startTime != null && info.endTime != null)
+        }
+        if (info.startTime != null && info.endTime != null) {
           timeParts.add('${info.startTime} - ${info.endTime}');
+        }
         final timeStr = timeParts.join(' ');
         targetText =
             '${info.activity ?? ""}${timeStr.isNotEmpty ? ' ($timeStr)' : ''}';
@@ -55,10 +57,12 @@ class FeedbackCard extends StatelessWidget {
       final info = feedback.amenityTicketInfo;
       if (info != null) {
         final timeParts = <String>[];
-        if (info.date != null && info.date!.isNotEmpty)
+        if (info.date != null && info.date!.isNotEmpty) {
           timeParts.add(info.date!);
-        if (info.startTime != null && info.endTime != null)
+        }
+        if (info.startTime != null && info.endTime != null) {
           timeParts.add('${info.startTime} - ${info.endTime}');
+        }
         final timeStr = timeParts.join(' ');
         targetText =
             '${info.amenityServiceName ?? ""}${timeStr.isNotEmpty ? ' ($timeStr)' : ''}';

@@ -511,7 +511,6 @@ class _HeaderCard extends StatelessWidget {
         String staffName = 'Nhân viên';
         String? avatarUrl;
         int? experience;
-        int? level;
         if (authState is AuthCurrentAccountLoaded) {
           final account = authState.account;
           staffName = account.username.isNotEmpty
@@ -519,7 +518,6 @@ class _HeaderCard extends StatelessWidget {
               : account.email.split('@').first;
           avatarUrl = account.avatarUrl;
           experience = account.experience;
-          level = account.level;
         }
 
         return Container(

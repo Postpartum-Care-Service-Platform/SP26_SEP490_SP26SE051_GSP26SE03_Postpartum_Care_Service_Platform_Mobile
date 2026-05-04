@@ -57,8 +57,9 @@ class _BookingStep2FamilyProfileSelectionState
   }
 
   String _getGenderLabel(String? gender) {
-    if (gender == null || gender.trim().isEmpty)
+    if (gender == null || gender.trim().isEmpty) {
       return AppStrings.bookingNotUpdated;
+    }
 
     final normalized = gender.trim().toLowerCase();
     if (normalized == 'male' || normalized == 'nam') return AppStrings.male;

@@ -73,3 +73,53 @@ enum ServiceLocationType {
     }
   }
 }
+
+/// Meal slot types for menu management
+enum MealSlot {
+  snackMorning,
+  snackAfternoon,
+  snackNight,
+  morning,
+  lunch,
+  dinner,
+  unknown;
+
+  /// Infers the meal slot from a given text (e.g., menu type name or record name)
+  static MealSlot fromText(String text) {
+    final lower = text.toLowerCase();
+    
+    // Check for snacks first as they are more specific
+    if (lower.contains('phụ')) {
+      if (lower.contains('sáng')) return MealSlot.snackMorning;
+      if (lower.contains('chiều')) return MealSlot.snackAfternoon;
+      if (lower.contains('tối')) return MealSlot.snackNight;
+    }
+    
+    // Main meals
+    if (lower.contains('sáng')) return MealSlot.morning;
+    if (lower.contains('trưa')) return MealSlot.lunch;
+    if (lower.contains('chiều') || lower.contains('tối')) return MealSlot.dinner;
+    
+    return MealSlot.unknown;
+  }
+
+  /// Returns the string representation used by the backend API
+  String toApiValue() {
+    switch (this) {
+      case MealSlot.snackMorning:
+        return 'snack_morning';
+      case MealSlot.snackAfternoon:
+        return 'snack_afternoon';
+      case MealSlot.snackNight:
+        return 'snack_night';
+      case MealSlot.morning:
+        return 'morning';
+      case MealSlot.lunch:
+        return 'lunch';
+      case MealSlot.dinner:
+        return 'dinner';
+      case MealSlot.unknown:
+        return 'unknown';
+    }
+  }
+}

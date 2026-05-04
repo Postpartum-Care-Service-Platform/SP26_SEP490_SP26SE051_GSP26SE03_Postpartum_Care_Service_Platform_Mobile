@@ -1021,12 +1021,7 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
     final totalController = TextEditingController(
       text: booking != null ? formatMoney(booking.totalPrice) : '',
     );
-    final discountController = TextEditingController(
-      text: booking != null ? formatMoney(booking.discountAmount) : '',
-    );
-    final finalController = TextEditingController(
-      text: booking != null ? formatMoney(booking.finalAmount) : '',
-    );
+
 
     DateTime? effectiveFrom = contract.effectiveFrom ?? booking?.startDate;
     DateTime? effectiveTo = contract.effectiveTo ?? booking?.endDate;
@@ -1043,8 +1038,6 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
     final originalFinalAmount = booking?.finalAmount;
 
     debugPrint('ContractScreen: Pre-filling with Name=$currentCustomerName, Phone=$currentCustomerPhone, BookingID=${booking?.id}');
-
-    bool finalAmountManualOverride = false;
 
     await showModalBottomSheet<void>(
       context: context,
@@ -1118,34 +1111,6 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
                 final raw = text.replaceAll('.', '').replaceAll(',', '').trim();
                 return double.tryParse(raw);
               }
-
-              String formatMoney(double value) {
-                final rounded = value.round();
-                final text = rounded.toString();
-                final buffer = StringBuffer();
-                for (int i = 0; i < text.length; i++) {
-                  final reverseIndex = text.length - i;
-                  buffer.write(text[i]);
-                  if (reverseIndex > 1 && reverseIndex % 3 == 1) {
-                    buffer.write('.');
-                  }
-                }
-                return buffer.toString();
-              }
-
-              void recomputeFinalAmount() {
-                if (finalAmountManualOverride) return;
-                final total = parseMoney(totalController.text);
-                final discount = parseMoney(discountController.text) ?? 0;
-                if (total == null) {
-                  finalController.clear();
-                  return;
-                }
-                final amount =
-                    (total - discount).clamp(0, double.infinity).toDouble();
-                finalController.text = formatMoney(amount);
-              }
-
               Widget sectionTitle(String text, IconData icon) {
                 return Padding(
                   padding: EdgeInsets.only(bottom: 12 * scale, top: 16 * scale),

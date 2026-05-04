@@ -5,6 +5,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/app_enums.dart';
 import '../../../../core/utils/app_formatters.dart';
 import '../../../../core/utils/app_responsive.dart';
 import '../../../../core/utils/app_text_styles.dart';
@@ -571,20 +572,6 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
               final saveRequests = <SaveMenuRecordRequest>[];
               final requestDates = <DateTime>{};
 
-              String inferMealSlot(String text) {
-                final lower = text.toLowerCase();
-                if (lower.contains('phụ') && lower.contains('sáng'))
-                  return 'snack_morning';
-                if (lower.contains('phụ') && lower.contains('chiều'))
-                  return 'snack_afternoon';
-                if (lower.contains('phụ') && lower.contains('tối'))
-                  return 'snack_night';
-                if (lower.contains('sáng')) return 'morning';
-                if (lower.contains('trưa')) return 'lunch';
-                if (lower.contains('chiều') || lower.contains('tối'))
-                  return 'dinner';
-                return 'unknown';
-              }
 
               String dateKey(DateTime date) {
                 final normalized = _normalizeDate(date);
@@ -616,9 +603,9 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
                   final existingMenu = _getMenuFromState(state, record.menuId);
                   if (existingMenu == null) throw Exception('Menu not found');
                   final menuTypeName = inferMenuTypeNameByMenu(existingMenu);
-                  mealSlot = inferMealSlot(menuTypeName);
+                  mealSlot = MealSlot.fromText(menuTypeName).toApiValue();
                 } catch (_) {
-                  mealSlot = inferMealSlot(record.name);
+                  mealSlot = MealSlot.fromText(record.name).toApiValue();
                 }
 
                 if (mealSlot == 'unknown') continue;
@@ -639,9 +626,9 @@ class _MyMenuScreenState extends State<MyMenuScreen> {
                 for (final menu in daySelections.values) {
                   requestDates.add(normalizedDate);
 
-                  final selectedMealSlot = inferMealSlot(
+                  final selectedMealSlot = MealSlot.fromText(
                     inferMenuTypeNameByMenu(menu),
-                  );
+                  ).toApiValue();
                   final key = '${dateKey(normalizedDate)}|$selectedMealSlot';
                   final existingRecord = selectedMealSlot == 'unknown'
                       ? null

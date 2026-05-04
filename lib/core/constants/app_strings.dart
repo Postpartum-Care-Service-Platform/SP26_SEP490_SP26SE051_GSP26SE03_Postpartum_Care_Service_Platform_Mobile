@@ -830,6 +830,15 @@ class AppStrings {
   static const String menuSelectAll = 'Chọn tất cả';
   static const String menuClearSelection = 'Bỏ chọn';
 
+  // Meal Slots
+  static const String mealMorning = 'Bữa sáng';
+  static const String mealLunch = 'Bữa trưa';
+  static const String mealDinner = 'Bữa tối';
+  static const String mealSnackMorning = 'Bữa phụ sáng';
+  static const String mealSnackAfternoon = 'Bữa phụ chiều';
+  static const String mealSnackNight = 'Bữa phụ tối';
+  static const String mealUnknown = 'Chưa xác định';
+
   // Months
   static const String month1 = 'Tháng 1';
   static const String month2 = 'Tháng 2';

@@ -123,7 +123,6 @@ class _CreateFeedbackSheetState extends State<CreateFeedbackSheet> {
   FamilyScheduleEntity? _selectedSchedule;
   int? _amenityTicketId;
   String? _selectedStaffId;
-  StaffEntity? _selectedStaff;
   DateTime? _selectedScheduleDate;
   late final bool _hasFamilyScheduleBloc;
   late final bool _hasAmenityBloc;
@@ -668,7 +667,6 @@ class _CreateFeedbackSheetState extends State<CreateFeedbackSheet> {
                                   _selectedSchedule = null;
                                   _amenityTicketId = null;
                                   _selectedStaffId = null;
-                                  _selectedStaff = null;
                                 }),
                                 child: Radio<int>(
                                   value: type.id,
@@ -789,8 +787,9 @@ class _CreateFeedbackSheetState extends State<CreateFeedbackSheet> {
 
                         if (scheduleHour < now.hour) return true;
                         if (scheduleHour == now.hour &&
-                            scheduleMinute <= now.minute)
+                            scheduleMinute <= now.minute) {
                           return true;
+                        }
                         return false;
                       } catch (_) {
                         return true;
@@ -1066,7 +1065,6 @@ class _CreateFeedbackSheetState extends State<CreateFeedbackSheet> {
                           onTap: () {
                             setState(() {
                               _selectedStaffId = staff.id;
-                              _selectedStaff = staff;
                             });
                           },
                           borderRadius: BorderRadius.circular(12 * scale),

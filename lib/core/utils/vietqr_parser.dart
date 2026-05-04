@@ -20,7 +20,9 @@ class VietQrParser {
           result[tag] = value;
         }
       }
-    } catch (e) {}
+    } catch (e) {
+      // Silently fail if QR parsing fails
+    }
     return result;
   }
 
@@ -38,7 +40,9 @@ class VietQrParser {
         index += length;
         result[tag] = value;
       }
-    } catch (e) {}
+    } catch (e) {
+      // Silently fail if nested parsing fails
+    }
     return result;
   }
 

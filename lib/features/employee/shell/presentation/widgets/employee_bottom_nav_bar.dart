@@ -27,12 +27,10 @@ class EmployeeBottomNavBar extends StatelessWidget {
     String? memberType;
     try {
       final authState = context.watch<AuthBloc>().state;
-      if (authState is AuthCurrentAccountLoaded) {
-        memberType = (authState.account as dynamic).memberType;
-        if (memberType == null) {
-          memberType = (authState.account as dynamic).ownerProfile?.memberTypeName;
+        if (authState is AuthCurrentAccountLoaded) {
+          memberType = (authState.account as dynamic).memberType;
+          memberType ??= (authState.account as dynamic).ownerProfile?.memberTypeName;
         }
-      }
     } catch (_) {}
 
     final isHomeStaff =

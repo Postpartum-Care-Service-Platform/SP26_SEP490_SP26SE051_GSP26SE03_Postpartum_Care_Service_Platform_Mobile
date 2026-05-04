@@ -71,14 +71,14 @@ class _StaffFeedbackScreenState extends State<StaffFeedbackScreen> {
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    child: const Text('Thử lại'),
+                    onPressed: () {
+                      context.read<StaffFeedbackBloc>().add(FetchStaffFeedbacksEvent());
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: AppColors.white,
                     ),
-                    onPressed: () {
-                      context.read<StaffFeedbackBloc>().add(FetchStaffFeedbacksEvent());
-                    },
+                    child: const Text('Thử lại'),
                   )
                 ],
               ),

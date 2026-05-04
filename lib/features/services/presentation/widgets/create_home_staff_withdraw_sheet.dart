@@ -22,10 +22,7 @@ import 'package:intl/intl.dart';
 class CreateHomeStaffWithdrawSheet extends StatefulWidget {
   final BuildContext parentContext;
 
-  const CreateHomeStaffWithdrawSheet({
-    super.key,
-    required this.parentContext,
-  });
+  const CreateHomeStaffWithdrawSheet({super.key, required this.parentContext});
 
   static Future<void> show(BuildContext context) {
     return showModalBottomSheet(
@@ -34,18 +31,14 @@ class CreateHomeStaffWithdrawSheet extends StatefulWidget {
       backgroundColor: Colors.transparent,
       builder: (_) => MultiBlocProvider(
         providers: [
-          BlocProvider(
-            create: (_) => InjectionContainer.refundRequestBloc,
-          ),
+          BlocProvider(create: (_) => InjectionContainer.refundRequestBloc),
           BlocProvider(
             create: (_) => WalletCubit(
               remoteDataSource: InjectionContainer.walletRemoteDataSource,
             )..loadWallet(),
           ),
         ],
-        child: CreateHomeStaffWithdrawSheet(
-          parentContext: context,
-        ),
+        child: CreateHomeStaffWithdrawSheet(parentContext: context),
       ),
     );
   }
@@ -55,7 +48,8 @@ class CreateHomeStaffWithdrawSheet extends StatefulWidget {
       _CreateHomeStaffWithdrawSheetState();
 }
 
-class _CreateHomeStaffWithdrawSheetState extends State<CreateHomeStaffWithdrawSheet> {
+class _CreateHomeStaffWithdrawSheetState
+    extends State<CreateHomeStaffWithdrawSheet> {
   final _amountController = TextEditingController();
   final _bankNameController = TextEditingController();
   final _accountNumberController = TextEditingController();
@@ -109,7 +103,9 @@ class _CreateHomeStaffWithdrawSheetState extends State<CreateHomeStaffWithdrawSh
       return;
     }
 
-    final amountText = _amountController.text.replaceAll('.', '').replaceAll(',', '');
+    final amountText = _amountController.text
+        .replaceAll('.', '')
+        .replaceAll(',', '');
     final amount = int.tryParse(amountText) ?? 0;
 
     if (amount <= 0) {
@@ -120,7 +116,8 @@ class _CreateHomeStaffWithdrawSheetState extends State<CreateHomeStaffWithdrawSh
     if (amount > _walletBalance) {
       AppToast.showWarning(
         context,
-        message: 'Số tiền không được vượt quá số dư (${NumberFormat.currency(locale: 'vi_VN', symbol: 'đ').format(_walletBalance)})',
+        message:
+            'Số tiền không được vượt quá số dư (${NumberFormat.currency(locale: 'vi_VN', symbol: 'đ').format(_walletBalance)})',
       );
       return;
     }
@@ -128,7 +125,8 @@ class _CreateHomeStaffWithdrawSheetState extends State<CreateHomeStaffWithdrawSh
     final confirmed = await AppWidgets.showConfirmDialog(
       context,
       title: 'Xác nhận rút tiền',
-      message: 'Hệ thống sẽ xử lý yêu cầu rút tiền của bạn. Bạn có chắc chắn muốn tiếp tục?',
+      message:
+          'Hệ thống sẽ xử lý yêu cầu rút tiền của bạn. Bạn có chắc chắn muốn tiếp tục?',
       confirmText: 'Xác nhận',
       cancelText: AppStrings.cancel,
       confirmColor: AppColors.primary,
@@ -140,14 +138,14 @@ class _CreateHomeStaffWithdrawSheetState extends State<CreateHomeStaffWithdrawSh
     AppLoading.show(widget.parentContext, message: AppStrings.processing);
 
     context.read<RefundRequestBloc>().add(
-          HomeStaffWithdrawRequested(
-            requestedAmount: amount,
-            bankName: _bankNameController.text.trim(),
-            accountNumber: _accountNumberController.text.trim(),
-            accountHolder: _accountHolderController.text.trim(),
-            reason: _reasonController.text.trim(),
-          ),
-        );
+      HomeStaffWithdrawRequested(
+        requestedAmount: amount,
+        bankName: _bankNameController.text.trim(),
+        accountNumber: _accountNumberController.text.trim(),
+        accountHolder: _accountHolderController.text.trim(),
+        reason: _reasonController.text.trim(),
+      ),
+    );
   }
 
   @override
@@ -162,7 +160,10 @@ class _CreateHomeStaffWithdrawSheetState extends State<CreateHomeStaffWithdrawSh
             if (state is RefundRequestCreated) {
               AppLoading.hide(widget.parentContext);
               Navigator.of(context).pop();
-              AppToast.showSuccess(widget.parentContext, message: 'Gửi yêu cầu rút tiền thành công');
+              AppToast.showSuccess(
+                widget.parentContext,
+                message: 'Gửi yêu cầu rút tiền thành công',
+              );
               AppRouter.push(widget.parentContext, AppRoutes.refundHistory);
             } else if (state is RefundRequestError) {
               AppLoading.hide(widget.parentContext);
@@ -173,7 +174,7 @@ class _CreateHomeStaffWithdrawSheetState extends State<CreateHomeStaffWithdrawSh
         BlocListener<WalletCubit, WalletState>(
           listener: (context, state) {
             if (state is WalletLoaded) {
-              setState(() => _walletBalance = state.wallet.balance ?? 0);
+              setState(() => _walletBalance = state.wallet.balance);
             }
           },
         ),
@@ -197,7 +198,12 @@ class _CreateHomeStaffWithdrawSheetState extends State<CreateHomeStaffWithdrawSh
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-                padding: EdgeInsets.fromLTRB(24 * scale, 12 * scale, 24 * scale, 24 * scale + bottomPadding),
+                padding: EdgeInsets.fromLTRB(
+                  24 * scale,
+                  12 * scale,
+                  24 * scale,
+                  24 * scale + bottomPadding,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -241,7 +247,8 @@ class _CreateHomeStaffWithdrawSheetState extends State<CreateHomeStaffWithdrawSh
                     _buildQuickReasons(scale),
                     SizedBox(height: 12 * scale),
                     _buildTextAreaField(
-                      placeholder: 'Nhập lý do rút tiền (ví dụ: Rút lương, chi phí sinh hoạt...)',
+                      placeholder:
+                          'Nhập lý do rút tiền (ví dụ: Rút lương, chi phí sinh hoạt...)',
                       controller: _reasonController,
                       scale: scale,
                     ),
@@ -271,7 +278,10 @@ class _CreateHomeStaffWithdrawSheetState extends State<CreateHomeStaffWithdrawSh
           ),
         ),
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 24 * scale, vertical: 16 * scale),
+          padding: EdgeInsets.symmetric(
+            horizontal: 24 * scale,
+            vertical: 16 * scale,
+          ),
           child: Row(
             children: [
               Container(
@@ -280,7 +290,11 @@ class _CreateHomeStaffWithdrawSheetState extends State<CreateHomeStaffWithdrawSh
                   color: AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(14 * scale),
                 ),
-                child: Icon(Icons.account_balance_wallet_rounded, color: AppColors.primary, size: 24 * scale),
+                child: Icon(
+                  Icons.account_balance_wallet_rounded,
+                  color: AppColors.primary,
+                  size: 24 * scale,
+                ),
               ),
               SizedBox(width: 16 * scale),
               Expanded(
@@ -327,10 +341,7 @@ class _CreateHomeStaffWithdrawSheetState extends State<CreateHomeStaffWithdrawSh
       padding: EdgeInsets.all(20 * scale),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            AppColors.primary,
-            AppColors.primary.withValues(alpha: 0.8),
-          ],
+          colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -348,7 +359,11 @@ class _CreateHomeStaffWithdrawSheetState extends State<CreateHomeStaffWithdrawSh
         children: [
           Row(
             children: [
-              Icon(Icons.shield_moon_outlined, color: Colors.white.withValues(alpha: 0.8), size: 16 * scale),
+              Icon(
+                Icons.shield_moon_outlined,
+                color: Colors.white.withValues(alpha: 0.8),
+                size: 16 * scale,
+              ),
               SizedBox(width: 8 * scale),
               Text(
                 'Số dư khả dụng',
@@ -367,7 +382,10 @@ class _CreateHomeStaffWithdrawSheetState extends State<CreateHomeStaffWithdrawSh
                 return const CircularProgressIndicator(color: Colors.white);
               }
               return Text(
-                NumberFormat.currency(locale: 'vi_VN', symbol: 'đ').format(_walletBalance),
+                NumberFormat.currency(
+                  locale: 'vi_VN',
+                  symbol: 'đ',
+                ).format(_walletBalance),
                 style: AppTextStyles.arimo(
                   fontSize: 28 * scale,
                   fontWeight: FontWeight.w800,
@@ -432,13 +450,27 @@ class _CreateHomeStaffWithdrawSheetState extends State<CreateHomeStaffWithdrawSh
             keyboardType: keyboardType,
             textCapitalization: textCapitalization,
             onChanged: (_) => setState(() {}),
-            style: AppTextStyles.arimo(fontSize: 14 * scale, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+            style: AppTextStyles.arimo(
+              fontSize: 14 * scale,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
             decoration: InputDecoration(
               hintText: placeholder,
-              hintStyle: AppTextStyles.arimo(fontSize: 14 * scale, color: AppColors.third),
-              prefixIcon: Icon(icon, color: AppColors.primary, size: 20 * scale),
+              hintStyle: AppTextStyles.arimo(
+                fontSize: 14 * scale,
+                color: AppColors.third,
+              ),
+              prefixIcon: Icon(
+                icon,
+                color: AppColors.primary,
+                size: 20 * scale,
+              ),
               border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 16 * scale),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 16 * scale,
+                vertical: 16 * scale,
+              ),
             ),
           ),
         ),
@@ -463,7 +495,10 @@ class _CreateHomeStaffWithdrawSheetState extends State<CreateHomeStaffWithdrawSh
           onTap: _showBankPicker,
           borderRadius: BorderRadius.circular(16 * scale),
           child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 16 * scale, vertical: 16 * scale),
+            padding: EdgeInsets.symmetric(
+              horizontal: 16 * scale,
+              vertical: 16 * scale,
+            ),
             decoration: BoxDecoration(
               color: AppColors.white,
               borderRadius: BorderRadius.circular(16 * scale),
@@ -471,19 +506,33 @@ class _CreateHomeStaffWithdrawSheetState extends State<CreateHomeStaffWithdrawSh
             ),
             child: Row(
               children: [
-                Icon(Icons.account_balance_rounded, color: AppColors.primary, size: 20 * scale),
+                Icon(
+                  Icons.account_balance_rounded,
+                  color: AppColors.primary,
+                  size: 20 * scale,
+                ),
                 SizedBox(width: 12 * scale),
                 Expanded(
                   child: Text(
-                    _bankNameController.text.isNotEmpty ? _bankNameController.text : 'Chọn ngân hàng...',
+                    _bankNameController.text.isNotEmpty
+                        ? _bankNameController.text
+                        : 'Chọn ngân hàng...',
                     style: AppTextStyles.arimo(
                       fontSize: 14 * scale,
-                      fontWeight: _bankNameController.text.isNotEmpty ? FontWeight.w600 : FontWeight.w400,
-                      color: _bankNameController.text.isNotEmpty ? AppColors.textPrimary : AppColors.third,
+                      fontWeight: _bankNameController.text.isNotEmpty
+                          ? FontWeight.w600
+                          : FontWeight.w400,
+                      color: _bankNameController.text.isNotEmpty
+                          ? AppColors.textPrimary
+                          : AppColors.third,
                     ),
                   ),
                 ),
-                Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.textSecondary, size: 24 * scale),
+                Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: AppColors.textSecondary,
+                  size: 24 * scale,
+                ),
               ],
             ),
           ),
@@ -508,10 +557,16 @@ class _CreateHomeStaffWithdrawSheetState extends State<CreateHomeStaffWithdrawSh
         maxLines: 4,
         minLines: 3,
         onChanged: (_) => setState(() {}),
-        style: AppTextStyles.arimo(fontSize: 14 * scale, color: AppColors.textPrimary),
+        style: AppTextStyles.arimo(
+          fontSize: 14 * scale,
+          color: AppColors.textPrimary,
+        ),
         decoration: InputDecoration(
           hintText: placeholder,
-          hintStyle: AppTextStyles.arimo(fontSize: 13 * scale, color: AppColors.third),
+          hintStyle: AppTextStyles.arimo(
+            fontSize: 13 * scale,
+            color: AppColors.third,
+          ),
           border: InputBorder.none,
           contentPadding: EdgeInsets.all(16 * scale),
         ),
@@ -541,9 +596,14 @@ class _CreateHomeStaffWithdrawSheetState extends State<CreateHomeStaffWithdrawSh
           },
           borderRadius: BorderRadius.circular(12 * scale),
           child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 14 * scale, vertical: 8 * scale),
+            padding: EdgeInsets.symmetric(
+              horizontal: 14 * scale,
+              vertical: 8 * scale,
+            ),
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : AppColors.background,
+              color: isSelected
+                  ? AppColors.primary.withValues(alpha: 0.1)
+                  : AppColors.background,
               borderRadius: BorderRadius.circular(12 * scale),
               border: Border.all(
                 color: isSelected ? AppColors.primary : Colors.transparent,
@@ -573,7 +633,10 @@ class _CreateHomeStaffWithdrawSheetState extends State<CreateHomeStaffWithdrawSh
         borderRadius: BorderRadius.circular(18 * scale),
         gradient: isEnabled
             ? LinearGradient(
-                colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.9)],
+                colors: [
+                  AppColors.primary,
+                  AppColors.primary.withValues(alpha: 0.9),
+                ],
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
               )
@@ -598,7 +661,11 @@ class _CreateHomeStaffWithdrawSheetState extends State<CreateHomeStaffWithdrawSh
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.send_rounded, color: isEnabled ? Colors.white : AppColors.third, size: 20 * scale),
+                Icon(
+                  Icons.send_rounded,
+                  color: isEnabled ? Colors.white : AppColors.third,
+                  size: 20 * scale,
+                ),
                 SizedBox(width: 12 * scale),
                 Text(
                   'Gửi yêu cầu rút tiền',
@@ -638,22 +705,29 @@ class _CreateHomeStaffWithdrawSheetState extends State<CreateHomeStaffWithdrawSh
               height: MediaQuery.of(context).size.height * 0.75,
               decoration: BoxDecoration(
                 color: AppColors.background,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(32),
+                ),
               ),
               child: Column(
                 children: [
-                  _buildBankPickerHeader(scale, searchController, (val) => setModalState(() {})),
+                  _buildBankPickerHeader(
+                    scale,
+                    searchController,
+                    (val) => setModalState(() {}),
+                  ),
                   Expanded(
                     child: banks.isEmpty
                         ? _buildEmptyBanks(scale)
                         : GridView.builder(
                             padding: EdgeInsets.all(24 * scale),
-                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 3,
-                              crossAxisSpacing: 16 * scale,
-                              mainAxisSpacing: 16 * scale,
-                              childAspectRatio: 0.9,
-                            ),
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 3,
+                                  crossAxisSpacing: 16 * scale,
+                                  mainAxisSpacing: 16 * scale,
+                                  childAspectRatio: 0.9,
+                                ),
                             itemCount: banks.length,
                             itemBuilder: (context, index) {
                               final bank = banks[index];
@@ -670,9 +744,18 @@ class _CreateHomeStaffWithdrawSheetState extends State<CreateHomeStaffWithdrawSh
     );
   }
 
-  Widget _buildBankPickerHeader(double scale, TextEditingController controller, Function(String) onChanged) {
+  Widget _buildBankPickerHeader(
+    double scale,
+    TextEditingController controller,
+    Function(String) onChanged,
+  ) {
     return Container(
-      padding: EdgeInsets.fromLTRB(24 * scale, 12 * scale, 24 * scale, 16 * scale),
+      padding: EdgeInsets.fromLTRB(
+        24 * scale,
+        12 * scale,
+        24 * scale,
+        16 * scale,
+      ),
       decoration: const BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
@@ -682,14 +765,26 @@ class _CreateHomeStaffWithdrawSheetState extends State<CreateHomeStaffWithdrawSh
           Container(
             width: 40 * scale,
             height: 4 * scale,
-            decoration: BoxDecoration(color: AppColors.borderLight, borderRadius: BorderRadius.circular(10)),
+            decoration: BoxDecoration(
+              color: AppColors.borderLight,
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
           SizedBox(height: 20 * scale),
           Row(
             children: [
-              Text('Chọn ngân hàng', style: AppTextStyles.arimo(fontSize: 18 * scale, fontWeight: FontWeight.w800)),
+              Text(
+                'Chọn ngân hàng',
+                style: AppTextStyles.arimo(
+                  fontSize: 18 * scale,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
               const Spacer(),
-              IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded)),
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.close_rounded),
+              ),
             ],
           ),
           SizedBox(height: 16 * scale),
@@ -703,7 +798,10 @@ class _CreateHomeStaffWithdrawSheetState extends State<CreateHomeStaffWithdrawSh
               onChanged: onChanged,
               decoration: InputDecoration(
                 hintText: 'Tìm kiếm ngân hàng...',
-                prefixIcon: const Icon(Icons.search_rounded, color: AppColors.third),
+                prefixIcon: const Icon(
+                  Icons.search_rounded,
+                  color: AppColors.third,
+                ),
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.symmetric(vertical: 14 * scale),
               ),
@@ -726,7 +824,10 @@ class _CreateHomeStaffWithdrawSheetState extends State<CreateHomeStaffWithdrawSh
         decoration: BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(20 * scale),
-          border: Border.all(color: isSelected ? AppColors.primary : Colors.transparent, width: 2),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : Colors.transparent,
+            width: 2,
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.05),
@@ -741,14 +842,26 @@ class _CreateHomeStaffWithdrawSheetState extends State<CreateHomeStaffWithdrawSh
             if (bank.logo.isNotEmpty)
               ClipRRect(
                 borderRadius: BorderRadius.circular(8 * scale),
-                child: Image.network(bank.logo, height: 40 * scale, fit: BoxFit.contain),
+                child: Image.network(
+                  bank.logo,
+                  height: 40 * scale,
+                  fit: BoxFit.contain,
+                ),
               )
             else
-              Icon(Icons.account_balance_rounded, size: 32 * scale, color: AppColors.primary),
+              Icon(
+                Icons.account_balance_rounded,
+                size: 32 * scale,
+                color: AppColors.primary,
+              ),
             SizedBox(height: 12 * scale),
             Text(
               bank.shortName.isNotEmpty ? bank.shortName : bank.code,
-              style: AppTextStyles.arimo(fontSize: 12 * scale, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+              style: AppTextStyles.arimo(
+                fontSize: 12 * scale,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -764,9 +877,19 @@ class _CreateHomeStaffWithdrawSheetState extends State<CreateHomeStaffWithdrawSh
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.account_balance_outlined, size: 64 * scale, color: AppColors.third.withValues(alpha: 0.3)),
+          Icon(
+            Icons.account_balance_outlined,
+            size: 64 * scale,
+            color: AppColors.third.withValues(alpha: 0.3),
+          ),
           SizedBox(height: 16 * scale),
-          Text('Không tìm thấy ngân hàng phù hợp', style: AppTextStyles.arimo(fontSize: 14 * scale, color: AppColors.third)),
+          Text(
+            'Không tìm thấy ngân hàng phù hợp',
+            style: AppTextStyles.arimo(
+              fontSize: 14 * scale,
+              color: AppColors.third,
+            ),
+          ),
         ],
       ),
     );

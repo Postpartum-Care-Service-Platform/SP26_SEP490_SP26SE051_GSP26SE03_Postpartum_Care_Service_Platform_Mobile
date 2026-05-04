@@ -576,20 +576,18 @@ class _EmployeeQuickMenuIconTile extends StatelessWidget {
   final EmployeeQuickMenuItem item;
   final VoidCallback onTap;
   final bool isActive;
-  final Color? groupColor;
 
   const _EmployeeQuickMenuIconTile({
     required this.item,
     required this.onTap,
     required this.isActive,
-    this.groupColor,
   });
 
   @override
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
 
-    final baseColor = groupColor ?? AppColors.primary;
+    final baseColor = AppColors.primary;
     final iconColor = isActive ? baseColor : baseColor.withValues(alpha: 0.75);
     final bgColor = isActive
         ? baseColor.withValues(alpha: 0.14)

@@ -265,7 +265,6 @@ class EmployeeMoreSheet {
         break;
     }
   }
-
 }
 
 class _MenuGroup {
@@ -307,7 +306,7 @@ List<_MenuGroup> _buildGroupedItems(List<EmployeeQuickMenuItem> items) {
       case EmployeeQuickMenuExtraAction.withdrawRequest:
         group2.add(item);
         break;
-      case null:
+      default:
         break;
     }
   }
@@ -443,8 +442,9 @@ class _GroupSectionState extends State<_GroupSection> {
               },
             ),
           ),
-          crossFadeState:
-              _isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+          crossFadeState: _isExpanded
+              ? CrossFadeState.showSecond
+              : CrossFadeState.showFirst,
           duration: const Duration(milliseconds: 220),
         ),
       ],
@@ -523,7 +523,10 @@ class _ModernSheetItemState extends State<_ModernSheetItem>
           decoration: BoxDecoration(
             color: AppColors.white,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: borderColor, width: widget.isPriority ? 1.4 : 1),
+            border: Border.all(
+              color: borderColor,
+              width: widget.isPriority ? 1.4 : 1,
+            ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.05),
@@ -551,10 +554,14 @@ class _ModernSheetItemState extends State<_ModernSheetItem>
                       width: widget.isPriority ? 54 : 48,
                       height: widget.isPriority ? 54 : 48,
                       decoration: BoxDecoration(
-                        color: itemColor.withValues(alpha: widget.isPriority ? 0.16 : 0.1),
+                        color: itemColor.withValues(
+                          alpha: widget.isPriority ? 0.16 : 0.1,
+                        ),
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: itemColor.withValues(alpha: widget.isPriority ? 0.5 : 0.3),
+                          color: itemColor.withValues(
+                            alpha: widget.isPriority ? 0.5 : 0.3,
+                          ),
                           width: widget.isPriority ? 2.2 : 2,
                         ),
                       ),

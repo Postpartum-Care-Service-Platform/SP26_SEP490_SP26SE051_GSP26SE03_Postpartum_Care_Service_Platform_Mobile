@@ -554,10 +554,6 @@ class _TaskCard extends StatelessWidget {
   void _confirmTask(BuildContext context) {
     context.read<AppointmentBloc>().add(ConfirmAppointmentEvent(task.id));
   }
-
-  void _completeTask(BuildContext context) {
-    context.read<AppointmentBloc>().add(CompleteAppointmentEvent(task.id));
-  }
 }
 
 /// Status badge
