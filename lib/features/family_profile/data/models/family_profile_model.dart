@@ -52,7 +52,7 @@ class FamilyProfileModel extends Equatable {
         updatedAt: DateTime.parse(json['updatedAt'] as String),
         memberTypeName: json['memberTypeName'] as String?,
         isOwner: json['isOwner'] as bool? ?? false,
-        isDeleted: json['isDeleted'] as bool? ?? false,
+        isDeleted: (json['isDeleted'] ?? json['is_deleted']) as bool? ?? false,
       );
 
   Map<String, dynamic> toJson() => {

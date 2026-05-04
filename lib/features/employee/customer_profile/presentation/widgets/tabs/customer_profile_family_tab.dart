@@ -33,7 +33,7 @@ class CustomerProfileFamilyTab extends StatelessWidget {
         if (snapshot.hasError) {
           return _buildErrorState(snapshot.error.toString());
         }
-        final members = snapshot.data ?? const [];
+        final members = (snapshot.data ?? <FamilyProfileEntity>[]).where((m) => !m.isDeleted).toList();
         if (members.isEmpty) {
           return _buildEmptyState();
         }
