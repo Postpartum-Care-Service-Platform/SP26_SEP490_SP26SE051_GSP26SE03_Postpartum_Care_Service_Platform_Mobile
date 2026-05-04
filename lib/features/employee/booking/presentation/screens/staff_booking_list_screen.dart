@@ -173,13 +173,12 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
     );
     if (!confirmed || !mounted) return;
 
-    final messenger = ScaffoldMessenger.of(context);
     setState(() => _isActionInProgress = true);
     try {
       final message = await _dataSource.confirmBooking(booking.id);
       if (!mounted) return;
       
-      messenger.showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             message,
@@ -191,7 +190,7 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
       await _refresh();
     } catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             'Lỗi xác nhận booking: $e',
@@ -217,13 +216,12 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
     );
     if (!confirmed || !mounted) return;
 
-    final messenger = ScaffoldMessenger.of(context);
     setState(() => _isActionInProgress = true);
     try {
       final message = await _dataSource.cancelBooking(booking.id);
       if (!mounted) return;
 
-      messenger.showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             message,
@@ -235,7 +233,7 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
       await _refresh();
     } catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             'Lỗi hủy booking: $e',
@@ -262,13 +260,12 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
     );
     if (!confirmed || !mounted) return;
 
-    final messenger = ScaffoldMessenger.of(context);
     setState(() => _isActionInProgress = true);
     try {
       final message = await _dataSource.completeBooking(booking.id);
       if (!mounted) return;
 
-      messenger.showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             message,
@@ -280,7 +277,7 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
       await _refresh();
     } catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             'Lỗi hoàn thành booking: $e',
@@ -325,13 +322,12 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
     );
     if (!confirmed || !mounted) return;
 
-    final messenger = ScaffoldMessenger.of(context);
     setState(() => _isActionInProgress = true);
     try {
       final message = await _dataSource.checkInBooking(booking.id);
       if (!mounted) return;
 
-      messenger.showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             message,
@@ -343,7 +339,7 @@ class _StaffBookingListScreenState extends State<StaffBookingListScreen> {
       await _refresh();
     } catch (e) {
       if (!mounted) return;
-      messenger.showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             'Lỗi check-in booking: $e',
