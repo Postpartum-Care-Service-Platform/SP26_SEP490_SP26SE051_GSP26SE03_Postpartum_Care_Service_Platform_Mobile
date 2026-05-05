@@ -3,6 +3,7 @@ import '../../../../../core/apis/api_client.dart';
 import '../../../../../core/apis/api_endpoints.dart';
 import '../models/appointment_model.dart';
 import '../models/create_appointment_request_model.dart';
+import '../models/dashboard_stats_model.dart';
 
 /// Appointment Remote Data Source for Employee
 /// Handles API calls for appointment operations
@@ -137,6 +138,16 @@ class AppointmentEmployeeRemoteDataSource {
       );
       
       return AppointmentModel.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// Get dashboard stats
+  Future<DashboardStatsModel> getDashboardStats() async {
+    try {
+      final response = await _dio.get(ApiEndpoints.dashboardStats);
+      return DashboardStatsModel.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw _handleError(e);
     }

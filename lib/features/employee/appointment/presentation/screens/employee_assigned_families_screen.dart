@@ -80,9 +80,46 @@ class _EmployeeAssignedFamiliesScreenState
       final family = first['familyScheduleResponse'] as Map<String, dynamic>?;
 
       final displayName =
-          (family?['customerName'] ?? family?['name'] ?? customerId).toString();
-      final avatarUrl = (family?['customerAvatar'] ?? '').toString();
-      final roomName = (first['roomName'] ?? '').toString();
+          (family?['customerName'] ?? family?['name'] ?? family?['CustomerName'] ?? family?['Name'] ?? customerId).toString();
+      final avatarUrl = (family?['customerAvatar'] ?? family?['CustomerAvatar'] ?? '').toString();
+      final packageName = (family?['packageName'] ?? family?['PackageName'] ?? '').toString();
+
+      String roomName = '';
+      for (final item in items) {
+        final f = item['familyScheduleResponse'] as Map<String, dynamic>?;
+        
+        // Extract room objects if they exist (handling both camelCase and PascalCase)
+        final itemRoom = (item['room'] ?? item['Room']) is Map ? (item['room'] ?? item['Room']) as Map : null;
+        final familyRoom = (f?['room'] ?? f?['Room']) is Map ? (f?['room'] ?? f?['Room']) as Map : null;
+        
+        // Aggressively check every possible field name and nesting
+        final r = (item['roomName'] ?? 
+                  item['RoomName'] ??
+                  f?['roomName'] ?? 
+                  f?['RoomName'] ??
+                  itemRoom?['name'] ?? 
+                  itemRoom?['Name'] ??
+                  itemRoom?['roomName'] ??
+                  itemRoom?['RoomName'] ??
+                  familyRoom?['name'] ??
+                  familyRoom?['Name'] ??
+                  familyRoom?['roomName'] ??
+                  familyRoom?['RoomName'] ??
+                  item['room'] ?? // fallback if room is just a string
+                  item['Room'] ??
+                  f?['room'] ??
+                  f?['Room'] ??
+                  item['roomNo'] ??
+                  item['RoomNo'] ??
+                  f?['roomNo'] ??
+                  f?['RoomNo'] ??
+                  '').toString();
+                  
+        if (r.isNotEmpty && r != 'null' && r.toLowerCase() != 'null') {
+          roomName = r;
+          break;
+        }
+      }
 
       final activities =
           items.map((row) {
@@ -153,6 +190,7 @@ class _EmployeeAssignedFamiliesScreenState
           displayName: displayName,
           avatarUrl: avatarUrl,
           roomName: roomName,
+          packageName: packageName,
           assignmentsCount: items.length,
           activities: activities,
           hasTodayActivity: hasTodayActivity,
@@ -674,6 +712,7 @@ class AssignedCustomer {
   final String displayName;
   final String avatarUrl;
   final String roomName;
+  final String packageName;
   final int assignmentsCount;
   final List<AssignedActivity> activities;
   final bool hasTodayActivity;
@@ -685,6 +724,7 @@ class AssignedCustomer {
     required this.displayName,
     required this.avatarUrl,
     required this.roomName,
+    required this.packageName,
     required this.assignmentsCount,
     required this.activities,
     this.hasTodayActivity = false,
@@ -856,17 +896,75 @@ class _FocusFamilyCard extends StatelessWidget {
                             color: AppColors.textPrimary,
                           ),
                         ),
-                        Text(
-                          customer.roomName.isNotEmpty
-                              ? customer.roomName
-                              : 'Chưa có thông tin phòng',
-                          style: AppTextStyles.arimo(
-                            fontSize: 13 * scale,
-                            color: AppColors.textSecondary,
+                        if (customer.roomName.isNotEmpty || customer.packageName.isNotEmpty)
+                          Padding(
+                            padding: EdgeInsets.only(top: 4 * scale),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (customer.roomName.isNotEmpty)
+                                  Row(
+                                    children: [
+                                      Icon(Icons.meeting_room_rounded, size: 14 * scale, color: AppColors.primary),
+                                      SizedBox(width: 6 * scale),
+                                      Text(
+                                        customer.roomName,
+                                        style: AppTextStyles.arimo(
+                                          fontSize: 13 * scale,
+                                          color: AppColors.textSecondary,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                if (customer.packageName.isNotEmpty)
+                                  Padding(
+                                    padding: EdgeInsets.only(top: 2 * scale),
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.card_membership_rounded, size: 14 * scale, color: Colors.orange),
+                                        SizedBox(width: 6 * scale),
+                                        Expanded(
+                                          child: Text(
+                                            customer.packageName,
+                                            style: AppTextStyles.arimo(
+                                              fontSize: 13 * scale,
+                                              color: AppColors.textSecondary,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          )
+                        else
+                          Text(
+                            'Chưa có thông tin phòng/gói',
+                            style: AppTextStyles.arimo(
+                              fontSize: 13 * scale,
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
-                        ),
                       ],
                     ),
+                  ),
+                  _ViewProfileButton(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => EmployeeCustomerFamilyProfilesScreen(
+                            customerId: customer.customerId,
+                            customerName: customer.displayName,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -1004,18 +1102,78 @@ class _FamilyCard extends StatelessWidget {
                       color: AppColors.textPrimary,
                     ),
                   ),
+                  if (customer.roomName.isNotEmpty || customer.packageName.isNotEmpty)
+                    Padding(
+                      padding: EdgeInsets.only(top: 2 * scale),
+                      child: Row(
+                        children: [
+                          if (customer.roomName.isNotEmpty) ...[
+                            Icon(Icons.meeting_room_rounded, size: 12 * scale, color: AppColors.primary),
+                            SizedBox(width: 4 * scale),
+                            Text(
+                              customer.roomName,
+                              style: AppTextStyles.arimo(
+                                fontSize: 12 * scale,
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            if (customer.packageName.isNotEmpty)
+                              Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 8 * scale),
+                                child: Text('|', style: TextStyle(color: AppColors.borderLight, fontSize: 12 * scale)),
+                              ),
+                          ],
+                          if (customer.packageName.isNotEmpty)
+                            Expanded(
+                              child: Text(
+                                customer.packageName,
+                                style: AppTextStyles.arimo(
+                                  fontSize: 12 * scale,
+                                  color: AppColors.textSecondary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                        ],
+                      ),
+                    )
+                  else
+                    Text(
+                      'Chưa có thông tin phòng/gói',
+                      style: AppTextStyles.arimo(
+                        fontSize: 12 * scale,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
                   Text(
                     '${customer.assignmentsCount} công việc trong khoảng thời gian',
                     style: AppTextStyles.arimo(
-                      fontSize: 12 * scale,
+                      fontSize: 11 * scale,
                       color: AppColors.textSecondary,
                     ),
                   ),
                 ],
               ),
             ),
+            _ViewProfileButton(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => EmployeeCustomerFamilyProfilesScreen(
+                      customerId: customer.customerId,
+                      customerName: customer.displayName,
+                    ),
+                  ),
+                );
+              },
+              isMini: true,
+            ),
             if (customer.isCurrentlyActive)
               Container(
+                margin: EdgeInsets.only(left: 8 * scale),
                 width: 8 * scale,
                 height: 8 * scale,
                 decoration: const BoxDecoration(
@@ -2200,25 +2358,18 @@ class _EmployeeActivitiesTimelineScreenState
         actions: [
           IconButton(
             onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => EmployeeCustomerFamilyProfilesScreen(
-                    customerId: widget.customer.customerId,
-                    customerName: widget.customer.displayName,
-                  ),
-                ),
-              );
+              setState(() {
+                // Future reload logic if needed
+              });
             },
-            icon: const Icon(
-              Icons.account_circle_outlined,
-              color: AppColors.primary,
-            ),
-            tooltip: 'Hồ sơ gia đình',
+            icon: const Icon(Icons.refresh_rounded, color: AppColors.primary),
+            tooltip: 'Làm mới',
           ),
         ],
       ),
       body: Column(
         children: [
+          _CustomerProfileBanner(customer: widget.customer),
           Padding(
             padding: EdgeInsets.all(16 * scale),
             child: Column(
@@ -2639,5 +2790,238 @@ class _EmployeeActivitiesTimelineScreenState
       );
       return false;
     }
+  }
+}
+class _ViewProfileButton extends StatelessWidget {
+  final VoidCallback onTap;
+  final bool isMini;
+
+  const _ViewProfileButton({required this.onTap, this.isMini = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+
+    if (isMini) {
+      return Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8 * scale),
+          child: Container(
+            padding: EdgeInsets.all(8 * scale),
+            decoration: BoxDecoration(
+              color: Colors.orange.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8 * scale),
+              border: Border.all(color: Colors.orange.withValues(alpha: 0.2)),
+            ),
+            child: const Icon(
+              Icons.account_box_rounded,
+              size: 18,
+              color: Colors.orange,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12 * scale),
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 12 * scale, vertical: 8 * scale),
+          decoration: BoxDecoration(
+            color: Colors.orange.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12 * scale),
+            border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.account_box_rounded, size: 16, color: Colors.orange),
+              SizedBox(width: 6 * scale),
+              Text(
+                'HỒ SƠ',
+                style: AppTextStyles.arimo(
+                  fontSize: 11 * scale,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.orange[800],
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+class _CustomerProfileBanner extends StatelessWidget {
+  final AssignedCustomer customer;
+
+  const _CustomerProfileBanner({required this.customer});
+
+  @override
+  Widget build(BuildContext context) {
+    final scale = AppResponsive.scaleFactor(context);
+
+    return Container(
+      margin: EdgeInsets.fromLTRB(16 * scale, 16 * scale, 16 * scale, 0),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFFFF7ED), Color(0xFFFFF1F2)],
+        ),
+        borderRadius: BorderRadius.circular(20 * scale),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.orange.withValues(alpha: 0.05),
+            blurRadius: 10 * scale,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: EdgeInsets.all(16 * scale),
+            child: Row(
+              children: [
+                Container(
+                  width: 52 * scale,
+                  height: 52 * scale,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.orange, width: 2),
+                    image: DecorationImage(
+                      image: NetworkImage(
+                        customer.avatarUrl.isNotEmpty
+                            ? customer.avatarUrl
+                            : 'https://ui-avatars.com/api/?name=${customer.displayName}&background=random',
+                      ),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                SizedBox(width: 16 * scale),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        customer.displayName,
+                        style: AppTextStyles.arimo(
+                          fontSize: 18 * scale,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      if (customer.roomName.isNotEmpty || customer.packageName.isNotEmpty)
+                        Padding(
+                          padding: EdgeInsets.only(top: 4 * scale),
+                          child: Wrap(
+                            spacing: 12 * scale,
+                            runSpacing: 4 * scale,
+                            children: [
+                              if (customer.roomName.isNotEmpty)
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.meeting_room_rounded, size: 14 * scale, color: AppColors.primary),
+                                    SizedBox(width: 4 * scale),
+                                    Text(
+                                      customer.roomName,
+                                      style: AppTextStyles.arimo(
+                                        fontSize: 12 * scale,
+                                        color: AppColors.textSecondary,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              if (customer.packageName.isNotEmpty)
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.card_membership_rounded, size: 14 * scale, color: Colors.orange),
+                                    SizedBox(width: 4 * scale),
+                                    Flexible(
+                                      child: Text(
+                                        customer.packageName,
+                                        style: AppTextStyles.arimo(
+                                          fontSize: 12 * scale,
+                                          color: AppColors.textSecondary,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                            ],
+                          ),
+                        )
+                      else
+                        Text(
+                          'Chưa có thông tin phòng/gói',
+                          style: AppTextStyles.arimo(
+                            fontSize: 12 * scale,
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          InkWell(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => EmployeeCustomerFamilyProfilesScreen(
+                    customerId: customer.customerId,
+                    customerName: customer.displayName,
+                  ),
+                ),
+              );
+            },
+            borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
+            child: Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(vertical: 12 * scale),
+              decoration: BoxDecoration(
+                color: Colors.orange.withValues(alpha: 0.1),
+                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.folder_shared_rounded, size: 18, color: Colors.orange),
+                  SizedBox(width: 8 * scale),
+                  Text(
+                    'XEM HỒ SƠ CHI TIẾT',
+                    style: AppTextStyles.arimo(
+                      fontSize: 12 * scale,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.orange[800],
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  SizedBox(width: 4 * scale),
+                  Icon(Icons.arrow_forward_rounded, size: 14, color: Colors.orange[800]),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

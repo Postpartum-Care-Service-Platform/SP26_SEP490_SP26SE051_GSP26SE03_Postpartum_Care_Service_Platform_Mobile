@@ -13,6 +13,7 @@ import '../../../../../features/employee/appointment/domain/entities/appointment
 import '../../../../../features/employee/appointment/presentation/bloc/appointment/appointment_bloc.dart';
 import '../../../../../features/employee/appointment/presentation/bloc/appointment/appointment_event.dart';
 import '../../../../../features/employee/appointment/presentation/bloc/appointment/appointment_state.dart';
+import '../../../../../features/employee/customer_profile/presentation/screens/employee_customer_family_profiles_screen.dart';
 
 /// Screen riêng để quản lý danh sách lịch hẹn của staff
 class EmployeeAppointmentListScreen extends StatelessWidget {
@@ -880,37 +881,84 @@ class _AppointmentCard extends StatelessWidget {
                 ),
                 
                 // Customer Info
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 18,
-                      backgroundColor: AppColors.background,
-                      child: Icon(Icons.person_outline_rounded, size: 18, color: AppColors.textSecondary),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      if (appointment.customer?.id != null) {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => EmployeeCustomerFamilyProfilesScreen(
+                              customerId: appointment.customer!.id!,
+                              customerName: appointment.customer?.username ?? '',
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.orange.withValues(alpha: 0.1)),
+                      ),
+                      child: Row(
                         children: [
-                          Text(
-                            appointment.customer?.username ?? 'Khách lẻ',
-                            style: AppTextStyles.arimo(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
+                          CircleAvatar(
+                            radius: 18,
+                            backgroundColor: Colors.orange.withValues(alpha: 0.1),
+                            child: const Icon(Icons.person_rounded, size: 18, color: Colors.orange),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      appointment.customer?.username ?? 'Khách lẻ',
+                                      style: AppTextStyles.arimo(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: Colors.orange.withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        'Hồ sơ',
+                                        style: AppTextStyles.arimo(
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.w900,
+                                          color: Colors.orange,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Text(
+                                  appointment.customer?.phone ?? appointment.customer?.email ?? 'Không có thông tin liên hệ',
+                                  style: AppTextStyles.arimo(
+                                    fontSize: 12,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          Text(
-                            appointment.customer?.phone ?? appointment.customer?.email ?? 'Không có thông tin liên hệ',
-                            style: AppTextStyles.arimo(
-                              fontSize: 12,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
+                          const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.orange),
                         ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
                 
                 const SizedBox(height: 20),
@@ -1073,37 +1121,76 @@ class _CompletedAppointmentCard extends StatelessWidget {
                 ),
                 
                 // Customer Info
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 18,
-                      backgroundColor: const Color(0xFFF1F5F9),
-                      child: Icon(Icons.person_outline_rounded, size: 18, color: AppColors.textSecondary.withValues(alpha: 0.5)),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      if (appointment.customer?.id != null) {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => EmployeeCustomerFamilyProfilesScreen(
+                              customerId: appointment.customer!.id!,
+                              customerName: appointment.customer?.username ?? '',
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.background.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.borderLight.withValues(alpha: 0.1)),
+                      ),
+                      child: Row(
                         children: [
-                          Text(
-                            appointment.customer?.username?.isNotEmpty == true ? appointment.customer!.username! : 'Khách lẻ',
-                            style: AppTextStyles.arimo(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary.withValues(alpha: 0.7),
+                          CircleAvatar(
+                            radius: 18,
+                            backgroundColor: const Color(0xFFF1F5F9),
+                            child: Icon(Icons.person_outline_rounded, size: 18, color: AppColors.textSecondary.withValues(alpha: 0.5)),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      appointment.customer?.username?.isNotEmpty == true ? appointment.customer!.username! : 'Khách lẻ',
+                                      style: AppTextStyles.arimo(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.textPrimary.withValues(alpha: 0.7),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      '• Hồ sơ',
+                                      style: AppTextStyles.arimo(
+                                        fontSize: 10,
+                                        color: AppColors.textSecondary.withValues(alpha: 0.5),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Text(
+                                  appointment.customer?.phone ?? appointment.customer?.email ?? 'Không có thông tin liên hệ',
+                                  style: AppTextStyles.arimo(
+                                    fontSize: 12,
+                                    color: AppColors.textSecondary.withValues(alpha: 0.7),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          Text(
-                            appointment.customer?.phone ?? appointment.customer?.email ?? 'Không có thông tin liên hệ',
-                            style: AppTextStyles.arimo(
-                              fontSize: 12,
-                              color: AppColors.textSecondary.withValues(alpha: 0.7),
-                            ),
-                          ),
+                          Icon(Icons.arrow_forward_ios_rounded, size: 12, color: AppColors.textSecondary.withValues(alpha: 0.3)),
                         ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ],
             ),

@@ -56,6 +56,7 @@ class ApiEndpoints {
   // Home endpoints
   static const String home = '/home';
   static const String dashboard = '/dashboard';
+  static const String dashboardStats = '/Dashboard/stats';
 
   // Services endpoints
   static const String services = '/services';
