@@ -18,6 +18,7 @@ import '../../../../../features/booking/data/models/booking_model.dart';
 import '../../../../../features/booking/data/models/customer_model.dart';
 import '../../../../../features/contract/data/datasources/contract_remote_datasource.dart';
 import '../../../../../features/contract/data/models/contract_model.dart';
+import '../../../../../features/contract/data/models/contract_preview_model.dart';
 import '../../../../../features/employee/contract/presentation/screens/staff_contract_preview_screen.dart';
 
 /// Màn hình staff quản lý hợp đồng cho một booking cụ thể.
@@ -48,6 +49,10 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
   bool _isSending = false;
   String? _error;
 
+  /// Pre-fetched preview data — bắt đầu fetch ngay khi screen load
+  Future<ContractPreviewModel>? _previewFuture;
+  ContractPreviewModel? _cachedPreview;
+
   @override
   void initState() {
     super.initState();
@@ -55,28 +60,47 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
   }
 
   Future<void> _init() async {
+    // ── Hiển thị data cũ ngay nếu có sẵn, chỉ loading nền ──
+    if (widget.initialContract != null) {
+      // Hiển thị contract từ danh sách ngay lập tức, không cần spinner
+      setState(() {
+        _contract = widget.initialContract;
+        _error = null;
+      });
+      // Refresh contract + booking SONG SONG ở background
+      _refreshInBackground(widget.initialContract!.id, widget.initialContract!.bookingId);
+      // Pre-fetch preview ngay để khi bấm "Xem nội dung" không phải chờ
+      _startPreviewPrefetch(widget.initialContract!.bookingId);
+      return;
+    }
+
+    // Các trường hợp cần loading spinner
     setState(() {
       _isLoading = true;
       _error = null;
     });
     try {
-      if (widget.initialContract != null) {
-        // Nếu đã có sẵn contract (từ danh sách), ưu tiên load lại theo ID
-        final loaded = await _remote.getContractById(
-          widget.initialContract!.id,
-        );
+      if (widget.booking?.contract != null) {
+        // Booking đã có hợp đồng -> fetch contract + booking SONG SONG
+        final contractId = widget.booking!.contract!.id;
+        final bookingId = widget.booking!.id;
+        final results = await Future.wait([
+          _remote.getContractById(contractId),
+          _bookingRemote.getBookingById(bookingId),
+        ], eagerError: false);
         if (!mounted) return;
         setState(() {
-          _contract = loaded;
+          _contract = results[0] as ContractModel;
+          final booking = results[1] as BookingModel?;
+          if (booking != null) {
+            _fullBooking = booking;
+            if (booking.customer != null) {
+              _bookingCustomer = booking.customer;
+            }
+          }
         });
-      } else if (widget.booking?.contract != null) {
-        // Booking đã có hợp đồng -> lấy chi tiết theo ID để cập nhật mới nhất
-        final id = widget.booking!.contract!.id;
-        final loaded = await _remote.getContractById(id);
-        if (!mounted) return;
-        setState(() {
-          _contract = loaded;
-        });
+        // Pre-fetch preview song song
+        _startPreviewPrefetch(widget.booking!.id);
       } else if (widget.booking != null) {
         // Chưa có hợp đồng -> tạo tự động từ booking
         final created = await _remote.createContractFromBooking(
@@ -85,10 +109,15 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
         if (!mounted) return;
         setState(() {
           _contract = created;
+          // Dùng booking đã truyền vào, không cần fetch thêm
+          _fullBooking = widget.booking;
+          if (widget.booking!.customer != null) {
+            _bookingCustomer = widget.booking!.customer;
+          }
         });
+        // Pre-fetch preview
+        _startPreviewPrefetch(widget.booking!.id);
       }
-      // Fetch booking để lấy thông tin giá cả & khách hàng nếu cần
-      await _fetchInitialDataIfNeeded();
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -103,28 +132,39 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
     }
   }
 
-  /// Fetch /api/Booking/{bookingId} để lấy thông tin khách & giá cả.
-  Future<void> _fetchInitialDataIfNeeded() async {
-    final contract = _contract;
-    if (contract == null) return;
-    
-    // Luôn fetch nếu chưa có _fullBooking để đảm bảo lấy đầy đủ các fields (prices, full customer info)
-    if (_fullBooking != null) return;
-
-    final bookingId = contract.bookingId;
-
+  /// Refresh contract + booking data song song ở background (không block UI).
+  Future<void> _refreshInBackground(int contractId, int bookingId) async {
     try {
-      final booking = await _bookingRemote.getBookingById(bookingId);
+      final results = await Future.wait([
+        _remote.getContractById(contractId),
+        _bookingRemote.getBookingById(bookingId),
+      ], eagerError: false);
       if (!mounted) return;
       setState(() {
-        _fullBooking = booking;
-        if (booking.customer != null) {
-          _bookingCustomer = booking.customer;
+        _contract = results[0] as ContractModel;
+        final booking = results[1] as BookingModel?;
+        if (booking != null) {
+          _fullBooking = booking;
+          if (booking.customer != null) {
+            _bookingCustomer = booking.customer;
+          }
         }
       });
     } catch (_) {
-      // Không làm gián đoạn UI nếu fetch booking thất bại
+      // Không gây lỗi - đã có data cũ hiển thị rồi
     }
+  }
+
+  /// Pre-fetch preview data ở background để khi bấm "Xem nội dung" hiển thị ngay.
+  void _startPreviewPrefetch(int bookingId) {
+    _previewFuture = _remote.previewContractByBooking(bookingId);
+    _previewFuture!.then((preview) {
+      if (mounted) {
+        _cachedPreview = preview;
+      }
+    }).catchError((_) {
+      // Không sao — sẽ fetch lại khi mở preview screen
+    });
   }
 
   String _formatDate(DateTime? date) {
@@ -254,7 +294,10 @@ class _StaffContractScreenState extends State<StaffContractScreen> {
 
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => StaffContractPreviewScreen(bookingId: bookingId),
+        builder: (_) => StaffContractPreviewScreen(
+          bookingId: bookingId,
+          initialPreview: _cachedPreview,
+        ),
       ),
     );
   }

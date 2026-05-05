@@ -28,18 +28,6 @@ class ContractScreen extends StatefulWidget {
 }
 
 class _ContractScreenState extends State<ContractScreen> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        context.read<ContractBloc>().add(
-              ContractLoadByBookingId(widget.bookingId),
-            );
-      }
-    });
-  }
-
   String _formatDate(DateTime? date) {
     if (date == null) return 'N/A';
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
@@ -110,7 +98,8 @@ class _ContractScreenState extends State<ContractScreen> {
     final scale = AppResponsive.scaleFactor(context);
 
     return BlocProvider(
-      create: (context) => InjectionContainer.contractBloc,
+      create: (context) => InjectionContainer.contractBloc
+        ..add(ContractLoadByBookingId(widget.bookingId)),
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppAppBar(
