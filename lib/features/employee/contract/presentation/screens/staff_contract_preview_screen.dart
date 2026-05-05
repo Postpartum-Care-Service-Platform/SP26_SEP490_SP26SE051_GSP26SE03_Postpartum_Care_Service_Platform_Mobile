@@ -59,8 +59,10 @@ final Map<String, Map<String, String>> _htmlStyleMap = {
 
 class StaffContractPreviewScreen extends StatefulWidget {
   final int bookingId;
+  /// Pre-fetched preview data — nếu có sẵn sẽ hiển thị ngay, không cần gọi API.
+  final ContractPreviewModel? initialPreview;
 
-  const StaffContractPreviewScreen({super.key, required this.bookingId});
+  const StaffContractPreviewScreen({super.key, required this.bookingId, this.initialPreview});
 
   @override
   State<StaffContractPreviewScreen> createState() => _StaffContractPreviewScreenState();
@@ -73,7 +75,10 @@ class _StaffContractPreviewScreenState extends State<StaffContractPreviewScreen>
   @override
   void initState() {
     super.initState();
-    _future = _remote.previewContractByBooking(widget.bookingId);
+    // Nếu đã có data sẵn → dùng ngay, không gọi API
+    _future = widget.initialPreview != null
+        ? Future.value(widget.initialPreview!)
+        : _remote.previewContractByBooking(widget.bookingId);
   }
 
   void _refresh() {
@@ -194,27 +199,41 @@ class _ContractContentView extends StatelessWidget {
         textStyle: AppTextStyles.arimo(fontSize: 14 * scale, color: AppColors.textPrimary, height: 1.5),
         customStylesBuilder: (element) {
           final tag = element.localName?.toLowerCase();
-          final text = element.text.toUpperCase();
-          
-          // Detect signature text in ANY tag to force centering and disable justify
-          // We use a permissive regex to catch variations in spacing/&nbsp;
-          if (RegExp(r'ĐẠI[\s\u00A0]*DIỆN[\s\u00A0]*BÊN|KÝ,[\s\u00A0]*GHI[\s\u00A0]*RÕ[\s\u00A0]*HỌ[\s\u00A0]*TÊN', caseSensitive: false).hasMatch(text)) {
+
+          // Signature table: no borders, respect left/right alignment
+          if (tag == 'table' && element.className.contains('sig-table')) {
             return {
-              'text-align': 'center', 
               'width': '100%',
-              'display': 'block',
-              'margin': '4px 0',
-              'font-weight': text.contains('ĐẠI DIỆN') ? 'bold' : 'normal',
-              'font-style': text.contains('KÝ, GHI') ? 'italic' : 'normal',
-              'text-justify': 'none',
+              'table-layout': 'fixed',
+              'border': 'none',
+              'margin-top': '32px',
+              'margin-bottom': '60px',
+            };
+          }
+          if (tag == 'td' && element.className.contains('sig-left')) {
+            return {
+              'width': '50%',
+              'border': 'none',
+              'text-align': 'left',
+              'vertical-align': 'top',
+              'padding': '0',
+            };
+          }
+          if (tag == 'td' && element.className.contains('sig-right')) {
+            return {
+              'width': '50%',
+              'border': 'none',
+              'text-align': 'right',
+              'vertical-align': 'top',
+              'padding': '0',
             };
           }
 
-          // Force signature cells to center
+          // Force signature cells in legacy no-border tables
           if (tag == 'td' && element.parent?.localName == 'tr') {
-            final table = element.parent?.parent?.parent; // td -> tr -> tbody/thead -> table
+            final table = element.parent?.parent?.parent;
             if (table?.localName == 'table' && table?.className.contains('no-border') == true) {
-              return {'text-align': 'center', 'border': 'none !important', 'padding': '0'};
+              return {'text-align': 'center', 'border': 'none', 'padding': '0'};
             }
           }
 
@@ -222,11 +241,15 @@ class _ContractContentView extends StatelessWidget {
           Map<String, String> mergedStyles = styles != null ? Map.from(styles) : {};
           
           if (tag == 'p' || tag == 'div') {
-            // Apply justification to normal paragraphs only if NOT a signature
-            mergedStyles['text-align'] = 'justify';
+            // Apply justification to normal paragraphs only
+            // Skip if inside signature section
+            final parentClass = element.parent?.className ?? '';
+            if (!parentClass.contains('sig-')) {
+              mergedStyles['text-align'] = 'justify';
+            }
           }
 
-          if (tag == 'table') {
+          if (tag == 'table' && !element.className.contains('sig-table')) {
             return {
               'width': '100%',
               'min-width': '100%',
@@ -238,7 +261,7 @@ class _ContractContentView extends StatelessWidget {
 
           // Label columns in data tables
           if (tag == 'td' && element.parent?.localName == 'tr' && element == element.parent?.children.first) {
-             if (!element.className.contains('no-border')) {
+             if (!element.className.contains('no-border') && !element.className.contains('sig-')) {
                return {'width': '35%', 'font-weight': '600', 'background-color': '#f9fafb', 'border': '1px solid #e5e7eb'};
              }
           }
@@ -262,14 +285,12 @@ class _ContractContentView extends StatelessWidget {
     );
 
     // 3. Process data table rows for consistent label/value look
-    // This targets the first <td> in standard tables
     processed = processed.replaceAllMapped(
       RegExp(r'<tr[^>]*>\s*<td([^>]*)>(.*?)</td>', dotAll: true),
       (match) {
         final attrs = match.group(1) ?? '';
         final content = match.group(2) ?? '';
         
-        // Skip signature markers or rows that already have specific styling
         if (!attrs.contains('no-border') && 
             !content.contains('ĐẠI DIỆN') && 
             !content.contains('Ký, ghi rõ họ tên')) {
@@ -279,51 +300,87 @@ class _ContractContentView extends StatelessWidget {
       },
     );
 
-    // 4. Robust Signature Section Replacement
-    // Using a extremely permissive approach to find the signature area
-    if (processed.contains('ĐẠI DIỆN BÊN') || processed.contains('ĐẠI\u00A0DIỆN\u00A0BÊN')) {
-      try {
-        // Find the start and end of the signature block
-        final startMatch = RegExp(r'ĐẠI[\s\u00A0]*DIỆN[\s\u00A0]*BÊN[\s\u00A0]*A', caseSensitive: false).firstMatch(processed);
-        final endMatch = RegExp(r'\(Ký,[\s\u00A0]*ghi[\s\u00A0]*rõ[\s\u00A0]*họ[\s\u00A0]*tên\)', caseSensitive: false).allMatches(processed);
-        
-        if (startMatch != null && endMatch.isNotEmpty) {
-          int startIdx = startMatch.start;
-          int lastSignIdx = endMatch.last.end;
-          
-          if (lastSignIdx > startIdx) {
-            // Find enclosing block tags to replace the whole mess
-            int openTagIdx = processed.lastIndexOf('<p', startIdx);
-            if (openTagIdx == -1 || (startIdx - openTagIdx) > 100) openTagIdx = startIdx;
-            
-            int closeTagIdx = processed.indexOf('</p>', lastSignIdx);
-            if (closeTagIdx == -1 || (closeTagIdx - lastSignIdx) > 100) closeTagIdx = lastSignIdx;
-            else closeTagIdx += 4;
+    // 4. Replace the entire signature section with a proper 2-column table
+    // Strategy: find <div class="signature"> and replace everything until its closing </div>
+    const signatureTable = '''
+<table class="sig-table">
+  <tr>
+    <td class="sig-left">
+      <p style="font-weight:bold; margin-bottom:4px;">ĐẠI DIỆN BÊN A</p>
+      <p style="font-style:italic; font-size:12px; color:#666;">(Ký, ghi rõ họ tên)</p>
+    </td>
+    <td class="sig-right">
+      <p style="font-weight:bold; margin-bottom:4px;">ĐẠI DIỆN BÊN B</p>
+      <p style="font-style:italic; font-size:12px; color:#666;">(Ký, ghi rõ họ tên)</p>
+    </td>
+  </tr>
+</table>
+''';
 
-            final originalBlock = processed.substring(openTagIdx, closeTagIdx);
-            const signInstruction = '(Ký, ghi rõ họ tên)';
-            const tableHtml = '''
-            <br/>
-            <table class="no-border" style="width:100% !important; margin-top:32px; margin-bottom:60px; table-layout: fixed; border: none !important;">
-              <tr style="border: none !important;">
-                <td style="width:50%; border:none !important; text-align:left !important; vertical-align:top; padding: 0;">
-                  <p style="font-weight:bold; margin-bottom:4px; text-align:left !important;">ĐẠI DIỆN BÊN A</p>
-                  <p style="font-style:italic; font-size:12px; color:#666; text-align:left !important;">$signInstruction</p>
-                </td>
-                <td style="width:50%; border:none !important; text-align:right !important; vertical-align:top; padding: 0;">
-                  <p style="font-weight:bold; margin-bottom:4px; text-align:right !important;">ĐẠI DIỆN BÊN B</p>
-                  <p style="font-style:italic; font-size:12px; color:#666; text-align:right !important;">$signInstruction</p>
-                </td>
-              </tr>
-            </table>
-            ''';
-            processed = processed.replaceFirst(originalBlock, tableHtml);
+    // Try class="signature" anchor first (most reliable)
+    final sigDivIdx = processed.indexOf('class="signature"');
+    if (sigDivIdx != -1) {
+      // Find the opening <div that contains this class
+      final divOpenIdx = processed.lastIndexOf('<div', sigDivIdx);
+      if (divOpenIdx != -1) {
+        // Find the matching closing tag — count nested divs
+        int depth = 0;
+        int searchIdx = divOpenIdx;
+        int closeIdx = -1;
+        while (searchIdx < processed.length) {
+          final nextOpen = processed.indexOf('<div', searchIdx + 1);
+          final nextClose = processed.indexOf('</div>', searchIdx + 1);
+          
+          if (nextClose == -1) break;
+          
+          if (nextOpen != -1 && nextOpen < nextClose) {
+            depth++;
+            searchIdx = nextOpen;
+          } else {
+            if (depth == 0) {
+              closeIdx = nextClose + 6; // length of '</div>'
+              break;
+            }
+            depth--;
+            searchIdx = nextClose;
           }
+        }
+        
+        if (closeIdx != -1) {
+          processed = processed.substring(0, divOpenIdx) + signatureTable + processed.substring(closeIdx);
+        }
+      }
+    } else if (processed.contains('ĐẠI DIỆN BÊN')) {
+      // Fallback: text-based replacement
+      try {
+        final startMatch = RegExp(r'ĐẠI\s*DIỆN\s*BÊN\s*A', caseSensitive: false).firstMatch(processed);
+        final endMatches = RegExp(r'\(Ký,\s*ghi\s*rõ\s*họ\s*tên\)', caseSensitive: false).allMatches(processed);
+        
+        if (startMatch != null && endMatches.length >= 2) {
+          // Find the outermost enclosing div
+          int startIdx = startMatch.start;
+          int endIdx = endMatches.last.end;
+          
+          // Expand to enclosing div
+          int divStart = processed.lastIndexOf('<div', startIdx);
+          if (divStart == -1 || (startIdx - divStart) > 200) divStart = startIdx;
+          
+          int divEnd = processed.indexOf('</div>', endIdx);
+          if (divEnd != -1 && (divEnd - endIdx) < 200) {
+            divEnd += 6;
+          } else {
+            divEnd = endIdx;
+          }
+          
+          processed = processed.substring(0, divStart) + signatureTable + processed.substring(divEnd);
         }
       } catch (e) {
         debugPrint('Error processing signature HTML: $e');
       }
     }
+
+    // Clean up any trailing empty <p></p> after signature
+    processed = processed.replaceAll(RegExp(r'</table>\s*<p>\s*</p>'), '</table>');
 
     return processed;
   }
