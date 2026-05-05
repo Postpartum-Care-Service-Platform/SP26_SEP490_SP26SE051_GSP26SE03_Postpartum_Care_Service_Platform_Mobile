@@ -10,6 +10,8 @@ import '../constants/app_colors.dart';
 import '../constants/app_strings.dart';
 import '../constants/app_assets.dart';
 import '../utils/app_responsive.dart';
+import '../../features/chat/presentation/bloc/chat_bloc.dart';
+import '../../features/chat/presentation/bloc/chat_state.dart';
 
 enum AppBottomTab {
   home,
@@ -375,23 +377,39 @@ class _PillBottomNavState extends State<_PillBottomNav>
                     children: [
                       for (final tab in _customerTabs)
                         Expanded(
-                          child: _NavIconButton(
-                            icon: tab.icon,
-                            svgIcon: tab == AppBottomTab.profile
-                                ? null
-                                : tab.svgIcon,
-                            avatarUrl: tab == AppBottomTab.profile
-                                ? widget.profileAvatarUrl
-                                : null,
-                            label: tab == AppBottomTab.profile
-                                ? widget.profileLabel
-                                : tab.label,
-                            isSelected: tab == widget.currentTab,
-                            selectedColor: AppColors.white,
-                            unselectedColor: widget.unselectedColor,
-                            onTap: () => widget.onTabSelected(tab),
-                            scale: scale,
-                          ),
+                          child: tab == AppBottomTab.chat
+                              ? BlocBuilder<ChatBloc, ChatState>(
+                                  builder: (context, chatState) {
+                                    return _NavIconButton(
+                                      icon: tab.icon,
+                                      svgIcon: tab.svgIcon,
+                                      label: tab.label,
+                                      isSelected: tab == widget.currentTab,
+                                      selectedColor: AppColors.white,
+                                      unselectedColor: widget.unselectedColor,
+                                      onTap: () => widget.onTabSelected(tab),
+                                      scale: scale,
+                                      unreadCount: chatState.totalUnreadMessages,
+                                    );
+                                  },
+                                )
+                              : _NavIconButton(
+                                  icon: tab.icon,
+                                  svgIcon: tab == AppBottomTab.profile
+                                      ? null
+                                      : tab.svgIcon,
+                                  avatarUrl: tab == AppBottomTab.profile
+                                      ? widget.profileAvatarUrl
+                                      : null,
+                                  label: tab == AppBottomTab.profile
+                                      ? widget.profileLabel
+                                      : tab.label,
+                                  isSelected: tab == widget.currentTab,
+                                  selectedColor: AppColors.white,
+                                  unselectedColor: widget.unselectedColor,
+                                  onTap: () => widget.onTabSelected(tab),
+                                  scale: scale,
+                                ),
                         ),
                     ],
                   ),
@@ -415,6 +433,7 @@ class _NavIconButton extends StatefulWidget {
   final Color unselectedColor;
   final VoidCallback onTap;
   final double scale;
+  final int unreadCount;
 
   const _NavIconButton({
     this.icon,
@@ -426,6 +445,7 @@ class _NavIconButton extends StatefulWidget {
     required this.unselectedColor,
     required this.onTap,
     required this.scale,
+    this.unreadCount = 0,
   });
 
   @override
@@ -515,29 +535,49 @@ class _NavIconButtonState extends State<_NavIconButton>
               curve: Curves.easeOut,
               child: ScaleTransition(
                 scale: _scaleAnimation,
-                child:
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
                     widget.avatarUrl != null ||
-                        (widget.svgIcon == null && widget.icon == null)
-                    ? _ProfileAvatarIcon(
-                        avatarUrl: widget.avatarUrl,
-                        size: widget.isSelected ? selectedIconSize : iconSize,
-                        borderColor: iconColor,
-                      )
-                    : widget.svgIcon != null
-                    ? SvgPicture.asset(
-                        widget.svgIcon!,
-                        width: widget.isSelected ? selectedIconSize : iconSize,
-                        height: widget.isSelected ? selectedIconSize : iconSize,
-                        colorFilter: ColorFilter.mode(
-                          iconColor,
-                          BlendMode.srcIn,
+                            (widget.svgIcon == null && widget.icon == null)
+                        ? _ProfileAvatarIcon(
+                            avatarUrl: widget.avatarUrl,
+                            size: widget.isSelected ? selectedIconSize : iconSize,
+                            borderColor: iconColor,
+                          )
+                        : widget.svgIcon != null
+                        ? SvgPicture.asset(
+                            widget.svgIcon!,
+                            width: widget.isSelected ? selectedIconSize : iconSize,
+                            height: widget.isSelected ? selectedIconSize : iconSize,
+                            colorFilter: ColorFilter.mode(
+                              iconColor,
+                              BlendMode.srcIn,
+                            ),
+                          )
+                        : Icon(
+                            widget.icon,
+                            size: widget.isSelected ? selectedIconSize : iconSize,
+                            color: iconColor,
+                          ),
+                    if (widget.unreadCount > 0)
+                      Positioned(
+                        top: -2 * widget.scale,
+                        right: -2 * widget.scale,
+                        child: Container(
+                          padding: EdgeInsets.all(4 * widget.scale),
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          constraints: BoxConstraints(
+                            minWidth: 8 * widget.scale,
+                            minHeight: 8 * widget.scale,
+                          ),
                         ),
-                      )
-                    : Icon(
-                        widget.icon,
-                        size: widget.isSelected ? selectedIconSize : iconSize,
-                        color: iconColor,
                       ),
+                  ],
+                ),
               ),
             ),
             SizedBox(height: spacing),

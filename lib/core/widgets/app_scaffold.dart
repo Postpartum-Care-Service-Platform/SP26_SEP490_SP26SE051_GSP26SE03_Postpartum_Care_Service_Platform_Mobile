@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/di/injection_container.dart';
 import '../../features/auth/presentation/bloc/auth_event.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
@@ -12,6 +13,9 @@ import '../../features/chat/presentation/screens/conversation_list_screen.dart';
 import '../../features/notification/presentation/widgets/notification_drawer.dart';
 import '../../features/notification/presentation/bloc/notification_bloc.dart';
 import '../../features/notification/presentation/bloc/notification_event.dart';
+import '../../features/chat/presentation/bloc/chat_bloc.dart';
+import '../../features/chat/presentation/bloc/chat_event.dart';
+import '../../features/chat/presentation/widgets/realtime_notification_listener.dart';
 import 'app_bottom_navigation_bar.dart';
 
 class ToggleBottomNavNotification extends Notification {
@@ -64,6 +68,10 @@ class _AppScaffoldState extends State<AppScaffold> {
     // Trigger initial notification load for badges
     context.read<NotificationBloc>().add(const NotificationLoadRequested());
 
+    // NEW: Trigger initial chat load and start SignalR globally
+    context.read<ChatBloc>().add(const ChatStarted(autoSelectFirstConversation: false));
+    InjectionContainer.chatHubService.start();
+
     final initialTab = widget.initialTab ?? AppBottomTab.home;
     _currentTab = _customerTabs.contains(initialTab)
         ? initialTab
@@ -103,16 +111,18 @@ class _AppScaffoldState extends State<AppScaffold> {
       },
       child: Scaffold(
         backgroundColor: AppColors.background,
-        body: PageView(
-          controller: _pageController,
-          onPageChanged: (index) {
-            if (index < 0 || index >= _customerTabs.length) return;
-            final newTab = _customerTabs[index];
-            setState(() {
-              _currentTab = newTab;
-            });
-          },
-          children: _screens,
+        body: RealtimeNotificationListener(
+          child: PageView(
+            controller: _pageController,
+            onPageChanged: (index) {
+              if (index < 0 || index >= _customerTabs.length) return;
+              final newTab = _customerTabs[index];
+              setState(() {
+                _currentTab = newTab;
+              });
+            },
+            children: _screens,
+          ),
         ),
         bottomNavigationBar: _showBottomNav
             ? AppBottomNavigationBar(

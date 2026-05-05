@@ -144,6 +144,17 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     return message;
   }
 
+  int _calculateTotalUnread(List<ChatConversation> conversations) {
+    int count = 0;
+    for (final conv in conversations) {
+      // Find messages that are NOT read
+      // For now, any unread message counts. 
+      // Ideally we should check if sender is NOT the current user.
+      count += conv.messages.where((m) => !m.isRead).length;
+    }
+    return count;
+  }
+
   Future<void> _onStarted(
     ChatStarted event,
     Emitter<ChatState> emit,
@@ -155,6 +166,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       emit(state.copyWith(
         conversations: conversations,
         conversationsStatus: ChatStatus.success,
+        totalUnreadMessages: _calculateTotalUnread(conversations),
       ));
 
       await _ensureHubStarted(emit);
@@ -180,6 +192,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       emit(state.copyWith(
         conversations: conversations,
         conversationsStatus: ChatStatus.success,
+        totalUnreadMessages: _calculateTotalUnread(conversations),
         errorMessage: null,
       ));
     } catch (e) {
@@ -227,6 +240,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         selectedConversation: conversation,
         conversations: updatedList,
         conversationDetailStatus: ChatStatus.success,
+        totalUnreadMessages: _calculateTotalUnread(updatedList),
       ));
 
       // Best-effort mark read & join; don't block UI or fail the detail view
@@ -542,6 +556,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           ? updatedConversation
           : state.selectedConversation,
       isAiTyping: shouldStopTyping ? false : state.isAiTyping,
+      totalUnreadMessages: _calculateTotalUnread(updatedList),
     ));
   }
 

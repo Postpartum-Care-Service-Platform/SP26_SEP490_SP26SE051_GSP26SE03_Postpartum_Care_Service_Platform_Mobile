@@ -31,6 +31,7 @@ class ChatState extends Equatable {
   final ChatStatus mySupportRequestsStatus;
   final ChatSupportRequestActionStatus supportRequestActionStatus;
   final Map<String, CurrentAccountModel> customerProfiles;
+  final int totalUnreadMessages;
 
   const ChatState({
     this.conversations = const [],
@@ -50,6 +51,7 @@ class ChatState extends Equatable {
     this.mySupportRequestsStatus = ChatStatus.initial,
     this.supportRequestActionStatus = ChatSupportRequestActionStatus.idle,
     this.customerProfiles = const {},
+    this.totalUnreadMessages = 0,
   });
 
   ChatState copyWith({
@@ -70,6 +72,7 @@ class ChatState extends Equatable {
     ChatStatus? mySupportRequestsStatus,
     ChatSupportRequestActionStatus? supportRequestActionStatus,
     Map<String, CurrentAccountModel>? customerProfiles,
+    int? totalUnreadMessages,
   }) {
     return ChatState(
       conversations: conversations ?? this.conversations,
@@ -91,6 +94,7 @@ class ChatState extends Equatable {
       mySupportRequestsStatus: mySupportRequestsStatus ?? this.mySupportRequestsStatus,
       supportRequestActionStatus: supportRequestActionStatus ?? this.supportRequestActionStatus,
       customerProfiles: customerProfiles ?? this.customerProfiles,
+      totalUnreadMessages: totalUnreadMessages ?? this.totalUnreadMessages,
     );
   }
 
@@ -113,6 +117,7 @@ class ChatState extends Equatable {
         mySupportRequestsStatus,
         supportRequestActionStatus,
         customerProfiles,
+        totalUnreadMessages,
       ];
 }
 

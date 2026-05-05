@@ -11,10 +11,11 @@ import 'core/utils/bad_cert_http_override.dart';
 import 'core/routing/app_router.dart';
 import 'core/routing/app_routes.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
+import 'features/chat/presentation/bloc/chat_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Load environment variables
   await AppConfig.init();
 
@@ -22,7 +23,7 @@ void main() async {
   if (kDebugMode && !kIsWeb) {
     HttpOverrides.global = DevHttpOverrides();
   }
-  
+
   runApp(const MyApp());
 }
 
@@ -36,9 +37,8 @@ class MyApp extends StatelessWidget {
         BlocProvider<NotificationBloc>.value(
           value: InjectionContainer.notificationBloc,
         ),
-        BlocProvider<AuthBloc>.value(
-          value: InjectionContainer.authBloc,
-        ),
+        BlocProvider<AuthBloc>.value(value: InjectionContainer.authBloc),
+        BlocProvider<ChatBloc>.value(value: InjectionContainer.chatBloc),
       ],
       child: MaterialApp(
         title: 'The Joyful Nest',
@@ -48,10 +48,7 @@ class MyApp extends StatelessWidget {
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        supportedLocales: const [
-          Locale('en', 'US'),
-          Locale('vi', 'VN'),
-        ],
+        supportedLocales: const [Locale('en', 'US'), Locale('vi', 'VN')],
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
             seedColor: AppColors.primary,
