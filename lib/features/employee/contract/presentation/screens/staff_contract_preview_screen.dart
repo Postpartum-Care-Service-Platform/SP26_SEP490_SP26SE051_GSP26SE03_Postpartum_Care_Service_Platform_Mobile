@@ -198,7 +198,7 @@ class _ContractContentView extends StatelessWidget {
           
           // Detect signature text in ANY tag to force centering and disable justify
           // We use a permissive regex to catch variations in spacing/&nbsp;
-          if (RegExp(r'ĐẠI\s*DIỆN\s*BÊN|KÝ,\s*GHI\s*RÕ\s*HỌ\s*TÊN').hasMatch(text)) {
+          if (RegExp(r'ĐẠI[\s\u00A0]*DIỆN[\s\u00A0]*BÊN|KÝ,[\s\u00A0]*GHI[\s\u00A0]*RÕ[\s\u00A0]*HỌ[\s\u00A0]*TÊN', caseSensitive: false).hasMatch(text)) {
             return {
               'text-align': 'center', 
               'width': '100%',
@@ -206,6 +206,7 @@ class _ContractContentView extends StatelessWidget {
               'margin': '4px 0',
               'font-weight': text.contains('ĐẠI DIỆN') ? 'bold' : 'normal',
               'font-style': text.contains('KÝ, GHI') ? 'italic' : 'normal',
+              'text-justify': 'none',
             };
           }
 
@@ -305,13 +306,13 @@ class _ContractContentView extends StatelessWidget {
             <br/>
             <table class="no-border" style="width:100% !important; margin-top:32px; margin-bottom:60px; table-layout: fixed; border: none !important;">
               <tr style="border: none !important;">
-                <td style="width:50%; border:none !important; text-align:center !important; vertical-align:top; padding: 0;">
-                  <p style="font-weight:bold; margin-bottom:4px; text-align:center !important;">ĐẠI DIỆN BÊN A</p>
-                  <p style="font-style:italic; font-size:12px; color:#666; text-align:center !important;">$signInstruction</p>
+                <td style="width:50%; border:none !important; text-align:left !important; vertical-align:top; padding: 0;">
+                  <p style="font-weight:bold; margin-bottom:4px; text-align:left !important;">ĐẠI DIỆN BÊN A</p>
+                  <p style="font-style:italic; font-size:12px; color:#666; text-align:left !important;">$signInstruction</p>
                 </td>
-                <td style="width:50%; border:none !important; text-align:center !important; vertical-align:top; padding: 0;">
-                  <p style="font-weight:bold; margin-bottom:4px; text-align:center !important;">ĐẠI DIỆN BÊN B</p>
-                  <p style="font-style:italic; font-size:12px; color:#666; text-align:center !important;">$signInstruction</p>
+                <td style="width:50%; border:none !important; text-align:right !important; vertical-align:top; padding: 0;">
+                  <p style="font-weight:bold; margin-bottom:4px; text-align:right !important;">ĐẠI DIỆN BÊN B</p>
+                  <p style="font-style:italic; font-size:12px; color:#666; text-align:right !important;">$signInstruction</p>
                 </td>
               </tr>
             </table>

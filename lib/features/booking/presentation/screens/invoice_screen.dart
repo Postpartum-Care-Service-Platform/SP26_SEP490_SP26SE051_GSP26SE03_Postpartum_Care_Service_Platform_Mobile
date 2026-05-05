@@ -635,18 +635,18 @@ class _ContractHtmlViewerScreenState extends State<_ContractHtmlViewerScreen> {
                       if (splitIndex == -1) splitIndex = originalSignaturesBlock.lastIndexOf('<div', startBInBlock);
                       if (splitIndex <= 0) splitIndex = startBInBlock;
                       
-                      String blockA = originalSignaturesBlock.substring(0, splitIndex).trim();
-                      String blockB = originalSignaturesBlock.substring(splitIndex).trim();
-                      
-                      // Inject class "no-border" to override td borders
+                      // Sử dụng template sạch thay vì cắt ghép để tránh lỗi trôi văn bản
+                      const signInstruction = '(Ký, ghi rõ họ tên)';
                       String tableHtml = '''
-                      <table class="signature-table no-border" style="width:100%; margin-top:32px;">
+                      <table class="signature-table no-border" style="width:100%; margin-top:32px; margin-bottom:40px;">
                         <tr class="no-border">
-                          <td class="no-border" style="width:50%;">
-                            $blockA
+                          <td class="no-border" style="width:50%; text-align:left !important;">
+                            <p style="font-weight:bold; margin-bottom:4px; text-align:left !important;">ĐẠI DIỆN BÊN A</p>
+                            <p style="font-style:italic; font-size:12px; color:#666; text-align:left !important;">$signInstruction</p>
                           </td>
-                          <td class="no-border" style="width:50%;">
-                            $blockB
+                          <td class="no-border" style="width:50%; text-align:right !important;">
+                            <p style="font-weight:bold; margin-bottom:4px; text-align:right !important;">ĐẠI DIỆN BÊN B</p>
+                            <p style="font-style:italic; font-size:12px; color:#666; text-align:right !important;">$signInstruction</p>
                           </td>
                         </tr>
                       </table>
@@ -720,6 +720,16 @@ class _ContractHtmlViewerScreenState extends State<_ContractHtmlViewerScreen> {
                             'color': '#1a1a1a',
                           };
                         case 'p':
+                          final text = element.text.toUpperCase();
+                          if (RegExp(r'ĐẠI[\s\u00A0]*DIỆN[\s\u00A0]*BÊN|KÝ,[\s\u00A0]*GHI[\s\u00A0]*RÕ[\s\u00A0]*HỌ[\s\u00A0]*TÊN').hasMatch(text)) {
+                            return {
+                              'text-align': 'center',
+                              'width': '100%',
+                              'margin-top': '4px',
+                              'margin-bottom': '4px',
+                              'text-justify': 'none',
+                            };
+                          }
                           return {
                             'margin-top': '8px',
                             'margin-bottom': '8px',

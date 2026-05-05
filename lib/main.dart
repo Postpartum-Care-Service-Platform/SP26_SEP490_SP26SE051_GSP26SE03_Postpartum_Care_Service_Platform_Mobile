@@ -13,11 +13,16 @@ import 'core/routing/app_routes.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/chat/presentation/bloc/chat_bloc.dart';
 
+import 'core/services/notification_service.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Load environment variables
   await AppConfig.init();
+
+  // Initialize System Notifications
+  await NotificationService.initialize();
 
   // DEV ONLY: Accept self-signed certs (SignalR / HTTPS)
   if (kDebugMode && !kIsWeb) {

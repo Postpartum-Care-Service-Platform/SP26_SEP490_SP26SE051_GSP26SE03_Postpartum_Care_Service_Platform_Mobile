@@ -112,6 +112,7 @@ class _AppScaffoldState extends State<AppScaffold> {
       child: Scaffold(
         backgroundColor: AppColors.background,
         body: RealtimeNotificationListener(
+          currentTab: _currentTab,
           child: PageView(
             controller: _pageController,
             onPageChanged: (index) {

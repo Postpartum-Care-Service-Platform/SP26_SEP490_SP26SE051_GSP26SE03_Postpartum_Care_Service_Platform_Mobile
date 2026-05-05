@@ -6,13 +6,22 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/app_text_styles.dart';
 import '../../../../core/utils/app_responsive.dart';
 import 'package:flutter/services.dart';
+import '../../../../core/widgets/app_bottom_navigation_bar.dart';
 import '../bloc/chat_bloc.dart';
 import '../bloc/chat_event.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../../../core/services/notification_service.dart';
 
 class RealtimeNotificationListener extends StatefulWidget {
   final Widget child;
+  final AppBottomTab currentTab;
 
-  const RealtimeNotificationListener({super.key, required this.child});
+  const RealtimeNotificationListener({
+    super.key,
+    required this.child,
+    required this.currentTab,
+  });
 
   @override
   State<RealtimeNotificationListener> createState() =>
@@ -73,16 +82,22 @@ class _RealtimeNotificationListenerState
     if (!mounted) return;
 
     final chatState = context.read<ChatBloc>().state;
+    final authState = context.read<AuthBloc>().state;
 
-    // Don't show notification if user is already in the conversation
-    if (chatState.selectedConversation?.id == data.conversationId) {
+    // Get current user ID to avoid showing notifications for our own messages
+    String? currentUserId;
+    if (authState is AuthCurrentAccountLoaded) {
+      currentUserId = authState.account.id.toString();
+    }
+
+    // Don't show notification if user is already in the conversation AND on the Chat tab
+    if (widget.currentTab == AppBottomTab.chat &&
+        chatState.selectedConversation?.id == data.conversationId) {
       return;
     }
 
-    // Don't show if it's our own message (though SignalR usually doesn't echo back
-    // unless configured, but better safe)
-    // Here we assume senderType 'customer' is the current user for customer app
-    if (data.message.senderType.toLowerCase() == 'customer') {
+    // Don't show if it's our own message
+    if (data.message.senderId == currentUserId) {
       return;
     }
 
@@ -127,6 +142,13 @@ class _RealtimeNotificationListenerState
     );
 
     Overlay.of(context).insert(_overlayEntry!);
+    
+    // Also show system-level notification
+    NotificationService.showNotification(
+      id: conversationId,
+      title: title,
+      body: message,
+    );
 
     _dismissTimer = Timer(const Duration(seconds: 4), () {
       _removeOverlay();

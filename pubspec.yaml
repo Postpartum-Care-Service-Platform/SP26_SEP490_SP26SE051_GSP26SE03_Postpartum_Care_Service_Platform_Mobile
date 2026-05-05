@@ -40,6 +40,7 @@ dependencies:
 
   # Permissions
   permission_handler: ^11.3.1
+  flutter_local_notifications: ^17.2.2
   # State management
   flutter_bloc: ^8.1.6
   equatable: ^2.0.5
