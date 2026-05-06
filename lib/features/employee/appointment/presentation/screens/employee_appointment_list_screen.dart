@@ -2,13 +2,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../../core/constants/app_colors.dart';  
-import '../../../../../core/di/injection_container.dart'; 
+import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/di/injection_container.dart';
 import '../../../../../core/utils/app_responsive.dart';
 import '../../../../../core/utils/app_text_styles.dart';
 import '../../../../../features/employee/shell/presentation/widgets/employee_header_bar.dart';
-import '../../../../../features/employee/shell/presentation/widgets/employee_scaffold.dart';  
-import '../../../../../features/employee/appointment/domain/entities/appointment_entity.dart';   
+import '../../../../../features/employee/shell/presentation/widgets/employee_scaffold.dart';
+import '../../../../../features/employee/appointment/domain/entities/appointment_entity.dart';
 import '../../../../../features/employee/appointment/domain/entities/appointment_status.dart';
 import '../../../../../features/employee/appointment/presentation/bloc/appointment/appointment_bloc.dart';
 import '../../../../../features/employee/appointment/presentation/bloc/appointment/appointment_event.dart';
@@ -321,11 +321,7 @@ class _LoadedContentState extends State<_LoadedContent> {
                       color: color.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
-                      icon,
-                      size: 40,
-                      color: color,
-                    ),
+                    child: Icon(icon, size: 40, color: color),
                   ),
                   const SizedBox(height: 20),
                   Text(
@@ -427,7 +423,8 @@ class _LoadedContentState extends State<_LoadedContent> {
         ? (totalUpcomingPages > 0 ? totalUpcomingPages - 1 : 0)
         : _currentPageUpcoming;
     final startUpcoming = safeCurrentPageUpcoming * _pageSize;
-    final endUpcoming = (startUpcoming + _pageSize) > upcomingAppointments.length
+    final endUpcoming =
+        (startUpcoming + _pageSize) > upcomingAppointments.length
         ? upcomingAppointments.length
         : (startUpcoming + _pageSize);
     final visibleUpcoming = upcomingAppointments.isEmpty
@@ -435,12 +432,15 @@ class _LoadedContentState extends State<_LoadedContent> {
         : upcomingAppointments.sublist(startUpcoming, endUpcoming);
 
     // Pagination logic for completed appointments
-    final totalCompletedPages = (completedAppointments.length / _pageSize).ceil();
-    final safeCurrentPageCompleted = _currentPageCompleted >= totalCompletedPages
+    final totalCompletedPages = (completedAppointments.length / _pageSize)
+        .ceil();
+    final safeCurrentPageCompleted =
+        _currentPageCompleted >= totalCompletedPages
         ? (totalCompletedPages > 0 ? totalCompletedPages - 1 : 0)
         : _currentPageCompleted;
     final startCompleted = safeCurrentPageCompleted * _pageSize;
-    final endCompleted = (startCompleted + _pageSize) > completedAppointments.length
+    final endCompleted =
+        (startCompleted + _pageSize) > completedAppointments.length
         ? completedAppointments.length
         : (startCompleted + _pageSize);
     final visibleCompleted = completedAppointments.isEmpty
@@ -492,14 +492,17 @@ class _LoadedContentState extends State<_LoadedContent> {
                             onPrevious: safeCurrentPageUpcoming > 0
                                 ? () {
                                     setState(() {
-                                      _currentPageUpcoming = safeCurrentPageUpcoming - 1;
+                                      _currentPageUpcoming =
+                                          safeCurrentPageUpcoming - 1;
                                     });
                                   }
                                 : null,
-                            onNext: safeCurrentPageUpcoming < totalUpcomingPages - 1
+                            onNext:
+                                safeCurrentPageUpcoming < totalUpcomingPages - 1
                                 ? () {
                                     setState(() {
-                                      _currentPageUpcoming = safeCurrentPageUpcoming + 1;
+                                      _currentPageUpcoming =
+                                          safeCurrentPageUpcoming + 1;
                                     });
                                   }
                                 : null,
@@ -513,10 +516,12 @@ class _LoadedContentState extends State<_LoadedContent> {
                     padding: padding.copyWith(top: 24, bottom: 24),
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
-                         _SectionTitle(
+                        _SectionTitle(
                           icon: Icons.check_circle_outline_rounded,
                           title: 'Đã hoàn thành',
-                          iconColor: AppColors.textSecondary.withValues(alpha: 0.5),
+                          iconColor: AppColors.textSecondary.withValues(
+                            alpha: 0.5,
+                          ),
                         ),
                         const SizedBox(height: 12),
                         ...visibleCompleted.map(
@@ -540,14 +545,18 @@ class _LoadedContentState extends State<_LoadedContent> {
                             onPrevious: safeCurrentPageCompleted > 0
                                 ? () {
                                     setState(() {
-                                      _currentPageCompleted = safeCurrentPageCompleted - 1;
+                                      _currentPageCompleted =
+                                          safeCurrentPageCompleted - 1;
                                     });
                                   }
                                 : null,
-                            onNext: safeCurrentPageCompleted < totalCompletedPages - 1
+                            onNext:
+                                safeCurrentPageCompleted <
+                                    totalCompletedPages - 1
                                 ? () {
                                     setState(() {
-                                      _currentPageCompleted = safeCurrentPageCompleted + 1;
+                                      _currentPageCompleted =
+                                          safeCurrentPageCompleted + 1;
                                     });
                                   }
                                 : null,
@@ -622,7 +631,11 @@ class _LoadedContentState extends State<_LoadedContent> {
               fontSize: 14,
               color: AppColors.textSecondary.withValues(alpha: 0.6),
             ),
-            prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primary, size: 20),
+            prefixIcon: const Icon(
+              Icons.search_rounded,
+              color: AppColors.primary,
+              size: 20,
+            ),
             suffixIcon: _searchQuery.isNotEmpty
                 ? IconButton(
                     icon: const Icon(Icons.close_rounded, size: 18),
@@ -820,7 +833,9 @@ class _AppointmentCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               color: statusColor.withValues(alpha: 0.08),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
             ),
             child: Row(
               children: [
@@ -837,7 +852,7 @@ class _AppointmentCard extends StatelessWidget {
               ],
             ),
           ),
-          
+
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -852,7 +867,9 @@ class _AppointmentCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            appointment.appointmentTypeName ?? appointment.name ?? 'Lịch hẹn',
+                            appointment.appointmentTypeName ??
+                                appointment.name ??
+                                'Lịch hẹn',
                             style: AppTextStyles.arimo(
                               fontSize: 16,
                               fontWeight: FontWeight.w900,
@@ -874,12 +891,12 @@ class _AppointmentCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                
+
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 12),
                   child: Divider(height: 1, color: Color(0xFFF1F5F9)),
                 ),
-                
+
                 // Customer Info
                 Material(
                   color: Colors.transparent,
@@ -888,10 +905,12 @@ class _AppointmentCard extends StatelessWidget {
                       if (appointment.customer?.id != null) {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (_) => EmployeeCustomerFamilyProfilesScreen(
-                              customerId: appointment.customer!.id!,
-                              customerName: appointment.customer?.username ?? '',
-                            ),
+                            builder: (_) =>
+                                EmployeeCustomerFamilyProfilesScreen(
+                                  customerId: appointment.customer!.id,
+                                  customerName:
+                                      appointment.customer?.username ?? '',
+                                ),
                           ),
                         );
                       }
@@ -902,14 +921,22 @@ class _AppointmentCard extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: Colors.orange.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.orange.withValues(alpha: 0.1)),
+                        border: Border.all(
+                          color: Colors.orange.withValues(alpha: 0.1),
+                        ),
                       ),
                       child: Row(
                         children: [
                           CircleAvatar(
                             radius: 18,
-                            backgroundColor: Colors.orange.withValues(alpha: 0.1),
-                            child: const Icon(Icons.person_rounded, size: 18, color: Colors.orange),
+                            backgroundColor: Colors.orange.withValues(
+                              alpha: 0.1,
+                            ),
+                            child: const Icon(
+                              Icons.person_rounded,
+                              size: 18,
+                              color: Colors.orange,
+                            ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -919,7 +946,8 @@ class _AppointmentCard extends StatelessWidget {
                                 Row(
                                   children: [
                                     Text(
-                                      appointment.customer?.username ?? 'Khách lẻ',
+                                      appointment.customer?.username ??
+                                          'Khách lẻ',
                                       style: AppTextStyles.arimo(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w800,
@@ -928,9 +956,14 @@ class _AppointmentCard extends StatelessWidget {
                                     ),
                                     const SizedBox(width: 8),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 2,
+                                      ),
                                       decoration: BoxDecoration(
-                                        color: Colors.orange.withValues(alpha: 0.1),
+                                        color: Colors.orange.withValues(
+                                          alpha: 0.1,
+                                        ),
                                         borderRadius: BorderRadius.circular(4),
                                       ),
                                       child: Text(
@@ -945,7 +978,9 @@ class _AppointmentCard extends StatelessWidget {
                                   ],
                                 ),
                                 Text(
-                                  appointment.customer?.phone ?? appointment.customer?.email ?? 'Không có thông tin liên hệ',
+                                  appointment.customer?.phone ??
+                                      appointment.customer?.email ??
+                                      'Không có thông tin liên hệ',
                                   style: AppTextStyles.arimo(
                                     fontSize: 12,
                                     color: AppColors.textSecondary,
@@ -954,15 +989,19 @@ class _AppointmentCard extends StatelessWidget {
                               ],
                             ),
                           ),
-                          const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.orange),
+                          const Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            size: 14,
+                            color: Colors.orange,
+                          ),
                         ],
                       ),
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 20),
-                
+
                 // Action Buttons
                 Row(
                   children: [
@@ -1000,11 +1039,16 @@ class _AppointmentCard extends StatelessWidget {
 
   Color _statusAccentColor(AppointmentStatus status) {
     switch (status) {
-      case AppointmentStatus.completed: return const Color(0xFF16A34A);
-      case AppointmentStatus.scheduled: return const Color(0xFF2563EB);
-      case AppointmentStatus.pending: return const Color(0xFFCA8A04);
-      case AppointmentStatus.cancelled: return const Color(0xFFDC2626);
-      default: return const Color(0xFF64748B);
+      case AppointmentStatus.completed:
+        return const Color(0xFF16A34A);
+      case AppointmentStatus.scheduled:
+        return const Color(0xFF2563EB);
+      case AppointmentStatus.pending:
+        return const Color(0xFFCA8A04);
+      case AppointmentStatus.cancelled:
+        return const Color(0xFFDC2626);
+      default:
+        return const Color(0xFF64748B);
     }
   }
 }
@@ -1040,12 +1084,17 @@ class _CompletedAppointmentCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               color: const Color(0xFF16A34A).withValues(alpha: 0.06),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
             ),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFE8F7EE),
                     borderRadius: BorderRadius.circular(999),
@@ -1071,7 +1120,7 @@ class _CompletedAppointmentCard extends StatelessWidget {
               ],
             ),
           ),
-          
+
           Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -1086,25 +1135,37 @@ class _CompletedAppointmentCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            appointment.appointmentTypeName ?? appointment.name ?? 'Lịch hẹn',
+                            appointment.appointmentTypeName ??
+                                appointment.name ??
+                                'Lịch hẹn',
                             style: AppTextStyles.arimo(
                               fontSize: 16,
                               fontWeight: FontWeight.w900,
-                              color: AppColors.textPrimary.withValues(alpha: 0.7),
+                              color: AppColors.textPrimary.withValues(
+                                alpha: 0.7,
+                              ),
                               letterSpacing: -0.5,
                             ),
                           ),
                           const SizedBox(height: 6),
                           Row(
                             children: [
-                              Icon(Icons.access_time_rounded, size: 14, color: AppColors.textSecondary.withValues(alpha: 0.7)),
+                              Icon(
+                                Icons.access_time_rounded,
+                                size: 14,
+                                color: AppColors.textSecondary.withValues(
+                                  alpha: 0.7,
+                                ),
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 _formatDateTime(appointment.appointmentDate),
                                 style: AppTextStyles.arimo(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.textSecondary.withValues(alpha: 0.7),
+                                  color: AppColors.textSecondary.withValues(
+                                    alpha: 0.7,
+                                  ),
                                 ),
                               ),
                             ],
@@ -1114,12 +1175,12 @@ class _CompletedAppointmentCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                
+
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 12),
                   child: Divider(height: 1, color: Color(0xFFF1F5F9)),
                 ),
-                
+
                 // Customer Info
                 Material(
                   color: Colors.transparent,
@@ -1128,10 +1189,12 @@ class _CompletedAppointmentCard extends StatelessWidget {
                       if (appointment.customer?.id != null) {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (_) => EmployeeCustomerFamilyProfilesScreen(
-                              customerId: appointment.customer!.id!,
-                              customerName: appointment.customer?.username ?? '',
-                            ),
+                            builder: (_) =>
+                                EmployeeCustomerFamilyProfilesScreen(
+                                  customerId: appointment.customer!.id,
+                                  customerName:
+                                      appointment.customer?.username ?? '',
+                                ),
                           ),
                         );
                       }
@@ -1142,14 +1205,22 @@ class _CompletedAppointmentCard extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: AppColors.background.withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.borderLight.withValues(alpha: 0.1)),
+                        border: Border.all(
+                          color: AppColors.borderLight.withValues(alpha: 0.1),
+                        ),
                       ),
                       child: Row(
                         children: [
                           CircleAvatar(
                             radius: 18,
                             backgroundColor: const Color(0xFFF1F5F9),
-                            child: Icon(Icons.person_outline_rounded, size: 18, color: AppColors.textSecondary.withValues(alpha: 0.5)),
+                            child: Icon(
+                              Icons.person_outline_rounded,
+                              size: 18,
+                              color: AppColors.textSecondary.withValues(
+                                alpha: 0.5,
+                              ),
+                            ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -1159,11 +1230,19 @@ class _CompletedAppointmentCard extends StatelessWidget {
                                 Row(
                                   children: [
                                     Text(
-                                      appointment.customer?.username?.isNotEmpty == true ? appointment.customer!.username! : 'Khách lẻ',
+                                      appointment
+                                                  .customer
+                                                  ?.username
+                                                  ?.isNotEmpty ==
+                                              true
+                                          ? appointment.customer!.username!
+                                          : 'Khách lẻ',
                                       style: AppTextStyles.arimo(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w700,
-                                        color: AppColors.textPrimary.withValues(alpha: 0.7),
+                                        color: AppColors.textPrimary.withValues(
+                                          alpha: 0.7,
+                                        ),
                                       ),
                                     ),
                                     const SizedBox(width: 8),
@@ -1171,22 +1250,33 @@ class _CompletedAppointmentCard extends StatelessWidget {
                                       '• Hồ sơ',
                                       style: AppTextStyles.arimo(
                                         fontSize: 10,
-                                        color: AppColors.textSecondary.withValues(alpha: 0.5),
+                                        color: AppColors.textSecondary
+                                            .withValues(alpha: 0.5),
                                       ),
                                     ),
                                   ],
                                 ),
                                 Text(
-                                  appointment.customer?.phone ?? appointment.customer?.email ?? 'Không có thông tin liên hệ',
+                                  appointment.customer?.phone ??
+                                      appointment.customer?.email ??
+                                      'Không có thông tin liên hệ',
                                   style: AppTextStyles.arimo(
                                     fontSize: 12,
-                                    color: AppColors.textSecondary.withValues(alpha: 0.7),
+                                    color: AppColors.textSecondary.withValues(
+                                      alpha: 0.7,
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          Icon(Icons.arrow_forward_ios_rounded, size: 12, color: AppColors.textSecondary.withValues(alpha: 0.3)),
+                          Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            size: 12,
+                            color: AppColors.textSecondary.withValues(
+                              alpha: 0.3,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -1414,7 +1504,7 @@ class _AppointmentPaginationControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (totalPages <= 1) return const SizedBox.shrink();
-    
+
     final scale = AppResponsive.scaleFactor(context);
     final primaryColor = AppColors.primary;
 
@@ -1446,13 +1536,21 @@ class _AppointmentPaginationControls extends StatelessWidget {
                   List<Widget> items = [];
                   int start = (currentPage - 1).clamp(0, totalPages - 1);
                   int end = (start + 2).clamp(0, totalPages - 1);
-                  
+
                   if (end == totalPages - 1 && totalPages >= 3) {
                     start = (end - 2).clamp(0, totalPages - 1);
                   }
 
                   if (start > 0) {
-                    items.add(Text('...', style: TextStyle(color: primaryColor, fontSize: 11 * scale)));
+                    items.add(
+                      Text(
+                        '...',
+                        style: TextStyle(
+                          color: primaryColor,
+                          fontSize: 11 * scale,
+                        ),
+                      ),
+                    );
                   }
 
                   for (int i = start; i <= end; i++) {
@@ -1469,7 +1567,9 @@ class _AppointmentPaginationControls extends StatelessWidget {
                             color: isSelected ? primaryColor : Colors.white,
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: isSelected ? primaryColor : primaryColor.withValues(alpha: 0.3),
+                              color: isSelected
+                                  ? primaryColor
+                                  : primaryColor.withValues(alpha: 0.3),
                             ),
                           ),
                           alignment: Alignment.center,
@@ -1477,7 +1577,9 @@ class _AppointmentPaginationControls extends StatelessWidget {
                             '${index + 1}',
                             style: AppTextStyles.arimo(
                               fontSize: 11 * scale,
-                              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                              fontWeight: isSelected
+                                  ? FontWeight.w800
+                                  : FontWeight.w600,
                               color: isSelected ? Colors.white : primaryColor,
                             ),
                           ),
@@ -1487,9 +1589,17 @@ class _AppointmentPaginationControls extends StatelessWidget {
                   }
 
                   if (end < totalPages - 1) {
-                    items.add(Text('...', style: TextStyle(color: primaryColor, fontSize: 11 * scale)));
+                    items.add(
+                      Text(
+                        '...',
+                        style: TextStyle(
+                          color: primaryColor,
+                          fontSize: 11 * scale,
+                        ),
+                      ),
+                    );
                   }
-                  
+
                   return items;
                 }(),
               ],

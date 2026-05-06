@@ -14,7 +14,6 @@ import '../../../../../core/utils/app_text_styles.dart';
 import '../../../../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../../../../features/auth/presentation/bloc/auth_event.dart';
 import '../../../../../features/auth/presentation/bloc/auth_state.dart';
-import '../../../../../features/booking/data/models/booking_model.dart';
 import '../../data/datasources/appointment_employee_remote_datasource.dart';
 import '../../../../../features/employee/account/presentation/screens/employee_profile_screen.dart';
 import '../../../../../features/employee/shell/presentation/widgets/employee_quick_menu.dart';
@@ -191,7 +190,6 @@ class _LoadedContentState extends State<_LoadedContent> {
     _appointmentRemote = AppointmentEmployeeRemoteDataSource(dio: dio);
     _summaryFuture = _loadSummary();
   }
-
 
   Future<_DashboardSummary> _loadSummary() async {
     try {
@@ -452,14 +450,18 @@ class _HeaderCardState extends State<_HeaderCard>
 
         if (authState is AuthCurrentAccountLoaded) {
           final account = authState.account;
-          staffName = account.ownerProfile?.fullName ?? 
-                    (account.username.isNotEmpty ? account.username : account.email.split('@').first);
+          staffName =
+              account.ownerProfile?.fullName ??
+              (account.username.isNotEmpty
+                  ? account.username
+                  : account.email.split('@').first);
           username = account.username;
           email = account.email;
           phone = account.phone;
           avatarUrl = account.avatarUrl;
           experience = account.experience;
-          role = (account as dynamic).ownerProfile?.memberTypeName ?? 'Nhân viên';
+          role =
+              (account as dynamic).ownerProfile?.memberTypeName ?? 'Nhân viên';
         }
 
         return GestureDetector(
@@ -479,7 +481,15 @@ class _HeaderCardState extends State<_HeaderCard>
                     ? Transform(
                         transform: Matrix4.identity()..rotateY(math.pi),
                         alignment: Alignment.center,
-                        child: _buildBackSide(scale, staffName, username, email, phone, role, avatarUrl),
+                        child: _buildBackSide(
+                          scale,
+                          staffName,
+                          username,
+                          email,
+                          phone,
+                          role,
+                          avatarUrl,
+                        ),
                       )
                     : _buildFrontSide(scale, staffName, avatarUrl, experience),
               );
@@ -490,7 +500,12 @@ class _HeaderCardState extends State<_HeaderCard>
     );
   }
 
-  Widget _buildFrontSide(double scale, String staffName, String? avatarUrl, int? experience) {
+  Widget _buildFrontSide(
+    double scale,
+    String staffName,
+    String? avatarUrl,
+    int? experience,
+  ) {
     final now = DateTime.now();
     final dateStr = DateFormat('EEEE, d MMMM yyyy', 'vi').format(now);
 
@@ -501,11 +516,7 @@ class _HeaderCardState extends State<_HeaderCard>
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF1A1A2E),
-            Color(0xFF16213E),
-            Color(0xFF0F3460),
-          ],
+          colors: [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F3460)],
         ),
         borderRadius: BorderRadius.circular(28 * scale),
         boxShadow: [
@@ -551,7 +562,11 @@ class _HeaderCardState extends State<_HeaderCard>
                             gradient: const LinearGradient(
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
-                              colors: [Color(0xFFFF8C00), Color(0xFFF59E0B), Color(0xFFFF6B6B)],
+                              colors: [
+                                Color(0xFFFF8C00),
+                                Color(0xFFF59E0B),
+                                Color(0xFFFF6B6B),
+                              ],
                             ),
                             borderRadius: BorderRadius.circular(22 * scale),
                           ),
@@ -564,10 +579,19 @@ class _HeaderCardState extends State<_HeaderCard>
                             ),
                             child: avatarUrl != null && avatarUrl.isNotEmpty
                                 ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(17 * scale),
-                                    child: Image.network(avatarUrl, fit: BoxFit.cover),
+                                    borderRadius: BorderRadius.circular(
+                                      17 * scale,
+                                    ),
+                                    child: Image.network(
+                                      avatarUrl,
+                                      fit: BoxFit.cover,
+                                    ),
                                   )
-                                : Icon(Icons.person_rounded, color: Colors.white70, size: 28 * scale),
+                                : Icon(
+                                    Icons.person_rounded,
+                                    color: Colors.white70,
+                                    size: 28 * scale,
+                                  ),
                           ),
                         ),
                         Positioned(
@@ -579,17 +603,26 @@ class _HeaderCardState extends State<_HeaderCard>
                               return Container(
                                 width: 16 * scale,
                                 height: 16 * scale,
-                                decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF1A1A2E)),
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Color(0xFF1A1A2E),
+                                ),
                                 alignment: Alignment.center,
                                 child: Container(
-                                  width: (10 + _pulseController.value * 2) * scale,
-                                  height: (10 + _pulseController.value * 2) * scale,
+                                  width:
+                                      (10 + _pulseController.value * 2) * scale,
+                                  height:
+                                      (10 + _pulseController.value * 2) * scale,
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
                                     color: const Color(0xFF22C55E),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: const Color(0xFF22C55E).withValues(alpha: 0.4 * _pulseController.value),
+                                        color: const Color(0xFF22C55E)
+                                            .withValues(
+                                              alpha:
+                                                  0.4 * _pulseController.value,
+                                            ),
                                         blurRadius: 6 * scale,
                                       ),
                                     ],
@@ -627,19 +660,32 @@ class _HeaderCardState extends State<_HeaderCard>
                         ],
                       ),
                     ),
-                    Icon(Icons.flip_camera_android_rounded, color: Colors.white24, size: 20 * scale),
+                    Icon(
+                      Icons.flip_camera_android_rounded,
+                      color: Colors.white24,
+                      size: 20 * scale,
+                    ),
                   ],
                 ),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 14 * scale, vertical: 12 * scale),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 14 * scale,
+                    vertical: 12 * scale,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.07),
                     borderRadius: BorderRadius.circular(14 * scale),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.08),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.calendar_today_rounded, size: 14 * scale, color: AppColors.primary),
+                      Icon(
+                        Icons.calendar_today_rounded,
+                        size: 14 * scale,
+                        color: AppColors.primary,
+                      ),
                       SizedBox(width: 8 * scale),
                       Expanded(
                         child: Text(
@@ -652,14 +698,23 @@ class _HeaderCardState extends State<_HeaderCard>
                         ),
                       ),
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 10 * scale, vertical: 4 * scale),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 10 * scale,
+                          vertical: 4 * scale,
+                        ),
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(colors: [Color(0xFFFF8C00), Color(0xFFF59E0B)]),
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFFF8C00), Color(0xFFF59E0B)],
+                          ),
                           borderRadius: BorderRadius.circular(20 * scale),
                         ),
                         child: Text(
                           '${experience ?? 0} năm KN',
-                          style: AppTextStyles.arimo(fontSize: 11 * scale, fontWeight: FontWeight.w700, color: Colors.white),
+                          style: AppTextStyles.arimo(
+                            fontSize: 11 * scale,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ],
@@ -673,7 +728,15 @@ class _HeaderCardState extends State<_HeaderCard>
     );
   }
 
-  Widget _buildBackSide(double scale, String name, String username, String email, String phone, String role, String? avatarUrl) {
+  Widget _buildBackSide(
+    double scale,
+    String name,
+    String username,
+    String email,
+    String phone,
+    String role,
+    String? avatarUrl,
+  ) {
     return Container(
       height: 175 * scale,
       margin: EdgeInsets.symmetric(vertical: 4 * scale),
@@ -695,7 +758,11 @@ class _HeaderCardState extends State<_HeaderCard>
           Positioned(
             right: -20 * scale,
             bottom: -20 * scale,
-            child: Icon(Icons.security_rounded, size: 150 * scale, color: Colors.grey.withValues(alpha: 0.03)),
+            child: Icon(
+              Icons.security_rounded,
+              size: 150 * scale,
+              color: Colors.grey.withValues(alpha: 0.03),
+            ),
           ),
           Padding(
             padding: EdgeInsets.all(22 * scale),
@@ -714,7 +781,11 @@ class _HeaderCardState extends State<_HeaderCard>
                         letterSpacing: 2.0,
                       ),
                     ),
-                    Icon(Icons.contactless_rounded, color: AppColors.primary, size: 20 * scale),
+                    Icon(
+                      Icons.contactless_rounded,
+                      color: AppColors.primary,
+                      size: 20 * scale,
+                    ),
                   ],
                 ),
                 Row(
@@ -725,15 +796,24 @@ class _HeaderCardState extends State<_HeaderCard>
                       height: 80 * scale,
                       padding: EdgeInsets.all(4 * scale),
                       decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+                        border: Border.all(
+                          color: Colors.grey.withValues(alpha: 0.2),
+                        ),
                         borderRadius: BorderRadius.circular(12 * scale),
                       ),
                       child: avatarUrl != null
                           ? ClipRRect(
                               borderRadius: BorderRadius.circular(8 * scale),
-                              child: Image.network(avatarUrl, fit: BoxFit.cover),
+                              child: Image.network(
+                                avatarUrl,
+                                fit: BoxFit.cover,
+                              ),
                             )
-                          : Icon(Icons.qr_code_2_rounded, size: 70 * scale, color: Colors.black87),
+                          : Icon(
+                              Icons.qr_code_2_rounded,
+                              size: 70 * scale,
+                              color: Colors.black87,
+                            ),
                     ),
                     SizedBox(width: 16 * scale),
                     Expanded(
@@ -757,9 +837,17 @@ class _HeaderCardState extends State<_HeaderCard>
                             ),
                           ),
                           SizedBox(height: 8 * scale),
-                          _buildContactRow(Icons.person_outline_rounded, username, scale),
+                          _buildContactRow(
+                            Icons.person_outline_rounded,
+                            username,
+                            scale,
+                          ),
                           SizedBox(height: 4 * scale),
-                          _buildContactRow(Icons.phone_iphone_rounded, phone, scale),
+                          _buildContactRow(
+                            Icons.phone_iphone_rounded,
+                            phone,
+                            scale,
+                          ),
                           SizedBox(height: 4 * scale),
                           _buildContactRow(Icons.email_outlined, email, scale),
                         ],
@@ -930,7 +1018,6 @@ class _DashboardSummaryRow extends StatelessWidget {
         final isLoading = snapshot.connectionState == ConnectionState.waiting;
         final summary = snapshot.data;
 
-
         if (isHomeStaff) {
           return Row(
             children: [
@@ -1052,10 +1139,7 @@ class _DashboardMiniCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24 * scale),
-        border: Border.all(
-          color: color.withValues(alpha: 0.12),
-          width: 1,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.12), width: 1),
         boxShadow: [
           BoxShadow(
             color: color.withValues(alpha: 0.08),
@@ -1225,7 +1309,6 @@ class _AppointmentSkeletonCard extends StatelessWidget {
   }
 }
 
-
 /// Wallet summary section for home-staff - Premium iOS style
 class _HomeStaffWalletSection extends StatefulWidget {
   const _HomeStaffWalletSection();
@@ -1352,7 +1435,9 @@ class _HomeStaffWalletSectionState extends State<_HomeStaffWalletSection> {
                                     Container(
                                       padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
-                                        color: AppColors.primary.withValues(alpha: 0.15),
+                                        color: AppColors.primary.withValues(
+                                          alpha: 0.15,
+                                        ),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: Icon(
@@ -1367,7 +1452,9 @@ class _HomeStaffWalletSectionState extends State<_HomeStaffWalletSection> {
                                       style: AppTextStyles.arimo(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w600,
-                                        color: Colors.white.withValues(alpha: 0.7),
+                                        color: Colors.white.withValues(
+                                          alpha: 0.7,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -1381,7 +1468,9 @@ class _HomeStaffWalletSectionState extends State<_HomeStaffWalletSection> {
                                     color: Colors.white.withValues(alpha: 0.08),
                                     borderRadius: BorderRadius.circular(100),
                                     border: Border.all(
-                                      color: Colors.white.withValues(alpha: 0.06),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.06,
+                                      ),
                                     ),
                                   ),
                                   child: const Icon(
@@ -1417,7 +1506,9 @@ class _HomeStaffWalletSectionState extends State<_HomeStaffWalletSection> {
                                       style: AppTextStyles.arimo(
                                         fontSize: 12,
                                         fontWeight: FontWeight.w400,
-                                        color: Colors.white.withValues(alpha: 0.45),
+                                        color: Colors.white.withValues(
+                                          alpha: 0.45,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -1426,7 +1517,9 @@ class _HomeStaffWalletSectionState extends State<_HomeStaffWalletSection> {
                                   color: Colors.transparent,
                                   child: InkWell(
                                     onTap: () {
-                                      CreateHomeStaffWithdrawSheet.show(context);
+                                      CreateHomeStaffWithdrawSheet.show(
+                                        context,
+                                      );
                                     },
                                     borderRadius: BorderRadius.circular(14),
                                     child: Container(
@@ -1440,7 +1533,9 @@ class _HomeStaffWalletSectionState extends State<_HomeStaffWalletSection> {
                                         borderRadius: BorderRadius.circular(14),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: AppColors.primary.withValues(alpha: 0.3),
+                                            color: AppColors.primary.withValues(
+                                              alpha: 0.3,
+                                            ),
                                             blurRadius: 12,
                                             offset: const Offset(0, 4),
                                           ),
