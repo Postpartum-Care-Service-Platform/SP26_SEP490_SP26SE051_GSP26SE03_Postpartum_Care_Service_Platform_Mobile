@@ -169,4 +169,9 @@ class AuthRestoreCurrentAccountFromCache extends AuthEvent {
   const AuthRestoreCurrentAccountFromCache();
 }
 
+/// Event to log out
+class AuthLogout extends AuthEvent {
+  const AuthLogout();
+}
+
 

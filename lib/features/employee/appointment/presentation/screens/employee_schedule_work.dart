@@ -1,4 +1,5 @@
 // lib/features/employee/presentation/screens/employee_schedule_work.dart
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -394,9 +395,33 @@ class _LoadedContentState extends State<_LoadedContent> {
   }
 }
 
-/// Header card với chào nhân viên
-class _HeaderCard extends StatelessWidget {
+/// Header card với chào nhân viên — Premium iOS Style with 3D Flip effect
+class _HeaderCard extends StatefulWidget {
   const _HeaderCard();
+
+  @override
+  State<_HeaderCard> createState() => _HeaderCardState();
+}
+
+class _HeaderCardState extends State<_HeaderCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulseController;
+  bool _isFlipped = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
@@ -405,83 +430,176 @@ class _HeaderCard extends StatelessWidget {
     return 'Chào buổi tối';
   }
 
+  void _toggleFlip() {
+    setState(() {
+      _isFlipped = !_isFlipped;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final scale = AppResponsive.scaleFactor(context);
-    final now = DateTime.now();
-    final dateStr = DateFormat('EEEE, d MMMM', 'vi').format(now);
 
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, authState) {
         String staffName = 'Nhân viên';
+        String username = '';
+        String email = '';
+        String phone = '';
         String? avatarUrl;
         int? experience;
+        String role = 'Staff';
+
         if (authState is AuthCurrentAccountLoaded) {
           final account = authState.account;
-          staffName = account.username.isNotEmpty
-              ? account.username
-              : account.email.split('@').first;
+          staffName = account.ownerProfile?.fullName ?? 
+                    (account.username.isNotEmpty ? account.username : account.email.split('@').first);
+          username = account.username;
+          email = account.email;
+          phone = account.phone;
           avatarUrl = account.avatarUrl;
           experience = account.experience;
+          role = (account as dynamic).ownerProfile?.memberTypeName ?? 'Nhân viên';
         }
 
-        return Container(
-          margin: EdgeInsets.symmetric(vertical: 8 * scale),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24 * scale),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 16 * scale,
-                offset: Offset(0, 8 * scale),
+        return GestureDetector(
+          onTap: _toggleFlip,
+          child: TweenAnimationBuilder<double>(
+            tween: Tween<double>(begin: 0, end: _isFlipped ? 180 : 0),
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeInOutBack,
+            builder: (context, value, child) {
+              final isBack = value > 90;
+              return Transform(
+                transform: Matrix4.identity()
+                  ..setEntry(3, 2, 0.001) // perspective
+                  ..rotateY(value * math.pi / 180),
+                alignment: Alignment.center,
+                child: isBack
+                    ? Transform(
+                        transform: Matrix4.identity()..rotateY(math.pi),
+                        alignment: Alignment.center,
+                        child: _buildBackSide(scale, staffName, username, email, phone, role, avatarUrl),
+                      )
+                    : _buildFrontSide(scale, staffName, avatarUrl, experience),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildFrontSide(double scale, String staffName, String? avatarUrl, int? experience) {
+    final now = DateTime.now();
+    final dateStr = DateFormat('EEEE, d MMMM yyyy', 'vi').format(now);
+
+    return Container(
+      height: 175 * scale,
+      margin: EdgeInsets.symmetric(vertical: 4 * scale),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF1A1A2E),
+            Color(0xFF16213E),
+            Color(0xFF0F3460),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(28 * scale),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F3460).withValues(alpha: 0.35),
+            blurRadius: 24 * scale,
+            offset: Offset(0, 12 * scale),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        children: [
+          Positioned(
+            right: -30 * scale,
+            top: -30 * scale,
+            child: Container(
+              width: 120 * scale,
+              height: 120 * scale,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    AppColors.primary.withValues(alpha: 0.15),
+                    AppColors.primary.withValues(alpha: 0.0),
+                  ],
+                ),
               ),
-            ],
-            border: Border.all(
-              color: AppColors.borderLight.withValues(alpha: 0.1),
-              width: 1,
             ),
           ),
-          clipBehavior: Clip.antiAlias,
-          child: Column(
-            children: [
-              Padding(
-                padding: EdgeInsets.all(20 * scale),
-                child: Row(
+          Padding(
+            padding: EdgeInsets.all(22 * scale),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
                   children: [
-                    Container(
-                      width: 64 * scale,
-                      height: 64 * scale,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-                        ),
-                        borderRadius: BorderRadius.circular(20 * scale),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(
-                              0xFF6366F1,
-                            ).withValues(alpha: 0.2),
-                            blurRadius: 12 * scale,
-                            offset: Offset(0, 4 * scale),
-                          ),
-                        ],
-                      ),
-                      child: avatarUrl != null && avatarUrl.isNotEmpty
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(20 * scale),
-                              child: Image.network(
-                                avatarUrl,
-                                fit: BoxFit.cover,
-                              ),
-                            )
-                          : Icon(
-                              Icons.person_rounded,
-                              color: Colors.white,
-                              size: 32 * scale,
+                    Stack(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(3 * scale),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [Color(0xFFFF8C00), Color(0xFFF59E0B), Color(0xFFFF6B6B)],
                             ),
+                            borderRadius: BorderRadius.circular(22 * scale),
+                          ),
+                          child: Container(
+                            width: 60 * scale,
+                            height: 60 * scale,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1A1A2E),
+                              borderRadius: BorderRadius.circular(19 * scale),
+                            ),
+                            child: avatarUrl != null && avatarUrl.isNotEmpty
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(17 * scale),
+                                    child: Image.network(avatarUrl, fit: BoxFit.cover),
+                                  )
+                                : Icon(Icons.person_rounded, color: Colors.white70, size: 28 * scale),
+                          ),
+                        ),
+                        Positioned(
+                          right: 2 * scale,
+                          bottom: 2 * scale,
+                          child: AnimatedBuilder(
+                            animation: _pulseController,
+                            builder: (context, child) {
+                              return Container(
+                                width: 16 * scale,
+                                height: 16 * scale,
+                                decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF1A1A2E)),
+                                alignment: Alignment.center,
+                                child: Container(
+                                  width: (10 + _pulseController.value * 2) * scale,
+                                  height: (10 + _pulseController.value * 2) * scale,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: const Color(0xFF22C55E),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xFF22C55E).withValues(alpha: 0.4 * _pulseController.value),
+                                        blurRadius: 6 * scale,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                     SizedBox(width: 16 * scale),
                     Expanded(
@@ -493,101 +611,189 @@ class _HeaderCard extends StatelessWidget {
                             style: AppTextStyles.arimo(
                               fontSize: 13 * scale,
                               fontWeight: FontWeight.w500,
-                              color: AppColors.textSecondary,
+                              color: Colors.white.withValues(alpha: 0.6),
                             ),
                           ),
                           SizedBox(height: 4 * scale),
                           Text(
                             staffName,
                             style: AppTextStyles.arimo(
-                              fontSize: 22 * scale,
+                              fontSize: 24 * scale,
                               fontWeight: FontWeight.w800,
-                              color: AppColors.textPrimary,
+                              color: Colors.white,
                               letterSpacing: -0.5,
-                            ),
-                          ),
-                          SizedBox(height: 8 * scale),
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 8 * scale,
-                              vertical: 2 * scale,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(
-                                0xFF8B5CF6,
-                              ).withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8 * scale),
-                            ),
-                            child: Text(
-                              '${experience ?? 0} năm kinh nghiệm',
-                              style: AppTextStyles.arimo(
-                                fontSize: 11 * scale,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF8B5CF6),
-                              ),
                             ),
                           ),
                         ],
                       ),
                     ),
+                    Icon(Icons.flip_camera_android_rounded, color: Colors.white24, size: 20 * scale),
                   ],
                 ),
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 20 * scale,
-                  vertical: 12 * scale,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.background.withValues(alpha: 0.5),
-                  border: Border(
-                    top: BorderSide(
-                      color: AppColors.borderLight.withValues(alpha: 0.05),
-                    ),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 14 * scale, vertical: 12 * scale),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.07),
+                    borderRadius: BorderRadius.circular(14 * scale),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
                   ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.calendar_today_rounded,
-                      size: 14 * scale,
-                      color: AppColors.primary,
-                    ),
-                    SizedBox(width: 8 * scale),
-                    Text(
-                      dateStr,
-                      style: AppTextStyles.arimo(
-                        fontSize: 12 * scale,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    const Spacer(),
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 10 * scale,
-                        vertical: 4 * scale,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(20 * scale),
-                      ),
-                      child: Text(
-                        'Online',
-                        style: AppTextStyles.arimo(
-                          fontSize: 11 * scale,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
+                  child: Row(
+                    children: [
+                      Icon(Icons.calendar_today_rounded, size: 14 * scale, color: AppColors.primary),
+                      SizedBox(width: 8 * scale),
+                      Expanded(
+                        child: Text(
+                          dateStr,
+                          style: AppTextStyles.arimo(
+                            fontSize: 12 * scale,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white.withValues(alpha: 0.7),
+                          ),
                         ),
                       ),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 10 * scale, vertical: 4 * scale),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(colors: [Color(0xFFFF8C00), Color(0xFFF59E0B)]),
+                          borderRadius: BorderRadius.circular(20 * scale),
+                        ),
+                        child: Text(
+                          '${experience ?? 0} năm KN',
+                          style: AppTextStyles.arimo(fontSize: 11 * scale, fontWeight: FontWeight.w700, color: Colors.white),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBackSide(double scale, String name, String username, String email, String phone, String role, String? avatarUrl) {
+    return Container(
+      height: 175 * scale,
+      margin: EdgeInsets.symmetric(vertical: 4 * scale),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28 * scale),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 20 * scale,
+            offset: Offset(0, 10 * scale),
+          ),
+        ],
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        children: [
+          Positioned(
+            right: -20 * scale,
+            bottom: -20 * scale,
+            child: Icon(Icons.security_rounded, size: 150 * scale, color: Colors.grey.withValues(alpha: 0.03)),
+          ),
+          Padding(
+            padding: EdgeInsets.all(22 * scale),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'STAFF ID CARD',
+                      style: AppTextStyles.arimo(
+                        fontSize: 12 * scale,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.primary,
+                        letterSpacing: 2.0,
+                      ),
+                    ),
+                    Icon(Icons.contactless_rounded, color: AppColors.primary, size: 20 * scale),
+                  ],
+                ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 80 * scale,
+                      height: 80 * scale,
+                      padding: EdgeInsets.all(4 * scale),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+                        borderRadius: BorderRadius.circular(12 * scale),
+                      ),
+                      child: avatarUrl != null
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(8 * scale),
+                              child: Image.network(avatarUrl, fit: BoxFit.cover),
+                            )
+                          : Icon(Icons.qr_code_2_rounded, size: 70 * scale, color: Colors.black87),
+                    ),
+                    SizedBox(width: 16 * scale),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            name.toUpperCase(),
+                            style: AppTextStyles.arimo(
+                              fontSize: 18 * scale,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          Text(
+                            role,
+                            style: AppTextStyles.arimo(
+                              fontSize: 13 * scale,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          SizedBox(height: 8 * scale),
+                          _buildContactRow(Icons.person_outline_rounded, username, scale),
+                          SizedBox(height: 4 * scale),
+                          _buildContactRow(Icons.phone_iphone_rounded, phone, scale),
+                          SizedBox(height: 4 * scale),
+                          _buildContactRow(Icons.email_outlined, email, scale),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-              ),
-            ],
+                const SizedBox.shrink(),
+              ],
+            ),
           ),
-        );
-      },
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContactRow(IconData icon, String text, double scale) {
+    return Row(
+      children: [
+        Icon(icon, size: 12 * scale, color: Colors.grey),
+        SizedBox(width: 6 * scale),
+        Expanded(
+          child: Text(
+            text,
+            style: AppTextStyles.arimo(
+              fontSize: 11 * scale,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -841,72 +1047,85 @@ class _DashboardMiniCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget card = Container(
-      height: 80 * scale,
-      padding: EdgeInsets.all(12 * scale),
+      height: 124 * scale,
+      padding: EdgeInsets.all(16 * scale),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(16 * scale),
-        border: Border.all(color: color.withValues(alpha: 0.25)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 32 * scale,
-            height: 32 * scale,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10 * scale),
-            ),
-            child: Icon(icon, size: 18 * scale, color: color),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24 * scale),
+        border: Border.all(
+          color: color.withValues(alpha: 0.12),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.08),
+            blurRadius: 20 * scale,
+            offset: Offset(0, 8 * scale),
           ),
-          SizedBox(width: 10 * scale),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 10 * scale,
+            offset: Offset(0, 2 * scale),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 32 * scale,
+                height: 32 * scale,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10 * scale),
+                ),
+                child: Icon(icon, size: 18 * scale, color: color),
+              ),
+              SizedBox(width: 10 * scale),
+              Expanded(
+                child: Text(
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.arimo(
-                    fontSize: 11 * scale,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textSecondary,
+                    fontSize: 12 * scale,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textSecondary.withValues(alpha: 0.8),
                   ),
                 ),
-                SizedBox(height: 4 * scale),
-                if (value != null)
-                  Center(
-                    child: Text(
-                      value!,
-                      style: AppTextStyles.arimo(
-                        fontSize: 18 * scale,
-                        fontWeight: FontWeight.w700,
-                        color: color,
-                      ),
+              ),
+            ],
+          ),
+          const Spacer(),
+          SizedBox(
+            width: double.infinity,
+            child: value != null
+                ? Text(
+                    value!,
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.arimo(
+                      fontSize: 32 * scale,
+                      fontWeight: FontWeight.w800,
+                      color: color,
+                      letterSpacing: -1.0,
+                      height: 1.0,
                     ),
                   )
-                else
-                  Center(
+                : Center(
                     child: SizedBox(
-                      width: 16 * scale,
-                      height: 16 * scale,
+                      width: 20 * scale,
+                      height: 20 * scale,
                       child: CircularProgressIndicator(
                         strokeWidth: 2 * scale,
                         color: color.withValues(alpha: 0.5),
                       ),
                     ),
                   ),
-              ],
-            ),
           ),
-          if (onTap != null)
-            Icon(
-              Icons.arrow_forward_ios,
-              size: 14 * scale,
-              color: color.withValues(alpha: 0.5),
-            ),
+          const Spacer(),
         ],
       ),
     );
@@ -914,7 +1133,7 @@ class _DashboardMiniCard extends StatelessWidget {
     if (onTap != null) {
       return InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16 * scale),
+        borderRadius: BorderRadius.circular(20 * scale),
         child: card,
       );
     }
@@ -958,32 +1177,32 @@ class _AppointmentSkeletonCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
+            blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildSkeletonBar(width: 120, height: 10),
-          const SizedBox(height: 10),
-          _buildSkeletonBar(width: 180, height: 14),
-          const SizedBox(height: 8),
-          _buildSkeletonBar(width: double.infinity, height: 10),
-          const SizedBox(height: 4),
-          _buildSkeletonBar(width: 140, height: 10),
           const SizedBox(height: 12),
+          _buildSkeletonBar(width: 180, height: 14),
+          const SizedBox(height: 10),
+          _buildSkeletonBar(width: double.infinity, height: 10),
+          const SizedBox(height: 6),
+          _buildSkeletonBar(width: 140, height: 10),
+          const SizedBox(height: 14),
           Row(
             children: [
-              Expanded(child: _buildSkeletonBar(height: 32)),
-              const SizedBox(width: 8),
-              Expanded(child: _buildSkeletonBar(height: 32)),
+              Expanded(child: _buildSkeletonBar(height: 36)),
+              const SizedBox(width: 10),
+              Expanded(child: _buildSkeletonBar(height: 36)),
             ],
           ),
         ],
@@ -1052,7 +1271,7 @@ class _HomeStaffWalletSectionState extends State<_HomeStaffWalletSection> {
           ).format(balance);
 
           return Container(
-            margin: const EdgeInsets.symmetric(vertical: 8),
+            margin: const EdgeInsets.symmetric(vertical: 4),
             child: InkWell(
               onTap: () {
                 AppRouter.push(context, AppRoutes.employeeWallet).then((_) {
@@ -1063,19 +1282,20 @@ class _HomeStaffWalletSectionState extends State<_HomeStaffWalletSection> {
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(24),
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.primary,
-                      AppColors.primary.withValues(alpha: 0.85),
-                    ],
+                  gradient: const LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFF1A1A2E),
+                      Color(0xFF16213E),
+                      Color(0xFF0F3460),
+                    ],
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.25),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
+                      color: const Color(0xFF0F3460).withValues(alpha: 0.35),
+                      blurRadius: 24,
+                      offset: const Offset(0, 12),
                     ),
                   ],
                 ),
@@ -1083,35 +1303,44 @@ class _HomeStaffWalletSectionState extends State<_HomeStaffWalletSection> {
                   borderRadius: BorderRadius.circular(24),
                   child: Stack(
                     children: [
-                      // Decorative Element 1: Glass Circle
+                      // Decorative orb
                       Positioned(
-                        right: -50,
-                        top: -50,
+                        right: -40,
+                        top: -40,
                         child: Container(
-                          width: 150,
-                          height: 150,
+                          width: 130,
+                          height: 130,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Colors.white.withValues(alpha: 0.1),
+                            gradient: RadialGradient(
+                              colors: [
+                                AppColors.primary.withValues(alpha: 0.15),
+                                AppColors.primary.withValues(alpha: 0.0),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                      // Decorative Element 2: Soft Light highlight
                       Positioned(
                         left: -20,
                         bottom: -20,
                         child: Container(
-                          width: 100,
-                          height: 100,
+                          width: 80,
+                          height: 80,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Colors.white.withValues(alpha: 0.05),
+                            gradient: RadialGradient(
+                              colors: [
+                                const Color(0xFF6366F1).withValues(alpha: 0.1),
+                                const Color(0xFF6366F1).withValues(alpha: 0.0),
+                              ],
+                            ),
                           ),
                         ),
                       ),
 
                       Padding(
-                        padding: const EdgeInsets.all(24),
+                        padding: const EdgeInsets.all(22),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -1123,14 +1352,12 @@ class _HomeStaffWalletSectionState extends State<_HomeStaffWalletSection> {
                                     Container(
                                       padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.2,
-                                        ),
+                                        color: AppColors.primary.withValues(alpha: 0.15),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
-                                      child: const Icon(
+                                      child: Icon(
                                         Icons.wallet_outlined,
-                                        color: Colors.white,
+                                        color: AppColors.primary,
                                         size: 18,
                                       ),
                                     ),
@@ -1140,9 +1367,7 @@ class _HomeStaffWalletSectionState extends State<_HomeStaffWalletSection> {
                                       style: AppTextStyles.arimo(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w600,
-                                        color: Colors.white.withValues(
-                                          alpha: 0.9,
-                                        ),
+                                        color: Colors.white.withValues(alpha: 0.7),
                                       ),
                                     ),
                                   ],
@@ -1153,12 +1378,15 @@ class _HomeStaffWalletSectionState extends State<_HomeStaffWalletSection> {
                                     vertical: 6,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.white24,
+                                    color: Colors.white.withValues(alpha: 0.08),
                                     borderRadius: BorderRadius.circular(100),
+                                    border: Border.all(
+                                      color: Colors.white.withValues(alpha: 0.06),
+                                    ),
                                   ),
                                   child: const Icon(
                                     Icons.arrow_forward_ios_rounded,
-                                    color: Colors.white,
+                                    color: Colors.white54,
                                     size: 12,
                                   ),
                                 ),
@@ -1189,42 +1417,59 @@ class _HomeStaffWalletSectionState extends State<_HomeStaffWalletSection> {
                                       style: AppTextStyles.arimo(
                                         fontSize: 12,
                                         fontWeight: FontWeight.w400,
-                                        color: Colors.white70,
+                                        color: Colors.white.withValues(alpha: 0.45),
                                       ),
                                     ),
                                   ],
                                 ),
                                 Material(
-                                  color: Colors.white.withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(12),
+                                  color: Colors.transparent,
                                   child: InkWell(
                                     onTap: () {
                                       CreateHomeStaffWithdrawSheet.show(context);
                                     },
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 10,
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          const Icon(
-                                            Icons.account_balance_rounded,
-                                            color: Colors.white,
-                                            size: 16,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            'Rút tiền',
-                                            style: AppTextStyles.arimo(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w700,
-                                              color: Colors.white,
-                                            ),
+                                    borderRadius: BorderRadius.circular(14),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        gradient: const LinearGradient(
+                                          colors: [
+                                            Color(0xFFFF8C00),
+                                            Color(0xFFF59E0B),
+                                          ],
+                                        ),
+                                        borderRadius: BorderRadius.circular(14),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: AppColors.primary.withValues(alpha: 0.3),
+                                            blurRadius: 12,
+                                            offset: const Offset(0, 4),
                                           ),
                                         ],
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: 10,
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(
+                                              Icons.account_balance_rounded,
+                                              color: Colors.white,
+                                              size: 16,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              'Rút tiền',
+                                              style: AppTextStyles.arimo(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w700,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ),

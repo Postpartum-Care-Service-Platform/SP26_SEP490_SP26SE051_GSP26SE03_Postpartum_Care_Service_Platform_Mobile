@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/services/current_account_cache_service.dart';
+import '../../../../core/storage/secure_storage_service.dart';
 import '../../../family_profile/domain/repositories/family_profile_repository.dart';
 import '../../data/models/current_account_model.dart';
 import '../../domain/usecases/login_usecase.dart';
@@ -61,6 +62,20 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthLoadCurrentAccount>(_onLoadCurrentAccount);
     on<AuthRestoreCurrentAccountFromCache>(_onRestoreCurrentAccountFromCache);
     on<AuthChangePassword>(_onChangePassword);
+    on<AuthLogout>(_onLogout);
+  }
+
+  Future<void> _onLogout(
+    AuthLogout event,
+    Emitter<AuthState> emit,
+  ) async {
+    try {
+      await SecureStorageService.clearAll();
+      await CurrentAccountCacheService.clearCache();
+      emit(AuthInitial(isPasswordObscured: state.isPasswordObscured));
+    } catch (_) {
+      emit(AuthInitial(isPasswordObscured: state.isPasswordObscured));
+    }
   }
 
   Future<void> _onLoginWithEmailPassword(
